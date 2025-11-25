@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relax & Renew RMT | Mobile Massage Therapy</title>
+    <meta name="description" content="Professional Registered Massage Therapy delivered to your home in the Niagara Region. Direct billing available.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F9F1D8', // Cream
+                            black: '#000000',
+                            dark: '#0a0a0a',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        // Hero Image (Woman receiving massage)
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        // Alternate Background (Hands/Oils) for Services Section
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Global Styles */
+        body {
+            background-color: #000000;
+            color: #F9F1D8; /* Defaulting to Cream */
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.125rem;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .fixed-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 999;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(224, 197, 132, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        /* UI Components */
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Fancy Service Cards */
+        .card-fancy {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            transition: all 0.5s ease;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-fancy:hover {
+            transform: translateY(-7px);
+            border-color: #E0C584;
+            box-shadow: 0 20px 40px rgba(224, 197, 132, 0.15);
+        }
+        .card-fancy:hover i {
+            transform: scale(1.1);
+            color: #F0D594;
+        }
+
+        /* Buttons */
+        .btn-gold {
+            background: transparent;
+            border: 1px solid #E0C584;
+            color: #E0C584;
+            transition: all 0.3s ease;
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+        .btn-gold:hover {
+            background: rgba(224, 197, 132, 0.1);
+            border-color: #F0D594;
+            color: #F0D594;
+        }
+
+        .btn-filled {
+            background: #E0C584;
+            color: #000000;
+            border: 1px solid #E0C584;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .btn-filled:hover {
+            background: #F0D594;
+            border-color: #F0D594;
+        }
+
+        /* Links */
+        .nav-link {
+            color: #F9F1D8;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+            white-space: nowrap; /* Prevents wrapping */
+        }
+        .nav-link:hover {
+            color: #F0D594;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #000000;
+            z-index: 998;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .mobile-menu.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Misc */
+        .pill {
+            background: rgba(224, 197, 132, 0.05);
+            border: 1px solid rgba(224, 197, 132, 0.2);
+            color: #F9F1D8;
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            margin: 0 0.25rem 0.5rem 0;
+        }
+        
+        /* Ensure backgrounds transition smoothly */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- Navigation Bar -->
+    <nav class="fixed-nav">
+        <!-- Reduced vertical padding (py-2) to make header thinner -->
+        <div class="container mx-auto px-6 py-2 flex justify-between items-center">
+            <!-- Logo Only (Text Removed) - Increased size to h-12 -->
+            <a href="#" class="flex items-center no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-12 w-auto transition-transform group-hover:scale-105">
+            </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center space-x-6 xl:space-x-8">
+                <a href="#" class="nav-link">About Us</a>
+                <a href="#" class="nav-link">Our Therapists</a>
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="#giftcards" class="nav-link">Gift Cards</a>
+                <a href="#area" class="nav-link">Service Area</a>
+                <a href="https://relaxandrenew.noterro.com" target="_blank" class="btn-filled py-2">Book Now</a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="menu-btn" class="lg:hidden text-brand-gold">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mob-menu" class="mobile-menu">
+        <button id="close-btn" class="absolute top-6 right-6 text-brand-gold">
+            <i data-lucide="x" class="w-10 h-10"></i>
+        </button>
+        <nav class="flex flex-col space-y-6 text-center">
+            <a href="#" class="text-2xl nav-link" onclick="closeMenu()">About Us</a>
+            <a href="#" class="text-2xl nav-link" onclick="closeMenu()">Our Therapists</a>
+            <a href="#services" class="text-2xl nav-link" onclick="closeMenu()">Services</a>
+            <a href="#pricing" class="text-2xl nav-link" onclick="closeMenu()">Pricing</a>
+            <a href="#giftcards" class="text-2xl nav-link" onclick="closeMenu()">Gift Cards</a>
+            <a href="#area" class="text-2xl nav-link" onclick="closeMenu()">Service Area</a>
+            <a href="https://relaxandrenew.noterro.com" target="_blank" class="btn-filled text-xl px-8 py-4 mt-4" onclick="closeMenu()">Book Now</a>
+        </nav>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="relative min-h-screen flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed pt-24">
+        <div class="absolute inset-0 bg-black/40"></div> <!-- Added slight overlay for better text contrast -->
+        <div class="container mx-auto px-6 relative z-10 text-center">
+            
+            <p class="text-brand-gold/90 uppercase tracking-[0.3em] text-sm md:text-base mb-6">Professional Mobile Massage Therapy</p>
+            
+            <h1 class="text-5xl md:text-8xl font-medium text-brand-gold mb-8 leading-tight">
+                The Sanctuary <br> <span class="text-brand-light">Comes to You.</span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-brand-light max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+                Experience therapeutic massage in the comfort of your home. Serving the Niagara Region with registered, professional care.
+            </p>
+            
+            <div class="flex flex-col md:flex-row gap-6 justify-center mb-16">
+                <a href="https://relaxandrenew.noterro.com/" target="_blank" class="btn-filled">
+                    Book Appointment
+                </a>
+                <a href="#services" class="btn-gold backdrop-blur-sm">
+                    View Services
+                </a>
+            </div>
+            
+            <!-- Trust Indicators -->
+            <div class="flex flex-wrap justify-center gap-8 md:gap-16 text-brand-gold text-xs uppercase tracking-widest">
+                 <div class="flex flex-col items-center">
+                    <i data-lucide="shield-check" class="w-8 h-8 mb-2"></i>
+                    <span>Certified RMT</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i data-lucide="file-check" class="w-8 h-8 mb-2"></i>
+                    <span>Direct Billing</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i data-lucide="heart-handshake" class="w-8 h-8 mb-2"></i>
+                    <span>Fully Insured</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Value Proposition -->
+    <section class="py-24 bg-black relative">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl md:text-5xl mb-8 text-brand-gold leading-tight">Wellness tailored to <br> your environment.</h2>
+                    <p class="text-brand-light/90 mb-6 text-lg font-light">
+                        We eliminate the stress of travel by bringing professional RMT service to you. No waiting rooms, no traffic—just relaxation.
+                    </p>
+                    <p class="text-brand-light/90 mb-8 text-lg font-light">
+                        From a professional table and fresh linens to soothing oils and music, we transform your space into a private spa.
+                    </p>
+                    <ul class="space-y-4 text-brand-light">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i>
+                            <span>Save time & avoid traffic stress</span>
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i>
+                            <span>RMT Receipts provided</span>
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i>
+                            <span>Direct Billing Available</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="relative">
+                    <div class="absolute -inset-4 bg-brand-gold/10 rounded-lg blur-xl"></div>
+                    <img src="https://static.wixstatic.com/media/bf8fef_ffe2e3b69cef4530ad98ddd13b93ede0~mv2.jpg" alt="Massage Setup" class="relative rounded-lg shadow-2xl border border-brand-gold/20 transition-all duration-700">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fancy Services Section (Alternate Background) -->
+    <section id="services" class="py-24 bg-alternate-pattern bg-cover bg-center bg-fixed">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm">Therapeutic Offerings</span>
+                <h2 class="text-5xl text-brand-light mt-2">Our Services</h2>
+                <div class="w-24 h-px bg-brand-gold mx-auto mt-6"></div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="card-fancy group">
+                    <div class="mb-6 flex justify-center">
+                        <i data-lucide="sparkles" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-gold transition-colors">Core Therapeutic</span>
+                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Foundational treatments for relaxation & pain relief.</p>
+                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4">
+                        <li>Relaxation (Swedish)</li>
+                        <li>Deep Tissue Massage</li>
+                        <li>Sports Massage</li>
+                        <li>Senior Massage</li>
+                    </ul>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="card-fancy group">
+                    <div class="absolute top-0 right-0 bg-brand-gold text-black text-[10px] font-bold px-3 py-1 uppercase tracking-wider">Popular</div>
+                    <div class="mb-6 flex justify-center">
+                        <i data-lucide="flame" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-gold transition-colors">Premium Therapy</span>
+                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Elevated experiences using specialized tools.</p>
+                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4">
+                        <li>Hot Stone Massage</li>
+                        <li>Cupping Therapy</li>
+                    </ul>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="card-fancy group">
+                    <div class="mb-6 flex justify-center">
+                        <i data-lucide="baby" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-gold transition-colors">Specialty Care</span>
+                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Gentle attention for specific life stages.</p>
+                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4">
+                        <li>Prenatal Massage</li>
+                        <li>Pediatric & Infant</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center mt-16">
+                 <a href="https://www.relaxandrenew.ca/massage-therapy" target="_blank" class="nav-link border-b border-brand-gold/50 pb-1 hover:border-brand-gold text-sm tracking-widest">VIEW FULL SERVICE DESCRIPTIONS</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-24 bg-black border-t border-brand-gold/10">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl text-brand-gold mb-4">Investment in Wellness</h2>
+                <p class="text-brand-light/70 max-w-2xl mx-auto">Transparent pricing with no hidden fees. We offer competitive rates that bring the spa to you.</p>
+            </div>
+
+            <!-- Promo Card -->
+            <div class="glass-panel border-brand-gold/50 rounded-lg p-8 md:p-12 max-w-5xl mx-auto mb-16 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
+                
+                <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                    <div class="text-left">
+                        <h3 class="text-3xl text-brand-light mb-2">Promotional Pricing</h3>
+                        <p class="text-brand-gold uppercase tracking-widest text-sm">Effective until January 2026</p>
+                        <p class="text-brand-light/70 text-sm max-w-md mt-2 font-light">
+                            Lock in our lowest rates. This pricing reflects our 1-Year Membership rate, currently available to all clients.
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-5xl font-light text-brand-gold mb-2">$110 <span class="text-xl text-brand-light/60">($124)</span></div>
+                        <p class="text-brand-light/60 text-sm">60 Min Core Massage (Tax Incl.)</p>
+                    </div>
+                </div>
+                
+                <!-- Pricing Tables -->
+                <div class="grid md:grid-cols-3 gap-8 border-t border-brand-gold/20 pt-8 text-sm">
+                    <!-- Col 1 -->
+                    <div>
+                        <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Core Services</h4>
+                        <div class="space-y-3 text-brand-light/80">
+                            <div class="flex justify-between"><span>60 Min</span> <span class="text-brand-gold">$110 ($124)</span></div>
+                            <div class="flex justify-between"><span>75 Min</span> <span class="text-brand-gold">$130 ($147)</span></div>
+                            <div class="flex justify-between"><span>90 Min</span> <span class="text-brand-gold">$150 ($170)</span></div>
+                            <div class="flex justify-between"><span>120 Min</span> <span class="text-brand-gold">$190 ($215)</span></div>
+                        </div>
+                    </div>
+                    <!-- Col 2 -->
+                    <div>
+                        <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Premium</h4>
+                        <div class="space-y-3 text-brand-light/80">
+                            <div class="flex justify-between"><span>60 Min</span> <span class="text-brand-gold">$120 ($136)</span></div>
+                            <div class="flex justify-between"><span>75 Min</span> <span class="text-brand-gold">$140 ($158)</span></div>
+                            <div class="flex justify-between"><span>90 Min</span> <span class="text-brand-gold">$160 ($181)</span></div>
+                            <div class="flex justify-between"><span>120 Min</span> <span class="text-brand-gold">$200 ($226)</span></div>
+                        </div>
+                    </div>
+                    <!-- Col 3 -->
+                    <div>
+                        <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Specialty</h4>
+                        <div class="space-y-3 text-brand-light/80">
+                            <div class="flex justify-between"><span>30 Min</span> <span class="text-brand-gold">$40 ($45)</span></div>
+                            <div class="flex justify-between"><span>45 Min</span> <span class="text-brand-gold">$65 ($73)</span></div>
+                            <div class="flex justify-between"><span>60 Min (Prenatal)</span> <span class="text-brand-gold">$120 ($136)</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-brand-gold/20 flex flex-col md:flex-row justify-between items-center text-xs text-brand-light/60 gap-4">
+                    <p>Standard Non-Member Rate: $120 (60min Core). Save $10+ per session with current promo.</p>
+                    <div class="flex gap-2 items-center">
+                        <i data-lucide="badge-percent" class="w-4 h-4 text-brand-gold"></i>
+                        <span>Seniors/First Responders: 10% Off</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="https://relaxandrenew.noterro.com/" target="_blank" class="btn-filled px-12 py-4 text-lg rounded-sm">Secure Your Appointment</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gift Cards Section -->
+    <section id="giftcards" class="py-24 bg-neutral-900 border-t border-brand-gold/10">
+        <div class="container mx-auto px-6">
+            <div class="glass-panel p-12 rounded-lg text-center border border-brand-gold/30 relative overflow-hidden max-w-4xl mx-auto">
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-gold/10 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-brand-gold/10 rounded-full blur-3xl"></div>
+                
+                <i data-lucide="gift" class="w-12 h-12 text-brand-gold mx-auto mb-6"></i>
+                <h2 class="text-4xl text-brand-light mb-4">Give the Gift of Wellness</h2>
+                <p class="text-brand-light/80 max-w-2xl mx-auto mb-8 font-light">
+                    Show someone you care with a Relax & Renew gift card. Perfect for birthdays, holidays, or simply to help a loved one unwind.
+                </p>
+                <a href="https://www.relaxandrenew.ca/gift-cards" target="_blank" class="btn-gold px-10 py-3 uppercase tracking-widest text-sm inline-block">Purchase Gift Card</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Service Area Section -->
+    <section id="area" class="py-24 bg-black border-t border-brand-gold/10">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row gap-16">
+                <div class="md:w-1/2">
+                    <h2 class="text-4xl text-brand-light mb-6">Serving the <span class="text-brand-gold">Niagara Region</span></h2>
+                    <p class="text-brand-light/80 mb-8 font-light text-lg">
+                        We are a locally owned business bringing wellness to our neighbours. Check our zones below to see if you fall within our complimentary travel area.
+                    </p>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-brand-gold uppercase tracking-widest text-sm mb-4 flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i> No Travel Fee Zone
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="pill">Port Colborne</span><span class="pill">Welland</span>
+                            <span class="pill">Fort Erie</span><span class="pill">Ridgeway</span>
+                            <span class="pill">Crystal Beach</span><span class="pill">Stevensville</span>
+                            <span class="pill">Niagara Falls</span><span class="pill">Fonthill/Pelham</span>
+                            <span class="pill">Thorold</span><span class="pill">St. Catharine's</span>
+                            <span class="pill">Dunnville</span><span class="pill">Niagara-on-the-Lake</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-brand-gold uppercase tracking-widest text-sm mb-4 flex items-center gap-2">
+                            <i data-lucide="car" class="w-4 h-4 text-brand-gold"></i> Extended ($50 Fee)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="pill opacity-60">Grimsby</span>
+                            <span class="pill opacity-60">Hamilton (L8, L9)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="md:w-1/2">
+                    <!-- Map -->
+                    <div class="bg-gray-800 rounded h-[400px] border border-brand-gold/30 relative overflow-hidden">
+                        <iframe 
+                            src="https://www.google.com/maps/d/embed?mid=1sOfl5SKuoXhcZZDAYN3itkC7SgtEQTA&ehbc=2E312F" 
+                            width="100%" 
+                            height="100%" 
+                            style="border:0;" 
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-900 py-20 border-t border-brand-gold/20">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-2">
+                    <h2 class="text-2xl text-brand-gold mb-4 tracking-widest">RELAX & RENEW<span class="text-xs opacity-70">RMT</span></h2>
+                    <p class="text-brand-light/70 max-w-sm mb-6">Professional, registered mobile massage therapy. We bring the clinic to your doorstep.</p>
+                    <div class="flex gap-4 text-brand-gold">
+                        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                        <a href="https://linktr.ee/relaxandrenewrmt" target="_blank" class="hover:text-white transition-colors"><i data-lucide="link" class="w-5 h-5"></i></a>
+                        <a href="mailto:info@relaxandrenew.ca" class="hover:text-white transition-colors"><i data-lucide="mail" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Quick Links</h4>
+                    <ul class="space-y-2 text-brand-light/60 text-sm">
+                        <li><a href="#services" class="hover:text-brand-gold transition-colors">Services</a></li>
+                        <li><a href="#pricing" class="hover:text-brand-gold transition-colors">Pricing & Membership</a></li>
+                        <li><a href="https://relaxandrenew.noterro.com/" target="_blank" class="hover:text-brand-gold transition-colors">Book Online</a></li>
+                        <li><a href="https://www.relaxandrenew.ca/gift-cards" target="_blank" class="hover:text-brand-gold transition-colors">Gift Cards</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Contact</h4>
+                    <ul class="space-y-2 text-brand-light/60 text-sm">
+                        <li class="flex gap-2 items-center"><i data-lucide="phone" class="w-4 h-4"></i> 1-226-337-9064</li>
+                        <li class="flex gap-2 items-center"><i data-lucide="mail" class="w-4 h-4"></i> info@relaxandrenew.ca</li>
+                        <li class="mt-4 text-xs">General Partnership<br>Brandon & Cassandra H</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-brand-gold/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-light/40">
+                <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
+                <div class="flex gap-6 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-brand-gold">Privacy Policy</a>
+                    <a href="#" class="hover:text-brand-gold">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Icons
+        window.onload = function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        };
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const mobMenu = document.getElementById('mob-menu');
+        const closeBtn = document.getElementById('close-btn');
+
+        function openMenu() { mobMenu.classList.add('open'); }
+        function closeMenu() { mobMenu.classList.remove('open'); }
+
+        menuBtn.addEventListener('click', openMenu);
+        closeBtn.addEventListener('click', closeMenu);
+    </script>
+</body>
+</html>
