@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relax & Renew RMT | Mobile Massage Therapy</title>
+    <title>Relax & Renew RMT | Mobile Massage Therapy Niagara</title>
+    <meta name="description" content="Professional mobile RMT massage therapy in Niagara Region, Welland, Port Colborne, and Fort Erie. We bring the sanctuary to you. Direct billing available.">
+    <meta property="og:title" content="Relax & Renew RMT | The Sanctuary Comes to You">
+    <meta property="og:description" content="Registered Massage Therapy in the comfort of your home. Serving the Niagara Region. Book your appointment today.">
+    <meta property="og:image" content="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png">
     
-    <!-- 1. LIBRARIES -->
+    <!-- 1. LIBRARIES & CONFIG -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    
-    <!-- 2. CONFIG -->
     <script>
         tailwind.config = {
             theme: {
@@ -19,327 +19,825 @@
                         brand: {
                             gold: '#E0C584',
                             goldHover: '#F0D594',
-                            light: '#F9F1D8', // Cream
-                            black: '#000000',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
                             dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
                         }
                     },
                     fontFamily: {
                         serif: ['"Cormorant Garamond"', 'serif'],
                     },
                     backgroundImage: {
-                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
-                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        subtleBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
                     }
                 }
             }
+        };
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+
+    <!-- Google Maps Logic Initialized Early with Safe Guards -->
+    <script>
+        // CRITICAL FIX: Wrapper to prevent "Script error" from stopping execution
+        window.initAllAutocompletes = function() {
+            try {
+                // Ensure DOM is fully loaded before accessing elements
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', _runMapsInitialization);
+                } else {
+                    _runMapsInitialization();
+                }
+            } catch (e) {
+                console.warn("Maps Init Error:", e);
+            }
+        };
+
+        function _runMapsInitialization() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                    console.warn("Google Maps API not fully loaded yet.");
+                    return;
+                }
+
+                // 1. Address Autocomplete for Booking Form
+                const modalInput = document.getElementById('autocomplete-address');
+                if (modalInput) {
+                    const ac = new google.maps.places.Autocomplete(modalInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "name"],
+                        types: ["address"],
+                    });
+                    ac.addListener("place_changed", () => {
+                        try {
+                            const place = ac.getPlace();
+                            fillAddressForm(place);
+                        } catch(e) { console.warn("Maps Listener Error", e); }
+                    });
+                }
+
+                // 2. Service Area Checker
+                const serviceInput = document.getElementById('service-area-search');
+                if (serviceInput) {
+                    const acService = new google.maps.places.Autocomplete(serviceInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "geometry", "name"],
+                        types: ["geocode"], 
+                    });
+                    acService.addListener("place_changed", () => {
+                        try {
+                            const place = acService.getPlace();
+                            checkServiceArea(place);
+                        } catch(e) { console.warn("Maps Service Listener Error", e); }
+                    });
+                }
+            } catch (e) {
+                console.warn("Maps Initialization Logic Error:", e);
+            }
+        }
+
+        function fillAddressForm(place) {
+            try {
+                if (!place.address_components) return;
+                const cityInput = document.getElementById('form-city');
+                const postalInput = document.getElementById('form-postal');
+                
+                // Reset fields
+                if(cityInput) cityInput.value = '';
+                if(postalInput) postalInput.value = '';
+
+                for (const component of place.address_components) {
+                    const type = component.types[0];
+                    if (type === "locality" || type === "administrative_area_level_3") {
+                        if(cityInput && !cityInput.value) cityInput.value = component.long_name;
+                    }
+                    if (type === "postal_code") {
+                        if(postalInput) postalInput.value = component.long_name;
+                    }
+                }
+            } catch(e) { console.warn("Fill Address Error", e); }
+        }
+
+        function checkServiceArea(place) {
+            try {
+                const resultDiv = document.getElementById('postal-result');
+                const warningDiv = document.getElementById('cc-warning');
+                
+                if (!place || !place.address_components) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-yellow-400 font-bold flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Please select a valid location from the dropdown.</span>`, 'bg-yellow-500/10 border-yellow-500/30', false);
+                    return;
+                }
+
+                let postalCode = '', city = '';
+                
+                // Extract Data
+                for (const component of place.address_components) {
+                    const type = component.types[0];
+                    if (type === "postal_code") postalCode = component.short_name.substring(0, 3).toUpperCase();
+                    if (type === "locality" || type === "administrative_area_level_3" || type === "neighborhood") city = component.long_name;
+                }
+
+                if (!city && place.name) city = place.name; 
+
+                // Logic Definitions
+                const freeCities = ['Port Colborne', 'Welland', 'Fort Erie', 'Ridgeway', 'Crystal Beach', 'Stevensville', 'Niagara Falls', 'Fonthill', 'Pelham', 'Thorold', 'St. Catharines', 'Dunnville', 'Niagara-on-the-Lake', 'Smithville', 'Byng', 'Moulton', 'Wainfleet'];
+                const freeZonePostals = ['L3K', 'L3B', 'L3C', 'L2A', 'L0S', 'L2E', 'L2G', 'L2H', 'L2J', 'L2V', 'L2M', 'L2N', 'L2P', 'L2R', 'L2S', 'L2T'];
+
+                const isLincoln = city.includes("Lincoln") || city.includes("Beamsville") || city.includes("Vineland") || city.includes("Jordan");
+                const isGrimsby = city.includes("Grimsby") || (postalCode === 'L3M');
+                const isPortDover = city.includes("Port Dover") || (postalCode.startsWith('N0A'));
+                const isHamilton = city.includes("Hamilton") || city.includes("Stoney Creek") || city.includes("Ancaster") || city.includes("Dundas") || postalCode.startsWith('L8') || postalCode.startsWith('L9');
+
+                // Evaluation
+                if (isLincoln) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($30 Travel Fee).</span> Lincoln & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (isGrimsby || isPortDover) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($50 Travel Fee).</span> Grimsby/Port Dover.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (isHamilton) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($80 Travel Fee).</span> Hamilton & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (freeZonePostals.includes(postalCode) || freeCities.some(c => city.includes(c))) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-green-400 font-bold flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Free Travel Zone!</span> Primary service area.`, 'bg-green-500/10 border-green-500/30', false);
+                } else {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-red-400 font-bold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Out of Area.</span> Currently unavailable here.`, 'bg-red-500/10 border-red-500/30', false);
+                }
+            } catch(e) { console.warn("Check Service Area Error", e); }
+        }
+
+        function showAreaMessage(el, warnEl, msg, classes, showWarn) {
+            try {
+                el.innerHTML = msg;
+                el.className = `mt-4 text-sm p-4 rounded border ${classes}`;
+                el.classList.remove('hidden');
+                if(showWarn) warnEl.classList.remove('hidden'); else warnEl.classList.add('hidden');
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            } catch(e) { console.warn("Show Area Message Error", e); }
         }
     </script>
 
     <style>
-        /* 3. CUSTOM CSS */
-        body { background-color: #000; color: #F9F1D8; font-family: 'Cormorant Garamond', serif; font-size: 1.125rem; line-height: 1.6; overflow-x: hidden; }
+        body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
         
-        /* Fixed Header - Force Height & Z-Index */
-        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(224, 197, 132, 0.3); display: flex; align-items: center; justify-content: center; }
+        /* Navigation */
+        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); display: flex; align-items: center; }
         
-        /* Mobile Menu Overlay */
-        .mobile-menu { position: fixed; top: 80px; left: 0; width: 100%; height: calc(100vh - 80px); background: #000; z-index: 49; transform: translateX(100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 80px; }
+        /* Mobile Menu */
+        .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #050505; z-index: 49; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .mobile-menu.open { transform: translateX(0); }
-
-        /* Cards & UI */
-        .glass-panel { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .card-fancy { background: rgba(10, 10, 10, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); transition: all 0.5s ease; padding: 3rem 2rem; text-align: center; position: relative; overflow: hidden; }
-        .card-fancy:hover { transform: translateY(-7px); border-color: #E0C584; box-shadow: 0 20px 40px rgba(224, 197, 132, 0.15); }
         
-        /* Buttons & Links */
-        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.5rem 1.5rem; text-transform: uppercase; font-weight: 700; transition: 0.3s; display: inline-block; }
-        .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0D594; border-color: #F0D594; }
-        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.5rem 1.5rem; text-transform: uppercase; font-weight: 700; transition: 0.3s; display: inline-block; }
-        .btn-filled:hover { background: #F0D594; border-color: #F0D594; }
-        .nav-link { color: #F9F1D8; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.1em; text-decoration: none; cursor: pointer; transition: 0.3s; white-space: nowrap; }
-        .nav-link:hover { color: #F0D594; }
-        .pill { background: rgba(224, 197, 132, 0.05); border: 1px solid rgba(224, 197, 132, 0.2); color: #F9F1D8; display: inline-block; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.875rem; margin: 0 0.25rem 0.5rem 0; }
+        /* Cards & Components */
+        .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); border: 1px solid rgba(224, 197, 132, 0.1); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; }
+        .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
+        .card-fancy:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.3); }
+        .card-fancy:hover::before { transform: scaleX(1); }
+        
+        .bg-gift-card { background-image: url('https://static.wixstatic.com/media/bf8fef_9da7c8e6be37443d89cac9f6884ec878~mv2.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #1a1a1a; }
+        
+        /* Buttons */
+        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
+        
+        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+        
+        /* Links */
+        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        
+        /* Utilities */
+        .pill { background: rgba(224, 197, 132, 0.08); border: 1px solid rgba(224, 197, 132, 0.2); color: #F0E2C0; display: inline-block; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin: 0 0.3rem 0.5rem 0; letter-spacing: 0.05em; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .accordion-content.active { max-height: 500px; }
+        .rotate-icon { transition: transform 0.3s ease; }
+        .rotate-icon.active { transform: rotate(180deg); }
+        
+        /* Google Maps Overrides */
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
+        .pac-item-query { color: #E0C584; }
+        
+        /* Modal Backdrop - High Z-Index */
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); z-index: 100; }
+
+        /* Scrollbar Hide */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* FIX: Calendar Picker Icon Color for Dark Backgrounds */
+        /* This filter inverts the standard black icon and shifts the hue to match brand-gold (#E0C584) */
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(86%) sepia(19%) saturate(986%) hue-rotate(357deg) brightness(92%) contrast(89%);
+            cursor: pointer;
+        }
     </style>
 </head>
-<body class="bg-black">
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
     <!-- 4. NAVIGATION BAR -->
-    <nav class="fixed-nav">
-        <div class="container mx-auto px-6 flex justify-between items-center h-full relative">
-            <!-- Logo Left (Text Removed) -->
-            <a href="#" class="flex items-center gap-3 no-underline absolute left-6 lg:static">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-14 w-auto">
+    <nav id="navbar" class="fixed-nav">
+        <div class="container mx-auto px-6 flex justify-between items-center h-full">
+            <a href="#" class="flex items-center gap-3 no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <div class="hidden md:flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                </div>
             </a>
-            
-            <!-- Desktop Links (Centered) -->
-            <div class="hidden lg:flex items-center space-x-8 mx-auto">
-                <a href="about.html" class="nav-link">About Us</a>
-                <a href="therapists.html" class="nav-link">Our Therapists</a>
+            <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
                 <a href="#services" class="nav-link">Services</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#giftcards" class="nav-link">Gift Cards</a>
                 <a href="#area" class="nav-link">Service Area</a>
+                <a href="#faq" class="nav-link">FAQ</a>
+                <a href="therapists.html" class="nav-link">Our Therapists</a>
             </div>
-
-            <!-- Mobile Menu Button (Visible only on Mobile, Absolute Right) -->
-            <button id="menu-btn" class="lg:hidden text-brand-gold p-2 absolute right-6">
+            <button id="menu-btn" class="lg:hidden text-brand-gold p-2 focus:outline-none hover:text-brand-light transition-colors">
                 <i data-lucide="menu" class="w-8 h-8"></i>
             </button>
         </div>
     </nav>
 
-    <!-- 5. MOBILE MENU (Hidden by default) -->
+    <!-- 5. MOBILE MENU -->
     <div id="mob-menu" class="mobile-menu">
-        <nav class="flex flex-col space-y-8 text-center">
-            <a href="about.html" class="text-2xl nav-link toggle-menu-link">About Us</a>
-            <a href="therapists.html" class="text-2xl nav-link toggle-menu-link">Our Therapists</a>
-            <a href="#services" class="text-2xl nav-link toggle-menu-link">Services</a>
-            <a href="#pricing" class="text-2xl nav-link toggle-menu-link">Pricing</a>
-            <a href="#giftcards" class="text-2xl nav-link toggle-menu-link">Gift Cards</a>
-            <a href="#area" class="text-2xl nav-link toggle-menu-link">Service Area</a>
-            <a href="https://relaxandrenew.noterro.com" target="_blank" class="btn-filled text-xl px-8 py-4 mt-4">Book Now</a>
+        <button id="close-btn" class="absolute top-8 right-6 text-brand-gold p-2 hover:rotate-90 transition-transform">
+            <i data-lucide="x" class="w-10 h-10"></i>
+        </button>
+        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-16 w-auto mb-8 opacity-80">
+        <nav class="flex flex-col space-y-6 text-center">
+            <a href="#services" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Services</a>
+            <a href="#pricing" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Pricing</a>
+            <a href="#giftcards" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Gift Cards</a>
+            <a href="#area" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Service Area</a>
+            <a href="#faq" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">FAQ</a>
+            <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
+            <button onclick="openBookingModal()" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Book Online</button>
         </nav>
+        <div class="absolute bottom-10 flex gap-6 text-brand-gold/60">
+            <a href="https://www.facebook.com/share/1F1fYU6yrF/"><i data-lucide="facebook"></i></a>
+            <a href="mailto:info@relaxandrenew.ca"><i data-lucide="mail"></i></a>
+        </div>
     </div>
 
     <!-- 6. HERO SECTION -->
-    <header class="relative min-h-screen flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed pt-20">
-        <div class="absolute inset-0 bg-black/40"></div>
-        <div class="container mx-auto px-6 relative z-10 text-center">
-            
-            <p class="text-brand-gold/90 uppercase tracking-[0.3em] text-sm md:text-base mb-6 animate-fade-in-up">Professional Mobile Massage Therapy</p>
-            
-            <h1 class="text-5xl md:text-8xl font-medium text-brand-gold mb-8 leading-tight">
-                The Sanctuary <br> <span class="text-brand-light">Comes to You.</span>
-            </h1>
-            
-            <p class="text-xl md:text-2xl text-brand-light max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-                Experience therapeutic massage in the comfort of your home. Serving the Niagara Region with registered, professional care.
-            </p>
-            
-            <div class="flex flex-col md:flex-row gap-6 justify-center mb-16">
-                <a href="https://relaxandrenew.noterro.com/" target="_blank" class="btn-filled">Book Appointment</a>
-                <a href="#services" class="btn-gold backdrop-blur-sm">View Services</a>
+    <header class="relative min-h-screen flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-brand-black"></div>
+        <div class="container mx-auto px-6 relative z-10 text-center pt-20">
+            <div class="inline-block border-b border-brand-gold/50 pb-2 mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <p class="text-brand-gold uppercase tracking-[0.3em] text-xs md:text-sm font-bold">Registered Mobile Massage Therapy</p>
             </div>
-            
-            <div class="flex flex-wrap justify-center gap-8 md:gap-16 text-brand-gold text-xs uppercase tracking-widest">
-                 <div class="flex flex-col items-center"><i data-lucide="shield-check" class="w-8 h-8 mb-2"></i><span>Certified RMT</span></div>
-                 <div class="flex flex-col items-center"><i data-lucide="file-check" class="w-8 h-8 mb-2"></i><span>Direct Billing</span></div>
-                 <div class="flex flex-col items-center"><i data-lucide="heart-handshake" class="w-8 h-8 mb-2"></i><span>Fully Insured</span></div>
+            <h1 class="text-5xl md:text-7xl lg:text-9xl font-medium text-brand-light mb-8 leading-[1.1] animate-fade-in-up" style="animation-delay: 0.3s;">
+                The Sanctuary <br> 
+                <span class="text-brand-gold italic font-serif">Comes to You.</span>
+            </h1>
+            <p class="text-lg md:text-2xl text-brand-light/90 max-w-2xl mx-auto mb-12 font-light leading-relaxed animate-fade-in-up" style="animation-delay: 0.5s;">
+                Serving the Niagara Region. We bring the massage table, linens, and relaxation to your home, so you don't have to travel.
+            </p>
+            <div class="flex flex-col md:flex-row gap-6 justify-center mb-16 animate-fade-in-up" style="animation-delay: 0.7s;">
+                <button onclick="openBookingModal()" class="btn-filled text-black min-w-[200px] animate-subtle-bounce">
+                    <i data-lucide="calendar-check" class="w-4 h-4 inline mr-2"></i> Book Appointment
+                </button>
+                <a href="#services" class="btn-gold backdrop-blur-sm min-w-[200px]">View Services</a>
+            </div>
+            <div class="flex flex-wrap justify-center gap-8 md:gap-16 text-brand-light/60 text-xs uppercase tracking-widest animate-fade-in-up" style="animation-delay: 0.9s;">
+                 <div class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-brand-gold"></i><span>Certified RMT</span></div>
+                 <div class="flex items-center gap-3"><i data-lucide="file-check" class="w-5 h-5 text-brand-gold"></i><span>Direct Billing</span></div>
+                 <div class="flex items-center gap-3"><i data-lucide="heart-handshake" class="w-5 h-5 text-brand-gold"></i><span>Fully Insured</span></div>
             </div>
         </div>
+        <a href="#about" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-brand-gold/50 animate-bounce cursor-pointer">
+            <i data-lucide="chevron-down" class="w-8 h-8"></i>
+        </a>
     </header>
 
-    <!-- 7. VALUE PROPOSITION -->
-    <section class="py-24 bg-black relative">
+    <!-- 7. ABOUT -->
+    <section id="about" class="py-24 bg-brand-black relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-brand-gold/5 to-transparent pointer-events-none"></div>
         <div class="container mx-auto px-6">
             <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div>
-                    <h2 class="text-4xl md:text-5xl mb-8 text-brand-gold leading-tight">Wellness tailored to <br> your environment.</h2>
-                    <p class="text-brand-light/90 mb-6 text-lg font-light">We eliminate the stress of travel by bringing professional RMT service to you. No waiting rooms, no traffic—just relaxation.</p>
-                    <p class="text-brand-light/90 mb-8 text-lg font-light">From a professional table and fresh linens to soothing oils and music, we transform your space into a private spa.</p>
-                    <ul class="space-y-4 text-brand-light">
-                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i><span>Save time & avoid traffic stress</span></li>
-                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i><span>RMT Receipts provided</span></li>
-                        <li class="flex items-center gap-4"><i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i><span>Direct Billing Available</span></li>
+                <div class="order-2 md:order-1">
+                    <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold mb-2 block">Why Mobile?</span>
+                    <h2 class="text-4xl md:text-5xl mb-8 text-brand-light leading-tight">Wellness tailored to <br> <span class="text-brand-gold italic">your environment.</span></h2>
+                    <p class="text-brand-dim mb-6 text-lg font-light">We eliminate the stress of travel by bringing professional RMT service to you. No waiting rooms, no traffic—just pure relaxation in the safety and comfort of your own home.</p>
+                    <p class="text-brand-dim mb-8 text-lg font-light">From a professional table and fresh linens to soothing oils and music, we transform your space into a private spa.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-brand-gold/10 p-2 rounded-full"><i data-lucide="clock" class="w-5 h-5 text-brand-gold"></i></div>
+                            <div><h4 class="text-brand-gold font-bold uppercase tracking-wider text-sm">Save Time</h4><p class="text-sm text-brand-dim">No driving, parking, or waiting. We arrive at your scheduled time.</p></div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="bg-brand-gold/10 p-2 rounded-full"><i data-lucide="receipt" class="w-5 h-5 text-brand-gold"></i></div>
+                            <div><h4 class="text-brand-gold font-bold uppercase tracking-wider text-sm">Insurance Ready</h4><p class="text-sm text-brand-dim">We provide RMT receipts and offer direct billing to most major insurers.</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 md:order-2 relative">
+                    <div class="absolute -inset-4 bg-brand-gold/5 rounded-full blur-3xl"></div>
+                    <img src="https://static.wixstatic.com/media/bf8fef_ffe2e3b69cef4530ad98ddd13b93ede0~mv2.jpg" alt="Massage Setup" class="relative rounded-sm shadow-2xl border border-brand-gold/20 transition-all duration-700 w-full object-cover h-[500px] bg-gray-900">
+                    <div class="absolute -bottom-6 -left-6 bg-brand-black border border-brand-gold/30 p-6 max-w-xs shadow-xl hidden md:block">
+                        <p class="text-brand-gold text-lg italic font-serif">"The most convenient way to prioritize your health."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. SERVICES -->
+    <section id="services" class="py-24 bg-alternate-pattern bg-cover bg-center bg-fixed relative bg-gray-900">
+        <div class="absolute inset-0 bg-brand-black/60"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-20">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Therapeutic Offerings</span>
+                <h2 class="text-4xl md:text-6xl text-brand-light mt-3 mb-6">Our Services</h2>
+                <div class="w-16 h-px bg-brand-gold mx-auto"></div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-fancy group">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="sparkles" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Core Therapeutic</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Relaxation & Rehabilitation</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Foundational treatments designed to calm the nervous system and address chronic pain or injury.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Swedish Relaxation</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Deep Tissue</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Sports Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Chair Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Senior Massage</li>
                     </ul>
                 </div>
-                <div class="relative">
-                    <div class="absolute -inset-4 bg-brand-gold/10 rounded-lg blur-xl"></div>
-                    <img src="https://static.wixstatic.com/media/bf8fef_ffe2e3b69cef4530ad98ddd13b93ede0~mv2.jpg" alt="Massage Setup" class="relative rounded-lg shadow-2xl border border-brand-gold/20 transition-all duration-700">
+                <div class="card-fancy group transform md:-translate-y-4 border-brand-gold/30">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="flame" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Premium Therapy</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Advanced Modalities</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Elevated experiences using specialized tools to increase blood flow and achieve deeper release.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Hot Stone Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Cupping Therapy</li>
+                        <li class="flex items-center gap-2 italic text-xs opacity-60 ml-3">Promotes circulation & detox</li>
+                    </ul>
                 </div>
+                <div class="card-fancy group">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="baby" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Specialty Care</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Maternal & Pediatric</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Gentle, specialized attention for specific life stages, reducing anxiety and promoting growth.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Prenatal Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Pediatric & Infant</li>
+                        <li class="flex items-center gap-2 italic text-xs opacity-60 ml-3">Reduced edema & better sleep</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flex flex-col md:flex-row justify-center gap-6 mt-16">
+                <button onclick="openBookingModal()" class="btn-gold animate-subtle-bounce">Book Your Session</button>
+                <a href="#pricing" class="btn-gold backdrop-blur-sm">Prices</a>
             </div>
         </div>
     </section>
 
-    <!-- 8. SERVICES SECTION -->
-    <section id="services" class="py-24 bg-alternate-pattern bg-cover bg-center bg-fixed">
+    <!-- 9. PRICING -->
+    <section id="pricing" class="py-24 bg-brand-black border-t border-brand-light/5">
         <div class="container mx-auto px-6">
             <div class="text-center mb-16">
-                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm">Therapeutic Offerings</span>
-                <h2 class="text-5xl text-brand-light mt-2">Our Services</h2>
-                <div class="w-24 h-px bg-brand-gold mx-auto mt-6"></div>
+                <h2 class="text-4xl md:text-5xl text-brand-gold mb-4 font-serif">Investment in Wellness</h2>
+                <p class="text-brand-dim max-w-2xl mx-auto font-light">Transparent pricing with no hidden fees. We offer competitive rates that bring the spa to you.</p>
             </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="card-fancy group">
-                    <div class="mb-6 flex justify-center"><i data-lucide="sparkles" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i></div>
-                    <span class="text-brand-gold text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-light transition-colors">Core Therapeutic</span>
-                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Foundational treatments for relaxation & pain relief.</p>
-                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4"><li>Relaxation (Swedish)</li><li>Deep Tissue Massage</li><li>Sports Massage</li><li>Senior Massage</li></ul>
-                </div>
-                <!-- Card 2 -->
-                <div class="card-fancy group">
-                    <div class="absolute top-0 right-0 bg-brand-gold text-black text-[10px] font-bold px-3 py-1 uppercase tracking-wider">Popular</div>
-                    <div class="mb-6 flex justify-center"><i data-lucide="flame" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i></div>
-                    <span class="text-brand-gold text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-light transition-colors">Premium Therapy</span>
-                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Elevated experiences using specialized tools.</p>
-                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4"><li>Hot Stone Massage</li><li>Cupping Therapy</li></ul>
-                </div>
-                <!-- Card 3 -->
-                <div class="card-fancy group">
-                    <div class="mb-6 flex justify-center"><i data-lucide="baby" class="w-12 h-12 text-brand-gold transition-transform duration-500 group-hover:scale-110"></i></div>
-                    <span class="text-brand-gold text-xs uppercase tracking-widest font-bold block mb-4 group-hover:text-brand-light transition-colors">Specialty Care</span>
-                    <p class="text-brand-light/80 mb-6 text-sm italic font-light">Gentle attention for specific life stages.</p>
-                    <ul class="space-y-2 text-sm text-brand-light/90 border-t border-brand-gold/10 pt-4"><li>Prenatal Massage</li><li>Pediatric & Infant</li></ul>
-                </div>
-            </div>
-            <div class="text-center mt-16"><a href="https://www.relaxandrenew.ca/massage-therapy" target="_blank" class="nav-link border-b border-brand-gold/50 pb-1 hover:border-brand-gold text-sm tracking-widest">VIEW FULL SERVICE DESCRIPTIONS</a></div>
-        </div>
-    </section>
-
-    <!-- 9. PRICING SECTION -->
-    <section id="pricing" class="py-24 bg-black border-t border-brand-gold/10">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-5xl text-brand-gold mb-4">Investment in Wellness</h2>
-                <p class="text-brand-light/70 max-w-2xl mx-auto">Transparent pricing with no hidden fees. We offer competitive rates that bring the spa to you.</p>
-            </div>
-            <div class="glass-panel border-brand-gold/50 rounded-lg p-8 md:p-12 max-w-5xl mx-auto mb-16 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
-                <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
-                    <div class="text-left">
-                        <h3 class="text-3xl text-brand-light mb-2">Promotional Pricing</h3>
-                        <p class="text-brand-gold uppercase tracking-widest text-sm">Effective until January 2026</p>
-                        <p class="text-brand-light/70 text-sm max-w-md mt-2 font-light">Lock in our lowest rates. This pricing reflects our 1-Year Membership rate, currently available to all clients.</p>
+            <div class="max-w-6xl mx-auto border border-brand-gold/30 rounded-lg p-8 md:p-12 bg-black/40 backdrop-blur-sm relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-brand-gold/20 pb-8 mb-8">
+                    <div>
+                        <h3 class="text-3xl md:text-4xl text-brand-light font-serif mb-2">Promotional Pricing</h3>
+                        <p class="text-brand-gold uppercase tracking-[0.15em] text-xs font-bold mb-3">Effective Until January 2026</p>
+                        <p class="text-brand-dim text-sm font-light max-w-md">This pricing is available to everyone until the New Year, after that, it reflects our 6 & 12 month membership.</p>
                     </div>
-                    <div class="text-right">
-                        <div class="text-5xl font-light text-brand-gold mb-2">$110 <span class="text-xl text-brand-light/60">($124)</span></div>
-                        <p class="text-brand-light/60 text-sm">60 Min Core Massage (Tax Incl.)</p>
+                    <div class="mt-6 md:mt-0 text-right">
+                        <div class="text-5xl md:text-6xl text-brand-gold font-serif flex items-start justify-end leading-none">
+                            <span class="text-2xl mt-2 mr-1">$</span>110
+                            <span class="text-lg text-brand-light/50 ml-3 mt-4 self-center">($124.30)</span>
+                        </div>
+                        <p class="text-brand-dim/70 text-sm mt-2">60 Min Core Massage (Tax Incl.)</p>
                     </div>
                 </div>
-                <div class="grid md:grid-cols-3 gap-8 border-t border-brand-gold/20 pt-8 text-sm">
-                    <div><h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Core Services</h4><div class="space-y-3 text-brand-light/80"><div class="flex justify-between"><span>60 Min</span> <span class="text-brand-gold">$110 ($124)</span></div><div class="flex justify-between"><span>75 Min</span> <span class="text-brand-gold">$130 ($147)</span></div><div class="flex justify-between"><span>90 Min</span> <span class="text-brand-gold">$150 ($170)</span></div><div class="flex justify-between"><span>120 Min</span> <span class="text-brand-gold">$190 ($215)</span></div></div></div>
-                    <div><h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Premium</h4><div class="space-y-3 text-brand-light/80"><div class="flex justify-between"><span>60 Min</span> <span class="text-brand-gold">$120 ($136)</span></div><div class="flex justify-between"><span>75 Min</span> <span class="text-brand-gold">$140 ($158)</span></div><div class="flex justify-between"><span>90 Min</span> <span class="text-brand-gold">$160 ($181)</span></div><div class="flex justify-between"><span>120 Min</span> <span class="text-brand-gold">$200 ($226)</span></div></div></div>
-                    <div><h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Specialty</h4><div class="space-y-3 text-brand-light/80"><div class="flex justify-between"><span>30 Min</span> <span class="text-brand-gold">$40 ($45)</span></div><div class="flex justify-between"><span>45 Min</span> <span class="text-brand-gold">$65 ($73)</span></div><div class="flex justify-between"><span>60 Min (Prenatal)</span> <span class="text-brand-gold">$120 ($136)</span></div></div></div>
+                <div class="grid md:grid-cols-3 gap-x-12 gap-y-12">
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Core Services</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">45 Min (Chair Only)</span><div class="text-right"><span class="block text-brand-gold font-bold">$80</span><span class="block text-[10px] text-brand-light/50">($90.40)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$110</span><span class="block text-[10px] text-brand-light/50">($124.30)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">75 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$130</span><span class="block text-[10px] text-brand-light/50">($146.90)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">90 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$150</span><span class="block text-[10px] text-brand-light/50">($169.50)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">120 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$190</span><span class="block text-[10px] text-brand-light/50">($214.70)</span></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Premium</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$120</span><span class="block text-[10px] text-brand-light/50">($135.60)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">75 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$140</span><span class="block text-[10px] text-brand-light/50">($158.20)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">90 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$160</span><span class="block text-[10px] text-brand-light/50">($180.80)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">120 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$200</span><span class="block text-[10px] text-brand-light/50">($226.00)</span></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Specialty</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">30 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$40</span><span class="block text-[10px] text-brand-light/50">($45.20)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">45 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$65</span><span class="block text-[10px] text-brand-light/50">($73.45)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min (Prenatal Only)</span><div class="text-right"><span class="block text-brand-gold font-bold">$120</span><span class="block text-[10px] text-brand-light/50">($135.60)</span></div></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-8 pt-6 border-t border-brand-gold/20 flex flex-col md:flex-row justify-between items-center text-xs text-brand-light/60 gap-4">
-                    <p>Standard Non-Member Rate: $120 (60min Core). Save $10+ per session with current promo.</p>
-                    <div class="flex gap-2 items-center"><i data-lucide="badge-percent" class="w-4 h-4 text-brand-gold"></i><span>Seniors/First Responders: 10% Off</span></div>
+                <div class="mt-10 pt-6 border-t border-brand-gold/20 flex flex-col md:flex-row justify-between items-center text-xs font-light">
+                    <p class="text-brand-dim/60">Standard Non-Member Rate: $120 (60min Core). Save $10+ per session with current promo.</p>
+                    <div class="flex items-center gap-2 mt-4 md:mt-0"><i data-lucide="badge-percent" class="w-5 h-5 text-brand-gold"></i><span class="text-brand-gold text-base font-bold">Seniors / First Responders / Veterans: 10% Off</span></div>
                 </div>
             </div>
-            <div class="text-center"><a href="https://relaxandrenew.noterro.com/" target="_blank" class="btn-filled px-12 py-4 text-lg rounded-sm">Secure Your Appointment</a></div>
+            <div class="flex flex-col md:flex-row justify-center gap-6 mt-12"><button onclick="openBookingModal()" class="btn-filled text-lg px-12 py-4 tracking-widest animate-subtle-bounce">SECURE YOUR APPOINTMENT</button></div>
         </div>
     </section>
 
     <!-- 10. GIFT CARDS -->
-    <section id="giftcards" class="py-24 bg-neutral-900 border-t border-brand-gold/10">
-        <div class="container mx-auto px-6">
-            <div class="glass-panel p-12 rounded-lg text-center border border-brand-gold/30 relative overflow-hidden max-w-4xl mx-auto">
-                <div class="absolute -top-24 -left-24 w-48 h-48 bg-brand-gold/10 rounded-full blur-3xl"></div>
-                <i data-lucide="gift" class="w-12 h-12 text-brand-gold mx-auto mb-6"></i>
-                <h2 class="text-4xl text-brand-light mb-4">Give the Gift of Wellness</h2>
-                <p class="text-brand-light/80 max-w-2xl mx-auto mb-8 font-light">Show someone you care with a Relax & Renew gift card. Perfect for birthdays, holidays, or simply to help a loved one unwind.</p>
-                <a href="https://www.relaxandrenew.ca/gift-cards" target="_blank" class="btn-gold px-10 py-3 uppercase tracking-widest text-sm inline-block">Purchase Gift Card</a>
+    <section id="giftcards" class="py-24 bg-gift-card border-t border-brand-light/5 relative overflow-hidden">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl text-brand-gold mb-6 font-serif shadow-black drop-shadow-lg">Give the Gift of Wellness</h2>
+            <p class="text-brand-light max-w-2xl mx-auto font-light mb-12 shadow-black drop-shadow-md">Treat your loved ones to a relaxing in-home massage. Purchase a digital gift card instantly and securely via Stripe.</p>
+            <div class="inline-block relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-goldHover rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <div class="bg-brand-black/80 backdrop-blur-md border border-brand-gold/40 rounded-lg p-10 shadow-2xl relative">
+                    <stripe-buy-button buy-button-id="buy_btn_1SUtWy2atTjzVbCkNOOOcYpo" publishable-key="pk_live_51SFdlq2atTjzVbCkiLOJb4Ee0qufeDnGdHuYUnSLuaSK3AD97lPRgzO2y7eQTnz6xBF60dvF8yqWc4jaRxXbdC4W00NIigxRTD"></stripe-buy-button>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- 11. SERVICE AREA -->
-    <section id="area" class="py-24 bg-black border-t border-brand-gold/10">
+    <section id="area" class="py-24 bg-neutral-900 border-t border-brand-light/5">
         <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row gap-16">
-                <div class="md:w-1/2">
-                    <h2 class="text-4xl text-brand-light mb-6">Serving the <span class="text-brand-gold">Niagara Region</span></h2>
-                    <p class="text-brand-light/80 mb-8 font-light text-lg">We are a locally owned business bringing wellness to our neighbours. Check our zones below to see if you fall within our complimentary travel area.</p>
-                    <div class="mb-8">
-                        <h3 class="text-brand-gold uppercase tracking-widest text-sm mb-4 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i> No Travel Fee Zone</h3>
-                        <div class="flex flex-wrap gap-2"><span class="pill">Port Colborne</span><span class="pill">Welland</span><span class="pill">Fort Erie</span><span class="pill">Ridgeway</span><span class="pill">Crystal Beach</span><span class="pill">Stevensville</span><span class="pill">Niagara Falls</span><span class="pill">Fonthill/Pelham</span><span class="pill">Thorold</span><span class="pill">St. Catharine's</span><span class="pill">Dunnville</span><span class="pill">Niagara-on-the-Lake</span></div>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h2 class="text-4xl text-brand-light mb-6">Service Area</h2>
+                    <p class="text-brand-dim mb-8">We are locally owned and operated. Check our zones below to see if you fall within our complimentary travel area.</p>
+                    <div class="bg-brand-black p-6 rounded border border-brand-gold/20 mb-8 shadow-lg">
+                        <label class="block text-brand-gold text-xs uppercase tracking-widest font-bold mb-3">Check Your Location Coverage</label>
+                        <div class="flex gap-2 relative"><input type="text" id="service-area-search" placeholder="Start typing your exact address or city..." class="w-full bg-white/5 border border-white/10 text-brand-light px-4 py-3 rounded focus:outline-none focus:border-brand-gold transition-colors"></div>
+                        <div id="postal-result" class="mt-4 text-sm hidden"></div>
+                        <p id="cc-warning" class="hidden text-[10px] text-red-400 mt-3 uppercase tracking-widest font-bold bg-red-500/10 border border-red-500/20 p-2 rounded text-center"><i data-lucide="credit-card" class="w-3 h-3 inline mr-1"></i>Credit Card required for booking in travel fee zones.</p>
                     </div>
-                    <div>
-                        <h3 class="text-brand-gold uppercase tracking-widest text-sm mb-4 flex items-center gap-2"><i data-lucide="car" class="w-4 h-4 text-brand-gold"></i> Extended ($50 Fee)</h3>
-                        <div class="flex flex-wrap gap-2"><span class="pill opacity-60">Grimsby</span><span class="pill opacity-60">Hamilton (L8, L9)</span></div>
+                    <div class="space-y-6 text-sm">
+                        <div><h3 class="text-brand-gold uppercase tracking-widest text-xs font-bold mb-3 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Primary Service Areas</h3><div class="flex flex-wrap gap-2 text-xs text-brand-dim/80"><span class="pill">Port Colborne</span><span class="pill">Welland</span><span class="pill">Fort Erie</span><span class="pill">Ridgeway</span><span class="pill">Crystal Beach</span><span class="pill">Stevensville</span><span class="pill">Niagara Falls</span><span class="pill">Fonthill/Pelham</span><span class="pill">Thorold</span><span class="pill">St. Catharines</span><span class="pill border-brand-gold/40">Dunnville</span><span class="pill border-brand-gold/40">Niagara-on-the-Lake</span><span class="pill border-brand-gold/40">Smithville</span><span class="pill border-brand-gold/40">Byng/Moulton</span><span class="pill border-brand-gold/40">Wainfleet</span></div></div>
+                        <p class="text-xs text-brand-dim italic">Note: Extended service areas such as Lincoln, Grimsby, and Hamilton may incur a travel fee. Please use the search box above to check your specific address.</p>
                     </div>
                 </div>
-                <div class="md:w-1/2">
-                    <div class="bg-gray-800 rounded h-[400px] border border-brand-gold/30 relative overflow-hidden">
-                        <iframe src="https://www.google.com/maps/d/embed?mid=1sOfl5SKuoXhcZZDAYN3itkC7SgtEQTA&ehbc=2E312F" width="100%" height="100%" style="border:0;" loading="lazy"></iframe>
-                    </div>
+                <div class="h-[400px] md:h-auto rounded-lg overflow-hidden border border-brand-gold/20 relative">
+                    <iframe src="https://www.google.com/maps/d/embed?mid=1sOfl5SKuoXhcZZDAYN3itkC7SgtEQTA&ehbc=2E312F" width="100%" height="100%" style="border:0; filter: grayscale(0.8) contrast(1.2);" loading="lazy"></iframe>
+                    <div class="absolute bottom-4 right-4 bg-brand-black/80 backdrop-blur px-3 py-1 text-xs text-brand-gold border border-brand-gold/20 rounded">Niagara Region</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 12. FOOTER -->
-    <footer class="bg-neutral-900 py-20 border-t border-brand-gold/20">
+    <!-- 12. FAQ -->
+    <section id="faq" class="py-24 bg-brand-black border-t border-brand-light/5">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <h2 class="text-4xl text-center text-brand-light mb-12 font-serif">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq1')">
+                        <span class="text-brand-gold font-medium text-lg font-serif">Do you offer mobile massage in my area?</span>
+                        <i id="icon-faq1" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="faq1" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light leading-relaxed">We serve the entire Niagara Region. Our <strong>No Travel Fee Zone</strong> includes Port Colborne, Welland, Fort Erie, Niagara Falls, Thorold, St. Catharines, Fonthill/Pelham, Dunnville, Niagara-on-the-Lake, Smithville, and Byng. A travel fee applies to extended areas: Lincoln ($30), Grimsby/Port Dover ($50), and Hamilton ($80).</div>
+                    </div>
+                </div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq2')"><span class="text-brand-gold font-medium text-lg font-serif">What should I expect during an in-home massage appointment?</span><i id="icon-faq2" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq2" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">We bring the spa experience to you. Your RMT will arrive with a massage table, fresh linens, oils, and music. We will set up in your preferred area, review your health history, and provide a professional treatment just like in a clinic—but in the comfort of your own home.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq3')"><span class="text-brand-gold font-medium text-lg font-serif">Do your therapists bring all equipment and supplies?</span><i id="icon-faq3" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq3" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Yes, absolutely. We bring everything required for the session, including a professional massage table, sheets, blankets, pillows, lotions/oils, and relaxation music.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq4')"><span class="text-brand-gold font-medium text-lg font-serif">How do I book an appointment?</span><i id="icon-faq4" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq4" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Booking is easy and secure via our online system. Simply click the "Book Now" button on our website to view availability and select your preferred time. You can also contact us by phone at (226) 337-9064.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq5')"><span class="text-brand-gold font-medium text-lg font-serif">What types of massage treatments do you offer?</span><i id="icon-faq5" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq5" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">We offer a comprehensive range of treatments including Core services (Swedish Relaxation, Deep Tissue, Sports Massage, Senior Massage, Chair Massage) and Premium/Specialty services (Hot Stone, Cupping Therapy, Prenatal, and Pediatric Massage).</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq6')"><span class="text-brand-gold font-medium text-lg font-serif">Do you provide direct billing for insurance?</span><i id="icon-faq6" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq6" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Yes, we offer direct billing to most major insurance companies. Upon booking, you will receive a health history form to complete, which includes a section where you can provide your insurance information prior to your appointment.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq7')"><span class="text-brand-gold font-medium text-lg font-serif">What is your cancellation or rescheduling policy?</span><i id="icon-faq7" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq7" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">We ask for 24 hours notice for cancellations or rescheduling. Please be aware that cancellations made within 12 hours of the appointment will incur a partial charge, while cancellations made within 6 hours will result in a full charge.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq8')"><span class="text-brand-gold font-medium text-lg font-serif">How should I prepare my space before the therapist arrives?</span><i id="icon-faq8" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq8" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Please ensure there is a clear space of approximately 8x10 feet to accommodate the massage table and allow the therapist to move around it. We also recommend ensuring the room is at a comfortable temperature for you.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq9')"><span class="text-brand-gold font-medium text-lg font-serif">Are your therapists registered and insured?</span><i id="icon-faq9" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq9" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Yes, absolutely. All of our therapists are Registered Massage Therapists (RMTs) registered with the College of Massage Therapists of Ontario (CMTO) and carry full liability insurance.</div></div></div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40"><button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('faq10')"><span class="text-brand-gold font-medium text-lg font-serif">Is mobile massage safe and hygienic?</span><i id="icon-faq10" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i></button><div id="faq10" class="accordion-content"><div class="p-6 pt-2 text-brand-light font-light leading-relaxed">Your safety is our priority. We follow strict sanitization protocols for all equipment and supplies between every appointment. Our linens are professionally laundered, and all surfaces are disinfected to ensure a hygienic experience.</div></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 13. FOOTER -->
+    <footer class="bg-neutral-950 py-16 border-t border-brand-gold/20">
         <div class="container mx-auto px-6">
             <div class="grid md:grid-cols-4 gap-12 mb-12">
                 <div class="md:col-span-2">
-                    <h2 class="text-2xl text-brand-gold mb-4 tracking-widest">RELAX & RENEW<span class="text-xs opacity-70">RMT</span></h2>
-                    <p class="text-brand-light/70 max-w-sm mb-6">Professional, registered mobile massage therapy. We bring the clinic to your doorstep.</p>
+                    <a href="#" class="flex items-center gap-2 mb-4"><img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-8 w-auto"><span class="text-brand-gold tracking-widest font-bold">RELAX & RENEW</span></a>
+                    <p class="text-brand-dim/60 max-w-sm mb-6 text-sm">Professional, registered mobile massage therapy. We are a General Partnership dedicated to bringing health and wellness to your doorstep.</p>
                     <div class="flex gap-4 text-brand-gold">
-                        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-white transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
-                        <a href="https://linktr.ee/relaxandrenewrmt" target="_blank" class="hover:text-white transition-colors"><i data-lucide="link" class="w-5 h-5"></i></a>
-                        <a href="mailto:info@relaxandrenew.ca" class="hover:text-white transition-colors"><i data-lucide="mail" class="w-5 h-5"></i></a>
+                        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="https://linktr.ee/relaxandrenewrmtA" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="link" class="w-4 h-4"></i></a>
+                        <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
                     </div>
                 </div>
                 <div>
-                    <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Quick Links</h4>
-                    <ul class="space-y-2 text-brand-light/60 text-sm">
-                        <li><a href="#services" class="hover:text-brand-gold transition-colors">Services</a></li>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Quick Links</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li><a href="#services" class="hover:text-brand-gold transition-colors">Therapeutic Services</a></li>
                         <li><a href="#pricing" class="hover:text-brand-gold transition-colors">Pricing & Membership</a></li>
                         <li><a href="https://relaxandrenew.noterro.com/" target="_blank" class="hover:text-brand-gold transition-colors">Book Online</a></li>
-                        <li><a href="https://www.relaxandrenew.ca/gift-cards" target="_blank" class="hover:text-brand-gold transition-colors">Gift Cards</a></li>
+                        <li><a href="#giftcards" class="hover:text-brand-gold transition-colors">Purchase Gift Cards</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-brand-light font-bold mb-4 uppercase tracking-wider">Contact</h4>
-                    <ul class="space-y-2 text-brand-light/60 text-sm">
-                        <li class="flex gap-2 items-center"><i data-lucide="phone" class="w-4 h-4"></i> 1-226-337-9064</li>
-                        <li class="flex gap-2 items-center"><i data-lucide="mail" class="w-4 h-4"></i> info@relaxandrenew.ca</li>
-                        <li class="mt-4 text-xs">General Partnership<br>Brandon & Cassandra H</li>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Contact</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li class="flex gap-3 items-center"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i> (226) 337-9064</li>
+                        <li class="flex gap-3 items-center"><i data-lucide="mail" class="w-4 h-4 text-brand-gold"></i> info@relaxandrenew.ca</li>
+                        <li class="flex gap-3 items-center"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i> Niagara Region, ON</li>
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-brand-gold/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-light/40">
+            <div class="border-t border-brand-light/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-dim/30">
                 <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
-                <div class="flex gap-6 mt-4 md:mt-0">
-                    <a href="#" class="hover:text-brand-gold">Privacy Policy</a>
-                    <a href="#" class="hover:text-brand-gold">Terms of Service</a>
-                </div>
+                <div class="flex gap-6 mt-4 md:mt-0"><a href="#" class="hover:text-brand-gold">Privacy Policy</a><a href="#" class="hover:text-brand-gold">Terms of Service</a></div>
             </div>
         </div>
     </footer>
 
-    <script>
-        // Initialize Icons
-        window.onload = function() {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Mobile Menu Toggle
-            const menuBtn = document.getElementById('menu-btn');
-            const mobMenu = document.getElementById('mob-menu');
-            const closeBtn = document.getElementById('close-btn'); // Close button inside the menu
-            const menuLinks = document.querySelectorAll('.toggle-menu-link'); // Add class to your menu links
-
-            if (menuBtn && mobMenu) {
-                function openMenu() {
-                    mobMenu.classList.add('open');
-                    document.body.style.overflow = 'hidden'; // Prevent scrolling
-                }
-
-                function closeMenu() {
-                    mobMenu.classList.remove('open');
-                    document.body.style.overflow = ''; // Restore scrolling
-                }
-
-                menuBtn.addEventListener('click', openMenu);
+    <!-- BOOKING MODAL -->
+    <div id="booking-modal" class="fixed inset-0 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 max-w-lg w-full relative shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-brand-gold hover:text-brand-light z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Book Your Session</h3>
+            <div class="w-16 h-px bg-brand-gold/50 mx-auto mb-6"></div>
+            
+            <div id="modal-options" class="space-y-6 py-4">
+                <p class="text-brand-dim text-center text-sm mb-4">How would you like to schedule your appointment?</p>
                 
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', closeMenu);
-                }
+                <!-- Portal Button (Matching Style with Bounce) -->
+                <a href="https://relaxandrenew.noterro.com/" target="_self" class="block w-full btn-gold py-4 rounded hover:scale-[1.02] transition-transform group text-left px-6 border-brand-gold/40 animate-subtle-bounce">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="block font-bold text-brand-gold group-hover:text-brand-light">Book on our Portal</span>
+                            <span class="block text-xs text-brand-dim/60 mt-1 group-hover:text-brand-dim leading-tight max-w-[280px]">Sign up easily to view our live calendar and secure your spot immediately</span>
+                        </div>
+                        <i data-lucide="calendar" class="w-5 h-5 text-brand-gold flex-shrink-0 ml-4"></i>
+                    </div>
+                </a>
+                
+                <div class="relative flex py-2 items-center"><div class="flex-grow border-t border-brand-gold/20"></div><span class="flex-shrink-0 mx-4 text-brand-gold/50 text-xs uppercase tracking-widest">OR</span><div class="flex-grow border-t border-brand-gold/20"></div></div>
+                
+                <button onclick="showRequestForm()" class="block w-full btn-gold py-4 rounded hover:scale-[1.02] transition-transform group text-left px-6 border-brand-gold/40">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="block font-bold text-brand-gold group-hover:text-brand-light">Request an Appointment</span>
+                            <span class="block text-xs text-brand-dim/60 mt-1 group-hover:text-brand-dim leading-tight max-w-[280px]">We will automatically book your appointment upon request unless there is no availability then we will contact you with alternatives.</span>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-brand-gold flex-shrink-0 ml-4"></i>
+                    </div>
+                </button>
+            </div>
 
-                // Close menu when clicking a link
-                menuLinks.forEach(link => {
-                    link.addEventListener('click', closeMenu);
-                });
+            <div id="modal-form" class="hidden">
+                <p class="text-sm text-brand-dim mb-6 bg-brand-gold/10 p-3 rounded border border-brand-gold/20"><i data-lucide="info" class="w-4 h-4 inline mr-1 text-brand-gold"></i>Complete the details below. We will confirm your booking shortly.</p>
+                <form id="appointment-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                    <div class="space-y-4">
+                        <h4 class="text-xs text-brand-gold uppercase tracking-widest font-bold border-b border-brand-gold/20 pb-1 mb-3">Contact & Location</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">First Name *</label><input type="text" name="first_name" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Last Name *</label><input type="text" name="last_name" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Phone *</label><input type="tel" name="phone" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Email *</label><input type="email" name="email" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Street Address *</label><input id="autocomplete-address" type="text" name="address" required autocomplete="street-address" placeholder="Start typing address..." class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">City *</label><input id="form-city" type="text" name="city" required autocomplete="address-level2" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Postal Code *</label><input id="form-postal" type="text" name="postal_code" required autocomplete="postal-code" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 pt-2">
+                        <h4 class="text-xs text-brand-gold uppercase tracking-widest font-bold border-b border-brand-gold/20 pb-1 mb-3">Appointment Details</h4>
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Category *</label>
+                            <select id="category-select" required onchange="updateTreatmentOptions()" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black">
+                                <option value="" disabled selected>Select Category...</option>
+                                <option value="Core">Core Therapeutic (Relaxation, Deep Tissue, etc)</option>
+                                <option value="Premium">Premium (Hot Stone, Cupping)</option>
+                                <option value="Specialty">Specialty (Prenatal, Pediatric)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Treatment *</label><select name="service_type" id="treatment-select" required onchange="updateDurationOptions()" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black"><option value="" disabled selected>Select Category First</option></select></div>
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Duration *</label><select name="duration" id="duration-select" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black"><option value="" disabled selected>Select Treatment First</option></select></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Preferred Date *</label><input type="date" name="date" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black appearance-none"></div>
+                            <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Preferred Time *</label><select id="time-select" name="time" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black max-h-40"></select></div>
+                        </div>
+                        <div><label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Health Notes / Focus</label><textarea name="notes" rows="2" placeholder="e.g. Lower back pain, relaxation, parking instructions..." class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors"></textarea></div>
+                    </div>
+                    <button type="submit" id="submit-btn" class="w-full btn-filled py-3 mt-2 font-bold tracking-wider">SEND REQUEST</button>
+                    <div class="text-center mt-4"><button type="button" onclick="hideRequestForm()" class="text-xs text-brand-gold hover:text-brand-light underline transition-colors">Back to Booking Options</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIC SCRIPT -->
+    <script>
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/Booking";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } catch(e) { console.warn("Lucide error", e); }
+            
+            populateTimeSelect();
+            setupMenu();
+            setupPhoneFormatting();
+            
+            // Check for direct booking link (e.g., /?book=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('book')) {
+                // Small delay to ensure elements are ready
+                setTimeout(openBookingModal, 500);
             }
         });
+
+        // Phone Formatting Logic
+        function setupPhoneFormatting() {
+            const phoneInput = document.querySelector('input[name="phone"]');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function (e) {
+                    try {
+                        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                        e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                    } catch(e) { console.warn("Phone format error", e); }
+                });
+            }
+        }
+
+        function populateTimeSelect() {
+            const select = document.getElementById('time-select');
+            if (!select) return;
+            const startHour = 10, endHour = 21;
+            for (let hour = startHour; hour <= endHour; hour++) {
+                for (let min = 0; min < 60; min += 15) {
+                    if (hour === endHour && min > 0) break;
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour > 12 ? hour - 12 : hour;
+                    const displayMin = min === 0 ? '00' : min;
+                    const timeString = `${displayHour}:${displayMin} ${ampm}`;
+                    const option = document.createElement('option');
+                    option.value = timeString; option.text = timeString;
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        const treatmentData = {
+            "Core": ["Relaxation (Swedish)", "Deep Tissue", "Sports Massage", "Senior Massage", "Chair Massage"],
+            "Premium": ["Hot Stone Massage", "Cupping Therapy"],
+            "Specialty": ["Prenatal Massage", "Pediatric & Infant Massage"]
+        };
+
+        function updateTreatmentOptions() {
+            const catSelect = document.getElementById('category-select');
+            const treatSelect = document.getElementById('treatment-select');
+            const durSelect = document.getElementById('duration-select');
+            treatSelect.innerHTML = '<option value="" disabled selected>Select Treatment...</option>';
+            durSelect.innerHTML = '<option value="" disabled selected>Select Treatment First</option>';
+            
+            const selectedCat = catSelect.value;
+            if (!selectedCat) return;
+
+            treatmentData[selectedCat].forEach(treat => {
+                const opt = document.createElement('option');
+                opt.value = treat;
+                opt.text = treat;
+                treatSelect.appendChild(opt);
+            });
+        }
+
+        function updateDurationOptions() {
+            const treatSelect = document.getElementById('treatment-select');
+            const durSelect = document.getElementById('duration-select');
+            const selectedTreat = treatSelect.value;
+            durSelect.innerHTML = '';
+            
+            let options = [];
+            if (selectedTreat === 'Pediatric & Infant Massage') options = ['30 Minutes', '45 Minutes'];
+            else if (selectedTreat === 'Chair Massage') options = ['45 Minutes'];
+            else if (selectedTreat === 'Prenatal Massage') options = ['30 Minutes', '45 Minutes', '60 Minutes'];
+            else options = ['60 Minutes', '75 Minutes', '90 Minutes', '120 Minutes'];
+
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt;
+                el.text = opt;
+                durSelect.appendChild(el);
+            });
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const btn = document.getElementById('submit-btn');
+            const originalText = "SEND REQUEST";
+            
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin inline mr-2"></i> Sending...`;
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            if(typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(e){} }
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Request Sent!`;
+                    btn.classList.remove('btn-filled');
+                    btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
+                    if(typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(e){} }
+                    setTimeout(() => {
+                        closeBookingModal();
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-green-600', 'text-white', 'border-green-600');
+                        btn.classList.add('btn-filled');
+                        form.reset();
+                    }, 2000);
+                } else { throw new Error('Network response was not ok'); }
+            } catch (error) {
+                console.error('Error:', error);
+                btn.innerHTML = `<i data-lucide="alert-triangle" class="inline mr-2"></i> Error. Please Call Us.`;
+                btn.classList.add('bg-red-600', 'border-red-600', 'text-white');
+                if(typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(e){} }
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-600', 'border-red-600', 'text-white');
+                }, 3000);
+            }
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (content.classList.contains('active')) { content.classList.remove('active'); icon.classList.remove('active'); }
+            else { document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.rotate-icon').forEach(el => el.classList.remove('active')); content.classList.add('active'); icon.classList.add('active'); }
+        }
+        
+        function openBookingModal() { document.getElementById('booking-modal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); document.body.style.overflow = ''; hideRequestForm(); }
+        function showRequestForm() { document.getElementById('modal-options').classList.add('hidden'); document.getElementById('modal-form').classList.remove('hidden'); }
+        function hideRequestForm() { document.getElementById('modal-form').classList.add('hidden'); document.getElementById('modal-options').classList.remove('hidden'); }
+        
+        function setupMenu() {
+            const menuBtn = document.getElementById('menu-btn'); 
+            const mobMenu = document.getElementById('mob-menu'); 
+            const closeBtn = document.getElementById('close-btn'); 
+            const menuLinks = document.querySelectorAll('.toggle-menu-link');
+            
+            if (menuBtn && mobMenu) {
+                function openMenu() { mobMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+                function closeMenu() { mobMenu.classList.remove('open'); document.body.style.overflow = ''; }
+                menuBtn.addEventListener('click', openMenu); 
+                if (closeBtn) closeBtn.addEventListener('click', closeMenu); 
+                menuLinks.forEach(link => link.addEventListener('click', closeMenu));
+            }
+        }
     </script>
+
+    <!-- GOOGLE MAPS API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
