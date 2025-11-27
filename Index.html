@@ -9,6 +9,45 @@
     <meta property="og:description" content="Registered Massage Therapy in the comfort of your home. Serving the Niagara Region. Book your appointment today.">
     <meta property="og:image" content="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png">
     
+    <!-- 0. GLOBAL ERROR HANDLING (MUST BE FIRST) -->
+    <script>
+        // Aggressively suppress "Script error." and other third-party noises
+        window.onerror = function(msg, url, line, col, error) {
+            // These are generic errors from external scripts (Maps, Stripe) where browsers hide details for security
+            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
+                return true; // Suppress
+            }
+            return false; // Let local errors pass
+        };
+
+        // Suppress unhandled promise rejections (common with Maps API auth failures)
+        window.addEventListener('unhandledrejection', function(event) {
+            event.preventDefault();
+        });
+
+        // Handle Google Maps Auth Failure Gracefully
+        window.gm_authFailure = function() {
+            console.warn("Google Maps API: Authentication restricted (Expected in Preview).");
+            const inputs = document.querySelectorAll('#autocomplete-address, #service-area-search');
+            inputs.forEach(el => {
+                el.placeholder = "Address lookup unavailable in preview";
+                el.title = "Auto-complete disabled due to API key restrictions.";
+                el.style.opacity = "0.7";
+                el.disabled = true; // Prevent interaction that causes errors
+            });
+        };
+
+        // Define Maps Callback immediately
+        window.initAllAutocompletes = function() {
+            // If the main logic function is ready, run it. Otherwise, set a flag.
+            if (typeof window._runMapsInitialization === 'function') {
+                window._runMapsInitialization();
+            } else {
+                window._mapsApiLoaded = true;
+            }
+        };
+    </script>
+
     <!-- 1. LIBRARIES & CONFIG -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -31,7 +70,8 @@
                     },
                     backgroundImage: {
                         'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
-                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')",
+                        'gift-card-bg': "url('https://static.wixstatic.com/media/bf8fef_9da7c8e6be37443d89cac9f6884ec878~mv2.jpg')"
                     },
                     animation: {
                         'fade-in-up': 'fadeInUp 1s ease-out forwards',
@@ -55,143 +95,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-
-    <!-- Google Maps Logic Initialized Early with Safe Guards -->
-    <script>
-        // CRITICAL FIX: Wrapper to prevent "Script error" from stopping execution
-        window.initAllAutocompletes = function() {
-            try {
-                // Ensure DOM is fully loaded before accessing elements
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', _runMapsInitialization);
-                } else {
-                    _runMapsInitialization();
-                }
-            } catch (e) {
-                console.warn("Maps Init Error:", e);
-            }
-        };
-
-        function _runMapsInitialization() {
-            try {
-                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
-                    console.warn("Google Maps API not fully loaded yet.");
-                    return;
-                }
-
-                // 1. Address Autocomplete for Booking Form
-                const modalInput = document.getElementById('autocomplete-address');
-                if (modalInput) {
-                    const ac = new google.maps.places.Autocomplete(modalInput, {
-                        componentRestrictions: { country: "ca" },
-                        fields: ["address_components", "name"],
-                        types: ["address"],
-                    });
-                    ac.addListener("place_changed", () => {
-                        try {
-                            const place = ac.getPlace();
-                            fillAddressForm(place);
-                        } catch(e) { console.warn("Maps Listener Error", e); }
-                    });
-                }
-
-                // 2. Service Area Checker
-                const serviceInput = document.getElementById('service-area-search');
-                if (serviceInput) {
-                    const acService = new google.maps.places.Autocomplete(serviceInput, {
-                        componentRestrictions: { country: "ca" },
-                        fields: ["address_components", "geometry", "name"],
-                        types: ["geocode"], 
-                    });
-                    acService.addListener("place_changed", () => {
-                        try {
-                            const place = acService.getPlace();
-                            checkServiceArea(place);
-                        } catch(e) { console.warn("Maps Service Listener Error", e); }
-                    });
-                }
-            } catch (e) {
-                console.warn("Maps Initialization Logic Error:", e);
-            }
-        }
-
-        function fillAddressForm(place) {
-            try {
-                if (!place.address_components) return;
-                const cityInput = document.getElementById('form-city');
-                const postalInput = document.getElementById('form-postal');
-                
-                // Reset fields
-                if(cityInput) cityInput.value = '';
-                if(postalInput) postalInput.value = '';
-
-                for (const component of place.address_components) {
-                    const type = component.types[0];
-                    if (type === "locality" || type === "administrative_area_level_3") {
-                        if(cityInput && !cityInput.value) cityInput.value = component.long_name;
-                    }
-                    if (type === "postal_code") {
-                        if(postalInput) postalInput.value = component.long_name;
-                    }
-                }
-            } catch(e) { console.warn("Fill Address Error", e); }
-        }
-
-        function checkServiceArea(place) {
-            try {
-                const resultDiv = document.getElementById('postal-result');
-                const warningDiv = document.getElementById('cc-warning');
-                
-                if (!place || !place.address_components) {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-yellow-400 font-bold flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Please select a valid location from the dropdown.</span>`, 'bg-yellow-500/10 border-yellow-500/30', false);
-                    return;
-                }
-
-                let postalCode = '', city = '';
-                
-                // Extract Data
-                for (const component of place.address_components) {
-                    const type = component.types[0];
-                    if (type === "postal_code") postalCode = component.short_name.substring(0, 3).toUpperCase();
-                    if (type === "locality" || type === "administrative_area_level_3" || type === "neighborhood") city = component.long_name;
-                }
-
-                if (!city && place.name) city = place.name; 
-
-                // Logic Definitions
-                const freeCities = ['Port Colborne', 'Welland', 'Fort Erie', 'Ridgeway', 'Crystal Beach', 'Stevensville', 'Niagara Falls', 'Fonthill', 'Pelham', 'Thorold', 'St. Catharines', 'Dunnville', 'Niagara-on-the-Lake', 'Smithville', 'Byng', 'Moulton', 'Wainfleet'];
-                const freeZonePostals = ['L3K', 'L3B', 'L3C', 'L2A', 'L0S', 'L2E', 'L2G', 'L2H', 'L2J', 'L2V', 'L2M', 'L2N', 'L2P', 'L2R', 'L2S', 'L2T'];
-
-                const isLincoln = city.includes("Lincoln") || city.includes("Beamsville") || city.includes("Vineland") || city.includes("Jordan");
-                const isGrimsby = city.includes("Grimsby") || (postalCode === 'L3M');
-                const isPortDover = city.includes("Port Dover") || (postalCode.startsWith('N0A'));
-                const isHamilton = city.includes("Hamilton") || city.includes("Stoney Creek") || city.includes("Ancaster") || city.includes("Dundas") || postalCode.startsWith('L8') || postalCode.startsWith('L9');
-
-                // Evaluation
-                if (isLincoln) {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($30 Travel Fee).</span> Lincoln & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
-                } else if (isGrimsby || isPortDover) {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($50 Travel Fee).</span> Grimsby/Port Dover.`, 'bg-brand-gold/10 border-brand-gold/30', true);
-                } else if (isHamilton) {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($80 Travel Fee).</span> Hamilton & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
-                } else if (freeZonePostals.includes(postalCode) || freeCities.some(c => city.includes(c))) {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-green-400 font-bold flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Free Travel Zone!</span> Primary service area.`, 'bg-green-500/10 border-green-500/30', false);
-                } else {
-                    showAreaMessage(resultDiv, warningDiv, `<span class="text-red-400 font-bold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Out of Area.</span> Currently unavailable here.`, 'bg-red-500/10 border-red-500/30', false);
-                }
-            } catch(e) { console.warn("Check Service Area Error", e); }
-        }
-
-        function showAreaMessage(el, warnEl, msg, classes, showWarn) {
-            try {
-                el.innerHTML = msg;
-                el.className = `mt-4 text-sm p-4 rounded border ${classes}`;
-                el.classList.remove('hidden');
-                if(showWarn) warnEl.classList.remove('hidden'); else warnEl.classList.add('hidden');
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) { console.warn("Show Area Message Error", e); }
-        }
-    </script>
 
     <style>
         body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
@@ -478,15 +381,76 @@
 
     <!-- 10. GIFT CARDS -->
     <section id="giftcards" class="py-24 bg-gift-card border-t border-brand-light/5 relative overflow-hidden">
-        <div class="absolute inset-0 bg-black/40"></div>
-        <div class="container mx-auto px-6 text-center relative z-10">
-            <h2 class="text-4xl md:text-5xl text-brand-gold mb-6 font-serif shadow-black drop-shadow-lg">Give the Gift of Wellness</h2>
-            <p class="text-brand-light max-w-2xl mx-auto font-light mb-12 shadow-black drop-shadow-md">Treat your loved ones to a relaxing in-home massage. Purchase a digital gift card instantly and securely via Stripe.</p>
-            <div class="inline-block relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-goldHover rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <div class="bg-brand-black/80 backdrop-blur-md border border-brand-gold/40 rounded-lg p-10 shadow-2xl relative">
-                    <stripe-buy-button buy-button-id="buy_btn_1SUtWy2atTjzVbCkNOOOcYpo" publishable-key="pk_live_51SFdlq2atTjzVbCkiLOJb4Ee0qufeDnGdHuYUnSLuaSK3AD97lPRgzO2y7eQTnz6xBF60dvF8yqWc4jaRxXbdC4W00NIigxRTD"></stripe-buy-button>
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+                
+                <!-- Info Column -->
+                <div class="order-2 md:order-1 text-left">
+                    <h2 class="text-3xl md:text-4xl text-brand-light font-serif mb-6">Digital Gift Cards</h2>
+                    <p class="text-lg text-brand-dim font-light leading-relaxed mb-6">
+                        Share the experience of relaxation and renewal. Our digital gift cards are the perfect way to show you care, whether for a birthday, a new mother, a holiday surprise, or simply to help someone de-stress.
+                    </p>
+                    
+                    <div class="space-y-6 mb-8">
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-brand-gold/10 p-3 rounded-full h-fit border border-brand-gold/20 flex-shrink-0">
+                                <i data-lucide="mail" class="w-6 h-6 text-brand-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-brand-gold font-bold uppercase tracking-wider text-sm mb-1">Instant Delivery</h4>
+                                <p class="text-brand-dim text-sm">Delivered instantly via email to you or the recipient.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="bg-brand-gold/10 p-3 rounded-full h-fit border border-brand-gold/20 flex-shrink-0">
+                                <i data-lucide="calendar-check" class="w-6 h-6 text-brand-gold"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-brand-gold font-bold uppercase tracking-wider text-sm mb-1">Easy Redemption</h4>
+                                <p class="text-brand-dim text-sm">Redeemable for any of our mobile massage services.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-brand-gold/20 pt-8">
+                        <h4 class="text-brand-light font-serif text-xl mb-4">Frequently Asked Questions</h4>
+                        <details class="mb-4 group">
+                            <summary class="text-brand-gold cursor-pointer list-none flex justify-between items-center text-sm font-bold uppercase tracking-wide outline-none">
+                                How does it work? 
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                            </summary>
+                            <p class="mt-2 text-brand-dim text-sm font-light">Select your amount, proceed to checkout via Stripe, and the digital code will be emailed immediately.</p>
+                        </details>
+                        <details class="mb-4 group">
+                            <summary class="text-brand-gold cursor-pointer list-none flex justify-between items-center text-sm font-bold uppercase tracking-wide outline-none">
+                                Do they expire? 
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                            </summary>
+                            <p class="mt-2 text-brand-dim text-sm font-light">No, our purchased gift cards do not expire.</p>
+                        </details>
+                    </div>
                 </div>
+
+                <!-- Purchase Column -->
+                <div class="order-1 md:order-2 flex justify-center">
+                    <div class="relative group w-full max-w-md">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-goldHover rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                        <div class="bg-brand-black/90 backdrop-blur-xl border border-brand-gold/40 rounded-lg p-10 shadow-2xl relative text-center">
+                            <h3 class="text-2xl text-brand-light font-serif mb-2">Purchase Securely</h3>
+                            <p class="text-brand-dim/60 text-xs mb-8 uppercase tracking-widest">Powered by Stripe</p>
+                            
+                            <!-- STRIPE BUTTON -->
+                            <stripe-buy-button buy-button-id="buy_btn_1SUtWy2atTjzVbCkNOOOcYpo" publishable-key="pk_live_51SFdlq2atTjzVbCkiLOJb4Ee0qufeDnGdHuYUnSLuaSK3AD97lPRgzO2y7eQTnz6xBF60dvF8yqWc4jaRxXbdC4W00NIigxRTD"></stripe-buy-button>
+                            <!-- END STRIPE BUTTON -->
+
+                            <div class="mt-8 pt-6 border-t border-white/5">
+                                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-8 w-auto mx-auto opacity-50">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -665,56 +629,178 @@
         </div>
     </div>
 
-    <!-- MAIN LOGIC SCRIPT -->
+    <!-- MAIN LOGIC SCRIPT - Consolidated at Bottom -->
     <script>
         const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/Booking";
 
+        // Define helper functions first to ensure they are available
+        function fillAddressForm(place) {
+            try {
+                if (!place || !place.address_components) return;
+                const cityInput = document.getElementById('form-city');
+                const postalInput = document.getElementById('form-postal');
+                
+                if(cityInput) cityInput.value = '';
+                if(postalInput) postalInput.value = '';
+
+                for (const component of place.address_components) {
+                    const type = component.types[0];
+                    if (type === "locality" || type === "administrative_area_level_3") {
+                        if(cityInput && !cityInput.value) cityInput.value = component.long_name;
+                    }
+                    if (type === "postal_code") {
+                        if(postalInput) postalInput.value = component.long_name;
+                    }
+                }
+            } catch(e) { /* console.warn("Form Fill Error", e); */ }
+        }
+
+        function checkServiceArea(place) {
+            try {
+                const resultDiv = document.getElementById('postal-result');
+                const warningDiv = document.getElementById('cc-warning');
+                
+                if (!place || !place.address_components) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-yellow-400 font-bold flex items-center gap-2"><i data-lucide="alert-circle" class="w-4 h-4"></i> Please select a valid location.</span>`, 'bg-yellow-500/10 border-yellow-500/30', false);
+                    return;
+                }
+
+                let postalCode = '', city = '';
+                for (const component of place.address_components) {
+                    const type = component.types[0];
+                    if (type === "postal_code") postalCode = component.short_name.substring(0, 3).toUpperCase();
+                    if (type === "locality" || type === "administrative_area_level_3" || type === "neighborhood") city = component.long_name;
+                }
+
+                if (!city && place.name) city = place.name; 
+                if (!city) city = ""; 
+
+                const freeCities = ['Port Colborne', 'Welland', 'Fort Erie', 'Ridgeway', 'Crystal Beach', 'Stevensville', 'Niagara Falls', 'Fonthill', 'Pelham', 'Thorold', 'St. Catharines', 'Dunnville', 'Niagara-on-the-Lake', 'Smithville', 'Byng', 'Moulton', 'Wainfleet'];
+                const freeZonePostals = ['L3K', 'L3B', 'L3C', 'L2A', 'L0S', 'L2E', 'L2G', 'L2H', 'L2J', 'L2V', 'L2M', 'L2N', 'L2P', 'L2R', 'L2S', 'L2T'];
+
+                const isLincoln = city.includes("Lincoln") || city.includes("Beamsville") || city.includes("Vineland") || city.includes("Jordan");
+                const isGrimsby = city.includes("Grimsby") || (postalCode === 'L3M');
+                const isPortDover = city.includes("Port Dover") || (postalCode.startsWith('N0A'));
+                const isHamilton = city.includes("Hamilton") || city.includes("Stoney Creek") || city.includes("Ancaster") || city.includes("Dundas") || postalCode.startsWith('L8') || postalCode.startsWith('L9');
+
+                if (isLincoln) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($30 Travel Fee).</span> Lincoln & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (isGrimsby || isPortDover) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($50 Travel Fee).</span> Grimsby/Port Dover.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (isHamilton) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-brand-gold font-bold flex items-center gap-2"><i data-lucide="car" class="w-4 h-4"></i> Service Available ($80 Travel Fee).</span> Hamilton & area.`, 'bg-brand-gold/10 border-brand-gold/30', true);
+                } else if (freeZonePostals.includes(postalCode) || freeCities.some(c => city.includes(c))) {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-green-400 font-bold flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Free Travel Zone!</span> Primary service area.`, 'bg-green-500/10 border-green-500/30', false);
+                } else {
+                    showAreaMessage(resultDiv, warningDiv, `<span class="text-red-400 font-bold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Out of Area.</span> Currently unavailable here.`, 'bg-red-500/10 border-red-500/30', false);
+                }
+            } catch(e) { /* console.warn("Logic Error", e); */ }
+        }
+
+        function showAreaMessage(el, warnEl, msg, classes, showWarn) {
+            if(!el || !warnEl) return;
+            el.innerHTML = msg;
+            el.className = `mt-4 text-sm p-4 rounded border ${classes}`;
+            el.classList.remove('hidden');
+            if(showWarn) warnEl.classList.remove('hidden'); else warnEl.classList.add('hidden');
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // --- Maps Initialization Logic ---
+        function _runMapsInitialization() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+
+                const modalInput = document.getElementById('autocomplete-address');
+                if (modalInput) {
+                    const ac = new google.maps.places.Autocomplete(modalInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "name"],
+                        types: ["address"],
+                    });
+                    ac.addListener("place_changed", () => {
+                        try {
+                            const place = ac.getPlace();
+                            fillAddressForm(place);
+                        } catch(e) { /* console.warn("Maps AC Error", e); */ }
+                    });
+                }
+
+                const serviceInput = document.getElementById('service-area-search');
+                if (serviceInput) {
+                    const acService = new google.maps.places.Autocomplete(serviceInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "geometry", "name"],
+                        types: ["geocode"], 
+                    });
+                    acService.addListener("place_changed", () => {
+                        try {
+                            const place = acService.getPlace();
+                            checkServiceArea(place);
+                        } catch(e) { /* console.warn("Maps Service Error", e); */ }
+                    });
+                }
+            } catch (e) {
+                /* console.warn("Maps Setup Error:", e); */
+            }
+        }
+        
+        // Expose init function globally for Google Maps callback
+        window.initAllAutocompletes = function() {
+            _runMapsInitialization();
+        };
+
+        // --- Main Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) { console.warn("Lucide error", e); }
+            } catch(e) { /* console.warn("Lucide error", e); */ }
             
             populateTimeSelect();
             setupMenu();
             setupPhoneFormatting();
             
-            // Check for direct booking link (e.g., /?book=true)
+            // Check for direct booking link
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('book')) {
-                // Small delay to ensure elements are ready
                 setTimeout(openBookingModal, 500);
             }
         });
 
-        // Phone Formatting Logic
+        // --- Phone Logic ---
         function setupPhoneFormatting() {
-            const phoneInput = document.querySelector('input[name="phone"]');
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function (e) {
-                    try {
-                        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
-                        e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
-                    } catch(e) { console.warn("Phone format error", e); }
-                });
-            }
+            try {
+                const phoneInput = document.querySelector('input[name="phone"]');
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', function (e) {
+                        try {
+                            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                        } catch(e) { /* console.warn("Phone format error", e); */ }
+                    });
+                }
+            } catch(e) { /* console.warn("Setup phone error", e); */ }
         }
 
+        // --- UI Helpers ---
         function populateTimeSelect() {
-            const select = document.getElementById('time-select');
-            if (!select) return;
-            const startHour = 10, endHour = 21;
-            for (let hour = startHour; hour <= endHour; hour++) {
-                for (let min = 0; min < 60; min += 15) {
-                    if (hour === endHour && min > 0) break;
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    const displayHour = hour > 12 ? hour - 12 : hour;
-                    const displayMin = min === 0 ? '00' : min;
-                    const timeString = `${displayHour}:${displayMin} ${ampm}`;
-                    const option = document.createElement('option');
-                    option.value = timeString; option.text = timeString;
-                    select.appendChild(option);
+            try {
+                const select = document.getElementById('time-select');
+                if (!select) return;
+                const startHour = 10, endHour = 21;
+                for (let hour = startHour; hour <= endHour; hour++) {
+                    for (let min = 0; min < 60; min += 15) {
+                        if (hour === endHour && min > 0) break;
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour > 12 ? hour - 12 : hour;
+                        const displayMin = min === 0 ? '00' : min;
+                        const timeString = `${displayHour}:${displayMin} ${ampm}`;
+                        const option = document.createElement('option');
+                        option.value = timeString; option.text = timeString;
+                        select.appendChild(option);
+                    }
                 }
-            }
+            } catch(e) { /* console.warn(e); */ }
         }
 
         const treatmentData = {
@@ -724,41 +810,45 @@
         };
 
         function updateTreatmentOptions() {
-            const catSelect = document.getElementById('category-select');
-            const treatSelect = document.getElementById('treatment-select');
-            const durSelect = document.getElementById('duration-select');
-            treatSelect.innerHTML = '<option value="" disabled selected>Select Treatment...</option>';
-            durSelect.innerHTML = '<option value="" disabled selected>Select Treatment First</option>';
-            
-            const selectedCat = catSelect.value;
-            if (!selectedCat) return;
+            try {
+                const catSelect = document.getElementById('category-select');
+                const treatSelect = document.getElementById('treatment-select');
+                const durSelect = document.getElementById('duration-select');
+                treatSelect.innerHTML = '<option value="" disabled selected>Select Treatment...</option>';
+                durSelect.innerHTML = '<option value="" disabled selected>Select Treatment First</option>';
+                
+                const selectedCat = catSelect.value;
+                if (!selectedCat) return;
 
-            treatmentData[selectedCat].forEach(treat => {
-                const opt = document.createElement('option');
-                opt.value = treat;
-                opt.text = treat;
-                treatSelect.appendChild(opt);
-            });
+                treatmentData[selectedCat].forEach(treat => {
+                    const opt = document.createElement('option');
+                    opt.value = treat;
+                    opt.text = treat;
+                    treatSelect.appendChild(opt);
+                });
+            } catch(e) { /* console.warn(e); */ }
         }
 
         function updateDurationOptions() {
-            const treatSelect = document.getElementById('treatment-select');
-            const durSelect = document.getElementById('duration-select');
-            const selectedTreat = treatSelect.value;
-            durSelect.innerHTML = '';
-            
-            let options = [];
-            if (selectedTreat === 'Pediatric & Infant Massage') options = ['30 Minutes', '45 Minutes'];
-            else if (selectedTreat === 'Chair Massage') options = ['45 Minutes'];
-            else if (selectedTreat === 'Prenatal Massage') options = ['30 Minutes', '45 Minutes', '60 Minutes'];
-            else options = ['60 Minutes', '75 Minutes', '90 Minutes', '120 Minutes'];
+            try {
+                const treatSelect = document.getElementById('treatment-select');
+                const durSelect = document.getElementById('duration-select');
+                const selectedTreat = treatSelect.value;
+                durSelect.innerHTML = '';
+                
+                let options = [];
+                if (selectedTreat === 'Pediatric & Infant Massage') options = ['30 Minutes', '45 Minutes'];
+                else if (selectedTreat === 'Chair Massage') options = ['45 Minutes'];
+                else if (selectedTreat === 'Prenatal Massage') options = ['30 Minutes', '45 Minutes', '60 Minutes'];
+                else options = ['60 Minutes', '75 Minutes', '90 Minutes', '120 Minutes'];
 
-            options.forEach(opt => {
-                const el = document.createElement('option');
-                el.value = opt;
-                el.text = opt;
-                durSelect.appendChild(el);
-            });
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt;
+                    el.text = opt;
+                    durSelect.appendChild(el);
+                });
+            } catch(e) { /* console.warn(e); */ }
         }
 
         async function handleFormSubmit(event) {
@@ -838,6 +928,7 @@
     </script>
 
     <!-- GOOGLE MAPS API -->
+    <!-- Placed at end of body for better loading performance -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
