@@ -8,15 +8,34 @@
     <!-- ========================================== -->
     <!-- 1. GOOGLE GLOBAL SITE TAG                  -->
     <!-- ========================================== -->
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5E17NKVQXG"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-5E17NKVQXG');
     </script>
+
+    <!-- ========================================== -->
+    <!-- 2. META PIXEL CODE (Facebook)              -->
+    <!-- ========================================== -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    
+    // Initialize Pixel with YOUR ID
+    fbq('init', '701194265870298'); 
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    /></noscript>
     <!-- ========================================== -->
 
     <!-- FONTS & ICONS -->
@@ -160,7 +179,7 @@
     </script>
 
     <!-- ============================================== -->
-    <!-- DYNAMIC TRACKING SCRIPT                        -->
+    <!-- DYNAMIC TRACKING SCRIPT (Google + Meta)        -->
     <!-- ============================================== -->
     <script>
         document.addEventListener("DOMContentLoaded", async function() {
@@ -200,8 +219,9 @@
                 amountContainer.classList.remove('opacity-0');
             }
 
-            // 4. Send Event to Google Ads with YOUR Label
+            // 4. Send Events to Both Platforms
             setTimeout(() => {
+                // GOOGLE ADS
                 if (typeof gtag === 'function') {
                     gtag('event', 'conversion', {
                         'send_to': 'AW-17575022013/8loLCPWb1MgbEL2btrxB',
@@ -210,6 +230,17 @@
                         'transaction_id': sessionId || ''
                     });
                     console.log(`Google Ads Conversion Sent: $${finalValue}`);
+                }
+
+                // META (FACEBOOK) PIXEL
+                if (typeof fbq === 'function') {
+                    fbq('track', 'Purchase', {
+                        value: finalValue,
+                        currency: currency,
+                        content_name: 'Gift Card',
+                        content_type: 'product'
+                    });
+                    console.log(`Meta Pixel Purchase Sent: $${finalValue}`);
                 }
             }, 500);
         });
