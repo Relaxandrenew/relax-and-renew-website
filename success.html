@@ -6,8 +6,7 @@
     <title>Payment Successful | Relax & Renew RMT</title>
     
     <!-- ========================================== -->
-    <!-- 1. YOUR GOOGLE GLOBAL TAG (G-5E17NKVQXG)   -->
-    <!-- We need this live so Google lets you pass.  -->
+    <!-- 1. GOOGLE GLOBAL SITE TAG                  -->
     <!-- ========================================== -->
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5E17NKVQXG"></script>
@@ -174,7 +173,7 @@
             const displayAmount = document.getElementById('display-amount');
             
             // Default Fallback
-            let finalValue = 110.00; 
+            let finalValue = 50.00; 
             let currency = 'CAD';
 
             if (sessionId) {
@@ -201,15 +200,16 @@
                 amountContainer.classList.remove('opacity-0');
             }
 
-            // 4. Tell Google Ads the exact amount
-            // NOTE: We do NOT have the 'AW-' code yet. 
-            // Upload this file first to pass verification.
-            // Once verified, Google will give you the 'AW-' code.
-            // Then we will update this section.
+            // 4. Send Event to Google Ads with YOUR Label
             setTimeout(() => {
                 if (typeof gtag === 'function') {
-                    // Placeholder console log for now
-                    console.log(`Global Tag Active. Ready for Event Tag.`);
+                    gtag('event', 'conversion', {
+                        'send_to': 'AW-17575022013/8loLCPWb1MgbEL2btrxB',
+                        'value': finalValue,
+                        'currency': currency,
+                        'transaction_id': sessionId || ''
+                    });
+                    console.log(`Google Ads Conversion Sent: $${finalValue}`);
                 }
             }, 500);
         });
