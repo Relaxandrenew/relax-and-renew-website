@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | Relax & Renew RMT</title>
+    <meta name="description" content="Privacy Policy for Relax & Renew RMT. How we collect, use, and protect your personal health information under PHIPA and CMTO regulations.">
+    <meta property="og:title" content="Privacy Policy | Relax & Renew RMT">
+    <meta property="og:description" content="Our commitment to protecting your personal and health information.">
+    <meta property="og:image" content="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png">
+    
+    <!-- 1. LIBRARIES & CONFIG -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')",
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        subtleBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+        
+        /* Navigation */
+        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); display: flex; align-items: center; }
+        
+        /* Mobile Menu */
+        .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #050505; z-index: 49; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .mobile-menu.open { transform: translateX(0); }
+        
+        /* Buttons */
+        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+        
+        /* Links */
+        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        
+        /* Scrollbar Hide */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+    <!-- NAVIGATION BAR -->
+    <nav id="navbar" class="fixed-nav">
+        <div class="container mx-auto px-6 flex justify-between items-center h-full">
+            <a href="index.html" class="flex items-center gap-3 no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <div class="hidden md:flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                </div>
+            </a>
+            <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
+                <a href="index.html#services" class="nav-link">Services</a>
+                <a href="index.html#pricing" class="nav-link">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
+                <a href="index.html#area" class="nav-link">Service Area</a>
+                <a href="index.html#faq" class="nav-link">FAQ</a>
+                <a href="therapists.html" class="nav-link">Our Therapists</a>
+                <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
+            </div>
+            <button id="menu-btn" class="lg:hidden text-brand-gold p-2 focus:outline-none hover:text-brand-light transition-colors">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MOBILE MENU -->
+    <div id="mob-menu" class="mobile-menu">
+        <button id="close-btn" class="absolute top-8 right-6 text-brand-gold p-2 hover:rotate-90 transition-transform">
+            <i data-lucide="x" class="w-10 h-10"></i>
+        </button>
+        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-16 w-auto mb-8 opacity-80">
+        <nav class="flex flex-col space-y-6 text-center">
+            <a href="index.html#services" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Services</a>
+            <a href="index.html#pricing" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Pricing</a>
+            <a href="index.html#giftcards" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Gift Cards</a>
+            <a href="index.html#area" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Service Area</a>
+            <a href="index.html#faq" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">FAQ</a>
+            <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
+            <a href="membership.html" class="text-3xl text-brand-gold font-medium transition-colors toggle-menu-link">Membership</a>
+            <a href="index.html?book=true" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Book Online</a>
+        </nav>
+    </div>
+
+    <!-- HEADER -->
+    <header class="pt-32 pb-16 bg-brand-black relative">
+        <div class="absolute inset-0 bg-hero-pattern bg-cover bg-center opacity-20 pointer-events-none"></div>
+        <div class="container mx-auto px-6 relative z-10 text-center">
+            <h1 class="text-4xl md:text-6xl text-brand-light font-serif mb-4">Privacy Policy</h1>
+            <div class="w-16 h-px bg-brand-gold mx-auto mb-6"></div>
+            <p class="text-brand-dim text-sm uppercase tracking-widest">Last Updated: October 10, 2025</p>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <section class="pb-24 bg-brand-black">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <div class="space-y-12 text-brand-light/90 font-light leading-relaxed">
+                
+                <!-- Section 1 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">1. Information Collected</h2>
+                    <p class="mb-4 text-brand-dim">We collect information necessary for safe, effective, and compliant care under Ontario's <strong>Personal Health Information Protection Act (PHIPA)</strong>.</p>
+                    <ul class="list-disc list-outside ml-5 space-y-2 text-brand-dim">
+                        <li><strong>Personal Information:</strong> Name, address (required for mobile service), email, phone number, and date of birth.</li>
+                        <li><strong>Health Information:</strong> Health history, conditions, and ongoing treatment progress notes (a mandatory part of the clinical record).</li>
+                        <li><strong>Payment Information:</strong> Credit card data, which is stored securely via our payment partners and not on our local systems.</li>
+                        <li><strong>Booking Information:</strong> Data collected by our third-party booking provider, Noterro.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 2 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">2. How Information is Used</h2>
+                    <ul class="list-disc list-outside ml-5 space-y-2 text-brand-dim">
+                        <li>To provide safe, ethical, and effective massage therapy treatments tailored to your needs.</li>
+                        <li>To schedule, confirm, and manage your appointments.</li>
+                        <li>To process payments and submit direct billing claims to insurance providers on your behalf.</li>
+                        <li>To maintain accurate clinical records as strictly required by the <strong>College of Massage Therapists of Ontario (CMTO)</strong>.</li>
+                        <li>To comply with all applicable legal and regulatory requirements.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 3 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">3. Information Sharing and Disclosure</h2>
+                    <p class="mb-4 text-brand-dim">Relax & Renew RMT does not sell, trade, or rent your personal or health information. Disclosure is only permitted in the following circumstances:</p>
+                    <ul class="list-disc list-outside ml-5 space-y-2 text-brand-dim">
+                        <li>With your <strong>express written consent</strong>.</li>
+                        <li>To other healthcare professionals involved in your circle of care (only with your consent).</li>
+                        <li>To necessary third-party processors (such as Square, Stripe, or Noterro) strictly for the purpose of facilitating appointments and payments.</li>
+                        <li>When required by law (e.g., a court order or subpoena).</li>
+                    </ul>
+                </div>
+
+                <!-- Section 4 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">4. Data Security and Retention</h2>
+                    <ul class="list-disc list-outside ml-5 space-y-2 text-brand-dim">
+                        <li><strong>Security:</strong> Health records are stored securely in full compliance with CMTO and PHIPA regulations to prevent unauthorized access, loss, or theft.</li>
+                        <li><strong>Retention:</strong> Clinical records are retained for the period required by law (typically 10 years after the last appointment or 10 years after the client turns 18), after which they are securely destroyed.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 5 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">5. Your Rights</h2>
+                    <p class="mb-4 text-brand-dim">As a client, you have specific rights regarding your information:</p>
+                    <ul class="list-disc list-outside ml-5 space-y-2 text-brand-dim">
+                        <li><strong>Access:</strong> You have the right to access the personal and health information we hold about you.</li>
+                        <li><strong>Correction:</strong> You may request corrections if you believe your information is inaccurate or incomplete.</li>
+                        <li><strong>Withdrawal of Consent:</strong> You may withdraw consent for the collection, use, or disclosure of your information at any time, subject to legal or contractual restrictions (e.g., mandatory record-keeping).</li>
+                    </ul>
+                </div>
+
+                <!-- Section 6 -->
+                <div>
+                    <h2 class="text-2xl text-brand-gold font-serif mb-4 border-b border-brand-gold/20 pb-2">6. Contact Details</h2>
+                    <p class="mb-4 text-brand-dim">If you have any questions or concerns regarding our privacy practices, please contact us:</p>
+                    <div class="bg-white/5 border border-brand-gold/20 p-6 rounded text-center">
+                        <div class="flex flex-col md:flex-row justify-center gap-8 text-brand-light">
+                            <div class="flex items-center justify-center gap-2">
+                                <i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i> 1-226-337-9064
+                            </div>
+                            <div class="flex items-center justify-center gap-2">
+                                <i data-lucide="mail" class="w-4 h-4 text-brand-gold"></i> info@relaxandrenew.ca
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-neutral-950 py-16 border-t border-brand-gold/20">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-2">
+                    <a href="index.html" class="flex items-center gap-2 mb-4"><img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-8 w-auto"><span class="text-brand-gold tracking-widest font-bold">RELAX & RENEW</span></a>
+                    <p class="text-brand-dim/60 max-w-sm mb-6 text-sm">Professional, registered mobile massage therapy. We are a General Partnership dedicated to bringing health and wellness to your doorstep.</p>
+                    <div class="flex gap-4 text-brand-gold">
+                        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="https://linktr.ee/relaxandrenewrmtA" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="link" class="w-4 h-4"></i></a>
+                        <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Quick Links</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li><a href="index.html#services" class="hover:text-brand-gold transition-colors">Therapeutic Services</a></li>
+                        <li><a href="index.html#pricing" class="hover:text-brand-gold transition-colors">Pricing & Membership</a></li>
+                        <li><a href="https://relaxandrenew.noterro.com/" target="_blank" class="hover:text-brand-gold transition-colors">Book Online</a></li>
+                        <li><a href="index.html#giftcards" class="hover:text-brand-gold transition-colors">Purchase Gift Cards</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Contact</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li class="flex gap-3 items-center"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i> (226) 337-9064</li>
+                        <li class="flex gap-3 items-center"><i data-lucide="mail" class="w-4 h-4 text-brand-gold"></i> info@relaxandrenew.ca</li>
+                        <li class="flex gap-3 items-center"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i> Niagara Region, ON</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-brand-light/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-dim/30">
+                <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
+                <div class="flex gap-6 mt-4 md:mt-0"><a href="/privacy" class="hover:text-brand-gold">Privacy Policy</a><a href="/terms" class="hover:text-brand-gold">Terms of Service</a></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Init Icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Menu Toggle
+        const menuBtn = document.getElementById('menu-btn'); 
+        const mobMenu = document.getElementById('mob-menu'); 
+        const closeBtn = document.getElementById('close-btn'); 
+        const menuLinks = document.querySelectorAll('.toggle-menu-link');
+        
+        if (menuBtn && mobMenu) {
+            function openMenu() { mobMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+            function closeMenu() { mobMenu.classList.remove('open'); document.body.style.overflow = ''; }
+            menuBtn.addEventListener('click', openMenu); 
+            if (closeBtn) closeBtn.addEventListener('click', closeMenu); 
+            menuLinks.forEach(link => link.addEventListener('click', closeMenu));
+        }
+    </script>
+</body>
+</html>
