@@ -6,7 +6,15 @@
     <title>Book Now | Relax & Renew RMT</title>
     <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
     
-    <!-- 1. LIBRARIES & CONFIG -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J4NC9FL44H"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-J4NC9FL44H');
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -92,7 +100,6 @@
             cursor: pointer;
         }
     </style>
-    <!-- Google Maps Logic Initialized Early -->
     <script>
         window.initAllAutocompletes = function() {
             try {
@@ -141,7 +148,6 @@
 </head>
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
-    <!-- Simple Header -->
     <div class="pt-10 pb-6 text-center">
         <a href="index.html" class="inline-block group">
             <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
@@ -152,7 +158,6 @@
         </a>
     </div>
 
-    <!-- SERVICES -->
     <section id="services" class="py-12 bg-alternate-pattern bg-cover bg-center bg-fixed relative bg-gray-900">
         <div class="absolute inset-0 bg-brand-black/60"></div>
         <div class="container mx-auto px-6 relative z-10">
@@ -205,7 +210,6 @@
         </div>
     </section>
 
-    <!-- PRICING -->
     <section id="pricing" class="py-24 bg-brand-black border-t border-brand-light/5">
         <div class="container mx-auto px-6">
             <div class="text-center mb-16">
@@ -266,7 +270,6 @@
         </div>
     </section>
 
-    <!-- FOOTER (Minimal) -->
     <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
         <div class="container mx-auto px-6">
             <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
@@ -278,7 +281,6 @@
         </div>
     </footer>
 
-    <!-- BOOKING MODAL -->
     <div id="booking-modal" class="fixed inset-0 hidden modal-backdrop flex items-center justify-center p-4">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 max-w-lg w-full relative shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
             <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-brand-gold hover:text-brand-light z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -287,7 +289,7 @@
             
             <div id="modal-options" class="space-y-6 py-4">
                 <p class="text-brand-dim text-center text-sm mb-4">How would you like to schedule your appointment?</p>
-                <a href="https://relaxandrenew.noterro.com/" target="_self" class="block w-full btn-gold py-4 rounded hover:scale-[1.02] transition-transform group text-left px-6 border-brand-gold/40 animate-subtle-bounce">
+                <a id="portal-booking-btn" href="https://relaxandrenew.noterro.com/" target="_self" class="block w-full btn-gold py-4 rounded hover:scale-[1.02] transition-transform group text-left px-6 border-brand-gold/40 animate-subtle-bounce">
                     <div class="flex items-center justify-between">
                         <div>
                             <span class="block font-bold text-brand-gold group-hover:text-brand-light">Book on our Portal</span>
@@ -357,7 +359,6 @@
         </div>
     </div>
 
-    <!-- MAIN LOGIC SCRIPT -->
     <script>
         const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/Booking";
 
@@ -365,6 +366,20 @@
             try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
             populateTimeSelect();
             setupPhoneFormatting();
+            
+            // --- NEW: Add click tracking for Portal Button ---
+            const portalBtn = document.getElementById('portal-booking-btn');
+            if (portalBtn) {
+                portalBtn.addEventListener('click', function() {
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'portal_booking_click', {
+                            'event_category': 'engagement',
+                            'event_label': 'Book on our Portal'
+                        });
+                    }
+                });
+            }
+
             // Auto-open modal
             setTimeout(openBookingModal, 800); // 800ms delay for visual setup
         });
@@ -472,6 +487,14 @@
                 });
 
                 if (response.ok) {
+                    // --- NEW: GA4 Tracking for Successful Request ---
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'appointment_request_submitted', {
+                            'event_category': 'lead',
+                            'event_label': 'Request Appointment Form'
+                        });
+                    }
+
                     btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Request Sent!`;
                     btn.classList.remove('btn-filled');
                     btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
@@ -504,7 +527,6 @@
         function hideRequestForm() { document.getElementById('modal-form').classList.add('hidden'); document.getElementById('modal-options').classList.remove('hidden'); }
     </script>
 
-    <!-- GOOGLE MAPS API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
