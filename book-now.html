@@ -6,7 +6,6 @@
     <title>Book Now | Relax & Renew RMT</title>
     <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
     
-    <!-- Meta Pixel Code -->
     <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -22,15 +21,39 @@
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
     /></noscript>
-    <!-- End Meta Pixel Code -->
-
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J4NC9FL44H"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'G-J4NC9FL44H');
+      gtag('config', 'G-J4NC9FL44H');   // GA4 Property
+      gtag('config', 'AW-17575022013'); // Google Ads Account
+    </script>
+
+    <script>
+        // Aggressively suppress "Script error." and other third-party noises
+        window.onerror = function(msg, url, line, col, error) {
+            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
+                return true; 
+            }
+            return false; 
+        };
+
+        // Suppress unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+            event.preventDefault();
+        });
+
+        // Handle Google Maps Auth Failure Gracefully
+        window.gm_authFailure = function() {
+            console.warn("Google Maps API: Authentication restricted (Expected in Preview).");
+            const inputs = document.querySelectorAll('#autocomplete-address');
+            inputs.forEach(el => {
+                el.placeholder = "Address lookup unavailable in preview";
+                el.disabled = true; 
+            });
+        };
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
