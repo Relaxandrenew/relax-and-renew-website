@@ -6,6 +6,24 @@
     <title>Book Now | Relax & Renew RMT</title>
     <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
     
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '701194265870298');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-J4NC9FL44H"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -371,11 +389,16 @@
             const portalBtn = document.getElementById('portal-booking-btn');
             if (portalBtn) {
                 portalBtn.addEventListener('click', function() {
+                    // GA4 Event
                     if (typeof gtag === 'function') {
                         gtag('event', 'portal_booking_click', {
                             'event_category': 'engagement',
                             'event_label': 'Book on our Portal'
                         });
+                    }
+                    // Meta Pixel Event (Schedule)
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'Schedule');
                     }
                 });
             }
@@ -493,6 +516,11 @@
                             'event_category': 'lead',
                             'event_label': 'Request Appointment Form'
                         });
+                    }
+
+                    // --- NEW: Meta Pixel Tracking for Successful Request (Lead) ---
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'Lead');
                     }
 
                     btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Request Sent!`;
