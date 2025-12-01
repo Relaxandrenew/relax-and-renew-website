@@ -103,6 +103,11 @@
         .rotate-icon.active { transform: rotate(180deg); }
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .accordion-content.active { max-height: 500px; }
+        
+        /* Visibility Transition for Term Select */
+        .term-hidden { display: none; }
+        .term-visible { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
@@ -232,7 +237,7 @@
                 <!-- Plan 1: Individual Monthly -->
                 <div class="pricing-card">
                     <h3 class="text-2xl text-brand-light font-serif">Individual Monthly</h3>
-                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Standard Care • 6 Month Commitment</p>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Standard Care • 3, 6, or 12 Month Options</p>
                     
                     <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
                         $110<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ month + HST</span>
@@ -251,7 +256,7 @@
                     <a href="#signup-form" onclick="selectPlan('Individual Monthly')" class="btn-gold w-full text-center justify-center mt-8">Select Monthly</a>
                 </div>
 
-                <!-- Plan 2: Bi-Weekly (Updated: Month to Month) -->
+                <!-- Plan 2: Bi-Weekly -->
                 <div class="pricing-card highlight transform md:-translate-y-4">
                     <div class="absolute top-0 right-0 bg-brand-gold text-black text-xs font-bold px-3 py-1 uppercase tracking-wider">Best Value</div>
                     <h3 class="text-3xl text-brand-light font-serif">Individual Bi-Weekly</h3>
@@ -277,7 +282,7 @@
                 <!-- Plan 3: Duo -->
                 <div class="pricing-card">
                     <h3 class="text-2xl text-brand-light font-serif">Duo (Couples)</h3>
-                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Shared Wellness • 6 Month Commitment</p>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Shared Wellness • 3, 6, or 12 Month Options</p>
                     
                     <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
                         $100<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
@@ -299,7 +304,7 @@
                 <!-- Plan 4: Household -->
                 <div class="pricing-card">
                     <h3 class="text-2xl text-brand-light font-serif">Household (3+)</h3>
-                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Family Care • 6 Month Commitment</p>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Family Care • 3, 6, or 12 Month Options</p>
                     
                     <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
                         $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
@@ -357,7 +362,7 @@
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Phone *</label>
-                            <input type="tel" name="phone" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                            <input type="tel" id="phone-input" name="phone" required placeholder="(555) 555-5555" maxlength="14" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
                         </div>
                         <div>
                             <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Email *</label>
@@ -365,7 +370,7 @@
                         </div>
                     </div>
 
-                    <!-- New Address Fields -->
+                    <!-- Address Fields -->
                     <div>
                         <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Street Address *</label>
                         <input id="autocomplete-address" type="text" name="address" required placeholder="Start typing address..." class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
@@ -382,15 +387,29 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Desired Plan *</label>
-                        <select id="plan-select" name="plan" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold focus:ring-0">
-                            <option value="" disabled selected>Select a membership tier...</option>
-                            <option value="Individual Monthly">Individual Monthly ($110 + HST)</option>
-                            <option value="Individual Bi-Weekly">Individual Bi-Weekly ($90/session + HST)</option>
-                            <option value="Duo">Duo / Couples ($100/person + HST)</option>
-                            <option value="Household">Household 3+ ($90/person + HST)</option>
-                        </select>
+                    <!-- Plan Selection Grid -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="md:col-span-1" id="plan-col">
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Desired Plan *</label>
+                            <select id="plan-select" name="plan" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold focus:ring-0">
+                                <option value="" disabled selected>Select a membership tier...</option>
+                                <option value="Individual Monthly">Individual Monthly ($110 + HST)</option>
+                                <option value="Individual Bi-Weekly">Individual Bi-Weekly ($90/session + HST)</option>
+                                <option value="Duo">Duo / Couples ($100/person + HST)</option>
+                                <option value="Household">Household 3+ ($90/person + HST)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Hidden Duration Field (Shows when Monthly/Duo/Household selected) -->
+                        <div id="term-container" class="term-hidden md:col-span-1">
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Commitment Term *</label>
+                            <select id="term-select" name="term_length" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold focus:ring-0">
+                                <option value="" disabled selected>Select duration...</option>
+                                <option value="3 Months">3 Months</option>
+                                <option value="6 Months">6 Months</option>
+                                <option value="12 Months">12 Months</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
@@ -549,13 +568,61 @@
             }
         }
 
-        // Auto-fill plan from buttons
-        function selectPlan(planName) {
-            const select = document.getElementById('plan-select');
-            if(select) {
-                select.value = planName;
-                // Scroll to form if needed
+        // Auto-fill plan from buttons & Handle Term Field Logic
+        const planSelect = document.getElementById('plan-select');
+        const termContainer = document.getElementById('term-container');
+        const termSelect = document.getElementById('term-select');
+        const planCol = document.getElementById('plan-col');
+
+        function toggleTermSelect() {
+            if(!planSelect) return;
+            
+            const selectedPlan = planSelect.value;
+            // Plans that require a 3/6/12 month term
+            const plansWithTerms = ["Individual Monthly", "Duo", "Household"];
+            
+            if (plansWithTerms.includes(selectedPlan)) {
+                // Show Term Select
+                termContainer.classList.remove('term-hidden');
+                termContainer.classList.add('term-visible');
+                termSelect.setAttribute('required', 'true');
+                
+                // Adjust layout on desktop if needed (ensure they sit side by side)
+                planCol.classList.remove('md:col-span-2');
+                planCol.classList.add('md:col-span-1');
+            } else {
+                // Hide Term Select (Bi-Weekly or empty)
+                termContainer.classList.remove('term-visible');
+                termContainer.classList.add('term-hidden');
+                termSelect.removeAttribute('required');
+                termSelect.value = ""; // Reset value
+                
+                // Make plan select full width if term is hidden (optional, but looks cleaner)
+                if(selectedPlan === 'Individual Bi-Weekly') {
+                     // Keep grid layout stable
+                }
             }
+        }
+
+        // Event listener for dropdown change
+        if(planSelect) {
+            planSelect.addEventListener('change', toggleTermSelect);
+        }
+
+        function selectPlan(planName) {
+            if(planSelect) {
+                planSelect.value = planName;
+                toggleTermSelect(); // Trigger logic manually after setting value
+            }
+        }
+
+        // Phone Number Formatting Logic
+        const phoneInput = document.getElementById('phone-input');
+        if (phoneInput) {
+             phoneInput.addEventListener('input', function (e) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            });
         }
 
         // --- Google Maps Autocomplete Logic ---
@@ -633,6 +700,11 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     setTimeout(() => {
                         event.target.reset();
+                        // Reset term visibility manually
+                        if(termContainer) {
+                             termContainer.classList.add('term-hidden');
+                             termContainer.classList.remove('term-visible');
+                        }
                         btn.innerHTML = originalText;
                         btn.disabled = false;
                         btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');

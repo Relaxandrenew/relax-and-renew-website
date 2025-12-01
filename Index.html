@@ -22,19 +22,16 @@
     <script>
         // Aggressively suppress "Script error." and other third-party noises
         window.onerror = function(msg, url, line, col, error) {
-            // These are generic errors from external scripts (Maps, Stripe) where browsers hide details for security
             if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
-                return true; // Suppress
+                return true; 
             }
-            return false; // Let local errors pass
+            return false; 
         };
 
-        // Suppress unhandled promise rejections (common with Maps API auth failures)
         window.addEventListener('unhandledrejection', function(event) {
             event.preventDefault();
         });
 
-        // Handle Google Maps Auth Failure Gracefully
         window.gm_authFailure = function() {
             console.warn("Google Maps API: Authentication restricted (Expected in Preview).");
             const inputs = document.querySelectorAll('#autocomplete-address, #service-area-search');
@@ -42,13 +39,11 @@
                 el.placeholder = "Address lookup unavailable in preview";
                 el.title = "Auto-complete disabled due to API key restrictions.";
                 el.style.opacity = "0.7";
-                el.disabled = true; // Prevent interaction that causes errors
+                el.disabled = true; 
             });
         };
 
-        // Define Maps Callback immediately
         window.initAllAutocompletes = function() {
-            // If the main logic function is ready, run it. Otherwise, set a flag.
             if (typeof window._runMapsInitialization === 'function') {
                 window._runMapsInitialization();
             } else {
@@ -156,7 +151,6 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* FIX: Calendar Picker Icon Color for Dark Backgrounds */
-        /* This filter inverts the standard black icon and shifts the hue to match brand-gold (#E0C584) */
         ::-webkit-calendar-picker-indicator {
             filter: invert(86%) sepia(19%) saturate(986%) hue-rotate(357deg) brightness(92%) contrast(89%);
             cursor: pointer;
@@ -166,7 +160,8 @@
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
     <nav id="navbar" class="fixed-nav">
-        <div class="container mx-auto px-6 flex justify-between items-center h-full">
+        <!-- Reverted to standard responsive padding classes for safety and robustness -->
+        <div class="container mx-auto px-4 md:px-8 lg:px-12 flex justify-between items-center h-full">
             <a href="#" class="flex items-center gap-3 no-underline group">
                 <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
@@ -212,7 +207,7 @@
 
     <header class="relative min-h-screen flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900">
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-brand-black"></div>
-        <div class="container mx-auto px-6 relative z-10 text-center pt-20">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12 relative z-10 text-center pt-20">
             <div class="inline-block border-b border-brand-gold/50 pb-2 mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
                 <p class="text-brand-gold uppercase tracking-[0.3em] text-xs md:text-sm font-bold">Registered Mobile Massage Therapy</p>
             </div>
@@ -242,7 +237,7 @@
 
     <section id="about" class="py-24 bg-brand-black relative overflow-hidden">
         <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-brand-gold/5 to-transparent pointer-events-none"></div>
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12">
             <div class="grid md:grid-cols-2 gap-16 items-center">
                 <div class="order-2 md:order-1">
                     <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold mb-2 block">Why Mobile?</span>
@@ -273,7 +268,7 @@
 
     <section id="services" class="py-24 bg-alternate-pattern bg-cover bg-center bg-fixed relative bg-gray-900">
         <div class="absolute inset-0 bg-brand-black/60"></div>
-        <div class="container mx-auto px-6 relative z-10">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12 relative z-10">
             <div class="text-center mb-20">
                 <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Therapeutic Offerings</span>
                 <h2 class="text-4xl md:text-6xl text-brand-light mt-3 mb-6">Our Services</h2>
@@ -324,7 +319,7 @@
     </section>
 
     <section id="pricing" class="py-24 bg-brand-black border-t border-brand-light/5">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl text-brand-gold mb-4 font-serif">Investment in Wellness</h2>
                 <p class="text-brand-dim max-w-2xl mx-auto font-light">Transparent pricing with no hidden fees. We offer competitive rates that bring the spa to you.</p>
@@ -385,7 +380,8 @@
 
     <section id="giftcards" class="py-24 bg-gift-card border-t border-brand-light/5 relative overflow-hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-        <div class="container mx-auto px-6 relative z-10">
+        <!-- CHANGED: Dynamic padding logic applied here for "dynamic to screen" effect -->
+        <div class="container mx-auto px-4 md:px-8 lg:px-16 relative z-10">
             <div class="grid md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
                 
                 <div class="order-2 md:order-1 text-left">
@@ -422,7 +418,14 @@
                                 How does it work? 
                                 <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
                             </summary>
-                            <p class="mt-2 text-brand-dim text-sm font-light">Select your amount, proceed to checkout via Stripe, and the digital code will be emailed immediately.</p>
+                            <p class="mt-2 text-brand-dim text-sm font-light">Select your amount, proceed to checkout via Stripe, and a Digital Card with your unique barcode will be emailed immediately.</p>
+                        </details>
+                        <details class="mb-4 group">
+                            <summary class="text-brand-gold cursor-pointer list-none flex justify-between items-center text-sm font-bold uppercase tracking-wide outline-none">
+                                How do I redeem? 
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                            </summary>
+                            <p class="mt-2 text-brand-dim text-sm font-light">You can either give us your code prior to your appointment or your therapist can scan it when they are there.</p>
                         </details>
                         <details class="mb-4 group">
                             <summary class="text-brand-gold cursor-pointer list-none flex justify-between items-center text-sm font-bold uppercase tracking-wide outline-none">
@@ -437,7 +440,8 @@
                 <div class="order-1 md:order-2 flex justify-center">
                     <div class="relative group w-full max-w-md">
                         <div class="absolute -inset-1 bg-gradient-to-r from-brand-gold to-brand-goldHover rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                        <div class="bg-brand-black/90 backdrop-blur-xl border border-brand-gold/40 rounded-lg p-10 shadow-2xl relative text-center">
+                        <!-- CHANGED: Dynamic padding logic applied here for "dynamic to screen" effect -->
+                        <div class="bg-brand-black/90 backdrop-blur-xl border border-brand-gold/40 rounded-lg p-5 sm:p-8 md:p-12 shadow-2xl relative text-center">
                             <h3 class="text-2xl text-brand-light font-serif mb-2">Purchase Securely</h3>
                             <p class="text-brand-dim/60 text-xs mb-8 uppercase tracking-widest">Powered by Stripe</p>
                             
@@ -454,7 +458,7 @@
     </section>
 
     <section id="area" class="py-24 bg-neutral-900 border-t border-brand-light/5">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12">
             <div class="grid md:grid-cols-2 gap-12">
                 <div>
                     <h2 class="text-4xl text-brand-light mb-6">Service Area</h2>
@@ -479,7 +483,7 @@
     </section>
 
     <section id="faq" class="py-24 bg-brand-black border-t border-brand-light/5">
-        <div class="container mx-auto px-6 max-w-4xl">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12 max-w-4xl">
             <h2 class="text-4xl text-center text-brand-light mb-12 font-serif">Frequently Asked Questions</h2>
             <div class="space-y-4">
                 <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-black/40">
@@ -505,7 +509,7 @@
     </section>
 
     <footer class="bg-neutral-950 py-16 border-t border-brand-gold/20">
-        <div class="container mx-auto px-6">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12">
             <div class="grid md:grid-cols-4 gap-12 mb-12">
                 <div class="md:col-span-2">
                     <a href="#" class="flex items-center gap-2 mb-4"><img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-8 w-auto"><span class="text-brand-gold tracking-widest font-bold">RELAX & RENEW</span></a>
@@ -625,7 +629,6 @@
     <script>
         const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/Booking";
 
-        // Define helper functions first to ensure they are available
         function fillAddressForm(place) {
             try {
                 if (!place || !place.address_components) return;
@@ -698,7 +701,6 @@
             if(typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // --- Maps Initialization Logic ---
         function _runMapsInitialization() {
             try {
                 if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
@@ -737,12 +739,10 @@
             }
         }
         
-        // Expose init function globally for Google Maps callback
         window.initAllAutocompletes = function() {
             _runMapsInitialization();
         };
 
-        // --- Main Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -752,14 +752,12 @@
             setupMenu();
             setupPhoneFormatting();
             
-            // Check for direct booking link
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('book')) {
                 setTimeout(openBookingModal, 500);
             }
         });
 
-        // --- Phone Logic ---
         function setupPhoneFormatting() {
             try {
                 const phoneInput = document.querySelector('input[name="phone"]');
@@ -774,7 +772,6 @@
             } catch(e) { /* console.warn("Setup phone error", e); */ }
         }
 
-        // --- UI Helpers ---
         function populateTimeSelect() {
             try {
                 const select = document.getElementById('time-select');
