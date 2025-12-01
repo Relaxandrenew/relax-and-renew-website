@@ -380,8 +380,31 @@
 
     <section id="giftcards" class="py-24 bg-gift-card border-t border-brand-light/5 relative overflow-hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-        <!-- CHANGED: Dynamic padding logic applied here for "dynamic to screen" effect -->
-        <div class="container mx-auto px-4 md:px-8 lg:px-16 relative z-10">
+        <!-- CHANGED: Made container padding fluid: clamp(1rem, 3vw, 2rem) handles both mobile and desktop gracefully -->
+        <div class="container mx-auto px-[clamp(1rem,3vw,2rem)] relative z-10">
+            
+            <!-- NEW CHRISTMAS ANNOUNCEMENT BLOCK START -->
+            <div class="mb-16 p-8 border border-brand-gold/40 rounded-lg bg-gradient-to-b from-brand-gold/10 to-transparent text-center relative overflow-hidden animate-fade-in-up">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
+                
+                <h3 class="text-2xl md:text-3xl text-brand-gold font-serif font-bold mb-4 tracking-wider flex items-center justify-center gap-3">
+                    <span>🎄</span> CHRISTMAS DRAW ANNOUNCEMENT <span>🎄</span>
+                </h3>
+                <p class="text-brand-light text-lg mb-6 italic font-light">Give the gift of relaxation this year, and you could win a little luxury for yourself.</p>
+                
+                <div class="bg-black/60 p-6 rounded-lg border border-brand-gold/10 max-w-3xl mx-auto backdrop-blur-sm">
+                    <p class="text-brand-dim mb-4 text-lg">
+                        For every gift card purchased between now and Christmas, you are automatically entered into our draw for a <span class="text-brand-gold font-bold border-b border-brand-gold/50">FREE $50 Gift Card!</span> 🎁
+                    </p>
+                    <div class="text-sm text-brand-dim/90 space-y-3 font-light">
+                        <p><strong class="text-brand-gold uppercase text-xs tracking-widest mr-2">The Reveal:</strong> We will be going <span class="font-bold text-brand-light">LIVE</span> on Christmas Eve (Facebook) to draw the name! 🎥</p>
+                        <p>The winner will be announced on video, tagged in the post, and emailed directly.</p>
+                        <p class="italic mt-4 border-t border-brand-gold/20 pt-4 text-brand-gold/80">No extra steps needed—just purchase a gift card for a loved one, and you’re in the running. Good luck! ✨</p>
+                    </div>
+                </div>
+            </div>
+            <!-- NEW CHRISTMAS ANNOUNCEMENT BLOCK END -->
+
             <div class="grid md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
                 
                 <div class="order-2 md:order-1 text-left">
