@@ -199,7 +199,14 @@
                 console.log("Session ID found:", sessionId);
                 try {
                     // 2. Call YOUR Webhook
-                    const response = await fetch(`https://primary-production-efcf.up.railway.app/webhook/get-session-details?session_id=${sessionId}`);
+                    // NEW: choose test vs production n8n endpoint based on session prefix
+                    const n8nBase = 'https://primary-production-efcf.up.railway.app';
+                    const isTestSession = sessionId.startsWith('cs_test_');
+                    const n8nPath = isTestSession
+                        ? '/webhook-test/get-session-details'
+                        : '/webhook/get-session-details';
+
+                    const response = await fetch(`${n8nBase}${n8nPath}?session_id=${encodeURIComponent(sessionId)}`);
                     
                     if (response.ok) {
                         const data = await response.json();
