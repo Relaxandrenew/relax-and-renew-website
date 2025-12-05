@@ -198,26 +198,30 @@
             if (sessionId) {
                 console.log("Session ID found:", sessionId);
                 try {
-                    // 2. Call YOUR Webhook
-                    // NEW: choose test vs production n8n endpoint based on session prefix
+                    // 2. Call YOUR Webhook (always production URL)
                     const n8nBase = 'https://primary-production-efcf.up.railway.app';
-                    const isTestSession = sessionId.startsWith('cs_test_');
-                    const n8nPath = isTestSession
-                        ? '/webhook-test/get-session-details'
-                        : '/webhook/get-session-details';
+                    const n8nPath = '/webhook/get-session-details';
 
                     const response = await fetch(`${n8nBase}${n8nPath}?session_id=${encodeURIComponent(sessionId)}`);
                     
                     if (response.ok) {
                         const data = await response.json();
+                        console.log('n8n session details:', data);
                         if (data.amount) {
                             finalValue = parseFloat(data.amount); 
                             displayAmount.innerText = new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(finalValue);
                             amountContainer.classList.remove('opacity-0');
+                        } else {
+                            displayAmount.innerText = "Confirmed";
+                            amountContainer.classList.remove('opacity-0');
                         }
+                    } else {
+                        console.warn("Webhook call failed:", response.status);
+                        displayAmount.innerText = "Confirmed"; 
+                        amountContainer.classList.remove('opacity-0');
                     }
                 } catch (e) {
-                    console.warn("Could not fetch dynamic amount, showing standard confirmation.");
+                    console.warn("Could not fetch dynamic amount, showing standard confirmation.", e);
                     displayAmount.innerText = "Confirmed"; 
                     amountContainer.classList.remove('opacity-0');
                 }
