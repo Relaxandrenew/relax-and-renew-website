@@ -568,22 +568,11 @@
         </div>
     </div>
 
-    <!-- HIDDEN FULL BOOKING MODAL (still here if you want to reuse later, but not used in the new flow) -->
-    <!-- Kept out for brevity in this version – you can reinsert your old booking-modal if you still want it as a fallback -->
-
+    <!-- SCRIPT: AVAILABILITY + BOOKING FLOW -->
     <script>
-        // ---------------- CONFIG: TEST vs PROD ----------------
-        const USE_TEST_AVAILABILITY = true;   // set false when ready
-        const USE_TEST_BOOKING = true;       // set false when ready
-
-        const AVAILABILITY_URL = USE_TEST_AVAILABILITY
-            ? "https://primary-production-efcf.up.railway.app/webhook-test/cliniko-mobile-availability"
-            : "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-availability";
-
-        // Assumes you create a second n8n workflow for creating the appointment:
-        const BOOKING_URL = USE_TEST_BOOKING
-            ? "https://primary-production-efcf.up.railway.app/webhook-test/cliniko-mobile-booking"
-            : "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-booking";
+        // ---------------- CONFIG (LIVE via Netlify Functions) ----------------
+        const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
+        const BOOKING_URL      = "/.netlify/functions/cliniko-mobile-booking";
 
         // ---------------- STATE ----------------
         let availabilityByDate = {};   // { 'YYYY-MM-DD': [slot, slot, ...] }
