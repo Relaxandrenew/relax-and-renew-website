@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Now | Relax & Renew RMT</title>
+    <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
+    
+    <!-- Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '701194265870298');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    /></noscript>
+
+    <!-- Google Tag / Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-J4NC9FL44H');   // GA4 Property
+      gtag('config', 'AW-17575022013'); // Google Ads Account
+    </script>
+
+    <!-- Error suppression for third-party scripts -->
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
+                return true; 
+            }
+            return false; 
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+            event.preventDefault();
+        });
+
+        window.gm_authFailure = function() {
+            console.warn("Google Maps API: Authentication restricted.");
+            const inputs = document.querySelectorAll('#address-input-initial');
+            inputs.forEach(el => {
+                el.placeholder = "Address lookup unavailable";
+                el.disabled = false; 
+                el.style.opacity = "0.8";
+            });
+        };
+    </script>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        subtleBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+        
+        .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); border: 1px solid rgba(224, 197, 132, 0.1); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; }
+        .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
+        .card-fancy:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.3); }
+        .card-fancy:hover::before { transform: scaleX(1); }
+        
+        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
+        
+        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+        
+        .pill { background: rgba(224, 197, 132, 0.08); border: 1px solid rgba(224, 197, 132, 0.2); color: #F0E2C0; display: inline-block; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin: 0 0.3rem 0.5rem 0; letter-spacing: 0.05em; }
+        
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
+        .pac-item-query { color: #E0C584; }
+        
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); z-index: 100; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(86%) sepia(19%) saturate(986%) hue-rotate(357deg) brightness(92%) contrast(89%);
+            cursor: pointer;
+        }
+
+        /* Calendar styles (respecting your palette) */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 0.25rem;
+        }
+        .calendar-day-disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+        .calendar-day-available {
+            border: 1px solid rgba(224,197,132,0.35);
+            cursor: pointer;
+        }
+        .calendar-day-available:hover {
+            background: rgba(224,197,132,0.08);
+        }
+        .calendar-day-selected {
+            background: rgba(224,197,132,0.18);
+            border-color: #E0C584;
+        }
+    </style>
+
+    <!-- Address autocomplete bootstrap -->
+    <script>
+        function initAllAutocompletes() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput) {
+                    const ac = new google.maps.places.Autocomplete(addrInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "formatted_address"],
+                        types: ["geocode"],
+                    });
+                    ac.addListener("place_changed", () => {
+                        const place = ac.getPlace();
+                        if (!place || !place.address_components) return;
+                        fillAddressFromPlace(place);
+                    });
+                }
+            } catch (e) {
+                console.warn("Maps init error", e);
+            }
+        }
+
+        function fillAddressFromPlace(place) {
+            try {
+                let street = place.formatted_address || "";
+                let city = "";
+                let postal = "";
+                if (place.address_components) {
+                    for (const c of place.address_components) {
+                        const t = c.types[0];
+                        if (t === "locality" || t === "administrative_area_level_3") {
+                            city = c.long_name;
+                        }
+                        if (t === "postal_code") {
+                            postal = c.long_name;
+                        }
+                    }
+                }
+                const full = street;
+                const addrObj = {
+                    address: full,
+                    city,
+                    postal_code: postal
+                };
+                window.__selectedAddress = addrObj;
+
+                // Mirror into hidden booking form fields when they eventually open
+                const formAddress = document.querySelector('input[name="address"]');
+                const formCity = document.querySelector('input[name="city"]');
+                const formPostal = document.querySelector('input[name="postal_code"]');
+                if (formAddress && full) formAddress.value = full;
+                if (formCity && city) formCity.value = city;
+                if (formPostal && postal) formPostal.value = postal;
+            } catch (e) {
+                console.warn("fillAddressFromPlace error", e);
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+    <!-- HERO / LOGO -->
+    <div class="relative pt-12 pb-12 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+        <div class="relative z-10">
+            <a href="index.html" class="inline-block group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
+                <div class="flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- BOOKING CALENDAR SECTION -->
+    <section id="booking" class="py-16 bg-brand-black border-b border-brand-light/5">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <div class="text-center mb-10">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Step 1: Choose your time</span>
+                <h1 class="text-3xl md:text-4xl text-brand-light mt-3 mb-3 font-serif">Mobile Appointment Booking</h1>
+                <p class="text-brand-dim text-sm max-w-2xl mx-auto">
+                    Enter your service address first so we can safely calculate drive time between appointments and only show you times that work for mobile visits.
+                </p>
+            </div>
+
+            <!-- Calendar & Time Slots Card -->
+            <div class="card-fancy">
+                <!-- Top helper row -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        <span id="selected-address-label">Service address required to view availability</span>
+                    </div>
+                    <button id="change-address-btn" class="btn-gold text-[0.65rem] px-4 py-2">
+                        <i data-lucide="edit-3" class="w-3 h-3"></i>
+                        <span>Change Address</span>
+                    </button>
+                </div>
+
+                <!-- Calendar controls -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <button id="prev-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
+                        </button>
+                        <button id="next-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
+                        </button>
+                        <div class="text-brand-light text-sm md:text-base font-serif">
+                            <span id="calendar-month-label"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-3 h-3 rounded border border-brand-gold/20"></span> No Availability
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-3 h-3 rounded border border-brand-gold/70 bg-brand-gold/15"></span> Available
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-3 h-3 rounded border border-brand-gold bg-brand-gold/30"></span> Selected
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekday header -->
+                <div class="calendar-grid text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim mb-2">
+                    <div class="text-center py-1">Sun</div>
+                    <div class="text-center py-1">Mon</div>
+                    <div class="text-center py-1">Tue</div>
+                    <div class="text-center py-1">Wed</div>
+                    <div class="text-center py-1">Thu</div>
+                    <div class="text-center py-1">Fri</div>
+                    <div class="text-center py-1">Sat</div>
+                </div>
+
+                <!-- Calendar days -->
+                <div id="calendar-days" class="calendar-grid text-sm mb-6">
+                    <!-- JS will inject day cells here -->
+                </div>
+
+                <!-- Availability status -->
+                <div id="availability-status" class="text-xs text-brand-dim/80 mb-4">
+                    Enter your address to load live availability.
+                </div>
+
+                <!-- Time slots for selected date -->
+                <div id="time-slots-wrapper" class="border-t border-brand-gold/15 pt-4 mt-2 hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            <span id="selected-date-label">Available Times</span>
+                        </div>
+                    </div>
+                    <div id="time-slots" class="flex flex-wrap gap-3">
+                        <!-- JS will insert time buttons -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Minimal details form (hidden until a time is chosen) -->
+                <div id="quick-form-wrapper" class="border-t border-brand-gold/15 pt-6 mt-6 hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
+                            <i data-lucide="user-round" class="w-4 h-4"></i>
+                            <span>Step 3: Your Details</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-brand-dim/80 mb-4">
+                        You’re almost done. Confirm your information and we’ll book this directly in our Cliniko schedule. You’ll receive an email confirmation shortly after.
+                    </p>
+                    <form id="quick-booking-form" class="space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Full Name *</label>
+                                <input type="text" name="full_name" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Phone *</label>
+                                <input type="tel" name="phone" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors" id="quick-phone">
+                            </div>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Email *</label>
+                                <input type="email" name="email" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Treatment Type *</label>
+                                <select name="treatment_type" required class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black">
+                                    <option value="" disabled selected>Select...</option>
+                                    <option value="Core Therapeutic">Core Therapeutic (Relaxation / Deep Tissue / Sports / Senior)</option>
+                                    <option value="Premium">Premium (Hot Stone / Cupping)</option>
+                                    <option value="Specialty">Specialty (Prenatal / Pediatric)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Address summary (readonly, from step 1) -->
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address</label>
+                            <textarea id="quick-address-display" readonly rows="2" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2.5 text-brand-light text-xs focus:outline-none"></textarea>
+                            <p class="mt-1 text-[10px] text-brand-dim/70">
+                                Need to change it? Use “Change Address” above and reselect your time.
+                            </p>
+                        </div>
+
+                        <button type="submit" id="quick-submit-btn" class="w-full btn-filled py-3 mt-2 font-bold tracking-wider">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>Confirm Appointment</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Existing Services & Pricing sections kept as-is below (no structural changes) -->
+    <section id="services" class="py-12 bg-alternate-pattern bg-cover bg-center bg-fixed relative bg-gray-900">
+        <div class="absolute inset-0 bg-brand-black/60"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-12">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Therapeutic Offerings</span>
+                <h2 class="text-4xl md:text-6xl text-brand-light mt-3 mb-6">Our Services</h2>
+                <div class="w-16 h-px bg-brand-gold mx-auto"></div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-fancy group">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="sparkles" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Core Therapeutic</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Relaxation & Rehabilitation</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Foundational treatments designed to calm the nervous system and address chronic pain or injury.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Swedish Relaxation</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Deep Tissue</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Sports Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Chair Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Senior Massage</li>
+                    </ul>
+                </div>
+                <div class="card-fancy group transform md:-translate-y-4 border-brand-gold/30">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="flame" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Premium Therapy</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Advanced Modalities</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Elevated experiences using specialized tools to increase blood flow and achieve deeper release.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Hot Stone Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Cupping Therapy</li>
+                        <li class="flex items-center gap-2 italic text-xs opacity-60 ml-3">Promotes circulation & detox</li>
+                    </ul>
+                </div>
+                <div class="card-fancy group">
+                    <div class="mb-6 inline-block p-3 rounded-full bg-brand-gold/5 border border-brand-gold/10 group-hover:border-brand-gold/30 transition-colors"><i data-lucide="baby" class="w-8 h-8 text-brand-gold"></i></div>
+                    <h3 class="text-2xl text-brand-light mb-2">Specialty Care</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest mb-6 opacity-80">Maternal & Pediatric</p>
+                    <p class="text-brand-dim text-sm mb-6 leading-relaxed">Gentle, specialized attention for specific life stages, reducing anxiety and promoting growth.</p>
+                    <ul class="space-y-3 text-sm text-brand-light/80 border-t border-brand-light/10 pt-6">
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Prenatal Massage</li>
+                        <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-gold rounded-full"></span>Pediatric & Infant</li>
+                        <li class="flex items-center gap-2 italic text-xs opacity-60 ml-3">Reduced edema & better sleep</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="py-24 bg-brand-black border-t border-brand-light/5">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl text-brand-gold mb-4 font-serif">Investment in Wellness</h2>
+                <p class="text-brand-dim max-w-2xl mx-auto font-light">Transparent pricing with no hidden fees. We offer competitive rates that bring the spa to you.</p>
+            </div>
+            <div class="max-w-6xl mx-auto border border-brand-gold/30 rounded-lg p-8 md:p-12 bg-black/40 backdrop-blur-sm relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-brand-gold/20 pb-8 mb-8">
+                    <div>
+                        <h3 class="text-3xl md:text-4xl text-brand-light font-serif mb-2">Promotional Pricing</h3>
+                        <p class="text-brand-gold uppercase tracking-[0.15em] text-xs font-bold mb-3">Effective Until January 2026</p>
+                        <p class="text-brand-dim text-sm font-light max-w-md">This pricing is available to everyone until the New Year, after that, it reflects our Individual membership, as we have 3, 6, 12 month options.</p>
+                    </div>
+                    <div class="mt-6 md:mt-0 text-right">
+                        <div class="text-5xl md:text-6xl text-brand-gold font-serif flex items-start justify-end leading-none">
+                            <span class="text-2xl mt-2 mr-1">$</span>110
+                            <span class="text-lg text-brand-light/50 ml-3 mt-4 self-center">($124.30)</span>
+                        </div>
+                        <p class="text-brand-dim/70 text-sm mt-2">60 Min Core Massage (Tax Incl.)</p>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Core Services</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">45 Min (Chair Only)</span><div class="text-right"><span class="block text-brand-gold font-bold">$80</span><span class="block text-[10px] text-brand-light/50">($90.40)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$110</span><span class="block text-[10px] text-brand-light/50">($124.30)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">75 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$130</span><span class="block text-[10px] text-brand-light/50">($146.90)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">90 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$150</span><span class="block text-[10px] text-brand-light/50">($169.50)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">120 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$190</span><span class="block text-[10px] text-brand-light/50">($214.70)</span></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Premium</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$120</span><span class="block text-[10px] text-brand-light/50">($135.60)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">75 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$140</span><span class="block text-[10px] text-brand-light/50">($158.20)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">90 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$160</span><span class="block text-[10px] text-brand-light/50">($180.80)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">120 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$200</span><span class="block text-[10px] text-brand-light/50">($226.00)</span></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Specialty</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end"><span class="text-brand-light">30 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$40</span><span class="block text-[10px] text-brand-light/50">($45.20)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">45 Min</span><div class="text-right"><span class="block text-brand-gold font-bold">$65</span><span class="block text-[10px] text-brand-light/50">($73.45)</span></div></div>
+                            <div class="flex justify-between items-end"><span class="text-brand-light">60 Min (Prenatal Only)</span><div class="text-right"><span class="block text-brand-gold font-bold">$120</span><span class="block text-[10px] text-brand-light/50">($135.60)</span></div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-brand-gold font-bold uppercase tracking-widest text-sm mb-6 border-b border-brand-gold/10 pb-2">Group & Events</h4>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-end">
+                                <span class="text-brand-light">Duo (2 People)</span>
+                                <div class="text-right">
+                                    <span class="block text-brand-gold font-bold">$100<span class="text-[10px] font-normal text-brand-dim ml-1">/pp</span></span>
+                                    <span class="block text-[10px] text-brand-light/50">($113.00)</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-brand-light">Household (3+)</span>
+                                <div class="text-right">
+                                    <span class="block text-brand-gold font-bold">$90<span class="text-[10px] font-normal text-brand-dim ml-1">/pp</span></span>
+                                    <span class="block text-[10px] text-brand-light/50">($101.70)</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-brand-light">Corporate / Events</span>
+                                <div class="text-right">
+                                    <span class="block text-brand-gold font-bold">Contact</span>
+                                    <span class="block text-[10px] text-brand-light/50">For Quote</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 pt-6 border-t border-brand-gold/20 flex flex-col md:flex-row justify-between items-center text-xs font-light">
+                    <p class="text-brand-dim/60">Standard Non-Member Rate: $120 (60min Core). Save $10+ per session with current promo.</p>
+                    <div class="flex items-center gap-2 mt-4 md:mt-0"><i data-lucide="badge-percent" class="w-5 h-5 text-brand-gold"></i><span class="text-brand-gold text-base font-bold">Seniors / First Responders / Veterans: 10% Off</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
+        <div class="container mx-auto px-6">
+            <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
+            <div class="flex justify-center gap-6 text-brand-gold mb-8">
+                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+            </div>
+            <a href="index.html" class="text-brand-gold hover:text-brand-light text-sm underline">Return to Main Website</a>
+        </div>
+    </footer>
+
+    <!-- ADDRESS MODAL (Step 0: required before showing availability) -->
+    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-6 md:p-8 max-w-lg w-full relative shadow-2xl">
+            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Where will we be visiting?</h3>
+            <p class="text-sm text-brand-dim text-center mb-6">
+                We’ll use this address to calculate drive-time between appointments and only show you times that are realistic for mobile service.
+            </p>
+
+            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address *</label>
+            <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors mb-2">
+            <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light mb-4">
+                Can’t find your address? Enter it manually.
+            </button>
+
+            <div id="manual-address-wrapper" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Street Address *</label>
+                    <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">City *</label>
+                        <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Postal Code *</label>
+                        <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                    </div>
+                </div>
+            </div>
+
+            <button id="address-continue-btn" class="w-full btn-filled py-3 mt-4 font-bold tracking-wider">
+                <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                <span>Show Available Times</span>
+            </button>
+
+            <p id="address-error" class="text-xs text-red-400 mt-3 hidden">
+                Please provide a valid address before continuing.
+            </p>
+        </div>
+    </div>
+
+    <!-- HIDDEN FULL BOOKING MODAL (still here if you want to reuse later, but not used in the new flow) -->
+    <!-- Kept out for brevity in this version – you can reinsert your old booking-modal if you still want it as a fallback -->
+
+    <script>
+        // ---------------- CONFIG: TEST vs PROD ----------------
+        const USE_TEST_AVAILABILITY = true;   // set false when ready
+        const USE_TEST_BOOKING = true;       // set false when ready
+
+        const AVAILABILITY_URL = USE_TEST_AVAILABILITY
+            ? "https://primary-production-efcf.up.railway.app/webhook-test/cliniko-mobile-availability"
+            : "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-availability";
+
+        // Assumes you create a second n8n workflow for creating the appointment:
+        const BOOKING_URL = USE_TEST_BOOKING
+            ? "https://primary-production-efcf.up.railway.app/webhook-test/cliniko-mobile-booking"
+            : "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-booking";
+
+        // ---------------- STATE ----------------
+        let availabilityByDate = {};   // { 'YYYY-MM-DD': [slot, slot, ...] }
+        let calendarCurrent = new Date();   // month being viewed
+        let selectedDateStr = null;         // 'YYYY-MM-DD'
+        let selectedSlot = null;            // chosen slot object
+        window.__selectedAddress = null;    // {address, city, postal_code}
+
+        // ---------------- HELPERS ----------------
+        function formatDateLabel(date) {
+            return date.toLocaleDateString('en-CA', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function toDateStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseISODate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return null;
+            return d;
+        }
+
+        function formatTimeLabel(slot) {
+            // Prefer prebuilt label from workflow if present
+            if (slot.label) return slot.label;
+            const dateObj = parseISODate(slot.start);
+            if (!dateObj) return 'Time';
+            return dateObj.toLocaleTimeString('en-CA', {
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+
+        function setAvailabilityFromResponse(data) {
+            availabilityByDate = {};
+            if (!data || !Array.isArray(data.dates)) return;
+            data.dates.forEach(day => {
+                if (!day.date || !Array.isArray(day.slots)) return;
+                availabilityByDate[day.date] = day.slots;
+            });
+        }
+
+        function hasSlots(dateStr) {
+            return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
+        }
+
+        // ---------------- CALENDAR RENDER ----------------
+        function renderCalendar() {
+            const monthLabelEl = document.getElementById('calendar-month-label');
+            const daysContainer = document.getElementById('calendar-days');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const year = calendarCurrent.getFullYear();
+            const month = calendarCurrent.getMonth(); // 0-based
+            const firstOfMonth = new Date(year, month, 1);
+            const lastOfMonth = new Date(year, month + 1, 0);
+
+            // Month label
+            monthLabelEl.textContent = calendarCurrent.toLocaleDateString('en-CA', {
+                month: 'long',
+                year: 'numeric'
+            });
+
+            // Determine day offset (0=Sun)
+            const startDow = firstOfMonth.getDay();
+            const daysInMonth = lastOfMonth.getDate();
+
+            daysContainer.innerHTML = '';
+
+            const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+            for (let cellIndex = 0; cellIndex < totalCells; cellIndex++) {
+                const dayEl = document.createElement('button');
+                dayEl.type = 'button';
+                dayEl.className = "relative text-center py-2 text-sm rounded-sm border border-brand-gold/10 bg-black/30";
+
+                const dayNumber = cellIndex - startDow + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                    dayEl.classList.add('opacity-0', 'pointer-events-none');
+                    daysContainer.appendChild(dayEl);
+                    continue;
+                }
+
+                const cellDate = new Date(year, month, dayNumber);
+                cellDate.setHours(0,0,0,0);
+                const dateStr = toDateStr(cellDate);
+
+                dayEl.textContent = dayNumber;
+
+                if (cellDate < today) {
+                    dayEl.classList.add('calendar-day-disabled');
+                    daysContainer.appendChild(dayEl);
+                    continue;
+                }
+
+                if (hasSlots(dateStr)) {
+                    dayEl.classList.add('calendar-day-available');
+                }
+
+                if (selectedDateStr === dateStr) {
+                    dayEl.classList.add('calendar-day-selected');
+                }
+
+                dayEl.addEventListener('click', () => {
+                    if (!hasSlots(dateStr)) return;
+                    selectedDateStr = dateStr;
+                    selectedSlot = null;
+                    renderCalendar();
+                    renderTimeSlotsForDate(dateStr);
+                });
+
+                daysContainer.appendChild(dayEl);
+            }
+
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+        }
+
+        function renderTimeSlotsForDate(dateStr) {
+            const wrapper = document.getElementById('time-slots-wrapper');
+            const container = document.getElementById('time-slots');
+            const dateLabelEl = document.getElementById('selected-date-label');
+
+            if (!hasSlots(dateStr)) {
+                wrapper.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            const dateParts = dateStr.split('-');
+            const dateObj = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
+            dateLabelEl.textContent = formatDateLabel(dateObj);
+
+            const slots = availabilityByDate[dateStr];
+            container.innerHTML = '';
+
+            slots.forEach((slot, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "px-4 py-2 rounded-full border border-brand-gold/30 text-xs md:text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 flex items-center gap-2";
+                btn.innerHTML = `<i data-lucide="clock-4" class="w-3 h-3 text-brand-gold"></i><span>${formatTimeLabel(slot)}</span>`;
+                btn.addEventListener('click', () => {
+                    selectedSlot = slot;
+                    renderTimeSlotsForDate(dateStr); // rerender for visual selection
+                    showQuickForm();
+                });
+                if (selectedSlot && selectedSlot.start === slot.start && selectedSlot.practitioner_id === slot.practitioner_id) {
+                    btn.classList.add('bg-brand-gold/20', 'border-brand-gold');
+                }
+                container.appendChild(btn);
+            });
+
+            wrapper.classList.remove('hidden');
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+        }
+
+        function updateAvailabilityStatus(message, isError = false) {
+            const el = document.getElementById('availability-status');
+            el.textContent = message;
+            el.className = "text-xs mb-4 " + (isError ? "text-red-400" : "text-brand-dim/80");
+        }
+
+        // ---------------- ADDRESS MODAL LOGIC ----------------
+        function openAddressModal() {
+            const modal = document.getElementById('address-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeAddressModal() {
+            const modal = document.getElementById('address-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function getAddressFromModal() {
+            const manualWrapper = document.getElementById('manual-address-wrapper');
+            const isManual = !manualWrapper.classList.contains('hidden');
+            if (isManual) {
+                const street = document.getElementById('manual-street').value.trim();
+                const city = document.getElementById('manual-city').value.trim();
+                const postal = document.getElementById('manual-postal').value.trim();
+                if (!street || !city || !postal) return null;
+                const full = `${street}, ${city} ${postal}`;
+                const addrObj = { address: full, city, postal_code: postal };
+                window.__selectedAddress = addrObj;
+                return addrObj;
+            } else {
+                if (window.__selectedAddress && window.__selectedAddress.address) {
+                    return window.__selectedAddress;
+                }
+                const raw = document.getElementById('address-input-initial').value.trim();
+                if (!raw) return null;
+                const addrObj = { address: raw, city: "", postal_code: "" };
+                window.__selectedAddress = addrObj;
+                return addrObj;
+            }
+        }
+
+        async function loadAvailabilityForAddress(addrObj) {
+            try {
+                updateAvailabilityStatus("Checking live availability for this address...");
+                selectedDateStr = null;
+                selectedSlot = null;
+                renderCalendar();
+                document.getElementById('time-slots-wrapper').classList.add('hidden');
+                document.getElementById('quick-form-wrapper').classList.add('hidden');
+
+                const payload = {
+                    address: addrObj.address,
+                    city: addrObj.city,
+                    postal_code: addrObj.postal_code
+                };
+
+                const res = await fetch(AVAILABILITY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    console.error('Availability error', res.status, await res.text());
+                    updateAvailabilityStatus("We couldn't load availability for this address. Please try again or contact us.", true);
+                    return;
+                }
+
+                const data = await res.json();
+                setAvailabilityFromResponse(data);
+
+                if (Object.keys(availabilityByDate).length === 0) {
+                    updateAvailabilityStatus("No mobile availability found for this address in the current window. Please try another date or contact us.", false);
+                } else {
+                    updateAvailabilityStatus("Select a date to see available times.", false);
+                }
+
+                renderCalendar();
+            } catch (e) {
+                console.error('Availability exception', e);
+                updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
+            }
+        }
+
+        // ---------------- QUICK FORM ----------------
+        function showQuickForm() {
+            const wrapper = document.getElementById('quick-form-wrapper');
+            if (!wrapper) return;
+            wrapper.classList.remove('hidden');
+
+            const addrObj = window.__selectedAddress || {};
+            const addrText = addrObj.address || '';
+            const display = document.getElementById('quick-address-display');
+            if (display) display.value = addrText;
+
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+        }
+
+        async function submitQuickForm(event) {
+            event.preventDefault();
+            if (!selectedDateStr || !selectedSlot || !window.__selectedAddress) {
+                alert('Please select a date and time again.');
+                return;
+            }
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+
+            payload.address = window.__selectedAddress.address;
+            payload.city = window.__selectedAddress.city;
+            payload.postal_code = window.__selectedAddress.postal_code;
+
+            payload.date = selectedDateStr;
+            payload.slot = {
+                start: selectedSlot.start,
+                end: selectedSlot.end,
+                practitioner_id: selectedSlot.practitioner_id,
+                appointment_type_id: selectedSlot.appointment_type_id,
+                label: selectedSlot.label || formatTimeLabel(selectedSlot)
+            };
+
+            const btn = document.getElementById('quick-submit-btn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Booking...</span>`;
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+
+            try {
+                const res = await fetch(BOOKING_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    console.error('Booking error', res.status, await res.text());
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    alert('Something went wrong submitting your booking. Please call or try again.');
+                    return;
+                }
+
+                const data = await res.json().catch(() => ({}));
+                // Track lead / schedule
+                if (typeof gtag === 'function') {
+                    gtag('event', 'appointment_booked', {
+                        'event_category': 'conversion',
+                        'event_label': 'Cliniko Mobile Booking'
+                    });
+                }
+                if (typeof fbq === 'function') {
+                    fbq('track', 'Schedule');
+                }
+
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Booked!</span>`;
+                try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+
+                setTimeout(() => {
+                    alert('Thank you! Your appointment request has been received. We will send confirmation shortly.');
+                    form.reset();
+                    document.getElementById('quick-form-wrapper').classList.add('hidden');
+                    selectedSlot = null;
+                    renderTimeSlotsForDate(selectedDateStr);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }, 900);
+            } catch (e) {
+                console.error('Booking exception', e);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                alert('Something went wrong submitting your booking. Please call or try again.');
+            }
+        }
+
+        // ---------------- INIT ----------------
+        document.addEventListener('DOMContentLoaded', () => {
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+
+            // Calendar navigation
+            document.getElementById('prev-month-btn').addEventListener('click', () => {
+                const tmp = new Date(calendarCurrent);
+                tmp.setMonth(calendarCurrent.getMonth() - 1);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                if (tmp < today) return; // do not go back before today
+                calendarCurrent = tmp;
+                renderCalendar();
+            });
+
+            document.getElementById('next-month-btn').addEventListener('click', () => {
+                calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+                renderCalendar();
+            });
+
+            document.getElementById('change-address-btn').addEventListener('click', () => {
+                openAddressModal();
+            });
+
+            // Address modal controls
+            const addrModalClose = document.getElementById('address-modal-close');
+            addrModalClose.addEventListener('click', () => {
+                // You can allow closing, but availability won't load until they reopen and confirm
+                closeAddressModal();
+            });
+
+            document.getElementById('toggle-manual-address').addEventListener('click', () => {
+                const wrapper = document.getElementById('manual-address-wrapper');
+                wrapper.classList.toggle('hidden');
+            });
+
+            document.getElementById('address-continue-btn').addEventListener('click', async () => {
+                const addrObj = getAddressFromModal();
+                const errorEl = document.getElementById('address-error');
+                if (!addrObj || !addrObj.address) {
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                errorEl.classList.add('hidden');
+
+                const label = document.getElementById('selected-address-label');
+                label.textContent = addrObj.address;
+
+                closeAddressModal();
+                await loadAvailabilityForAddress(addrObj);
+            });
+
+            // Quick form phone formatting
+            const quickPhone = document.getElementById('quick-phone');
+            if (quickPhone) {
+                quickPhone.addEventListener('input', function(e) {
+                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                    e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                });
+            }
+
+            document.getElementById('quick-booking-form').addEventListener('submit', submitQuickForm);
+
+            // Initial calendar render (empty state)
+            renderCalendar();
+            openAddressModal();
+        });
+    </script>
+
+    <!-- Google Maps Places API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+</body>
+</html>

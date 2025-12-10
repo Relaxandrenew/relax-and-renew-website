@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal | Relax & Renew RMT</title>
+    <meta name="description" content="Secure client portal for Relax & Renew RMT. View your profile, appointments, and receipts.">
+    
+    <!-- Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '701194265870298');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    /></noscript>
+
+    <!-- Google Analytics / Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-J4NC9FL44H');   // GA4 Property
+      gtag('config', 'AW-17575022013'); // Google Ads Account
+    </script>
+
+    <!-- Suppress noisy third-party errors -->
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
+                return true;
+            }
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            event.preventDefault();
+        });
+    </script>
+
+    <!-- Tailwind + Brand Config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        subtleBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Auth0 SPA SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+
+    <style>
+        body { 
+            background-color: #050505; 
+            color: #F0E2C0; 
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: 1.15rem; 
+            line-height: 1.7; 
+            overflow-x: hidden; 
+        }
+        html { scroll-behavior: smooth; }
+
+        .card-fancy { 
+            background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); 
+            border: 1px solid rgba(224, 197, 132, 0.1); 
+            backdrop-filter: blur(10px); 
+            transition: all 0.4s ease; 
+            padding: 2.0rem 1.8rem; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .card-fancy::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 2px; 
+            background: linear-gradient(90deg, transparent, #E0C584, transparent); 
+            transform: scaleX(0); 
+            transition: transform 0.5s ease; 
+        }
+        .card-fancy:hover { 
+            transform: translateY(-4px); 
+            border-color: rgba(224, 197, 132, 0.3); 
+        }
+        .card-fancy:hover::before { 
+            transform: scaleX(1); 
+        }
+
+        .btn-gold { 
+            border: 1px solid #E0C584; 
+            color: #E0C584; 
+            padding: 0.6rem 2rem; 
+            text-transform: uppercase; 
+            font-weight: 700; 
+            letter-spacing: 0.1em; 
+            transition: 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 0.5rem; 
+            cursor: pointer; 
+        }
+        .btn-gold:hover { 
+            background: rgba(224, 197, 132, 0.1); 
+            color: #F0E2C0; 
+            border-color: #F0D594; 
+            box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); 
+        }
+
+        .btn-filled { 
+            background: #E0C584; 
+            color: #000; 
+            border: 1px solid #E0C584; 
+            padding: 0.6rem 2rem; 
+            text-transform: uppercase; 
+            font-weight: 700; 
+            letter-spacing: 0.1em; 
+            transition: 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 0.5rem; 
+            cursor: pointer; 
+        }
+        .btn-filled:hover { 
+            background: #F0D594; 
+            border-color: #F0D594; 
+            transform: translateY(-1px); 
+            box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); 
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+    <!-- HEADER / HERO -->
+    <header class="relative pt-10 pb-10 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+        <div class="relative z-10">
+            <a href="/index.html" class="inline-block group">
+                <img 
+                    src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" 
+                    alt="Relax & Renew Logo" 
+                    class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
+                <div class="flex flex-col items-center">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">
+                        RELAX & RENEW
+                    </span>
+                    <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">
+                        Mobile RMT
+                    </span>
+                </div>
+            </a>
+
+            <!-- Simple nav -->
+            <div class="mt-6 flex items-center justify-center gap-4 text-xs uppercase tracking-[0.2em] text-brand-light/70">
+                <a href="/book-now.html" class="hover:text-brand-gold transition-colors flex items-center gap-1">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Book Now
+                </a>
+                <span class="w-px h-4 bg-brand-gold/40"></span>
+                <a href="/gift-cards.html" class="hover:text-brand-gold transition-colors flex items-center gap-1">
+                    <i data-lucide="gift" class="w-4 h-4"></i> Gift Cards
+                </a>
+                <span class="w-px h-4 bg-brand-gold/40"></span>
+                <span class="text-brand-gold flex items-center gap-1">
+                    <i data-lucide="user-circle-2" class="w-4 h-4"></i> Client Portal
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN PORTAL CONTENT -->
+    <main class="py-16 bg-alternate-pattern bg-cover bg-center bg-fixed relative">
+        <div class="absolute inset-0 bg-brand-black/65"></div>
+        <div class="relative z-10 container mx-auto px-6 max-w-6xl">
+            <div class="grid lg:grid-cols-[1.1fr,0.9fr] gap-10 items-start">
+
+                <!-- LEFT COLUMN: OVERVIEW -->
+                <section class="space-y-6 animate-fade-in-up">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-gold/30 bg-black/40 text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/80">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        Secure Client Portal
+                    </div>
+
+                    <h1 class="text-4xl md:text-5xl text-brand-light mt-4 mb-2 leading-tight">
+                        Your Massage History, Receipts & Bookings in One Place
+                    </h1>
+
+                    <p class="text-brand-dim text-base max-w-2xl">
+                        Sign in to your Relax & Renew Client Portal to review past sessions, see upcoming bookings,
+                        download receipts for insurance, and keep your address and preferences up to date — all under a secure login.
+                    </p>
+
+                    <div class="grid md:grid-cols-3 gap-4 mt-6 text-sm">
+                        <div class="card-fancy">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="user" class="w-5 h-5 text-brand-gold"></i>
+                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Profile</span>
+                            </div>
+                            <p class="text-brand-dim text-sm">
+                                Confirm your contact details, service address, and preferred city so we can calculate
+                                travel time and availability accurately.
+                            </p>
+                        </div>
+                        <div class="card-fancy">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
+                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Appointments</span>
+                            </div>
+                            <p class="text-brand-dim text-sm">
+                                View past and upcoming massage appointments, with drive-time aware scheduling coming soon.
+                            </p>
+                        </div>
+                        <div class="card-fancy">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="file-text" class="w-5 h-5 text-brand-gold"></i>
+                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Receipts</span>
+                            </div>
+                            <p class="text-brand-dim text-sm">
+                                Access treatment receipts and invoices to submit to your extended health insurance provider.
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-brand-dim/70 mt-4 max-w-xl">
+                        Note: This portal is for returning clients only. New to Relax & Renew?
+                        You can still <a href="/book-now.html" class="text-brand-gold underline hover:text-brand-light">book your first session here</a> — 
+                        we will create your portal login after your first visit.
+                    </p>
+                </section>
+
+                <!-- RIGHT COLUMN: AUTH / DASHBOARD CARD -->
+                <aside class="card-fancy max-w-xl mx-auto w-full">
+                    <!-- LOADING STATE -->
+                    <div id="state-loading">
+                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-brand-gold/80">
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                            Checking login
+                        </div>
+                        <h2 class="text-2xl text-brand-light mb-2">Relax & Renew Client Portal</h2>
+                        <p class="text-brand-dim text-sm mb-4">
+                            One moment while we securely check your session.
+                        </p>
+                    </div>
+
+                    <!-- LOGGED OUT STATE -->
+                    <div id="state-logged-out" class="hidden">
+                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-brand-gold/80">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                            Sign in required
+                        </div>
+                        <h2 class="text-2xl text-brand-light mb-2">Log in to your portal</h2>
+                        <p class="text-brand-dim text-sm mb-5">
+                            Use the email you book with to create or access your Relax & Renew portal account.
+                            Your password is managed securely by Auth0.
+                        </p>
+                        <button id="btn-login" class="btn-filled w-full justify-center py-3 mb-3">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>
+                            Log In / Sign Up
+                        </button>
+                        <p class="text-[11px] text-brand-dim/80 leading-snug mt-2">
+                            By logging in, you agree to our
+                            <a href="/privacy-policy" class="underline text-brand-gold hover:text-brand-light">Privacy Policy</a>
+                            and
+                            <a href="/terms" class="underline text-brand-gold hover:text-brand-light">Terms</a>.
+                        </p>
+                    </div>
+
+                    <!-- LOGGED IN STATE -->
+                    <div id="state-logged-in" class="hidden">
+                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-emerald-400/90">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            Logged in securely
+                        </div>
+                        <h2 class="text-2xl text-brand-light mb-1">Welcome back</h2>
+                        <p class="text-brand-dim text-sm mb-4">
+                            You are now securely signed in to your Relax & Renew client portal.
+                        </p>
+
+                        <!-- PROFILE SUMMARY -->
+                        <div class="border border-brand-gold/20 rounded-lg p-3 mb-4 bg-black/40 text-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
+                                    <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/80">Profile</span>
+                                </div>
+                            </div>
+                            <p class="text-brand-dim text-sm">
+                                <span class="font-semibold text-brand-light">Name:</span>
+                                <span id="profile-name" class="ml-1"></span>
+                            </p>
+                            <p class="text-brand-dim text-sm">
+                                <span class="font-semibold text-brand-light">Email:</span>
+                                <span id="profile-email" class="ml-1"></span>
+                            </p>
+                        </div>
+
+                        <!-- PLACEHOLDER DASHBOARD SECTIONS -->
+                        <div class="grid gap-3 text-sm mb-5">
+                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-gold"></i>
+                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Appointments</span>
+                                    </div>
+                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
+                                </div>
+                                <p class="text-brand-dim text-[13px]">
+                                    Your past and upcoming massage appointments will appear here.
+                                </p>
+                            </div>
+
+                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="file-text" class="w-4 h-4 text-brand-gold"></i>
+                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Receipts</span>
+                                    </div>
+                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
+                                </div>
+                                <p class="text-brand-dim text-[13px]">
+                                    Download treatment receipts and invoices for insurance claims.
+                                </p>
+                            </div>
+
+                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="megaphone" class="w-4 h-4 text-brand-gold"></i>
+                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Updates</span>
+                                    </div>
+                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
+                                </div>
+                                <p class="text-brand-dim text-[13px]">
+                                    Important clinic news, membership offers, and schedule changes will be shown here.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- ACTION BUTTONS -->
+                        <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                            <a href="/book-now.html" class="btn-gold flex-1 justify-center py-2">
+                                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                                Book a Session
+                            </a>
+                            <button id="btn-logout" class="btn-gold flex-1 justify-center py-2">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                Log Out
+                            </button>
+                        </div>
+
+                        <p class="text-[11px] text-brand-dim/80 mt-3">
+                            Your session token is stored securely in your browser and will be used to connect to our systems.
+                        </p>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-neutral-950 py-10 border-t border-brand-gold/20 text-center">
+        <div class="container mx-auto px-6">
+            <p class="text-brand-dim/60 text-sm mb-4">
+                Professional, registered mobile massage therapy across Niagara Region.
+            </p>
+            <div class="flex justify-center gap-6 text-brand-gold mb-6">
+                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="facebook" class="w-4 h-4"></i>
+                </a>
+                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                </a>
+            </div>
+            <a href="/index.html" class="text-brand-gold hover:text-brand-light text-sm underline">
+                Return to Main Website
+            </a>
+        </div>
+    </footer>
+
+    <!-- PORTAL / AUTH0 LOGIC -->
+    <script>
+        // Run lucide icons
+        document.addEventListener('DOMContentLoaded', function() {
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e) {}
+        });
+
+        // ===== AUTH0 CONFIG - EDIT THESE TWO LINES =====
+        const AUTH0_DOMAIN = "dev-sbhcygzz4xcoa2ij.us.auth0.com";      // e.g. "relaxandrenew.us.auth0.com"
+        const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
+        const AUTH0_REDIRECT_URI = "https://relaxandrenew.ca/client-portal";
+        const AUTH0_LOGOUT_RETURN_TO = "https://relaxandrenew.ca/client-portal";
+
+        let auth0Client = null;
+
+        function showState(state) {
+            const loading = document.getElementById("state-loading");
+            const loggedOut = document.getElementById("state-logged-out");
+            const loggedIn = document.getElementById("state-logged-in");
+
+            if (loading) loading.classList.add("hidden");
+            if (loggedOut) loggedOut.classList.add("hidden");
+            if (loggedIn) loggedIn.classList.add("hidden");
+
+            if (state === "loading" && loading) loading.classList.remove("hidden");
+            if (state === "logged-out" && loggedOut) loggedOut.classList.remove("hidden");
+            if (state === "logged-in" && loggedIn) loggedIn.classList.remove("hidden");
+        }
+
+        async function initAuth0() {
+            auth0Client = await createAuth0Client({
+                domain: AUTH0_DOMAIN,
+                clientId: AUTH0_CLIENT_ID,
+                authorizationParams: {
+                    redirect_uri: AUTH0_REDIRECT_URI
+                },
+                cacheLocation: "localstorage",
+                useRefreshTokens: true
+            });
+        }
+
+        async function handleAuth0Redirect() {
+            const query = window.location.search;
+            if (query.includes("code=") && query.includes("state=")) {
+                try {
+                    await auth0Client.handleRedirectCallback();
+                } catch (err) {
+                    console.error("Error handling redirect callback:", err);
+                } finally {
+                    // Clean up ?code= & ?state= from URL
+                    window.history.replaceState({}, document.title, "/client-portal");
+                }
+            }
+        }
+
+        async function refreshUI() {
+            showState("loading");
+
+            const isAuthenticated = await auth0Client.isAuthenticated();
+
+            if (!isAuthenticated) {
+                // Clear token if any
+                window.localStorage.removeItem("rnr_auth_token");
+                showState("logged-out");
+                return;
+            }
+
+            const user = await auth0Client.getUser();
+
+            const nameEl = document.getElementById("profile-name");
+            const emailEl = document.getElementById("profile-email");
+            if (nameEl) nameEl.textContent = user.name || "";
+            if (emailEl) emailEl.textContent = user.email || "";
+
+            try {
+                const token = await auth0Client.getTokenSilently();
+                window.localStorage.setItem("rnr_auth_token", token);
+            } catch (err) {
+                console.error("Error getting token silently:", err);
+            }
+
+            showState("logged-in");
+        }
+
+        function setupEventHandlers() {
+            const loginBtn = document.getElementById("btn-login");
+            const logoutBtn = document.getElementById("btn-logout");
+
+            if (loginBtn) {
+                loginBtn.addEventListener("click", async () => {
+                    try {
+                        if (typeof gtag === "function") {
+                            gtag("event", "client_portal_login_click", {
+                                event_category: "engagement",
+                                event_label: "Client Portal Log In"
+                            });
+                        }
+                        if (typeof fbq === "function") {
+                            fbq("trackCustom", "ClientPortalLoginClick");
+                        }
+                    } catch (e) {}
+
+                    await auth0Client.loginWithRedirect({
+                        authorizationParams: {
+                            redirect_uri: AUTH0_REDIRECT_URI
+                        }
+                    });
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", () => {
+                    window.localStorage.removeItem("rnr_auth_token");
+                    auth0Client.logout({
+                        logoutParams: {
+                            returnTo: AUTH0_LOGOUT_RETURN_TO
+                        }
+                    });
+                });
+            }
+        }
+
+        window.addEventListener("load", async () => {
+            try {
+                showState("loading");
+                await initAuth0();
+                await handleAuth0Redirect();
+                setupEventHandlers();
+                await refreshUI();
+            } catch (err) {
+                console.error("Error during Auth0 init:", err);
+                showState("logged-out");
+            }
+        });
+    </script>
+</body>
+</html>
