@@ -1,42 +1,57 @@
 // netlify/functions/cliniko-mobile-availability.js
 
-// LIVE n8n webhook URL (Availability)
-const TARGET_WEBHOOK_URL =
+const N8N_WEBHOOK_URL =
   "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-availability";
 
 exports.handler = async (event) => {
-  // Only allow POST from your booking page
+  // Only allow POST from the front-end
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: "POST only",
+      body: "Method Not Allowed",
     };
   }
 
   try {
-    // Forward the body from the browser directly to your n8n workflow
-    const res = await fetch(TARGET_WEBHOOK_URL, {
+    const body = event.body ? JSON.parse(event.body) : {};
+
+    // Forward the same JSON body to n8n
+    const resp = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: event.body,
-    });
-
-    const text = await res.text(); // n8n should return JSON text
-
-    return {
-      statusCode: res.status,
       headers: {
         "Content-Type": "application/json",
       },
-      body: text,
+      body: JSON.stringify(body),
+    });
+
+    const text = await resp.text();
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // If n8n returns non-JSON, just pass it through as text
+      data = { raw: text };
+    }
+
+    return {
+      statusCode: resp.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*", // safe since this is your own origin
+      },
+      body: JSON.stringify(data),
     };
   } catch (err) {
+    console.error("Netlify → n8n error:", err);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: "Proxy to n8n failed",
-        details: String(err),
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ error: "Failed to reach booking service" }),
     };
   }
 };
