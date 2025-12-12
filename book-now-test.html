@@ -1,753 +1,757 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Now | Relax & Renew RMT</title>
-  <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Now | Relax & Renew RMT</title>
+  <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
 
-  <!-- Meta Pixel -->
-  <script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', '701194265870298');
-  fbq('track', 'PageView');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
-  /></noscript>
+    <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '701194265870298');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+  /></noscript>
 
-  <!-- Google Tag / Ads -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-J4NC9FL44H');
-    gtag('config', 'AW-17575022013');
-  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J4NC9FL44H');
+    gtag('config', 'AW-17575022013');
+  </script>
 
-  <!-- Error suppression for third-party scripts -->
-  <script>
-    window.onerror = function(msg, url) {
-      if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) return true;
-      return false;
-    };
-    window.addEventListener('unhandledrejection', function(event) { event.preventDefault(); });
+    <script>
+    window.onerror = function(msg, url) {
+      if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) return true;
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) { event.preventDefault(); });
 
-    window.gm_authFailure = function() {
-      console.warn("Google Maps API: Authentication restricted.");
-      const inputs = document.querySelectorAll('#address-input-initial');
-      inputs.forEach(el => {
-        el.placeholder = "Address lookup unavailable";
-        el.disabled = false;
-        el.style.opacity = "0.8";
-      });
-    };
-  </script>
+    window.gm_authFailure = function() {
+      console.warn("Google Maps API: Authentication restricted.");
+      const inputs = document.querySelectorAll('#address-input-initial');
+      inputs.forEach(el => {
+        el.placeholder = "Address lookup unavailable";
+        el.disabled = false;
+        el.style.opacity = "0.8";
+      });
+    };
+  </script>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              gold: '#E0C584',
-              goldHover: '#F0D594',
-              light: '#F0E2C0',
-              dim: 'rgba(240, 226, 192, 0.6)',
-              black: '#050505',
-              dark: '#0a0a0a',
-              panel: 'rgba(20, 20, 20, 0.7)',
-            }
-          },
-          fontFamily: { serif: ['"Cormorant Garamond"', 'serif'] },
-          backgroundImage: {
-            'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
-            'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
-          }
-        }
-      }
-    };
-  </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#E0C584',
+              goldHover: '#F0D594',
+              light: '#F0E2C0',
+              dim: 'rgba(240, 226, 192, 0.6)',
+              black: '#050505',
+              dark: '#0a0a0a',
+              panel: 'rgba(20, 20, 20, 0.7)',
+            }
+          },
+          fontFamily: { serif: ['"Cormorant Garamond"', 'serif'] },
+          backgroundImage: {
+            'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+            'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+          }
+        }
+      }
+    };
+  </script>
 
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-  <style>
-    body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
-    html { scroll-behavior: smooth; }
+  <style>
+    body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+    html { scroll-behavior: smooth; }
 
-    .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); border: 1px solid rgba(224, 197, 132, 0.1); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; }
-    .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
-    .card-fancy:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.3); }
-    .card-fancy:hover::before { transform: scaleX(1); }
+    .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); border: 1px solid rgba(224, 197, 132, 0.1); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; }
+    .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
+    .card-fancy:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.3); }
+    .card-fancy:hover::before { transform: scaleX(1); }
 
-    .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-    .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
+    .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+    .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
 
-    .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-    .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+    .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+    .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
 
-    .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
-    .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
-    .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
-    .pac-item-query { color: #E0C584; }
+    .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
+    .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+    .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
+    .pac-item-query { color: #E0C584; }
 
-    .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); z-index: 100; }
+    .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); z-index: 100; }
 
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
-    .calendar-day-disabled { opacity: 0.25; cursor: not-allowed; }
-    .calendar-day-available { border: 1px solid rgba(224,197,132,0.35); cursor: pointer; }
-    .calendar-day-available:hover { background: rgba(224,197,132,0.08); }
-    .calendar-day-selected { background: rgba(224,197,132,0.18); border-color: #E0C584; }
-  </style>
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+    .calendar-day-disabled { opacity: 0.25; cursor: not-allowed; }
+    .calendar-day-available { border: 1px solid rgba(224,197,132,0.35); cursor: pointer; }
+    .calendar-day-available:hover { background: rgba(224,197,132,0.08); }
+    .calendar-day-selected { background: rgba(224,197,132,0.18); border-color: #E0C584; }
+  </style>
 
-  <!-- Address autocomplete bootstrap -->
-  <script>
-    function initAllAutocompletes() {
-      try {
-        if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
-        const addrInput = document.getElementById('address-input-initial');
-        if (addrInput) {
-          const ac = new google.maps.places.Autocomplete(addrInput, {
-            componentRestrictions: { country: "ca" },
-            fields: ["address_components", "formatted_address"],
-            types: ["geocode"],
-          });
-          ac.addListener("place_changed", () => {
-            const place = ac.getPlace();
-            if (!place) return;
-            fillAddressFromPlace(place);
-          });
-        }
-      } catch (e) {
-        console.warn("Maps init error", e);
-      }
-    }
+    <script>
+    function initAllAutocompletes() {
+      try {
+        if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+        const addrInput = document.getElementById('address-input-initial');
+        if (addrInput) {
+          const ac = new google.maps.places.Autocomplete(addrInput, {
+            componentRestrictions: { country: "ca" },
+            fields: ["address_components", "formatted_address"],
+            types: ["geocode"],
+          });
+          ac.addListener("place_changed", () => {
+            const place = ac.getPlace();
+            if (!place) return;
+            fillAddressFromPlace(place);
+          });
+        }
+      } catch (e) {
+        console.warn("Maps init error", e);
+      }
+    }
 
-    function fillAddressFromPlace(place) {
-      try {
-        let street = place.formatted_address || "";
-        let city = "";
-        let postal = "";
-        if (place.address_components) {
-          for (const c of place.address_components) {
-            const t = c.types[0];
-            if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
-            if (t === "postal_code") postal = c.long_name;
-          }
-        }
-        window.__selectedAddress = { address: street, city, postal_code: postal };
-      } catch (e) {
-        console.warn("fillAddressFromPlace error", e);
-      }
-    }
-  </script>
+    function fillAddressFromPlace(place) {
+      try {
+        let street = place.formatted_address || "";
+        let city = "";
+        let postal = "";
+        if (place.address_components) {
+          for (const c of place.address_components) {
+            const t = c.types[0];
+            if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
+            if (t === "postal_code") postal = c.long_name;
+          }
+        }
+        window.__selectedAddress = { address: street, city, postal_code: postal };
+      } catch (e) {
+        console.warn("fillAddressFromPlace error", e);
+      }
+    }
+  </script>
 </head>
 
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
-  <!-- HERO / LOGO -->
-  <div class="relative pt-12 pb-12 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-    <div class="relative z-10">
-      <a href="index.html" class="inline-block group">
-        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
-        <div class="flex flex-col">
-          <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">RELAX & RENEW</span>
-          <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
-        </div>
-      </a>
-    </div>
-  </div>
-
-  <!-- BOOKING CALENDAR SECTION -->
-  <section id="booking" class="py-16 bg-brand-black border-b border-brand-light/5">
-    <div class="container mx-auto px-6 max-w-5xl">
-      <div class="text-center mb-10">
-        <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Step 1: Address + Treatment</span>
-        <h1 class="text-3xl md:text-4xl text-brand-light mt-3 mb-3 font-serif">Mobile Appointment Booking</h1>
-        <p class="text-brand-dim text-sm max-w-2xl mx-auto">
-          Enter your service address and choose your treatment. We’ll calculate drive-time between appointments and only show times that realistically work for mobile visits.
-        </p>
-      </div>
-
-      <div class="card-fancy">
-        <!-- Top helper row -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
-            <i data-lucide="map-pin" class="w-4 h-4"></i>
-            <span id="selected-address-label">Service address + treatment required to view availability</span>
-          </div>
-          <button id="change-address-btn" class="btn-gold text-[0.65rem] px-4 py-2">
-            <i data-lucide="edit-3" class="w-3 h-3"></i>
-            <span>Change</span>
-          </button>
-        </div>
-
-        <!-- Calendar controls -->
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3">
-            <button id="prev-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10 disabled:opacity-30 disabled:cursor-not-allowed">
-              <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
-            </button>
-            <button id="next-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10">
-              <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
-            </button>
-            <div class="text-brand-light text-sm md:text-base font-serif">
-              <span id="calendar-month-label"></span>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
-            <div class="flex items-center gap-2">
-              <span class="inline-block w-3 h-3 rounded border border-brand-gold/20"></span> No Availability
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="inline-block w-3 h-3 rounded border border-brand-gold/70 bg-brand-gold/15"></span> Available
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="inline-block w-3 h-3 rounded border border-brand-gold bg-brand-gold/30"></span> Selected
-            </div>
-          </div>
-        </div>
-
-        <!-- Weekday header -->
-        <div class="calendar-grid text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim mb-2">
-          <div class="text-center py-1">Sun</div>
-          <div class="text-center py-1">Mon</div>
-          <div class="text-center py-1">Tue</div>
-          <div class="text-center py-1">Wed</div>
-          <div class="text-center py-1">Thu</div>
-          <div class="text-center py-1">Fri</div>
-          <div class="text-center py-1">Sat</div>
-        </div>
-
-        <!-- Calendar days -->
-        <div id="calendar-days" class="calendar-grid text-sm mb-6"></div>
-
-        <!-- Availability status -->
-        <div id="availability-status" class="text-xs text-brand-dim/80 mb-4">
-          Enter your address and select a treatment to load live availability.
-        </div>
-
-        <!-- Time slots for selected date -->
-        <div id="time-slots-wrapper" class="border-t border-brand-gold/15 pt-4 mt-2 hidden">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
-              <i data-lucide="clock" class="w-4 h-4"></i>
-              <span id="selected-date-label">Available Times</span>
-            </div>
-            <div class="text-[11px] text-brand-dim/80">
-              <span id="selected-treatment-label"></span>
-            </div>
-          </div>
-          <div id="time-slots" class="flex flex-wrap gap-3"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
-    <div class="container mx-auto px-6">
-      <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
-      <div class="flex justify-center gap-6 text-brand-gold mb-8">
-        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
-        <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
-      </div>
-      <a href="index.html" class="text-brand-gold hover:text-brand-light text-sm underline">Return to Main Website</a>
-    </div>
-  </footer>
-
-  <!-- ADDRESS MODAL -->
-  <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
-    <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-6 md:p-8 max-w-lg w-full relative shadow-2xl">
-      <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-      <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Where will we be visiting?</h3>
-      <p class="text-sm text-brand-dim text-center mb-6">
-        We’ll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
-      </p>
-
-      <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address *</label>
-      <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors mb-2">
-      <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light mb-4">
-        Can’t find your address? Enter it manually.
-      </button>
-
-      <div id="manual-address-wrapper" class="space-y-3 hidden">
-        <div>
-          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Street Address *</label>
-          <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">City *</label>
-            <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
-          </div>
-          <div>
-            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Postal Code *</label>
-            <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
-          </div>
-        </div>
-      </div>
-
-      <!-- Treatment + Duration (standard only) -->
-      <div class="mt-6 space-y-3">
-        <div>
-          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Treatment *</label>
-          <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black">
-            <option value="" disabled selected>Select a treatment...</option>
-
-            <optgroup label="Core Therapeutic">
-              <option value="relaxation">Relaxation Massage</option>
-              <option value="deep_tissue">Deep Tissue Massage</option>
-              <option value="sports">Sports Massage</option>
-              <option value="senior">Senior Massage</option>
-            </optgroup>
-
-            <optgroup label="Premium Therapeutic">
-              <option value="hot_stone">Hot Stone Massage</option>
-              <option value="cupping">Cupping Therapy</option>
-            </optgroup>
-
-            <optgroup label="Specialty">
-              <option value="prenatal">Prenatal Massage</option>
-              <option value="pediatric">Pediatric Massage</option>
-              <option value="infant">Infant Massage</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Duration *</label>
-          <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60">
-            <option value="" disabled selected>Select a duration...</option>
-          </select>
-          <p class="mt-2 text-[11px] text-brand-dim/80">
-            You will only see the service duration. We add a standard 25-minute setup/pack-up internally.
-          </p>
-        </div>
-      </div>
-
-      <button id="address-continue-btn" class="w-full btn-filled py-3 mt-4 font-bold tracking-wider">
-        <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
-        <span>Show Available Times</span>
-      </button>
-
-      <p id="address-error" class="text-xs text-red-400 mt-3 hidden">
-        Please provide an address, treatment, and duration before continuing.
-      </p>
-    </div>
-  </div>
-
-  <!-- SCRIPT: AVAILABILITY -->
-  <script>
-    // ---------------- CONFIG ----------------
-    const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
-    const STATIC_SETUP_MINUTES = 25;
-
-    // ---------------- RULES (from your message) ----------------
-    const TREATMENT_RULES = {
-      relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
-      deep_tissue: { label: "Deep Tissue Massage", durations: [60, 75, 90, 120] },
-      sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
-      senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
-
-      hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
-      cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
-
-      prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
-      pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
-      infant:      { label: "Infant Massage", durations: [30, 45] },
-    };
-
-    // ---------------- STATE ----------------
-    let availabilityByDate = {};      // { 'YYYY-MM-DD': [slot, ...] }
-    let calendarCurrent = new Date(); // month being viewed
-    let selectedDateStr = null;       // 'YYYY-MM-DD'
-    let selectedSlot = null;          // {start,end, ...}
-    window.__selectedAddress = null;  // {address, city, postal_code}
-
-    let selectedServiceKey = null;       // e.g. 'relaxation'
-    let selectedStandardDuration = null; // e.g. 60
-
-    // ---------------- HELPERS ----------------
-    function toDateStr(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function formatDateLabel(date) {
-      return date.toLocaleDateString('en-CA', {
-        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-      });
-    }
-
-    function parseISODate(iso) {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return null;
-      return d;
-    }
-
-    function formatTimeLabel(slot) {
-      if (slot.label) return slot.label;
-      const dateObj = parseISODate(slot.start);
-      if (!dateObj) return 'Time';
-      return dateObj.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
-    }
-
-    function setAvailabilityFromResponse(data) {
-      availabilityByDate = {};
-
-      if (!data || typeof data !== 'object') return;
-
-      // Supports new format: { slots: { "YYYY-MM-DD": [...] } }
-      if (data.slots && typeof data.slots === 'object') {
-        availabilityByDate = data.slots;
-        return;
-      }
-
-      // Supports old format: { dates: [ {date, slots} ] }
-      if (Array.isArray(data.dates)) {
-        data.dates.forEach(day => {
-          if (!day || !day.date || !Array.isArray(day.slots)) return;
-          availabilityByDate[day.date] = day.slots;
-        });
-      }
-    }
-
-    function hasSlots(dateStr) {
-      return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
-    }
-
-    function updateAvailabilityStatus(message, isError = false) {
-      const el = document.getElementById('availability-status');
-      el.textContent = message;
-      el.className = "text-xs mb-4 " + (isError ? "text-red-400" : "text-brand-dim/80");
-    }
-
-    function computeMonthRange(monthDate) {
-      const now = new Date(); now.setHours(0,0,0,0);
-      const y = monthDate.getFullYear();
-      const m = monthDate.getMonth();
-      const first = new Date(y, m, 1); first.setHours(0,0,0,0);
-      const last = new Date(y, m + 1, 0); last.setHours(0,0,0,0);
-
-      const from = (y === now.getFullYear() && m === now.getMonth()) ? now : first;
-      return { from: toDateStr(from), to: toDateStr(last) };
-    }
-
-    function getClinikoBlockMinutes() {
-      if (!selectedStandardDuration) return null;
-      return Number(selectedStandardDuration) + STATIC_SETUP_MINUTES;
-    }
-
-    // ---------------- CALENDAR RENDER ----------------
-    function renderCalendar() {
-      const monthLabelEl = document.getElementById('calendar-month-label');
-      const daysContainer = document.getElementById('calendar-days');
-      const today = new Date(); today.setHours(0,0,0,0);
-
-      const year = calendarCurrent.getFullYear();
-      const month = calendarCurrent.getMonth();
-      const firstOfMonth = new Date(year, month, 1);
-      const lastOfMonth = new Date(year, month + 1, 0);
-
-      monthLabelEl.textContent = calendarCurrent.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
-
-      const startDow = firstOfMonth.getDay();
-      const daysInMonth = lastOfMonth.getDate();
-      daysContainer.innerHTML = '';
-
-      const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
-
-      for (let cellIndex = 0; cellIndex < totalCells; cellIndex++) {
-        const dayEl = document.createElement('button');
-        dayEl.type = 'button';
-        dayEl.className = "relative text-center py-2 text-sm rounded-sm border border-brand-gold/10 bg-black/30";
-
-        const dayNumber = cellIndex - startDow + 1;
-        if (dayNumber < 1 || dayNumber > daysInMonth) {
-          dayEl.classList.add('opacity-0', 'pointer-events-none');
-          daysContainer.appendChild(dayEl);
-          continue;
-        }
-
-        const cellDate = new Date(year, month, dayNumber);
-        cellDate.setHours(0,0,0,0);
-        const dateStr = toDateStr(cellDate);
-
-        dayEl.textContent = dayNumber;
-
-        if (cellDate < today) {
-          dayEl.classList.add('calendar-day-disabled');
-          daysContainer.appendChild(dayEl);
-          continue;
-        }
-
-        if (hasSlots(dateStr)) dayEl.classList.add('calendar-day-available');
-        if (selectedDateStr === dateStr) dayEl.classList.add('calendar-day-selected');
-
-        dayEl.addEventListener('click', () => {
-          if (!hasSlots(dateStr)) return;
-          selectedDateStr = dateStr;
-          selectedSlot = null;
-          renderCalendar();
-          renderTimeSlotsForDate(dateStr);
-        });
-
-        daysContainer.appendChild(dayEl);
-      }
-
-      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
-    }
-
-    function renderTimeSlotsForDate(dateStr) {
-      const wrapper = document.getElementById('time-slots-wrapper');
-      const container = document.getElementById('time-slots');
-      const dateLabelEl = document.getElementById('selected-date-label');
-      const treatLabelEl = document.getElementById('selected-treatment-label');
-
-      if (!hasSlots(dateStr)) {
-        wrapper.classList.add('hidden');
-        container.innerHTML = '';
-        return;
-      }
-
-      const [yy, mm, dd] = dateStr.split('-').map(Number);
-      const dateObj = new Date(yy, mm - 1, dd);
-      dateLabelEl.textContent = formatDateLabel(dateObj);
-
-      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-      treatLabelEl.textContent = (treat && selectedStandardDuration)
-        ? `${treat.label} • ${selectedStandardDuration} min`
-        : '';
-
-      const slots = availabilityByDate[dateStr];
-      container.innerHTML = '';
-
-      slots.forEach((slot) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = "px-4 py-2 rounded-full border border-brand-gold/30 text-xs md:text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 flex items-center gap-2";
-        btn.innerHTML = '<i data-lucide="clock-4" class="w-3 h-3 text-brand-gold"></i><span>' + formatTimeLabel(slot) + '</span>';
-
-        btn.addEventListener('click', () => {
-          selectedSlot = slot;
-          renderTimeSlotsForDate(dateStr);
-        });
-
-        if (selectedSlot && selectedSlot.start === slot.start) {
-          btn.classList.add('bg-brand-gold/20', 'border-brand-gold');
-        }
-
-        container.appendChild(btn);
-      });
-
-      wrapper.classList.remove('hidden');
-      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
-    }
-
-    // ---------------- ADDRESS MODAL LOGIC ----------------
-    function openAddressModal() {
-      const modal = document.getElementById('address-modal');
-      if (modal) modal.classList.remove('hidden');
-    }
-    function closeAddressModal() {
-      const modal = document.getElementById('address-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function getAddressFromModal() {
-      const manualWrapper = document.getElementById('manual-address-wrapper');
-      const isManual = !manualWrapper.classList.contains('hidden');
-
-      if (isManual) {
-        const street = document.getElementById('manual-street').value.trim();
-        const city = document.getElementById('manual-city').value.trim();
-        const postal = document.getElementById('manual-postal').value.trim();
-        if (!street || !city || !postal) return null;
-        const full = `${street}, ${city} ${postal}`;
-        const addrObj = { address: full, city, postal_code: postal };
-        window.__selectedAddress = addrObj;
-        return addrObj;
-      }
-
-      if (window.__selectedAddress && window.__selectedAddress.address) return window.__selectedAddress;
-
-      const raw = document.getElementById('address-input-initial').value.trim();
-      if (!raw) return null;
-      const addrObj = { address: raw, city: "", postal_code: "" };
-      window.__selectedAddress = addrObj;
-      return addrObj;
-    }
-
-    function rebuildDurationOptions() {
-      const durationSelect = document.getElementById('duration-select');
-      durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
-
-      if (!selectedServiceKey || !TREATMENT_RULES[selectedServiceKey]) {
-        durationSelect.disabled = true;
-        selectedStandardDuration = null;
-        return;
-      }
-
-      const durations = TREATMENT_RULES[selectedServiceKey].durations;
-      durations.forEach(min => {
-        const opt = document.createElement('option');
-        opt.value = String(min);
-        opt.textContent = `${min} min`;
-        durationSelect.appendChild(opt);
-      });
-
-      durationSelect.disabled = false;
-      selectedStandardDuration = null;
-    }
-
-    async function loadAvailabilityForCurrentMonth() {
-      const addrObj = window.__selectedAddress;
-      if (!addrObj || !addrObj.address) {
-        updateAvailabilityStatus("Enter your address to load live availability.", false);
-        return;
-      }
-      if (!selectedServiceKey || !selectedStandardDuration) {
-        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-        return;
-      }
-
-      try {
-        updateAvailabilityStatus("Checking live availability for this address...");
-        selectedDateStr = null;
-        selectedSlot = null;
-        document.getElementById('time-slots-wrapper').classList.add('hidden');
-
-        const { from, to } = computeMonthRange(calendarCurrent);
-        const blockMinutes = getClinikoBlockMinutes();
-
-        const treat = TREATMENT_RULES[selectedServiceKey];
-
-        // Payload your Netlify fn can forward to n8n
-        const payload = {
-          address: addrObj.address,
-          city: addrObj.city,
-          postal_code: addrObj.postal_code,
-          from,
-          to,
-          durationMinutes: blockMinutes,                // Cliniko block minutes (standard + 25)
-          standardDurationMinutes: Number(selectedStandardDuration),
-          treatment_key: selectedServiceKey,
-          treatment_label: treat ? treat.label : ""
-        };
-
-        const res = await fetch(AVAILABILITY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          console.error('Availability error', res.status, await res.text());
-          setAvailabilityFromResponse(null);
-          renderCalendar();
-          updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
-          return;
-        }
-
-        const data = await res.json();
-        setAvailabilityFromResponse(data);
-
-        const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
-        if (!any) {
-          updateAvailabilityStatus("No mobile availability found for this month with the selected treatment and duration. Please try another month or contact us.", false);
-        } else {
-          updateAvailabilityStatus("Select a date to see available times.", false);
-        }
-
-        renderCalendar();
-      } catch (e) {
-        console.error('Availability exception', e);
-        updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
-      }
-    }
-
-    // ---------------- INIT ----------------
-    document.addEventListener('DOMContentLoaded', () => {
-      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
-
-      const serviceSelect = document.getElementById('service-select');
-      const durationSelect = document.getElementById('duration-select');
-
-      serviceSelect.addEventListener('change', () => {
-        selectedServiceKey = serviceSelect.value || null;
-        rebuildDurationOptions();
-      });
-
-      durationSelect.addEventListener('change', () => {
-        selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
-      });
-
-      document.getElementById('prev-month-btn').addEventListener('click', async () => {
-        const tmp = new Date(calendarCurrent);
-        tmp.setMonth(calendarCurrent.getMonth() - 1);
-
-        const today = new Date(); today.setHours(0,0,0,0);
-        const lastTmp = new Date(tmp.getFullYear(), tmp.getMonth() + 1, 0);
-        if (lastTmp < today) return;
-
-        calendarCurrent = tmp;
-        await loadAvailabilityForCurrentMonth();
-      });
-
-      document.getElementById('next-month-btn').addEventListener('click', async () => {
-        calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
-        await loadAvailabilityForCurrentMonth();
-      });
-
-      document.getElementById('change-address-btn').addEventListener('click', () => openAddressModal());
-      document.getElementById('address-modal-close').addEventListener('click', () => closeAddressModal());
-
-      document.getElementById('toggle-manual-address').addEventListener('click', () => {
-        const wrapper = document.getElementById('manual-address-wrapper');
-        wrapper.classList.toggle('hidden');
-      });
-
-      document.getElementById('address-continue-btn').addEventListener('click', async () => {
-        const addrObj = getAddressFromModal();
-        const errorEl = document.getElementById('address-error');
-
-        if (!addrObj || !addrObj.address || !selectedServiceKey || !selectedStandardDuration) {
-          errorEl.classList.remove('hidden');
-          return;
-        }
-        errorEl.classList.add('hidden');
-
-        const treat = TREATMENT_RULES[selectedServiceKey];
-        const label = document.getElementById('selected-address-label');
-        label.textContent = `${addrObj.address} • ${treat.label} (${selectedStandardDuration} min)`;
-
-        closeAddressModal();
-        await loadAvailabilityForCurrentMonth();
-      });
-
-      renderCalendar();
-      openAddressModal();
-    });
-  </script>
-
-  <!-- Google Maps Places API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+    <div class="relative pt-12 pb-12 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+    <div class="relative z-10">
+      <a href="index.html" class="inline-block group">
+        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
+        <div class="flex flex-col">
+          <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">RELAX & RENEW</span>
+          <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+    <section id="booking" class="py-16 bg-brand-black border-b border-brand-light/5">
+    <div class="container mx-auto px-6 max-w-5xl">
+      <div class="text-center mb-10">
+        <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Step 1: Address + Treatment</span>
+        <h1 class="text-3xl md:text-4xl text-brand-light mt-3 mb-3 font-serif">Mobile Appointment Booking</h1>
+        <p class="text-brand-dim text-sm max-w-2xl mx-auto">
+          Enter your service address and choose your treatment. We’ll calculate drive-time between appointments and only show times that realistically work for mobile visits.
+        </p>
+      </div>
+
+      <div class="card-fancy">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4"></i>
+            <span id="selected-address-label">Service address + treatment required to view availability</span>
+          </div>
+          <button id="change-address-btn" class="btn-gold text-[0.65rem] px-4 py-2">
+            <i data-lucide="edit-3" class="w-3 h-3"></i>
+            <span>Change</span>
+          </button>
+        </div>
+
+                <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <button id="prev-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10 disabled:opacity-30 disabled:cursor-not-allowed">
+              <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
+            </button>
+            <button id="next-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10">
+              <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
+            </button>
+            <div class="text-brand-light text-sm md:text-base font-serif">
+              <span id="calendar-month-label"></span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded border border-brand-gold/20"></span> No Availability
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded border border-brand-gold/70 bg-brand-gold/15"></span> Available
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded border border-brand-gold bg-brand-gold/30"></span> Selected
+            </div>
+          </div>
+        </div>
+
+                <div class="calendar-grid text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim mb-2">
+          <div class="text-center py-1">Sun</div>
+          <div class="text-center py-1">Mon</div>
+          <div class="text-center py-1">Tue</div>
+          <div class="text-center py-1">Wed</div>
+          <div class="text-center py-1">Thu</div>
+          <div class="text-center py-1">Fri</div>
+          <div class="text-center py-1">Sat</div>
+        </div>
+
+                <div id="calendar-days" class="calendar-grid text-sm mb-6"></div>
+
+                <div id="availability-status" class="text-xs text-brand-dim/80 mb-4">
+          Enter your address and select a treatment to load live availability.
+        </div>
+
+                <div id="time-slots-wrapper" class="border-t border-brand-gold/15 pt-4 mt-2 hidden">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4"></i>
+              <span id="selected-date-label">Available Times</span>
+            </div>
+            <div class="text-[11px] text-brand-dim/80">
+              <span id="selected-treatment-label"></span>
+            </div>
+          </div>
+          <div id="time-slots" class="flex flex-wrap gap-3"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
+    <div class="container mx-auto px-6">
+      <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
+      <div class="flex justify-center gap-6 text-brand-gold mb-8">
+        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+        <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+      </div>
+      <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline">Return to Main Website</a>
+    </div>
+  </footer>
+
+    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-6 md:p-8 max-w-lg w-full relative shadow-2xl">
+      <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Where will we be visiting?</h3>
+      <p class="text-sm text-brand-dim text-center mb-6">
+        We’ll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+      </p>
+
+      <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address *</label>
+      <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors mb-2">
+      <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light mb-4">
+        Can’t find your address? Enter it manually.
+      </button>
+
+      <div id="manual-address-wrapper" class="space-y-3 hidden">
+        <div>
+          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Street Address *</label>
+          <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">City *</label>
+            <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+          <div>
+            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Postal Code *</label>
+            <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+          </div>
+        </div>
+      </div>
+
+            <div class="mt-6 space-y-3">
+        <div>
+          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Treatment *</label>
+          <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black">
+            <option value="" disabled selected>Select a treatment...</option>
+
+            <optgroup label="Core Therapeutic">
+              <option value="relaxation">Relaxation Massage</option>
+              <option value="deep_tissue">Deep Tissue Massage</option>
+              <option value="sports">Sports Massage</option>
+              <option value="senior">Senior Massage</option>
+            </optgroup>
+
+            <optgroup label="Premium Therapeutic">
+              <option value="hot_stone">Hot Stone Massage</option>
+              <option value="cupping">Cupping Therapy</option>
+            </optgroup>
+
+            <optgroup label="Specialty">
+              <option value="prenatal">Prenatal Massage</option>
+              <option value="pediatric">Pediatric Massage</option>
+              <option value="infant">Infant Massage</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Duration *</label>
+          <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60">
+            <option value="" disabled selected>Select a duration...</option>
+          </select>
+          <p class="mt-2 text-[11px] text-brand-dim/80">
+            You will only see the service duration. We add a standard 25-minute setup/pack-up internally.
+          </p>
+        </div>
+      </div>
+
+      <button id="address-continue-btn" class="w-full btn-filled py-3 mt-4 font-bold tracking-wider">
+        <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+        <span>Show Available Times</span>
+      </button>
+
+      <p id="address-error" class="text-xs text-red-400 mt-3 hidden">
+        Please provide an address, treatment, and duration before continuing.
+      </p>
+    </div>
+  </div>
+
+    <script>
+    // ---------------- CONFIG ----------------
+    const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
+    const STATIC_SETUP_MINUTES = 25;
+
+    // ---------------- RULES (from your message) ----------------
+    const TREATMENT_RULES = {
+      relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
+      deep_tissue: { label: "Deep Tissue Massage", durations: [60, 75, 90, 120] },
+      sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
+      senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
+
+      hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
+      cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
+
+      prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
+      pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
+      infant:      { label: "Infant Massage", durations: [30, 45] },
+    };
+
+    // ---------------- STATE ----------------
+    let availabilityByDate = {};      // { 'YYYY-MM-DD': [slot, ...] }
+    let calendarCurrent = new Date(); // month being viewed
+    let selectedDateStr = null;       // 'YYYY-MM-DD'
+    let selectedSlot = null;          // {start,end, ...}
+    window.__selectedAddress = null;  // {address, city, postal_code}
+
+    let selectedServiceKey = null;       // e.g. 'relaxation'
+    let selectedStandardDuration = null; // e.g. 60
+
+    // ---------------- HELPERS ----------------
+    function toDateStr(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDateLabel(date) {
+      return date.toLocaleDateString('en-CA', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+      });
+    }
+
+    function parseISODate(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function formatTimeLabel(slot) {
+      if (slot.label) return slot.label;
+      const dateObj = parseISODate(slot.start);
+      if (!dateObj) return 'Time';
+      return dateObj.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    // *** FIX APPLIED: Correctly handles the array structure returned by n8n. ***
+    function setAvailabilityFromResponse(data) {
+      availabilityByDate = {};
+
+      if (!data || typeof data !== 'object') return;
+
+      // Handle the clean array returned directly by the n8n response node.
+      if (Array.isArray(data)) {
+        data.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+        return;
+      }
+
+      // Supports other formats (kept for backward compatibility/flexibility)
+      if (data.slots && typeof data.slots === 'object') {
+        availabilityByDate = data.slots;
+        return;
+      }
+      if (Array.isArray(data.dates)) {
+        data.dates.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+      }
+    }
+
+    function hasSlots(dateStr) {
+      return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
+    }
+
+    function updateAvailabilityStatus(message, isError = false) {
+      const el = document.getElementById('availability-status');
+      el.textContent = message;
+      el.className = "text-xs mb-4 " + (isError ? "text-red-400" : "text-brand-dim/80");
+    }
+
+    function computeMonthRange(monthDate) {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const y = monthDate.getFullYear();
+      const m = monthDate.getMonth();
+      const first = new Date(y, m, 1); first.setHours(0,0,0,0);
+      const last = new Date(y, m + 1, 0); last.setHours(0,0,0,0);
+
+      const from = (y === now.getFullYear() && m === now.getMonth()) ? now : first;
+      return { from: toDateStr(from), to: toDateStr(last) };
+    }
+
+    function getClinikoBlockMinutes() {
+      if (!selectedStandardDuration) return null;
+      return Number(selectedStandardDuration) + STATIC_SETUP_MINUTES;
+    }
+
+    // ---------------- CALENDAR RENDER ----------------
+    function renderCalendar() {
+      const monthLabelEl = document.getElementById('calendar-month-label');
+      const daysContainer = document.getElementById('calendar-days');
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      const year = calendarCurrent.getFullYear();
+      const month = calendarCurrent.getMonth();
+      const firstOfMonth = new Date(year, month, 1);
+      const lastOfMonth = new Date(year, month + 1, 0);
+
+      monthLabelEl.textContent = calendarCurrent.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+
+      const startDow = firstOfMonth.getDay();
+      const daysInMonth = lastOfMonth.getDate();
+      daysContainer.innerHTML = '';
+
+      const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+      for (let cellIndex = 0; cellIndex < totalCells; cellIndex++) {
+        const dayEl = document.createElement('button');
+        dayEl.type = 'button';
+        dayEl.className = "relative text-center py-2 text-sm rounded-sm border border-brand-gold/10 bg-black/30";
+
+        const dayNumber = cellIndex - startDow + 1;
+        if (dayNumber < 1 || dayNumber > daysInMonth) {
+          dayEl.classList.add('opacity-0', 'pointer-events-none');
+          daysContainer.appendChild(dayEl);
+          continue;
+        }
+
+        const cellDate = new Date(year, month, dayNumber);
+        cellDate.setHours(0,0,0,0);
+        const dateStr = toDateStr(cellDate);
+
+        dayEl.textContent = dayNumber;
+
+        if (cellDate < today) {
+          dayEl.classList.add('calendar-day-disabled');
+          daysContainer.appendChild(dayEl);
+          continue;
+        }
+
+        if (hasSlots(dateStr)) dayEl.classList.add('calendar-day-available');
+        if (selectedDateStr === dateStr) dayEl.classList.add('calendar-day-selected');
+
+        dayEl.addEventListener('click', () => {
+          if (!hasSlots(dateStr)) return;
+          selectedDateStr = dateStr;
+          selectedSlot = null;
+          renderCalendar();
+          renderTimeSlotsForDate(dateStr);
+        });
+
+        daysContainer.appendChild(dayEl);
+      }
+
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+    }
+
+    function renderTimeSlotsForDate(dateStr) {
+      const wrapper = document.getElementById('time-slots-wrapper');
+      const container = document.getElementById('time-slots');
+      const dateLabelEl = document.getElementById('selected-date-label');
+      const treatLabelEl = document.getElementById('selected-treatment-label');
+
+      if (!hasSlots(dateStr)) {
+        wrapper.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+
+      const [yy, mm, dd] = dateStr.split('-').map(Number);
+      const dateObj = new Date(yy, mm - 1, dd);
+      dateLabelEl.textContent = formatDateLabel(dateObj);
+
+      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+      treatLabelEl.textContent = (treat && selectedStandardDuration)
+        ? `${treat.label} • ${selectedStandardDuration} min`
+        : '';
+
+      const slots = availabilityByDate[dateStr];
+      container.innerHTML = '';
+
+      slots.forEach((slot) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = "px-4 py-2 rounded-full border border-brand-gold/30 text-xs md:text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 flex items-center gap-2";
+        btn.innerHTML = '<i data-lucide="clock-4" class="w-3 h-3 text-brand-gold"></i><span>' + formatTimeLabel(slot) + '</span>';
+
+        btn.addEventListener('click', () => {
+          selectedSlot = slot;
+          renderTimeSlotsForDate(dateStr);
+        });
+
+        if (selectedSlot && selectedSlot.start === slot.start) {
+          btn.classList.add('bg-brand-gold/20', 'border-brand-gold');
+        }
+
+        container.appendChild(btn);
+      });
+
+      wrapper.classList.remove('hidden');
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+    }
+
+    // ---------------- ADDRESS MODAL LOGIC ----------------
+    function openAddressModal() {
+      const modal = document.getElementById('address-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+    function closeAddressModal() {
+      const modal = document.getElementById('address-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function getAddressFromModal() {
+      const manualWrapper = document.getElementById('manual-address-wrapper');
+      const isManual = !manualWrapper.classList.contains('hidden');
+
+      if (isManual) {
+        const street = document.getElementById('manual-street').value.trim();
+        const city = document.getElementById('manual-city').value.trim();
+        const postal = document.getElementById('manual-postal').value.trim();
+        if (!street || !city || !postal) return null;
+        const full = `${street}, ${city} ${postal}`;
+        const addrObj = { address: full, city, postal_code: postal };
+        window.__selectedAddress = addrObj;
+        return addrObj;
+      }
+
+      if (window.__selectedAddress && window.__selectedAddress.address) return window.__selectedAddress;
+
+      const raw = document.getElementById('address-input-initial').value.trim();
+      if (!raw) return null;
+      const addrObj = { address: raw, city: "", postal_code: "" };
+      window.__selectedAddress = addrObj;
+      return addrObj;
+    }
+
+    function rebuildDurationOptions() {
+      const durationSelect = document.getElementById('duration-select');
+      durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
+
+      if (!selectedServiceKey || !TREATMENT_RULES[selectedServiceKey]) {
+        durationSelect.disabled = true;
+        selectedStandardDuration = null;
+        return;
+      }
+
+      const durations = TREATMENT_RULES[selectedServiceKey].durations;
+      durations.forEach(min => {
+        const opt = document.createElement('option');
+        opt.value = String(min);
+        opt.textContent = `${min} min`;
+        durationSelect.appendChild(opt);
+      });
+
+      durationSelect.disabled = false;
+      selectedStandardDuration = null;
+    }
+
+    async function loadAvailabilityForCurrentMonth() {
+      const addrObj = window.__selectedAddress;
+      if (!addrObj || !addrObj.address) {
+        updateAvailabilityStatus("Enter your address to load live availability.", false);
+        return;
+      }
+      if (!selectedServiceKey || !selectedStandardDuration) {
+        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        return;
+      }
+
+      try {
+        updateAvailabilityStatus("Checking live availability for this address...");
+        selectedDateStr = null;
+        selectedSlot = null;
+        document.getElementById('time-slots-wrapper').classList.add('hidden');
+
+        const { from, to } = computeMonthRange(calendarCurrent);
+        const blockMinutes = getClinikoBlockMinutes();
+
+        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+        // Payload your Netlify fn can forward to n8n
+        const payload = {
+          address: addrObj.address,
+          city: addrObj.city,
+          postal_code: addrObj.postal_code,
+          from,
+          to,
+          durationMinutes: blockMinutes,                // Cliniko block minutes (standard + 25)
+          standardDurationMinutes: Number(selectedStandardDuration),
+          treatment_key: selectedServiceKey,
+          treatment_label: treat ? treat.label : ""
+        };
+
+        const res = await fetch(AVAILABILITY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          console.error('Availability error', res.status, await res.text());
+          setAvailabilityFromResponse(null);
+          renderCalendar();
+          updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
+          return;
+        }
+
+        const data = await res.json();
+        setAvailabilityFromResponse(data);
+
+        const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
+        if (!any) {
+          updateAvailabilityStatus("No mobile availability found for this month with the selected treatment and duration. Please try another month or contact us.", false);
+        } else {
+          updateAvailabilityStatus("Select a date to see available times.", false);
+        }
+
+        renderCalendar();
+      } catch (e) {
+        console.error('Availability exception', e);
+        updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
+      }
+    }
+
+    // ---------------- INIT ----------------
+    document.addEventListener('DOMContentLoaded', () => {
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e){}
+
+      const serviceSelect = document.getElementById('service-select');
+      const durationSelect = document.getElementById('duration-select');
+
+      serviceSelect.addEventListener('change', () => {
+        selectedServiceKey = serviceSelect.value || null;
+        rebuildDurationOptions();
+      });
+
+      durationSelect.addEventListener('change', () => {
+        selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+      });
+
+      document.getElementById('prev-month-btn').addEventListener('click', async () => {
+        const tmp = new Date(calendarCurrent);
+        tmp.setMonth(calendarCurrent.getMonth() - 1);
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const lastTmp = new Date(tmp.getFullYear(), tmp.getMonth() + 1, 0);
+        // Check if moving back would be before the current month
+        if (lastTmp < today) return;
+        
+        calendarCurrent = tmp;
+        await loadAvailabilityForCurrentMonth();
+      });
+
+      document.getElementById('next-month-btn').addEventListener('click', async () => {
+        calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
+        await loadAvailabilityForCurrentMonth();
+      });
+
+      document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
+        e.preventDefault();
+        const manualWrapper = document.getElementById('manual-address-wrapper');
+        const autoInput = document.getElementById('address-input-initial');
+        const isHidden = manualWrapper.classList.contains('hidden');
+
+        if (isHidden) {
+          manualWrapper.classList.remove('hidden');
+          autoInput.classList.add('hidden');
+          e.target.textContent = "Use address lookup instead.";
+        } else {
+          manualWrapper.classList.add('hidden');
+          autoInput.classList.remove('hidden');
+          e.target.textContent = "Can’t find your address? Enter it manually.";
+        }
+      });
+
+
+      document.getElementById('address-continue-btn').addEventListener('click', async () => {
+        const addr = getAddressFromModal();
+        const errorEl = document.getElementById('address-error');
+        const labelEl = document.getElementById('selected-address-label');
+        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+        if (!addr || !selectedStandardDuration || !treat) {
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        errorEl.classList.add('hidden');
+        labelEl.textContent = `Selected: ${treat.label} (${selectedStandardDuration} min) at ${addr.city}`;
+        closeAddressModal();
+        await loadAvailabilityForCurrentMonth();
+      });
+
+      document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
+      document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
+      document.getElementById('address-modal').classList.remove('hidden');
+
+      renderCalendar();
+    });
+
+  </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
