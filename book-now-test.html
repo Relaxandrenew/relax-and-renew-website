@@ -183,7 +183,7 @@
                 <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Step 1: Address + Treatment</span>
                 <h1 class="text-3xl md:text-4xl text-brand-light mt-3 mb-3 font-serif">Mobile Appointment Booking</h1>
                 <p class="text-brand-dim text-sm max-w-2xl mx-auto">
-                    Enter your service address and choose your treatment. We’ll calculate drive-time between appointments and only show times that realistically work for mobile visits.
+                    Enter your service address and choose your treatment. We'll calculate drive-time between appointments and only show times that realistically work for mobile visits.
                 </p>
             </div>
 
@@ -281,13 +281,13 @@
             </button>
             <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Where will we be visiting?</h3>
             <p class="text-sm text-brand-dim text-center mb-6">
-                We’ll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+                We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
             </p>
 
             <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address *</label>
             <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors mb-2">
             <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light mb-4">
-                Can’t find your address? Enter it manually.
+                Can't find your address? Enter it manually.
             </button>
 
             <div id="manual-address-wrapper" class="space-y-3 hidden">
@@ -362,30 +362,30 @@
         const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
         const STATIC_SETUP_MINUTES = 25;
 
-        // ---------------- RULES (from your message) ----------------
+        // ---------------- RULES ----------------
         const TREATMENT_RULES = {
-            relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
+            relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
             deep_tissue: { label: "Deep Tissue Massage", durations: [60, 75, 90, 120] },
-            sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
-            senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
+            sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
+            senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
 
-            hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
-            cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
+            hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
+            cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
 
-            prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
-            pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
-            infant:      { label: "Infant Massage", durations: [30, 45] },
+            prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
+            pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
+            infant:      { label: "Infant Massage", durations: [30, 45] },
         };
 
         // ---------------- STATE ----------------
-        let availabilityByDate = {};      // { 'YYYY-MM-DD': [slot, ...] }
-        let calendarCurrent = new Date(); // month being viewed
-        let selectedDateStr = null;       // 'YYYY-MM-DD'
-        let selectedSlot = null;          // {start,end, ...}
-        window.__selectedAddress = null;  // {address, city, postal_code}
+        let availabilityByDate = {};
+        let calendarCurrent = new Date();
+        let selectedDateStr = null;
+        let selectedSlot = null;
+        window.__selectedAddress = null;
 
-        let selectedServiceKey = null;       // e.g. 'relaxation'
-        let selectedStandardDuration = null; // e.g. 60
+        let selectedServiceKey = null;
+        let selectedStandardDuration = null;
 
         // ---------------- HELPERS ----------------
         function toDateStr(date) {
@@ -417,27 +417,39 @@
         function setAvailabilityFromResponse(data) {
             availabilityByDate = {};
 
-            if (!data || typeof data !== 'object') return;
+            console.log('🔍 Raw API Response:', data);
+            console.log('🔍 Is Array?', Array.isArray(data));
+            console.log('🔍 Type:', typeof data);
 
-            // Handle the clean array returned by the n8n response node.
+            if (!data) return;
+
+            // Handle direct array (expected from fixed n8n workflow)
             if (Array.isArray(data)) {
+                console.log('✅ Processing as direct array');
                 data.forEach(day => {
                     if (!day || !day.date || !Array.isArray(day.slots)) return;
                     availabilityByDate[day.date] = day.slots;
                 });
+                console.log('📅 Availability by date:', availabilityByDate);
                 return;
             }
-            
-            // Handles if the structure changes or is wrapped differently
-            const source = data.slots || data.dates;
-            if (Array.isArray(source)) {
-                source.forEach(day => {
-                    if (!day || !day.date || !Array.isArray(day.slots)) return;
-                    availabilityByDate[day.date] = day.slots;
-                });
-            } else if (data.slots && typeof data.slots === 'object') {
-                 availabilityByDate = data.slots;
+
+            // Handle wrapped responses (fallback)
+            if (typeof data === 'object') {
+                console.log('⚠️ Response is object, checking for wrapper keys');
+                const source = data.dates || data.slots || data.availability;
+                if (Array.isArray(source)) {
+                    console.log('✅ Found array in wrapper, processing');
+                    source.forEach(day => {
+                        if (!day || !day.date || !Array.isArray(day.slots)) return;
+                        availabilityByDate[day.date] = day.slots;
+                    });
+                    console.log('📅 Availability by date:', availabilityByDate);
+                    return;
+                }
             }
+
+            console.error('❌ Could not parse availability data structure');
         }
 
         function hasSlots(dateStr) {
@@ -459,11 +471,6 @@
 
             const from = (y === now.getFullYear() && m === now.getMonth()) ? now : first;
             return { from: toDateStr(from), to: toDateStr(last) };
-        }
-
-        function getClinikoBlockMinutes() {
-            if (!selectedStandardDuration) return null;
-            return Number(selectedStandardDuration) + STATIC_SETUP_MINUTES;
         }
 
         // ---------------- CALENDAR RENDER ----------------
@@ -556,7 +563,6 @@
 
                 btn.addEventListener('click', () => {
                     selectedSlot = slot;
-                    // Re-render to highlight selected slot
                     renderTimeSlotsForDate(dateStr);
                 });
 
@@ -568,7 +574,8 @@
             });
 
             wrapper.classList.remove('hidden');
-            // IMPORTANT: Only create icons once all elements are in the DOM, not inside tight loops
+            
+            // Render icons once after all buttons are created
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
@@ -577,6 +584,7 @@
             const modal = document.getElementById('address-modal');
             if (modal) modal.classList.remove('hidden');
         }
+        
         function closeAddressModal() {
             const modal = document.getElementById('address-modal');
             if (modal) modal.classList.add('hidden');
@@ -646,22 +654,26 @@
                 document.getElementById('time-slots-wrapper').classList.add('hidden');
 
                 const { from, to } = computeMonthRange(calendarCurrent);
-                const blockMinutes = getClinikoBlockMinutes();
+                
+                // Calculate block minutes (what Cliniko needs to reserve)
+                const blockMinutes = Number(selectedStandardDuration) + STATIC_SETUP_MINUTES;
 
                 const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
 
-                // Payload your Netlify fn can forward to n8n
+                // FIXED: Send both standard and block durations
                 const payload = {
                     address: addrObj.address,
                     city: addrObj.city,
                     postal_code: addrObj.postal_code,
                     from,
                     to,
-                    durationMinutes: blockMinutes,                // Cliniko block minutes (standard + 25)
-                    standardDurationMinutes: Number(selectedStandardDuration),
+                    durationMinutes: blockMinutes,                          // Block duration for Cliniko
+                    standardDurationMinutes: Number(selectedStandardDuration), // Standard duration for display/cache
                     treatment_key: selectedServiceKey,
                     treatment_label: treat ? treat.label : ""
                 };
+
+                console.log('📤 Sending payload:', payload);
 
                 const res = await fetch(AVAILABILITY_URL, {
                     method: 'POST',
@@ -670,7 +682,7 @@
                 });
 
                 if (!res.ok) {
-                    console.error('Availability error', res.status, await res.text());
+                    console.error('❌ Availability error', res.status, await res.text());
                     setAvailabilityFromResponse(null);
                     renderCalendar();
                     updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
@@ -689,14 +701,13 @@
 
                 renderCalendar();
             } catch (e) {
-                console.error('Availability exception', e);
+                console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
             }
         }
 
         // ---------------- INIT ----------------
         function initializeApp() {
-            // Initialize Lucide Icons once the DOM is ready
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
             const serviceSelect = document.getElementById('service-select');
@@ -712,31 +723,22 @@
             });
 
             document.getElementById('prev-month-btn').addEventListener('click', async () => {
-                const tmp = new Date(calendarCurrent);
-                tmp.setMonth(calendarCurrent.getMonth() - 1);
-
                 const today = new Date(); today.setHours(0,0,0,0);
-                // Check if moving back would be before the current month
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
 
-                if (isCurrentMonth) {
-                    // Cannot go back if already in the current month view
-                    return;
-                }
+                if (isCurrentMonth) return;
                 
-                calendarCurrent = tmp;
+                calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
                 await loadAvailabilityForCurrentMonth();
+                updatePrevMonthButton();
             });
             
-            // Disable the previous month button if we are in the current month
             function updatePrevMonthButton() {
                 const today = new Date(); today.setHours(0,0,0,0);
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
                 document.getElementById('prev-month-btn').disabled = isCurrentMonth;
             }
-            // Initial call
             updatePrevMonthButton();
-
 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
                 calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
@@ -757,10 +759,9 @@
                 } else {
                     manualWrapper.classList.add('hidden');
                     autoInput.classList.remove('hidden');
-                    e.target.textContent = "Can’t find your address? Enter it manually.";
+                    e.target.textContent = "Can't find your address? Enter it manually.";
                 }
             });
-
 
             document.getElementById('address-continue-btn').addEventListener('click', async () => {
                 const addr = getAddressFromModal();
@@ -774,7 +775,7 @@
                 }
 
                 errorEl.classList.add('hidden');
-                labelEl.textContent = `Selected: ${treat.label} (${selectedStandardDuration} min) at ${addr.city}`;
+                labelEl.textContent = `Selected: ${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address}`;
                 closeAddressModal();
                 await loadAvailabilityForCurrentMonth();
             });
@@ -782,12 +783,10 @@
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
-            // Initially show the modal and render the calendar for the current month
             document.getElementById('address-modal').classList.remove('hidden');
             renderCalendar();
         }
 
-        // Call initialization function when the window is fully loaded
         window.onload = initializeApp;
 
     </script>
