@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Book Now | Relax & Renew RMT</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Now | Relax &amp; Renew RMT</title>
     <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
 
     <!-- Meta Pixel -->
@@ -19,9 +19,6 @@
     fbq('init', '701194265870298');
     fbq('track', 'PageView');
     </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
-    /></noscript>
 
     <!-- Google Tag / Ads -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
@@ -331,6 +328,13 @@
                                 <span class="text-brand-light" id="therapist-name"></span>
                             </div>
                         </div>
+                        <div>
+                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Service Address</div>
+                            <div id="summary-address"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-[12px] text-brand-dim bg-brand-gold/5 border border-brand-gold/10 rounded-lg p-3">
+                        We offer direct billing to insurance companies and accept cash, credit, or e-transfer.
                     </div>
                     <div id="time-slots" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
                 </div>
@@ -342,12 +346,33 @@
         <div class="container mx-auto px-6">
             <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
             <div class="flex justify-center gap-6 text-brand-gold mb-8">
-                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
-                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="facebook" class="w-4 h-4"></i>
+                    <span class="sr-only">Facebook</span>
+                </a>
+                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span class="sr-only">Email</span>
+                </a>
             </div>
             <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline transition-colors">Return to Main Website</a>
         </div>
     </footer>
+
+    <div id="sticky-cta" class="sticky-cta hidden">
+        <div class="container mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3 text-sm text-brand-light">
+                <div class="w-12 h-12 rounded-lg border border-brand-gold/40 bg-black/40 grid place-items-center">
+                    <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
+                </div>
+                <div>
+                    <div id="cta-summary" class="font-semibold"></div>
+                    <div id="cta-details" class="text-brand-dim text-[12px]"></div>
+                </div>
+            </div>
+            <button id="cta-continue" type="button" class="btn-filled px-6 py-3 text-sm font-bold">Continue to Booking</button>
+        </div>
+    </div>
 
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
@@ -396,21 +421,21 @@
                         <option value="" disabled selected>Select a treatment...</option>
 
                         <optgroup label="Core Therapeutic">
-                            <option value="relaxation">Relaxation Massage</option>
-                            <option value="deep_tissue">Deep Tissue Massage</option>
-                            <option value="sports">Sports Massage</option>
-                            <option value="senior">Senior Massage</option>
+                            <option value="relaxation">🌿 Relaxation Massage</option>
+                            <option value="deep_tissue">💪 Deep Tissue Massage</option>
+                            <option value="sports">🏃‍♂️ Sports Massage</option>
+                            <option value="senior">🕰️ Senior Massage</option>
                         </optgroup>
 
                         <optgroup label="Premium Therapeutic">
-                            <option value="hot_stone">Hot Stone Massage</option>
-                            <option value="cupping">Cupping Therapy</option>
+                            <option value="hot_stone">🔥 Hot Stone Massage</option>
+                            <option value="cupping">🌀 Cupping Therapy</option>
                         </optgroup>
 
-                        <optgroup label="Specialty">
-                            <option value="prenatal">Prenatal Massage</option>
-                            <option value="pediatric">Pediatric Massage</option>
-                            <option value="infant">Infant Massage</option>
+                            <optgroup label="Specialty">
+                            <option value="prenatal">🤰 Prenatal Massage</option>
+                            <option value="pediatric">🧒 Pediatric Massage</option>
+                            <option value="infant">👶 Infant Massage</option>
                         </optgroup>
                     </select>
                 </div>
@@ -431,6 +456,7 @@
                 <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
                 <span>Show Available Times</span>
             </button>
+            <button id="returning-client-btn" type="button" class="w-full btn-gold py-3 mt-3 text-sm">Returning Client?</button>
 
             <p id="address-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
                 <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
@@ -466,6 +492,15 @@
             infant:      { label: "Infant Massage", durations: [30, 45] },
         };
 
+        const PRICE_MAP = {
+            30: "$70+HST (~$79)",
+            45: "$90+HST (~$102)",
+            60: "$110+HST (~$124)",
+            75: "$130+HST (~$147)",
+            90: "$150+HST (~$169)",
+            120: "$190+HST (~$214)"
+        };
+
         // ---------------- STATE ----------------
         let availabilityByDate = {};
         let calendarCurrent = new Date();
@@ -475,6 +510,10 @@
 
         let selectedServiceKey = null;
         let selectedStandardDuration = null;
+        let selectedPriceLabel = null;
+        let isLoadingAvailability = false;
+        let expandedHours = {};
+        let currentStep = 1;
 
         // ---------------- HELPERS ----------------
         function toDateStr(date) {
@@ -559,11 +598,38 @@
             return { from: toDateStr(from), to: toDateStr(last) };
         }
 
+        function updateStepTracker(step) {
+            currentStep = step;
+            const cards = document.querySelectorAll('#step-tracker .step-item');
+            cards.forEach((card, idx) => {
+                const badge = card.querySelector('.step-badge');
+                const isActive = idx + 1 === step;
+                const isCompleted = idx + 1 < step;
+                card.classList.toggle('border-brand-gold/20', isActive);
+                card.classList.toggle('border-brand-gold/10', !isActive);
+                card.classList.toggle('bg-black/30', isActive);
+                card.classList.toggle('bg-black/20', !isActive);
+                badge.classList.toggle('bg-brand-gold/20', isActive || isCompleted);
+                badge.classList.toggle('bg-brand-light/10', !isActive && !isCompleted);
+                badge.classList.toggle('text-brand-gold', isActive || isCompleted);
+                badge.classList.toggle('text-brand-light', !isActive && !isCompleted);
+            });
+        }
+
         // ---------------- CALENDAR RENDER ----------------
         function renderCalendar() {
             const monthLabelEl = document.getElementById('calendar-month-label');
             const daysContainer = document.getElementById('calendar-days');
+            const skeleton = document.getElementById('calendar-skeleton');
             const today = new Date(); today.setHours(0,0,0,0);
+
+            if (isLoadingAvailability) {
+                daysContainer.classList.add('hidden');
+                skeleton.classList.remove('hidden');
+            } else {
+                skeleton.classList.add('hidden');
+                daysContainer.classList.remove('hidden');
+            }
 
             const year = calendarCurrent.getFullYear();
             const month = calendarCurrent.getMonth();
@@ -595,6 +661,12 @@
                 const dateStr = toDateStr(cellDate);
 
                 dayEl.textContent = dayNumber;
+
+                if (cellDate.getTime() === today.getTime()) {
+                    const dot = document.createElement('span');
+                    dot.className = 'today-dot';
+                    dayEl.appendChild(dot);
+                }
 
                 if (cellDate < today) {
                     dayEl.classList.add('calendar-day-disabled', 'border-brand-gold/10', 'bg-black/30');
@@ -636,16 +708,21 @@
             if (!hasSlots(dateStr)) {
                 wrapper.classList.add('hidden');
                 container.innerHTML = '';
+                updateSummaryAndCta();
                 return;
             }
+
+            expandedHours[dateStr] = expandedHours[dateStr] || {};
 
             const [yy, mm, dd] = dateStr.split('-').map(Number);
             const dateObj = new Date(yy, mm - 1, dd);
             dateLabelEl.textContent = formatDateLabel(dateObj);
 
             const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+            const durationLabel = selectedStandardDuration ? `${selectedStandardDuration} min` : '';
+            const priceLabel = selectedPriceLabel ? ` • ${selectedPriceLabel}` : '';
             treatLabelEl.textContent = (treat && selectedStandardDuration)
-                ? `${treat.label} • ${selectedStandardDuration} min`
+                ? `${treat.label} • ${durationLabel}${priceLabel}`
                 : '';
 
             const slots = availabilityByDate[dateStr];
@@ -669,8 +746,35 @@
                     <span class="font-semibold">${timeLabel}</span>
                 `;
 
-                btn.addEventListener('click', () => {
-                    selectedSlot = slot;
+            const hours = {};
+            slots.forEach(slot => {
+                const start = parseISODate(slot.start);
+                if (!start) return;
+                const hourLabel = start.toLocaleTimeString('en-CA', { hour: 'numeric' });
+                hours[hourLabel] = hours[hourLabel] || [];
+                hours[hourLabel].push(slot);
+            });
+
+            Object.keys(hours).sort((a,b)=>{
+                const parseHour = h => {
+                    const d = new Date(`1970-01-01 ${h}`);
+                    return d.getHours();
+                };
+                return parseHour(a) - parseHour(b);
+            }).forEach(hour => {
+                const hourBtn = document.createElement('button');
+                hourBtn.type = 'button';
+                hourBtn.className = 'hour-chip w-full text-center px-4 py-3 rounded-lg text-brand-light uppercase tracking-[0.18em] text-xs flex items-center justify-between';
+                hourBtn.innerHTML = `<span>${hour}</span><i data-lucide="chevron-down" class="w-4 h-4"></i>`;
+                const hourWrap = document.createElement('div');
+                hourWrap.className = 'space-y-2';
+                hourWrap.appendChild(hourBtn);
+
+                const slotsGrid = document.createElement('div');
+                slotsGrid.className = 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2';
+
+                hourBtn.addEventListener('click', () => {
+                    expandedHours[dateStr][hour] = !expandedHours[dateStr][hour];
                     renderTimeSlotsForDate(dateStr);
                 });
 
@@ -678,13 +782,41 @@
                     btn.classList.add('bg-brand-gold/25', 'border-brand-gold', 'ring-2', 'ring-brand-gold/50');
                 }
 
-                container.appendChild(btn);
+                hourWrap.appendChild(slotsGrid);
+                container.appendChild(hourWrap);
             });
 
             wrapper.classList.remove('hidden');
-            
-            // Render icons once after all buttons are created
+            updateSummaryAndCta();
             if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function updateSummaryAndCta() {
+            const summaryCard = document.getElementById('session-summary');
+            const sticky = document.getElementById('sticky-cta');
+
+            if (!selectedSlot || !selectedServiceKey || !selectedStandardDuration || !window.__selectedAddress) {
+                summaryCard.classList.add('hidden');
+                sticky.classList.add('hidden');
+                return;
+            }
+
+            const treat = TREATMENT_RULES[selectedServiceKey];
+            const addressLabel = window.__selectedAddress.city || window.__selectedAddress.address;
+            const slotDate = parseISODate(selectedSlot.start);
+            const slotTime = slotDate ? slotDate.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : '';
+            const slotDateLabel = slotDate ? slotDate.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : '';
+
+            document.getElementById('summary-treatment').textContent = treat?.label || '';
+            document.getElementById('summary-duration').textContent = `${selectedStandardDuration} min ${selectedPriceLabel ? `— ${selectedPriceLabel}` : ''}`;
+            document.getElementById('summary-datetime').textContent = `${slotDateLabel} at ${slotTime}`;
+            document.getElementById('summary-address').textContent = addressLabel;
+
+            summaryCard.classList.remove('hidden');
+
+            document.getElementById('cta-summary').textContent = `${treat?.label || ''} on ${slotDateLabel}`;
+            document.getElementById('cta-details').textContent = `${slotTime} • ${selectedStandardDuration} min${selectedPriceLabel ? ` • ${selectedPriceLabel}` : ''}`;
+            sticky.classList.remove('hidden');
         }
 
         // ---------------- ADDRESS MODAL LOGIC ----------------
@@ -729,19 +861,22 @@
             if (!selectedServiceKey || !TREATMENT_RULES[selectedServiceKey]) {
                 durationSelect.disabled = true;
                 selectedStandardDuration = null;
+                selectedPriceLabel = null;
                 return;
             }
 
             const durations = TREATMENT_RULES[selectedServiceKey].durations;
             durations.forEach(min => {
                 const opt = document.createElement('option');
+                const priceLabel = PRICE_MAP[min] || '';
                 opt.value = String(min);
-                opt.textContent = `${min} min`;
+                opt.textContent = priceLabel ? `${min} min — ${priceLabel}` : `${min} min`;
                 durationSelect.appendChild(opt);
             });
 
             durationSelect.disabled = false;
             selectedStandardDuration = null;
+            selectedPriceLabel = null;
         }
 
         async function loadAvailabilityForCurrentMonth() {
@@ -811,6 +946,9 @@
             } catch (e) {
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
+            } finally {
+                isLoadingAvailability = false;
+                renderCalendar();
             }
         }
 
@@ -828,6 +966,7 @@
 
             durationSelect.addEventListener('change', () => {
                 selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+                selectedPriceLabel = selectedStandardDuration ? PRICE_MAP[selectedStandardDuration] : null;
             });
 
             document.getElementById('prev-month-btn').addEventListener('click', async () => {
@@ -885,12 +1024,26 @@
                 errorEl.classList.add('hidden');
                 labelEl.textContent = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address}`;
                 closeAddressModal();
+                updateStepTracker(2);
                 await loadAvailabilityForCurrentMonth();
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
-            
+            document.getElementById('returning-client-btn').addEventListener('click', () => alert('Returning client flow coming soon.'));
+            document.getElementById('cta-continue').addEventListener('click', () => {
+                document.getElementById('session-summary')?.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            const mobileToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                const icon = mobileToggle.querySelector('i');
+                icon.setAttribute('data-lucide', mobileMenu.classList.contains('hidden') ? 'menu' : 'x');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+
             document.getElementById('address-modal').classList.remove('hidden');
             renderCalendar();
         }
