@@ -96,7 +96,7 @@
     </script>
 
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <style>
@@ -144,23 +144,6 @@
         
         .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-
-        /* Sticky footer CTA */
-        .sticky-cta { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 60; background: rgba(5,5,5,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(224, 197, 132, 0.2); box-shadow: 0 -8px 30px rgba(0,0,0,0.35); }
-
-        /* Progress indicator */
-        .step-item { display: flex; align-items: center; gap: 0.75rem; }
-        .step-badge { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; letter-spacing: 0.08em; }
-
-        /* Time grouping */
-        .hour-chip { border: 1px solid rgba(224,197,132,0.35); background: rgba(224,197,132,0.08); transition: all 0.25s ease; }
-        .hour-chip:hover { border-color: rgba(224,197,132,0.6); background: rgba(224,197,132,0.15); }
-        .hour-chip.active { border-color: #E0C584; box-shadow: 0 0 15px rgba(224,197,132,0.3); }
-
-        /* Today dot */
-        .today-dot { width: 6px; height: 6px; border-radius: 9999px; background: #E0C584; position: absolute; right: 6px; top: 6px; box-shadow: 0 0 0 4px rgba(224,197,132,0.15); }
 
         /* Header hero section */
         .header-hero { 
@@ -217,35 +200,18 @@
 </head>
 
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
-    <noscript>
-        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=701194265870298&amp;ev=PageView&amp;noscript=1" alt="Meta pixel tracker">
-    </noscript>
 
     <!-- NAVIGATION -->
     <nav id="navbar" class="fixed-nav">
         <div class="container mx-auto px-6 flex justify-between items-center h-20">
             <a href="index.html" class="flex items-center gap-3 no-underline group">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
-                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX &amp; RENEW</span>
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
                     <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
                 </div>
             </a>
             <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
-                <a href="index.html#services" class="nav-link">Services</a>
-                <a href="index.html#pricing" class="nav-link">Pricing</a>
-                <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
-                <a href="index.html#area" class="nav-link">Service Area</a>
-                <a href="index.html#faq" class="nav-link">FAQ</a>
-                <a href="therapists.html" class="nav-link">Our Therapists</a>
-                <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
-            </div>
-            <button id="mobile-menu-toggle" type="button" class="lg:hidden text-brand-light p-2 rounded border border-brand-gold/40 hover:border-brand-gold" aria-label="Toggle navigation">
-                <i data-lucide="menu" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <div id="mobile-menu" class="lg:hidden hidden px-6 pb-4 bg-brand-dark/90 border-t border-brand-gold/20">
-            <div class="flex flex-col space-y-3 text-sm uppercase tracking-[0.16em]">
                 <a href="index.html#services" class="nav-link">Services</a>
                 <a href="index.html#pricing" class="nav-link">Pricing</a>
                 <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
@@ -259,7 +225,7 @@
 
     <!-- HEADER HERO WITH STEP 1 INFO -->
     <header class="header-hero pt-28 pb-16 border-b border-brand-gold/20">
-        <div class="container mx-auto px-6 max-w-6xl space-y-6">
+        <div class="container mx-auto px-6 max-w-6xl">
             <div class="animate-slide-up">
                 <span class="inline-block text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold mb-3 bg-brand-gold/10 px-4 py-2 rounded-full">
                     <i data-lucide="calendar-check" class="w-4 h-4 inline mr-2"></i>
@@ -271,29 +237,6 @@
                 <p class="text-brand-dim text-base md:text-lg max-w-2xl leading-relaxed">
                     Enter your service address and choose your treatment. We'll calculate drive-time between appointments and only show times that realistically work for mobile visits.
                 </p>
-            </div>
-            <div id="step-tracker" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                <div class="step-item bg-black/30 rounded-lg p-3 border border-brand-gold/20">
-                    <div class="step-badge bg-brand-gold/20 text-brand-gold">1</div>
-                    <div>
-                        <div class="uppercase tracking-[0.18em] text-brand-gold text-xs font-bold">Step 1</div>
-                        <div class="text-brand-light">Address &amp; Treatment</div>
-                    </div>
-                </div>
-                <div class="step-item bg-black/20 rounded-lg p-3 border border-brand-gold/10">
-                    <div class="step-badge bg-brand-light/10 text-brand-light">2</div>
-                    <div>
-                        <div class="uppercase tracking-[0.18em] text-brand-dim text-xs font-bold">Step 2</div>
-                        <div class="text-brand-dim">Pick Date &amp; Time</div>
-                    </div>
-                </div>
-                <div class="step-item bg-black/20 rounded-lg p-3 border border-brand-gold/10">
-                    <div class="step-badge bg-brand-light/10 text-brand-light">3</div>
-                    <div>
-                        <div class="uppercase tracking-[0.18em] text-brand-dim text-xs font-bold">Step 3</div>
-                        <div class="text-brand-dim">Review &amp; Continue</div>
-                    </div>
-                </div>
             </div>
         </div>
     </header>
@@ -313,7 +256,7 @@
                             <div class="text-sm text-brand-light" id="selected-address-label">Service address + treatment required to view availability</div>
                         </div>
                     </div>
-                    <button id="change-address-btn" type="button" class="btn-gold text-sm px-6 py-3">
+                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                         <span>Change Selection</span>
                     </button>
@@ -322,13 +265,13 @@
                 <!-- Calendar controls -->
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div class="flex items-center gap-4">
-                        <button id="prev-month-btn" type="button" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all" aria-label="Previous month">
+                        <button id="prev-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                             <i data-lucide="chevron-left" class="w-5 h-5 text-brand-gold"></i>
                         </button>
                         <div class="text-brand-light text-lg md:text-xl font-serif">
                             <span id="calendar-month-label"></span>
                         </div>
-                        <button id="next-month-btn" type="button" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all" aria-label="Next month">
+                        <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
                             <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
                         </button>
                     </div>
@@ -358,36 +301,6 @@
 
                 <!-- Calendar days -->
                 <div id="calendar-days" class="calendar-grid text-sm mb-8"></div>
-                <div id="calendar-skeleton" class="calendar-grid text-sm mb-8 hidden" aria-hidden="true">
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                    <div class="h-16 rounded-lg loading-shimmer"></div>
-                </div>
 
                 <!-- Availability status -->
                 <div id="availability-status" class="text-xs text-brand-dim/80 mb-6 p-4 rounded bg-brand-gold/5 border border-brand-gold/10">
@@ -410,37 +323,10 @@
                             </div>
                         </div>
                         <div id="therapist-info" class="hidden therapist-badge">
-                            <div class="flex items-center gap-3 text-sm">
-                                <img id="therapist-avatar" src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Therapist" class="w-10 h-10 rounded-full object-cover border border-brand-gold/40">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="user-check" class="w-4 h-4 text-brand-gold"></i>
-                                        <span class="text-brand-light font-semibold" id="therapist-name"></span>
-                                    </div>
-                                    <div class="text-[11px] text-brand-dim" id="therapist-specialty"></div>
-                                </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <i data-lucide="user-check" class="w-4 h-4 text-brand-gold"></i>
+                                <span class="text-brand-light" id="therapist-name"></span>
                             </div>
-                        </div>
-                    </div>
-                    <div id="time-slots" class="space-y-4"></div>
-                </div>
-                <div id="session-summary" class="hidden mt-8 p-5 rounded-lg border border-brand-gold/20 bg-black/30">
-                    <div class="flex items-center gap-3 mb-4">
-                        <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-gold"></i>
-                        <span class="uppercase tracking-[0.18em] text-xs text-brand-gold font-bold">Session Summary</span>
-                    </div>
-                    <div class="grid md:grid-cols-2 gap-4 text-sm text-brand-light">
-                        <div>
-                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Treatment</div>
-                            <div id="summary-treatment" class="font-semibold"></div>
-                        </div>
-                        <div>
-                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Duration &amp; Price</div>
-                            <div id="summary-duration"></div>
-                        </div>
-                        <div>
-                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Date &amp; Time</div>
-                            <div id="summary-datetime"></div>
                         </div>
                         <div>
                             <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Service Address</div>
@@ -450,6 +336,7 @@
                     <div class="mt-4 text-[12px] text-brand-dim bg-brand-gold/5 border border-brand-gold/10 rounded-lg p-3">
                         We offer direct billing to insurance companies and accept cash, credit, or e-transfer.
                     </div>
+                    <div id="time-slots" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
                 </div>
             </div>
         </div>
@@ -490,7 +377,7 @@
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up">
-            <button id="address-modal-close" type="button" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors" aria-label="Close address modal">
+            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <div class="text-center mb-8">
@@ -505,7 +392,7 @@
 
             <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
             <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all mb-2">
-            <button id="toggle-manual-address" type="button" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
+            <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
                 Can't find your address? Enter it manually.
             </button>
 
@@ -565,7 +452,7 @@
                 </div>
             </div>
 
-            <button id="address-continue-btn" type="button" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+            <button id="address-continue-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
                 <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
                 <span>Show Available Times</span>
             </button>
@@ -586,8 +473,8 @@
 
         // Therapist data (you can expand this)
         const THERAPISTS = {
-            'cassandra': { name: 'Cassandra', specialty: 'Deep Tissue & Sports', avatar: 'https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg' },
-            'default': { name: 'Available Therapist', specialty: 'All Services', avatar: 'https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png' }
+            'cassandra': { name: 'Cassandra', specialty: 'Deep Tissue & Sports' },
+            'default': { name: 'Available Therapist', specialty: 'All Services' }
         };
 
         // ---------------- RULES ----------------
@@ -817,8 +704,6 @@
             const treatLabelEl = document.getElementById('selected-treatment-label');
             const therapistInfo = document.getElementById('therapist-info');
             const therapistName = document.getElementById('therapist-name');
-            const therapistSpecialty = document.getElementById('therapist-specialty');
-            const therapistAvatar = document.getElementById('therapist-avatar');
 
             if (!hasSlots(dateStr)) {
                 wrapper.classList.add('hidden');
@@ -843,13 +728,23 @@
             const slots = availabilityByDate[dateStr];
             container.innerHTML = '';
 
+            // Show therapist info (simplified - you can enhance this based on your data)
             if (slots.length > 0) {
                 const therapist = THERAPISTS['cassandra'] || THERAPISTS['default'];
                 therapistName.textContent = therapist.name;
-                therapistSpecialty.textContent = therapist.specialty;
-                therapistAvatar.src = therapist.avatar;
                 therapistInfo.classList.remove('hidden');
             }
+
+            slots.forEach((slot) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "time-slot-btn px-4 py-3 rounded-lg border border-brand-gold/30 text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1";
+                
+                const timeLabel = formatTimeLabel(slot);
+                btn.innerHTML = `
+                    <i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i>
+                    <span class="font-semibold">${timeLabel}</span>
+                `;
 
             const hours = {};
             slots.forEach(slot => {
@@ -883,36 +778,8 @@
                     renderTimeSlotsForDate(dateStr);
                 });
 
-                const isOpen = expandedHours[dateStr][hour];
-                if (isOpen) {
-                    hourBtn.classList.add('active');
-                    slotsGrid.classList.remove('hidden');
-                    hours[hour].forEach(slot => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'time-slot-btn border border-brand-gold/30 text-brand-light bg-black/50 rounded-lg aspect-square text-xs flex flex-col items-center justify-center hover:border-brand-gold hover:bg-brand-gold/15';
-                        const timeLabel = formatTimeLabel(slot);
-                        btn.innerHTML = `
-                            <i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i>
-                            <span class="font-semibold">${timeLabel}</span>
-                        `;
-                        btn.addEventListener('click', () => {
-                            selectedSlot = slot;
-                            updateSummaryAndCta();
-                            updateStepTracker(3);
-                            renderTimeSlotsForDate(dateStr);
-                        });
-                        if (selectedSlot && selectedSlot.start === slot.start) {
-                            btn.classList.add('bg-brand-gold/25', 'border-brand-gold', 'ring-2', 'ring-brand-gold/50', 'scale-105');
-                            btn.innerHTML = `
-                                <i data-lucide="check" class="w-4 h-4 text-brand-black"></i>
-                                <span class="font-semibold text-brand-black">${timeLabel}</span>
-                            `;
-                        }
-                        slotsGrid.appendChild(btn);
-                    });
-                } else {
-                    slotsGrid.classList.add('hidden');
+                if (selectedSlot && selectedSlot.start === slot.start) {
+                    btn.classList.add('bg-brand-gold/25', 'border-brand-gold', 'ring-2', 'ring-brand-gold/50');
                 }
 
                 hourWrap.appendChild(slotsGrid);
@@ -1024,7 +891,6 @@
             }
 
             try {
-                isLoadingAvailability = true;
                 updateAvailabilityStatus("Checking live availability for this address...", false);
                 selectedDateStr = null;
                 selectedSlot = null;
@@ -1187,6 +1053,6 @@
     </script>
 
     <!-- Google Maps Places API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&amp;libraries=places&amp;callback=initAllAutocompletes" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
