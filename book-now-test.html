@@ -985,111 +985,170 @@
             const availableSlots = availabilityByDate[dateStr] || [];
             container.innerHTML = '';
 
-            // Show therapist info
             if (availableSlots.length > 0) {
                 therapistInfo.classList.remove('hidden');
             }
 
-            // Get the day of week to know working hours
-            const dow = dateObj.getDay();
-            const workingHours = {
-                0: [{s:'10:00', e:'18:00'}],  // Sunday
-                1: [{s:'17:00', e:'20:00'}],  // Monday
-                3: [{s:'10:00', e:'20:00'}],  // Wednesday
-                5: [{s:'10:00', e:'20:00'}]   // Friday
+            // Group slots by time of day
+            const timeGroups = {
+                morning: { label: 'Morning', hours: [10, 11], slots: [] },
+                afternoon: { label: 'Afternoon', hours: [12, 13, 14, 15], slots: [] },
+                evening: { label: 'Evening', hours: [16, 17, 18, 19, 20], slots: [] }
             };
-            
-            const todayHours = workingHours[dow] || [];
-            if (todayHours.length === 0) {
-                wrapper.classList.remove('hidden');
-                return;
-            }
 
-            // Generate ALL possible 15-minute slots for this day's working hours
-            const allPossibleSlots = [];
-            todayHours.forEach(window => {
-                const [startHour, startMin] = window.s.split(':').map(Number);
-                const [endHour, endMin] = window.e.split(':').map(Number);
-                
-                // Create date objects for start and end
-                const start = new Date(dateObj);
-                start.setHours(startHour, startMin, 0, 0);
-                
-                const end = new Date(dateObj);
-                end.setHours(endHour, endMin, 0, 0);
-                
-                // Generate all 15-minute intervals
-                for (let time = new Date(start); time < end; time.setMinutes(time.getMinutes() + 15)) {
-                    const hour = time.getHours();
-                    const min = time.getMinutes();
-                    const timeStr = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
-                    allPossibleSlots.push({
-                        hour,
-                        min,
-                        timeStr,
-                        display: time.toLocaleTimeString('en-CA', {hour: 'numeric', minute: '2-digit'})
-                    });
-                }
-            });
-
-            // Create a Set of available time strings for quick lookup
-            const availableTimeStrs = new Set();
-            const slotsByTimeStr = {};
             availableSlots.forEach(slot => {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
-                const min = startTime.getMinutes();
-                const timeStr = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
-                availableTimeStrs.add(timeStr);
-                slotsByTimeStr[timeStr] = slot;
+                
+                if (hour >= 10 && hour < 12) {
+                    timeGroups.morning.slots.push(slot);
+                } else if (hour >= 12 && hour < 16) {
+                    timeGroups.afternoon.slots.push(slot);
+                } else if (hour >= 16 && hour <= 20) {
+                    timeGroups.evening.slots.push(slot);
+                }
             });
 
-            // Render ALL slots (available and unavailable)
-            allPossibleSlots.forEach(timeSlot => {
-                const isAvailable = availableTimeStrs.has(timeSlot.timeStr);
-                const actualSlot = slotsByTimeStr[timeSlot.timeStr];
+            // Create time-of-day row
+            const groupRow = document.createElement('div');
+            groupRow.className = 'grid grid-cols-3 gap-3 mb-4';
+
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                const hasSlots = group.slots.length > 0;
                 
-                const btn = document.createElement('button');
-                btn.type = 'button';
+                const groupBtn = document.createElement('button');
+                groupBtn.type = 'button';
+                groupBtn.className = hasSlots 
+                    ? 'px-4 py-4 rounded-lg border-2 border-brand-gold/40 bg-black/50 hover:bg-brand-gold/10 text-brand-light font-bold text-lg transition-all'
+                    : 'px-4 py-4 rounded-lg border-2 border-brand-gold/10 bg-black/30 text-brand-dim/30 font-bold text-lg opacity-50 cursor-not-allowed';
                 
-                if (isAvailable) {
-                    // Available slot - normal styling
-                    btn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/30 text-base text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1 transition-all";
+                groupBtn.disabled = !hasSlots;
+                groupBtn.textContent = group.label;
+                groupBtn.dataset.group = groupKey;
+                
+                if (hasSlots) {
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                }
+                
+                groupRow.appendChild(groupBtn);
+            });
+
+            container.appendChild(groupRow);
+
+            // Create expand indicator row
+            const expandRow = document.createElement('div');
+            expandRow.className = 'grid grid-cols-3 gap-3 mb-6';
+            
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                const hasSlots = group.slots.length > 0;
+                
+                const expandBtn = document.createElement('button');
+                expandBtn.type = 'button';
+                expandBtn.id = `expand-${groupKey}`;
+                expandBtn.className = 'flex flex-col items-center gap-1 py-2 transition-all';
+                expandBtn.disabled = !hasSlots;
+                
+                if (hasSlots) {
+                    expandBtn.innerHTML = `
+                        <div class="expand-arrows">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-brand-gold"></i>
+                        </div>
+                        <span class="text-xs text-brand-gold/80 uppercase tracking-wider font-semibold">Expand Times</span>
+                    `;
+                    expandBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                } else {
+                    expandBtn.innerHTML = `<div class="h-8"></div>`;
+                }
+                
+                expandRow.appendChild(expandBtn);
+            });
+
+            container.appendChild(expandRow);
+
+            // Create expandable sections for each time group
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                if (group.slots.length === 0) return;
+
+                const expandSection = document.createElement('div');
+                expandSection.id = `slots-${groupKey}`;
+                expandSection.className = 'hidden mb-6 expand-section';
+                expandSection.style.maxHeight = '0';
+                expandSection.style.overflow = 'hidden';
+                expandSection.style.transition = 'max-height 0.4s ease-out';
+
+                // Sort slots by time
+                group.slots.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                // Create grid for time slots
+                const slotsGrid = document.createElement('div');
+                slotsGrid.className = 'grid grid-cols-4 gap-2';
+
+                group.slots.forEach(slot => {
+                    const slotBtn = document.createElement('button');
+                    slotBtn.type = 'button';
+                    slotBtn.className = 'px-3 py-2.5 rounded-lg border-2 border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1 transition-all';
                     
-                    btn.innerHTML = `
+                    const timeLabel = formatTimeLabel(slot);
+                    slotBtn.innerHTML = `
                         <i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i>
-                        <span class="font-bold text-base">${timeSlot.display}</span>
-                        <span class="text-xs text-brand-dim/60 font-normal">EST</span>
+                        <span class="font-bold text-base">${timeLabel}</span>
+                        <span class="text-[10px] text-brand-dim/60">EST</span>
                     `;
                     
-                    btn.addEventListener('click', () => {
-                        selectedSlot = actualSlot;
+                    slotBtn.addEventListener('click', () => {
+                        selectedSlot = slot;
                         renderTimeSlotsForDate(dateStr);
                         updateStickyBar();
                     });
                     
-                    if (selectedSlot && selectedSlot.start === actualSlot.start) {
-                        btn.classList.add('time-slot-selected');
+                    if (selectedSlot && selectedSlot.start === slot.start) {
+                        slotBtn.classList.add('time-slot-selected');
                     }
-                } else {
-                    // Unavailable slot - grayed out
-                    btn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/10 text-base text-brand-dim/30 bg-black/20 cursor-not-allowed flex flex-col items-center justify-center gap-1 opacity-40";
-                    btn.disabled = true;
                     
-                    btn.innerHTML = `
-                        <i data-lucide="x-circle" class="w-4 h-4 text-brand-dim/40"></i>
-                        <span class="font-bold text-base">${timeSlot.display}</span>
-                        <span class="text-xs text-brand-dim/40 font-normal">Booked</span>
-                    `;
-                }
-                
-                container.appendChild(btn);
+                    slotsGrid.appendChild(slotBtn);
+                });
+
+                expandSection.appendChild(slotsGrid);
+                container.appendChild(expandSection);
             });
 
             wrapper.classList.remove('hidden');
             
-            // Render icons once after all buttons are created
             if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Toggle function
+            function toggleGroupExpansion(groupKey) {
+                const section = document.getElementById(`slots-${groupKey}`);
+                const expandBtn = document.getElementById(`expand-${groupKey}`);
+                const groupBtn = document.querySelector(`button[data-group="${groupKey}"]`);
+                
+                if (!section) return;
+                
+                const isHidden = section.classList.contains('hidden');
+                
+                if (isHidden) {
+                    // Expand
+                    section.classList.remove('hidden');
+                    section.style.maxHeight = section.scrollHeight + 'px';
+                    groupBtn.classList.add('bg-brand-gold/20', 'border-brand-gold');
+                    expandBtn.querySelector('.expand-arrows').innerHTML = '<i data-lucide="chevron-up" class="w-5 h-5 text-brand-gold"></i>';
+                    expandBtn.querySelector('span').textContent = 'Collapse';
+                } else {
+                    // Collapse
+                    section.style.maxHeight = '0';
+                    setTimeout(() => {
+                        section.classList.add('hidden');
+                    }, 400);
+                    groupBtn.classList.remove('bg-brand-gold/20', 'border-brand-gold');
+                    expandBtn.querySelector('.expand-arrows').innerHTML = '<i data-lucide="chevron-down" class="w-5 h-5 text-brand-gold"></i>';
+                    expandBtn.querySelector('span').textContent = 'Expand Times';
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
         }
 
         // ---------------- ADDRESS MODAL LOGIC ----------------
