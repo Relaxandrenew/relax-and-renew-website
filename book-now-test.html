@@ -614,6 +614,93 @@
         </div>
     </div>
 
+    <!-- CLIENT DETAILS MODAL (STEP 3) -->
+    <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="client-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+                    <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
+                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+                    Please provide your details to complete the booking.
+                </p>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+                <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Treatment:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Date & Time:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Location:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-brand-gold/20">
+                        <span class="text-brand-gold font-bold">Total:</span>
+                        <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$110+HST (~$124)</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="client-details-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
+                        <input id="client-first-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
+                        <input id="client-last-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
+                    <input id="client-phone" type="tel" required placeholder="(555) 123-4567" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+                    <input id="client-address-display" type="text" readonly class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75">
+                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
+                    <input id="client-email" type="email" required placeholder="your.email@example.com" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
+                    <textarea id="client-notes" rows="3" placeholder="Any special requests, health concerns, or preferences..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>Confirm Booking</span>
+                </button>
+            </form>
+
+            <p id="client-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
+                Please fill in all required fields.
+            </p>
+        </div>
+    </div>
+
     <!-- SCRIPT: AVAILABILITY -->
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // ============================================================================
@@ -899,37 +986,180 @@
                 ? `<span class="text-base">${treat.label} • ${selectedStandardDuration} min</span> • <span class="text-brand-gold font-bold text-lg">$${price.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`
                 : '';
 
-            const slots = availabilityByDate[dateStr];
+            const availableSlots = availabilityByDate[dateStr] || [];
             container.innerHTML = '';
 
             // Show therapist info
-            if (slots.length > 0) {
+            if (availableSlots.length > 0) {
                 therapistInfo.classList.remove('hidden');
             }
 
-            slots.forEach((slot) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "time-slot-btn px-5 py-4 rounded-lg border-2 border-brand-gold/30 text-base text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-2";
+            // Get the day of week to know working hours
+            const dow = dateObj.getDay();
+            const workingHours = {
+                0: [{s:'10:00', e:'18:00'}],  // Sunday
+                1: [{s:'17:00', e:'20:00'}],  // Monday
+                3: [{s:'10:00', e:'20:00'}],  // Wednesday
+                5: [{s:'10:00', e:'20:00'}]   // Friday
+            };
+            
+            const todayHours = workingHours[dow] || [];
+            if (todayHours.length === 0) {
+                wrapper.classList.remove('hidden');
+                return;
+            }
+
+            // Generate ALL possible hourly slots for this day's working hours
+            const allHourlySlots = [];
+            todayHours.forEach(window => {
+                const [startHour] = window.s.split(':').map(Number);
+                const [endHour] = window.e.split(':').map(Number);
                 
-                const timeLabel = formatTimeLabel(slot);
-                btn.innerHTML = `
-                    <i data-lucide="clock" class="w-5 h-5 text-brand-gold"></i>
-                    <span class="font-bold text-lg">${timeLabel}</span>
-                    <span class="text-xs text-brand-dim/60 font-normal">EST</span>
-                `;
-
-                btn.addEventListener('click', () => {
-                    selectedSlot = slot;
-                    renderTimeSlotsForDate(dateStr);
-                    updateStickyBar();
-                });
-
-                if (selectedSlot && selectedSlot.start === slot.start) {
-                    btn.classList.add('time-slot-selected');
+                for (let hour = startHour; hour < endHour; hour++) {
+                    allHourlySlots.push(hour);
                 }
+            });
 
-                container.appendChild(btn);
+            // Create a map of available slots by hour
+            const availableByHour = {};
+            availableSlots.forEach(slot => {
+                const startTime = new Date(slot.start);
+                const hour = startTime.getHours();
+                const minutes = startTime.getMinutes();
+                
+                if (!availableByHour[hour]) {
+                    availableByHour[hour] = [];
+                }
+                availableByHour[hour].push(slot);
+            });
+
+            // Render ALL hourly slots (available and unavailable)
+            allHourlySlots.forEach(hour => {
+                const hourNum = Number(hour);
+                const hasAvailability = availableByHour[hour] && availableByHour[hour].length > 0;
+                
+                // Format hour display (12-hour format)
+                const hourDisplay = hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`;
+                
+                // Create hourly container
+                const hourlyDiv = document.createElement('div');
+                hourlyDiv.className = 'mb-3';
+                
+                // Main hour button
+                const hourBtn = document.createElement('button');
+                hourBtn.type = 'button';
+                
+                if (hasAvailability) {
+                    // Available hour - normal styling
+                    hourBtn.className = "w-full time-slot-btn px-4 py-3 rounded-lg border-2 border-brand-gold/40 text-base text-brand-light bg-black/50 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-between transition-all";
+                    hourBtn.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="clock" class="w-5 h-5 text-brand-gold"></i>
+                            <span class="font-bold text-lg">${hourDisplay}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-brand-dim/80 uppercase tracking-wider">Click to Expand Times</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold expand-icon"></i>
+                        </div>
+                    `;
+                } else {
+                    // Unavailable hour - grayed out
+                    hourBtn.className = "w-full time-slot-btn px-4 py-3 rounded-lg border-2 border-brand-gold/10 text-base text-brand-dim/30 bg-black/30 cursor-not-allowed flex items-center justify-between opacity-50";
+                    hourBtn.disabled = true;
+                    hourBtn.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="clock" class="w-5 h-5 text-brand-dim/30"></i>
+                            <span class="font-bold text-lg">${hourDisplay}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-brand-dim/40 uppercase tracking-wider">Unavailable</span>
+                            <i data-lucide="x-circle" class="w-4 h-4 text-brand-dim/40"></i>
+                        </div>
+                    `;
+                }
+                
+                // Only create intervals container if there's availability
+                if (hasAvailability) {
+                    const intervalsDiv = document.createElement('div');
+                    intervalsDiv.className = 'hidden mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 pl-4';
+                    intervalsDiv.id = `intervals-${hour}`;
+                    
+                    // Generate ALL 15-minute intervals for this hour
+                    const allIntervals = [0, 15, 30, 45];
+                    
+                    allIntervals.forEach(minutes => {
+                        // Check if this specific interval is available
+                        const thisSlot = availableByHour[hour].find(slot => {
+                            const slotTime = new Date(slot.start);
+                            return slotTime.getMinutes() === minutes;
+                        });
+                        
+                        const intervalBtn = document.createElement('button');
+                        intervalBtn.type = 'button';
+                        
+                        if (thisSlot) {
+                            // Available interval
+                            intervalBtn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/30 text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1 transition-all";
+                            
+                            const timeLabel = formatTimeLabel(thisSlot);
+                            intervalBtn.innerHTML = `
+                                <span class="font-semibold">${timeLabel}</span>
+                                <span class="text-[10px] text-brand-dim/60">EST</span>
+                            `;
+                            
+                            intervalBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                selectedSlot = thisSlot;
+                                renderTimeSlotsForDate(dateStr);
+                                updateStickyBar();
+                            });
+                            
+                            if (selectedSlot && selectedSlot.start === thisSlot.start) {
+                                intervalBtn.classList.add('time-slot-selected');
+                            }
+                        } else {
+                            // Unavailable interval - grayed out
+                            const displayTime = hourNum === 0 ? `12:${String(minutes).padStart(2,'0')} AM` 
+                                              : hourNum < 12 ? `${hourNum}:${String(minutes).padStart(2,'0')} AM` 
+                                              : hourNum === 12 ? `12:${String(minutes).padStart(2,'0')} PM` 
+                                              : `${hourNum-12}:${String(minutes).padStart(2,'0')} PM`;
+                            
+                            intervalBtn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/10 text-sm text-brand-dim/30 bg-black/20 cursor-not-allowed flex flex-col items-center justify-center gap-1 opacity-40";
+                            intervalBtn.disabled = true;
+                            intervalBtn.innerHTML = `
+                                <span class="font-semibold">${displayTime}</span>
+                                <span class="text-[10px] text-brand-dim/40">Booked</span>
+                            `;
+                        }
+                        
+                        intervalsDiv.appendChild(intervalBtn);
+                    });
+                    
+                    // Toggle expansion
+                    hourBtn.addEventListener('click', () => {
+                        const isHidden = intervalsDiv.classList.contains('hidden');
+                        const icon = hourBtn.querySelector('.expand-icon');
+                        
+                        if (isHidden) {
+                            intervalsDiv.classList.remove('hidden');
+                            icon.setAttribute('data-lucide', 'chevron-up');
+                        } else {
+                            intervalsDiv.classList.add('hidden');
+                            icon.setAttribute('data-lucide', 'chevron-down');
+                        }
+                        
+                        // Re-render icons
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    });
+                    
+                    hourlyDiv.appendChild(hourBtn);
+                    hourlyDiv.appendChild(intervalsDiv);
+                } else {
+                    // Just add the disabled button (no intervals to expand)
+                    hourlyDiv.appendChild(hourBtn);
+                }
+                
+                container.appendChild(hourlyDiv);
             });
 
             wrapper.classList.remove('hidden');
@@ -1217,10 +1447,113 @@
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
-            // Continue to booking button
+            // Continue to booking button - opens Step 3
             document.getElementById('continue-to-booking-btn').addEventListener('click', () => {
-                // TODO: Proceed to step 3 - collect user details
-                alert('Proceeding to Step 3: Your Details (to be implemented)');
+                openClientDetailsModal();
+            });
+
+            // Client details modal functions
+            function openClientDetailsModal() {
+                const modal = document.getElementById('client-details-modal');
+                if (!modal) return;
+
+                // Update progress to Step 3
+                updateProgress(3);
+
+                // Fill in booking summary
+                const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+                const price = getPrice();
+                
+                if (treat && selectedStandardDuration) {
+                    document.getElementById('summary-modal-treatment').textContent = `${treat.label} (${selectedStandardDuration} min)`;
+                }
+
+                if (selectedSlot && selectedDateStr) {
+                    const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+                    const dateObj = new Date(yy, mm - 1, dd);
+                    const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const timeLabel = formatTimeLabel(selectedSlot);
+                    document.getElementById('summary-modal-datetime').textContent = `${dateLabel} at ${timeLabel} EST`;
+                }
+
+                const addrObj = window.__selectedAddress;
+                if (addrObj) {
+                    const addressDisplay = addrObj.city ? `${addrObj.city}, ${addrObj.postal_code}` : addrObj.address;
+                    document.getElementById('summary-modal-address').textContent = addressDisplay;
+                    document.getElementById('client-address-display').value = addrObj.address;
+                }
+
+                document.getElementById('summary-modal-price').textContent = `$${price.base}+HST (~$${price.total})`;
+
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            function closeClientDetailsModal() {
+                const modal = document.getElementById('client-details-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+
+            document.getElementById('client-modal-close').addEventListener('click', closeClientDetailsModal);
+
+            // Handle client details form submission
+            document.getElementById('client-details-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const firstName = document.getElementById('client-first-name').value.trim();
+                const lastName = document.getElementById('client-last-name').value.trim();
+                const phone = document.getElementById('client-phone').value.trim();
+                const email = document.getElementById('client-email').value.trim();
+                const notes = document.getElementById('client-notes').value.trim();
+                const errorEl = document.getElementById('client-error');
+
+                // Validation
+                if (!firstName || !lastName || !phone || !email) {
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                errorEl.classList.add('hidden');
+
+                // Prepare booking data
+                const bookingData = {
+                    // Client info
+                    firstName,
+                    lastName,
+                    phone,
+                    email,
+                    notes,
+                    
+                    // Appointment details
+                    address: window.__selectedAddress?.address,
+                    city: window.__selectedAddress?.city,
+                    postal_code: window.__selectedAddress?.postal_code,
+                    
+                    // Treatment details
+                    treatment_key: selectedServiceKey,
+                    treatment_label: TREATMENT_RULES[selectedServiceKey]?.label,
+                    duration: selectedStandardDuration,
+                    
+                    // Time slot
+                    slot_start: selectedSlot?.start,
+                    slot_end: selectedSlot?.end,
+                    date: selectedDateStr,
+                    
+                    // Pricing
+                    price_base: getPrice().base,
+                    price_total: getPrice().total
+                };
+
+                console.log('📋 Booking data ready:', bookingData);
+
+                // TODO: Send to Cliniko API or booking endpoint
+                // For now, show success message
+                alert(`Booking request submitted!\n\nName: ${firstName} ${lastName}\nPhone: ${phone}\nDate: ${selectedDateStr}\nTime: ${formatTimeLabel(selectedSlot)}\n\nYou will receive a confirmation shortly.`);
+                
+                closeClientDetailsModal();
+                
+                // Reset form
+                document.getElementById('client-details-form').reset();
             });
 
             // Start with modal open
