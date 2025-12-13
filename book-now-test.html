@@ -1009,157 +1009,85 @@
                 return;
             }
 
-            // Generate ALL possible hourly slots for this day's working hours
-            const allHourlySlots = [];
+            // Generate ALL possible 15-minute slots for this day's working hours
+            const allPossibleSlots = [];
             todayHours.forEach(window => {
-                const [startHour] = window.s.split(':').map(Number);
-                const [endHour] = window.e.split(':').map(Number);
+                const [startHour, startMin] = window.s.split(':').map(Number);
+                const [endHour, endMin] = window.e.split(':').map(Number);
                 
-                for (let hour = startHour; hour < endHour; hour++) {
-                    allHourlySlots.push(hour);
+                // Create date objects for start and end
+                const start = new Date(dateObj);
+                start.setHours(startHour, startMin, 0, 0);
+                
+                const end = new Date(dateObj);
+                end.setHours(endHour, endMin, 0, 0);
+                
+                // Generate all 15-minute intervals
+                for (let time = new Date(start); time < end; time.setMinutes(time.getMinutes() + 15)) {
+                    const hour = time.getHours();
+                    const min = time.getMinutes();
+                    const timeStr = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+                    allPossibleSlots.push({
+                        hour,
+                        min,
+                        timeStr,
+                        display: time.toLocaleTimeString('en-CA', {hour: 'numeric', minute: '2-digit'})
+                    });
                 }
             });
 
-            // Create a map of available slots by hour
-            const availableByHour = {};
+            // Create a Set of available time strings for quick lookup
+            const availableTimeStrs = new Set();
+            const slotsByTimeStr = {};
             availableSlots.forEach(slot => {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
-                const minutes = startTime.getMinutes();
-                
-                if (!availableByHour[hour]) {
-                    availableByHour[hour] = [];
-                }
-                availableByHour[hour].push(slot);
+                const min = startTime.getMinutes();
+                const timeStr = `${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+                availableTimeStrs.add(timeStr);
+                slotsByTimeStr[timeStr] = slot;
             });
 
-            // Render ALL hourly slots (available and unavailable)
-            allHourlySlots.forEach(hour => {
-                const hourNum = Number(hour);
-                const hasAvailability = availableByHour[hour] && availableByHour[hour].length > 0;
+            // Render ALL slots (available and unavailable)
+            allPossibleSlots.forEach(timeSlot => {
+                const isAvailable = availableTimeStrs.has(timeSlot.timeStr);
+                const actualSlot = slotsByTimeStr[timeSlot.timeStr];
                 
-                // Format hour display (12-hour format)
-                const hourDisplay = hourNum === 0 ? '12 AM' : hourNum < 12 ? `${hourNum} AM` : hourNum === 12 ? '12 PM' : `${hourNum - 12} PM`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
                 
-                // Create hourly container
-                const hourlyDiv = document.createElement('div');
-                hourlyDiv.className = 'mb-3';
-                
-                // Main hour button
-                const hourBtn = document.createElement('button');
-                hourBtn.type = 'button';
-                
-                if (hasAvailability) {
-                    // Available hour - normal styling
-                    hourBtn.className = "w-full time-slot-btn px-4 py-3 rounded-lg border-2 border-brand-gold/40 text-base text-brand-light bg-black/50 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-between transition-all";
-                    hourBtn.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="clock" class="w-5 h-5 text-brand-gold"></i>
-                            <span class="font-bold text-lg">${hourDisplay}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-brand-dim/80 uppercase tracking-wider">Click to Expand Times</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold expand-icon"></i>
-                        </div>
+                if (isAvailable) {
+                    // Available slot - normal styling
+                    btn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/30 text-base text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1 transition-all";
+                    
+                    btn.innerHTML = `
+                        <i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i>
+                        <span class="font-bold text-base">${timeSlot.display}</span>
+                        <span class="text-xs text-brand-dim/60 font-normal">EST</span>
                     `;
+                    
+                    btn.addEventListener('click', () => {
+                        selectedSlot = actualSlot;
+                        renderTimeSlotsForDate(dateStr);
+                        updateStickyBar();
+                    });
+                    
+                    if (selectedSlot && selectedSlot.start === actualSlot.start) {
+                        btn.classList.add('time-slot-selected');
+                    }
                 } else {
-                    // Unavailable hour - grayed out
-                    hourBtn.className = "w-full time-slot-btn px-4 py-3 rounded-lg border-2 border-brand-gold/10 text-base text-brand-dim/30 bg-black/30 cursor-not-allowed flex items-center justify-between opacity-50";
-                    hourBtn.disabled = true;
-                    hourBtn.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="clock" class="w-5 h-5 text-brand-dim/30"></i>
-                            <span class="font-bold text-lg">${hourDisplay}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-brand-dim/40 uppercase tracking-wider">Unavailable</span>
-                            <i data-lucide="x-circle" class="w-4 h-4 text-brand-dim/40"></i>
-                        </div>
+                    // Unavailable slot - grayed out
+                    btn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/10 text-base text-brand-dim/30 bg-black/20 cursor-not-allowed flex flex-col items-center justify-center gap-1 opacity-40";
+                    btn.disabled = true;
+                    
+                    btn.innerHTML = `
+                        <i data-lucide="x-circle" class="w-4 h-4 text-brand-dim/40"></i>
+                        <span class="font-bold text-base">${timeSlot.display}</span>
+                        <span class="text-xs text-brand-dim/40 font-normal">Booked</span>
                     `;
                 }
                 
-                // Only create intervals container if there's availability
-                if (hasAvailability) {
-                    const intervalsDiv = document.createElement('div');
-                    intervalsDiv.className = 'hidden mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 pl-4';
-                    intervalsDiv.id = `intervals-${hour}`;
-                    
-                    // Generate ALL 15-minute intervals for this hour
-                    const allIntervals = [0, 15, 30, 45];
-                    
-                    allIntervals.forEach(minutes => {
-                        // Check if this specific interval is available
-                        const thisSlot = availableByHour[hour].find(slot => {
-                            const slotTime = new Date(slot.start);
-                            return slotTime.getMinutes() === minutes;
-                        });
-                        
-                        const intervalBtn = document.createElement('button');
-                        intervalBtn.type = 'button';
-                        
-                        if (thisSlot) {
-                            // Available interval
-                            intervalBtn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/30 text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1 transition-all";
-                            
-                            const timeLabel = formatTimeLabel(thisSlot);
-                            intervalBtn.innerHTML = `
-                                <span class="font-semibold">${timeLabel}</span>
-                                <span class="text-[10px] text-brand-dim/60">EST</span>
-                            `;
-                            
-                            intervalBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                selectedSlot = thisSlot;
-                                renderTimeSlotsForDate(dateStr);
-                                updateStickyBar();
-                            });
-                            
-                            if (selectedSlot && selectedSlot.start === thisSlot.start) {
-                                intervalBtn.classList.add('time-slot-selected');
-                            }
-                        } else {
-                            // Unavailable interval - grayed out
-                            const displayTime = hourNum === 0 ? `12:${String(minutes).padStart(2,'0')} AM` 
-                                              : hourNum < 12 ? `${hourNum}:${String(minutes).padStart(2,'0')} AM` 
-                                              : hourNum === 12 ? `12:${String(minutes).padStart(2,'0')} PM` 
-                                              : `${hourNum-12}:${String(minutes).padStart(2,'0')} PM`;
-                            
-                            intervalBtn.className = "time-slot-btn px-3 py-2 rounded-lg border-2 border-brand-gold/10 text-sm text-brand-dim/30 bg-black/20 cursor-not-allowed flex flex-col items-center justify-center gap-1 opacity-40";
-                            intervalBtn.disabled = true;
-                            intervalBtn.innerHTML = `
-                                <span class="font-semibold">${displayTime}</span>
-                                <span class="text-[10px] text-brand-dim/40">Booked</span>
-                            `;
-                        }
-                        
-                        intervalsDiv.appendChild(intervalBtn);
-                    });
-                    
-                    // Toggle expansion
-                    hourBtn.addEventListener('click', () => {
-                        const isHidden = intervalsDiv.classList.contains('hidden');
-                        const icon = hourBtn.querySelector('.expand-icon');
-                        
-                        if (isHidden) {
-                            intervalsDiv.classList.remove('hidden');
-                            icon.setAttribute('data-lucide', 'chevron-up');
-                        } else {
-                            intervalsDiv.classList.add('hidden');
-                            icon.setAttribute('data-lucide', 'chevron-down');
-                        }
-                        
-                        // Re-render icons
-                        if (typeof lucide !== 'undefined') lucide.createIcons();
-                    });
-                    
-                    hourlyDiv.appendChild(hourBtn);
-                    hourlyDiv.appendChild(intervalsDiv);
-                } else {
-                    // Just add the disabled button (no intervals to expand)
-                    hourlyDiv.appendChild(hourBtn);
-                }
-                
-                container.appendChild(hourlyDiv);
+                container.appendChild(btn);
             });
 
             wrapper.classList.remove('hidden');
