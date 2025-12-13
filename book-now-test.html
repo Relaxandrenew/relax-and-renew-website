@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Book Now | Relax & Renew RMT</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Now | Relax &amp; Renew RMT</title>
     <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
 
     <!-- Meta Pixel -->
@@ -19,9 +19,6 @@
     fbq('init', '701194265870298');
     fbq('track', 'PageView');
     </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
-    /></noscript>
 
     <!-- Google Tag / Ads -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
@@ -99,7 +96,7 @@
     </script>
 
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&amp;display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <style>
@@ -147,6 +144,8 @@
         
         .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
         /* Sticky footer CTA */
         .sticky-cta { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 60; background: rgba(5,5,5,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(224, 197, 132, 0.2); box-shadow: 0 -8px 30px rgba(0,0,0,0.35); }
@@ -218,14 +217,17 @@
 </head>
 
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+    <noscript>
+        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=701194265870298&amp;ev=PageView&amp;noscript=1" alt="Meta pixel tracker">
+    </noscript>
 
     <!-- NAVIGATION -->
     <nav id="navbar" class="fixed-nav">
         <div class="container mx-auto px-6 flex justify-between items-center h-20">
             <a href="index.html" class="flex items-center gap-3 no-underline group">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
-                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX &amp; RENEW</span>
                     <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
                 </div>
             </a>
@@ -238,7 +240,7 @@
                 <a href="therapists.html" class="nav-link">Our Therapists</a>
                 <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
             </div>
-            <button id="mobile-menu-toggle" class="lg:hidden text-brand-light p-2 rounded border border-brand-gold/40 hover:border-brand-gold" aria-label="Toggle navigation">
+            <button id="mobile-menu-toggle" type="button" class="lg:hidden text-brand-light p-2 rounded border border-brand-gold/40 hover:border-brand-gold" aria-label="Toggle navigation">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
         </div>
@@ -275,21 +277,21 @@
                     <div class="step-badge bg-brand-gold/20 text-brand-gold">1</div>
                     <div>
                         <div class="uppercase tracking-[0.18em] text-brand-gold text-xs font-bold">Step 1</div>
-                        <div class="text-brand-light">Address & Treatment</div>
+                        <div class="text-brand-light">Address &amp; Treatment</div>
                     </div>
                 </div>
                 <div class="step-item bg-black/20 rounded-lg p-3 border border-brand-gold/10">
                     <div class="step-badge bg-brand-light/10 text-brand-light">2</div>
                     <div>
                         <div class="uppercase tracking-[0.18em] text-brand-dim text-xs font-bold">Step 2</div>
-                        <div class="text-brand-dim">Pick Date & Time</div>
+                        <div class="text-brand-dim">Pick Date &amp; Time</div>
                     </div>
                 </div>
                 <div class="step-item bg-black/20 rounded-lg p-3 border border-brand-gold/10">
                     <div class="step-badge bg-brand-light/10 text-brand-light">3</div>
                     <div>
                         <div class="uppercase tracking-[0.18em] text-brand-dim text-xs font-bold">Step 3</div>
-                        <div class="text-brand-dim">Review & Continue</div>
+                        <div class="text-brand-dim">Review &amp; Continue</div>
                     </div>
                 </div>
             </div>
@@ -311,7 +313,7 @@
                             <div class="text-sm text-brand-light" id="selected-address-label">Service address + treatment required to view availability</div>
                         </div>
                     </div>
-                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
+                    <button id="change-address-btn" type="button" class="btn-gold text-sm px-6 py-3">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                         <span>Change Selection</span>
                     </button>
@@ -320,13 +322,13 @@
                 <!-- Calendar controls -->
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div class="flex items-center gap-4">
-                        <button id="prev-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                        <button id="prev-month-btn" type="button" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all" aria-label="Previous month">
                             <i data-lucide="chevron-left" class="w-5 h-5 text-brand-gold"></i>
                         </button>
                         <div class="text-brand-light text-lg md:text-xl font-serif">
                             <span id="calendar-month-label"></span>
                         </div>
-                        <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
+                        <button id="next-month-btn" type="button" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all" aria-label="Next month">
                             <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
                         </button>
                     </div>
@@ -409,7 +411,7 @@
                         </div>
                         <div id="therapist-info" class="hidden therapist-badge">
                             <div class="flex items-center gap-3 text-sm">
-                                <img id="therapist-avatar" src="" alt="Therapist" class="w-10 h-10 rounded-full object-cover border border-brand-gold/40">
+                                <img id="therapist-avatar" src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Therapist" class="w-10 h-10 rounded-full object-cover border border-brand-gold/40">
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <i data-lucide="user-check" class="w-4 h-4 text-brand-gold"></i>
@@ -433,11 +435,11 @@
                             <div id="summary-treatment" class="font-semibold"></div>
                         </div>
                         <div>
-                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Duration & Price</div>
+                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Duration &amp; Price</div>
                             <div id="summary-duration"></div>
                         </div>
                         <div>
-                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Date & Time</div>
+                            <div class="text-brand-dim text-xs uppercase tracking-[0.16em]">Date &amp; Time</div>
                             <div id="summary-datetime"></div>
                         </div>
                         <div>
@@ -457,8 +459,14 @@
         <div class="container mx-auto px-6">
             <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
             <div class="flex justify-center gap-6 text-brand-gold mb-8">
-                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
-                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="facebook" class="w-4 h-4"></i>
+                    <span class="sr-only">Facebook</span>
+                </a>
+                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span class="sr-only">Email</span>
+                </a>
             </div>
             <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline transition-colors">Return to Main Website</a>
         </div>
@@ -475,14 +483,14 @@
                     <div id="cta-details" class="text-brand-dim text-[12px]"></div>
                 </div>
             </div>
-            <button id="cta-continue" class="btn-filled px-6 py-3 text-sm font-bold">Continue to Booking</button>
+            <button id="cta-continue" type="button" class="btn-filled px-6 py-3 text-sm font-bold">Continue to Booking</button>
         </div>
     </div>
 
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up">
-            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
+            <button id="address-modal-close" type="button" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors" aria-label="Close address modal">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <div class="text-center mb-8">
@@ -497,7 +505,7 @@
 
             <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
             <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all mb-2">
-            <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
+            <button id="toggle-manual-address" type="button" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
                 Can't find your address? Enter it manually.
             </button>
 
@@ -557,11 +565,11 @@
                 </div>
             </div>
 
-            <button id="address-continue-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+            <button id="address-continue-btn" type="button" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
                 <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
                 <span>Show Available Times</span>
             </button>
-            <button id="returning-client-btn" class="w-full btn-gold py-3 mt-3 text-sm">Returning Client?</button>
+            <button id="returning-client-btn" type="button" class="w-full btn-gold py-3 mt-3 text-sm">Returning Client?</button>
 
             <p id="address-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
                 <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
@@ -1179,6 +1187,6 @@
     </script>
 
     <!-- Google Maps Places API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&amp;libraries=places&amp;callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
