@@ -73,6 +73,30 @@
                     backgroundImage: {
                         'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
                         'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+                        'shimmer': 'shimmer 1.5s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseSubtle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.7' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '200% 0' },
+                            '100%': { backgroundPosition: '-200% 0' }
+                        }
                     }
                 }
             }
@@ -81,40 +105,96 @@
 
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons - Loaded here -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <style>
         body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
         html { scroll-behavior: smooth; }
 
-        .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); border: 1px solid rgba(224, 197, 132, 0.1); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; }
+        /* Navigation - Matching Main Site */
+        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); }
+        
+        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Mobile Menu */
+        .mobile-menu { transform: translateX(100%); transition: transform 0.3s ease; }
+        .mobile-menu.open { transform: translateX(0); }
+
+        .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95)); border: 1px solid rgba(224, 197, 132, 0.15); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; border-radius: 8px; }
         .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
-        .card-fancy:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.3); }
         .card-fancy:hover::before { transform: scaleX(1); }
 
-        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-        .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
+        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
+        .btn-gold:hover { background: rgba(224, 197, 132, 0.15); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 20px rgba(224, 197, 132, 0.3); }
 
-        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(224, 197, 132, 0.4); }
 
-        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; border-radius: 4px; }
         .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
         .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
         .pac-item-query { color: #E0C584; }
 
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(5px); z-index: 100; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); z-index: 100; }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
         .calendar-day-disabled { opacity: 0.25; cursor: not-allowed; }
-        .calendar-day-available { border: 1px solid rgba(224,197,132,0.35); cursor: pointer; }
-        .calendar-day-available:hover { background: rgba(224,197,132,0.08); }
-        .calendar-day-selected { background: rgba(224,197,132,0.18); border-color: #E0C584; }
+        .calendar-day-available { border: 2px solid rgba(224,197,132,0.4); cursor: pointer; transition: all 0.3s ease; background: rgba(224,197,132,0.05); }
+        .calendar-day-available:hover { background: rgba(224,197,132,0.15); border-color: rgba(224,197,132,0.7); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(224, 197, 132, 0.2); }
+        .calendar-day-selected { background: rgba(224,197,132,0.25); border-color: #E0C584; box-shadow: 0 0 20px rgba(224, 197, 132, 0.3); }
+        .calendar-day-today::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: #E0C584; border-radius: 50%; }
+        
+        .time-slot-btn { transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .time-slot-btn::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: rgba(224, 197, 132, 0.3); transform: translate(-50%, -50%); transition: width 0.5s ease, height 0.5s ease; }
+        .time-slot-btn:hover::before { width: 200%; height: 200%; }
+        .time-slot-btn > * { position: relative; z-index: 1; }
+        .time-slot-selected { background: rgba(224,197,132,0.25) !important; border-color: #E0C584 !important; box-shadow: 0 0 20px rgba(224, 197, 132, 0.3) !important; transform: scale(1.05); }
+
+        .therapist-badge { background: linear-gradient(135deg, rgba(224,197,132,0.1), rgba(224,197,132,0.05)); border: 1px solid rgba(224,197,132,0.3); border-radius: 6px; padding: 0.75rem 1rem; }
+        
+        input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.1); }
+        
+        .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+
+        /* Skeleton Loader */
+        .skeleton { background: linear-gradient(90deg, rgba(224,197,132,0.05) 25%, rgba(224,197,132,0.15) 50%, rgba(224,197,132,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+
+        /* Progress Steps */
+        .progress-step { position: relative; flex: 1; }
+        .progress-step::before { content: ''; position: absolute; top: 20px; left: 50%; width: 100%; height: 2px; background: rgba(224,197,132,0.2); z-index: 0; }
+        .progress-step:first-child::before { left: 50%; width: 50%; }
+        .progress-step:last-child::before { width: 50%; }
+        .progress-step.active .step-circle { background: #E0C584; color: #000; border-color: #E0C584; }
+        .progress-step.completed .step-circle { background: rgba(224,197,132,0.3); border-color: #E0C584; }
+        .progress-step.completed::before { background: #E0C584; }
+        .step-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(224,197,132,0.3); background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; margin: 0 auto; transition: all 0.3s ease; }
+
+        /* Sticky Bar */
+        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(5,5,5,0.98), rgba(5,5,5,0.95)); backdrop-filter: blur(20px); border-top: 1px solid rgba(224,197,132,0.3); z-index: 40; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -4px 30px rgba(0,0,0,0.5); }
+        .sticky-bar.show { transform: translateY(0); }
+
+        /* Header hero section */
+        .header-hero { 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(5,5,5,1)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Therapist Avatar */
+        .therapist-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #E0C584; object-fit: cover; }
+
+        /* Payment Badge */
+        .payment-badge { background: linear-gradient(135deg, rgba(224,197,132,0.08), rgba(224,197,132,0.03)); border: 1px solid rgba(224,197,132,0.25); }
+
+        @media (max-width: 768px) {
+            .calendar-grid { gap: 0.25rem; }
+            .card-fancy { padding: 1.5rem 1rem; }
+        }
     </style>
 
     <!-- Address autocomplete bootstrap -->
-    <!-- This function is called by the Google Maps script once it loads -->
     <script>
         function initAllAutocompletes() {
             try {
@@ -162,105 +242,263 @@
 
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
-    <!-- HERO / LOGO -->
-    <div class="relative pt-12 pb-12 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-        <div class="relative z-10">
-            <a href="index.html" class="inline-block group">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
-                <div class="flex flex-col">
-                    <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">RELAX & RENEW</span>
-                    <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+    <!-- NAVIGATION -->
+    <nav id="navbar" class="fixed-nav">
+        <div class="container mx-auto px-6 flex justify-between items-center h-20">
+            <a href="index.html" class="flex items-center gap-3 no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <div class="hidden md:flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
                 </div>
             </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
+                <a href="index.html#services" class="nav-link">Services</a>
+                <a href="index.html#pricing" class="nav-link">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
+                <a href="index.html#area" class="nav-link">Service Area</a>
+                <a href="index.html#faq" class="nav-link">FAQ</a>
+                <a href="therapists.html" class="nav-link">Our Therapists</a>
+                <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="lg:hidden text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-8">
+                <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
+                <button id="mobile-menu-close" class="text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-6">
+                <a href="index.html#services" class="nav-link text-lg">Services</a>
+                <a href="index.html#pricing" class="nav-link text-lg">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link text-lg">Gift Cards</a>
+                <a href="index.html#area" class="nav-link text-lg">Service Area</a>
+                <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
+                <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
+                <a href="membership.html" class="nav-link text-lg text-brand-gold font-bold">Membership</a>
+            </div>
         </div>
     </div>
 
-    <!-- BOOKING CALENDAR SECTION -->
-    <section id="booking" class="py-16 bg-brand-black border-b border-brand-light/5">
-        <div class="container mx-auto px-6 max-w-5xl">
-            <div class="text-center mb-10">
-                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Step 1: Address + Treatment</span>
-                <h1 class="text-3xl md:text-4xl text-brand-light mt-3 mb-3 font-serif">Mobile Appointment Booking</h1>
-                <p class="text-brand-dim text-sm max-w-2xl mx-auto">
-                    Enter your service address and choose your treatment. We'll calculate drive-time between appointments and only show times that realistically work for mobile visits.
-                </p>
+    <!-- HEADER HERO WITH PROGRESS INDICATOR -->
+    <header class="header-hero pt-28 pb-16 border-b border-brand-gold/20">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-center mb-12 max-w-3xl mx-auto">
+                <div class="progress-step active" id="step-1">
+                    <div class="step-circle">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-xs uppercase tracking-[0.15em] text-brand-gold font-bold">Step 1</div>
+                        <div class="text-[10px] text-brand-dim/70 mt-1 hidden md:block">Location & Service</div>
+                    </div>
+                </div>
+                <div class="progress-step" id="step-2">
+                    <div class="step-circle">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-xs uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 2</div>
+                        <div class="text-[10px] text-brand-dim/70 mt-1 hidden md:block">Date & Time</div>
+                    </div>
+                </div>
+                <div class="progress-step" id="step-3">
+                    <div class="step-circle">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-xs uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 3</div>
+                        <div class="text-[10px] text-brand-dim/70 mt-1 hidden md:block">Your Details</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="card-fancy">
+            <div class="animate-slide-up text-center">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl text-brand-light mt-3 mb-5 font-serif leading-tight">
+                    Book Your Mobile Massage
+                </h1>
+                <p class="text-brand-dim text-base md:text-lg max-w-2xl leading-relaxed mx-auto">
+                    We'll calculate drive-time between appointments and show you times that work for your location.
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- BOOKING CALENDAR SECTION -->
+    <section id="booking" class="py-12 bg-brand-black border-b border-brand-light/5">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <div class="card-fancy animate-fade-in">
                 <!-- Top helper row -->
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                    <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
-                        <i data-lucide="map-pin" class="w-4 h-4"></i>
-                        <span id="selected-address-label">Service address + treatment required to view availability</span>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-brand-gold/10">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-brand-gold/10 p-2 rounded-full">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-brand-gold"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold/70 font-bold mb-1">Service Location</div>
+                            <div class="text-sm text-brand-light" id="selected-address-label">Service address + treatment required to view availability</div>
+                        </div>
                     </div>
-                    <button id="change-address-btn" class="btn-gold text-[0.65rem] px-4 py-2">
-                        <i data-lucide="edit-3" class="w-3 h-3"></i>
-                        <span>Change</span>
+                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        <span>Change Selection</span>
                     </button>
                 </div>
 
+                <!-- Skeleton Loader -->
+                <div id="calendar-skeleton" class="hidden space-y-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="skeleton h-8 w-48"></div>
+                        <div class="skeleton h-8 w-32"></div>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-2 mt-2">
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                    </div>
+                </div>
+
                 <!-- Calendar controls -->
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <button id="prev-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10 disabled:opacity-30 disabled:cursor-not-allowed">
-                            <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
-                        </button>
-                        <button id="next-month-btn" class="p-1 rounded border border-brand-gold/20 hover:bg-brand-gold/10">
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
-                        </button>
-                        <div class="text-brand-light text-sm md:text-base font-serif">
-                            <span id="calendar-month-label"></span>
+                <div id="calendar-content" class="">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-4">
+                            <button id="prev-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                <i data-lucide="chevron-left" class="w-5 h-5 text-brand-gold"></i>
+                            </button>
+                            <div class="text-brand-light text-lg md:text-xl font-serif">
+                                <span id="calendar-month-label"></span>
+                            </div>
+                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4 md:gap-6 text-[0.65rem] md:text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold/20"></span> 
+                                <span class="hidden sm:inline">No Availability</span>
+                                <span class="sm:hidden">None</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold/70 bg-brand-gold/15"></span> 
+                                <span class="hidden sm:inline">Available</span>
+                                <span class="sm:hidden">Open</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold bg-brand-gold/30"></span> 
+                                <span class="hidden sm:inline">Selected</span>
+                                <span class="sm:hidden">Picked</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
+
+                    <!-- Weekday header -->
+                    <div class="calendar-grid text-[0.7rem] md:text-[0.75rem] uppercase tracking-[0.16em] text-brand-gold/70 mb-3 font-bold">
+                        <div class="text-center py-2">Sun</div>
+                        <div class="text-center py-2">Mon</div>
+                        <div class="text-center py-2">Tue</div>
+                        <div class="text-center py-2">Wed</div>
+                        <div class="text-center py-2">Thu</div>
+                        <div class="text-center py-2">Fri</div>
+                        <div class="text-center py-2">Sat</div>
+                    </div>
+
+                    <!-- Calendar days -->
+                    <div id="calendar-days" class="calendar-grid text-sm mb-8"></div>
+
+                    <!-- Availability status -->
+                    <div id="availability-status" class="text-xs text-brand-dim/80 mb-6 p-4 rounded bg-brand-gold/5 border border-brand-gold/10">
                         <div class="flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded border border-brand-gold/20"></span> No Availability
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded border border-brand-gold/70 bg-brand-gold/15"></span> Available
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-block w-3 h-3 rounded border border-brand-gold bg-brand-gold/30"></span> Selected
+                            <i data-lucide="info" class="w-4 h-4 text-brand-gold"></i>
+                            <span>Enter your address and select a treatment to load live availability.</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Weekday header -->
-                <div class="calendar-grid text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim mb-2">
-                    <div class="text-center py-1">Sun</div>
-                    <div class="text-center py-1">Mon</div>
-                    <div class="text-center py-1">Tue</div>
-                    <div class="text-center py-1">Wed</div>
-                    <div class="text-center py-1">Thu</div>
-                    <div class="text-center py-1">Fri</div>
-                    <div class="text-center py-1">Sat</div>
-                </div>
-
-                <!-- Calendar days -->
-                <div id="calendar-days" class="calendar-grid text-sm mb-6"></div>
-
-                <!-- Availability status -->
-                <div id="availability-status" class="text-xs text-brand-dim/80 mb-4">
-                    Enter your address and select a treatment to load live availability.
-                </div>
-
-                <!-- Time slots for selected date -->
-                <div id="time-slots-wrapper" class="border-t border-brand-gold/15 pt-4 mt-2 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2">
-                            <i data-lucide="clock" class="w-4 h-4"></i>
-                            <span id="selected-date-label">Available Times</span>
+                    <!-- Time slots for selected date -->
+                    <div id="time-slots-wrapper" class="border-t border-brand-gold/20 pt-6 mt-4 hidden animate-slide-up">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <div class="text-xs uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2 mb-2">
+                                    <i data-lucide="clock" class="w-4 h-4"></i>
+                                    <span id="selected-date-label">Available Times</span>
+                                </div>
+                                <div class="text-[11px] text-brand-dim/80">
+                                    <span id="selected-treatment-label"></span>
+                                </div>
+                            </div>
+                            <div id="therapist-info" class="hidden therapist-badge">
+                                <div class="flex items-center gap-3">
+                                    <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg" alt="Cassandra - RMT" class="therapist-avatar">
+                                    <div>
+                                        <div class="text-sm font-bold text-brand-light" id="therapist-name">Cassandra</div>
+                                        <div class="text-[10px] text-brand-dim/70 uppercase tracking-wider">Registered Massage Therapist</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-[11px] text-brand-dim/80">
-                            <span id="selected-treatment-label"></span>
-                        </div>
+                        <div id="time-slots" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
                     </div>
-                    <div id="time-slots" class="flex flex-wrap gap-3"></div>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- STICKY BOTTOM BAR -->
+    <div id="sticky-bar" class="sticky-bar">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Summary -->
+                <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+                    <div class="flex items-center gap-3">
+                        <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg" alt="Cassandra" class="therapist-avatar hidden md:block">
+                        <div>
+                            <div class="text-sm font-bold text-brand-light flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-brand-gold"></i>
+                                <span id="summary-treatment">Treatment Selected</span>
+                            </div>
+                            <div class="text-xs text-brand-dim/80 mt-1" id="summary-datetime">Date & Time</div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-px h-12 bg-brand-gold/20"></div>
+                    <div class="text-sm">
+                        <div class="text-brand-gold font-bold text-lg" id="summary-price">$110+HST</div>
+                        <div class="text-[10px] text-brand-dim/70">(~<span id="summary-total">$124</span> total)</div>
+                    </div>
+                </div>
+                
+                <!-- CTA Button -->
+                <button id="continue-to-booking-btn" class="btn-filled py-4 px-8 font-bold tracking-wider text-base whitespace-nowrap">
+                    <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
+                    <span>Continue to Booking</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
         <div class="container mx-auto px-6">
@@ -269,49 +507,54 @@
                 <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
                 <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
             </div>
-            <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline">Return to Main Website</a>
+            <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline transition-colors">Return to Main Website</a>
         </div>
     </footer>
 
     <!-- ADDRESS MODAL -->
-    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-6 md:p-8 max-w-lg w-full relative shadow-2xl">
-            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light">
-                <i data-lucide="x" class="w-5 h-5"></i>
+    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
             </button>
-            <h3 class="text-2xl text-brand-gold font-serif mb-2 text-center">Where will we be visiting?</h3>
-            <p class="text-sm text-brand-dim text-center mb-6">
-                We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
-            </p>
+            <div class="text-center mb-8">
+                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+                    <i data-lucide="map-pin" class="w-8 h-8 text-brand-gold"></i>
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-2">Where will we be visiting?</h3>
+                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+                    We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+                </p>
+            </div>
 
-            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Service Address *</label>
-            <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-colors mb-2">
-            <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light mb-4">
+            <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+            <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all mb-2">
+            <button id="toggle-manual-address" class="text-[11px] underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
                 Can't find your address? Enter it manually.
             </button>
 
-            <div id="manual-address-wrapper" class="space-y-3 hidden">
+            <div id="manual-address-wrapper" class="space-y-4 hidden">
                 <div>
-                    <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Street Address *</label>
-                    <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                    <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Street Address *</label>
+                    <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">City *</label>
-                        <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                        <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">City *</label>
+                        <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Postal Code *</label>
-                        <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded p-2 text-brand-light text-sm focus:outline-none focus:border-brand-gold">
+                        <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+                        <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
                     </div>
                 </div>
             </div>
 
-            <!-- Treatment + Duration (standard only) -->
-            <div class="mt-6 space-y-3">
+            <!-- Treatment + Duration -->
+            <div class="mt-8 space-y-4">
                 <div>
-                    <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Treatment *</label>
-                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black">
+                    <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
+                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all">
                         <option value="" disabled selected>Select a treatment...</option>
 
                         <optgroup label="Core Therapeutic">
@@ -335,22 +578,39 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] text-brand-dim uppercase font-bold mb-1">Duration *</label>
-                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded p-2.5 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60">
+                    <label class="block text-[11px] text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
+                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
-                    <p class="mt-2 text-[11px] text-brand-dim/80">
+                    <p class="mt-3 text-[11px] text-brand-dim/70 bg-brand-gold/5 p-3 rounded-lg border border-brand-gold/10">
+                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
                         You will only see the service duration. We add a standard 25-minute setup/pack-up internally.
                     </p>
                 </div>
             </div>
 
-            <button id="address-continue-btn" class="w-full btn-filled py-3 mt-4 font-bold tracking-wider">
-                <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+            <!-- Payment Options -->
+            <div class="mt-6 payment-badge rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <div class="bg-brand-gold/10 p-2 rounded-full mt-0.5">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs uppercase tracking-[0.15em] text-brand-gold font-bold mb-2">Payment Options</div>
+                        <div class="text-[11px] text-brand-dim/80 leading-relaxed">
+                            We accept <strong class="text-brand-light">Cash, Credit Card, and E-Transfer</strong>. We also offer <strong class="text-brand-light">Direct Billing</strong> for most insurance companies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="address-continue-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+                <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
                 <span>Show Available Times</span>
             </button>
 
-            <p id="address-error" class="text-xs text-red-400 mt-3 hidden">
+            <p id="address-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
                 Please provide an address, treatment, and duration before continuing.
             </p>
         </div>
@@ -361,6 +621,25 @@
         // ---------------- CONFIG ----------------
         const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
         const STATIC_SETUP_MINUTES = 25;
+
+        // Pricing data (base price before HST)
+        const PRICING = {
+            relaxation:  { 60: 110, 75: 135, 90: 160, 120: 210 },
+            deep_tissue: { 60: 110, 75: 135, 90: 160, 120: 210 },
+            sports:      { 60: 110, 75: 135, 90: 160, 120: 210 },
+            senior:      { 60: 110, 75: 135, 90: 160, 120: 210 },
+            hot_stone:   { 60: 130, 75: 155, 90: 180, 120: 230 },
+            cupping:     { 60: 130, 75: 155, 90: 180, 120: 230 },
+            prenatal:    { 30: 70, 45: 95, 60: 110 },
+            pediatric:   { 30: 70, 45: 95 },
+            infant:      { 30: 70, 45: 95 },
+        };
+
+        // Therapist data
+        const THERAPISTS = {
+            'cassandra': { name: 'Cassandra', specialty: 'Deep Tissue & Sports' },
+            'default': { name: 'Available Therapist', specialty: 'All Services' }
+        };
 
         // ---------------- RULES ----------------
         const TREATMENT_RULES = {
@@ -414,16 +693,49 @@
             return dateObj.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
         }
 
+        function getPrice() {
+            if (!selectedServiceKey || !selectedStandardDuration) return { base: 0, total: 0 };
+            const base = PRICING[selectedServiceKey]?.[selectedStandardDuration] || 0;
+            const total = Math.round(base * 1.13); // HST = 13%
+            return { base, total };
+        }
+
+        function updateProgress(step) {
+            const steps = ['step-1', 'step-2', 'step-3'];
+            steps.forEach((s, idx) => {
+                const el = document.getElementById(s);
+                if (idx < step - 1) {
+                    el.classList.add('completed');
+                    el.classList.remove('active');
+                } else if (idx === step - 1) {
+                    el.classList.add('active');
+                    el.classList.remove('completed');
+                } else {
+                    el.classList.remove('active', 'completed');
+                }
+            });
+        }
+
         function setAvailabilityFromResponse(data) {
             availabilityByDate = {};
 
             console.log('🔍 Raw API Response:', data);
-            console.log('🔍 Is Array?', Array.isArray(data));
             console.log('🔍 Type:', typeof data);
 
             if (!data) return;
 
-            // Handle direct array (expected from fixed n8n workflow)
+            // Handle object with dates property (expected from n8n)
+            if (data.dates && Array.isArray(data.dates)) {
+                console.log('✅ Processing dates array from response');
+                data.dates.forEach(day => {
+                    if (!day || !day.date || !Array.isArray(day.slots)) return;
+                    availabilityByDate[day.date] = day.slots;
+                });
+                console.log('📅 Availability by date:', availabilityByDate);
+                return;
+            }
+
+            // Fallback: Handle direct array
             if (Array.isArray(data)) {
                 console.log('✅ Processing as direct array');
                 data.forEach(day => {
@@ -432,21 +744,6 @@
                 });
                 console.log('📅 Availability by date:', availabilityByDate);
                 return;
-            }
-
-            // Handle wrapped responses (fallback)
-            if (typeof data === 'object') {
-                console.log('⚠️ Response is object, checking for wrapper keys');
-                const source = data.dates || data.slots || data.availability;
-                if (Array.isArray(source)) {
-                    console.log('✅ Found array in wrapper, processing');
-                    source.forEach(day => {
-                        if (!day || !day.date || !Array.isArray(day.slots)) return;
-                        availabilityByDate[day.date] = day.slots;
-                    });
-                    console.log('📅 Availability by date:', availabilityByDate);
-                    return;
-                }
             }
 
             console.error('❌ Could not parse availability data structure');
@@ -458,8 +755,10 @@
 
         function updateAvailabilityStatus(message, isError = false) {
             const el = document.getElementById('availability-status');
-            el.textContent = message;
-            el.className = "text-xs mb-4 " + (isError ? "text-red-400" : "text-brand-dim/80");
+            const iconClass = isError ? 'alert-circle' : 'info';
+            el.innerHTML = `<div class="flex items-center gap-2"><i data-lucide="${iconClass}" class="w-4 h-4 ${isError ? 'text-red-400' : 'text-brand-gold'}"></i><span>${message}</span></div>`;
+            el.className = "text-xs mb-6 p-4 rounded border " + (isError ? "text-red-400 bg-red-500/10 border-red-500/30" : "text-brand-dim/80 bg-brand-gold/5 border-brand-gold/10");
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function computeMonthRange(monthDate) {
@@ -471,6 +770,32 @@
 
             const from = (y === now.getFullYear() && m === now.getMonth()) ? now : first;
             return { from: toDateStr(from), to: toDateStr(last) };
+        }
+
+        function updateStickyBar() {
+            const bar = document.getElementById('sticky-bar');
+            const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+            
+            if (!selectedSlot || !selectedDateStr || !treat) {
+                bar.classList.remove('show');
+                return;
+            }
+
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            const timeLabel = formatTimeLabel(selectedSlot);
+            const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const price = getPrice();
+
+            document.getElementById('summary-treatment').textContent = `${treat.label} (${selectedStandardDuration} min)`;
+            document.getElementById('summary-datetime').innerHTML = `<i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${dateLabel} at ${timeLabel} EST`;
+            document.getElementById('summary-price').textContent = `$${price.base}+HST`;
+            document.getElementById('summary-total').textContent = `$${price.total}`;
+
+            bar.classList.add('show');
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // ---------------- CALENDAR RENDER ----------------
@@ -495,11 +820,11 @@
             for (let cellIndex = 0; cellIndex < totalCells; cellIndex++) {
                 const dayEl = document.createElement('button');
                 dayEl.type = 'button';
-                dayEl.className = "relative text-center py-2 text-sm rounded-sm border border-brand-gold/10 bg-black/30";
+                dayEl.className = "relative text-center py-3 text-base rounded-lg border transition-all";
 
                 const dayNumber = cellIndex - startDow + 1;
                 if (dayNumber < 1 || dayNumber > daysInMonth) {
-                    dayEl.classList.add('opacity-0', 'pointer-events-none');
+                    dayEl.classList.add('opacity-0', 'pointer-events-none', 'border-transparent');
                     daysContainer.appendChild(dayEl);
                     continue;
                 }
@@ -511,13 +836,26 @@
                 dayEl.textContent = dayNumber;
 
                 if (cellDate < today) {
-                    dayEl.classList.add('calendar-day-disabled');
+                    dayEl.classList.add('calendar-day-disabled', 'border-brand-gold/10', 'bg-black/30');
                     daysContainer.appendChild(dayEl);
                     continue;
                 }
 
-                if (hasSlots(dateStr)) dayEl.classList.add('calendar-day-available');
-                if (selectedDateStr === dateStr) dayEl.classList.add('calendar-day-selected');
+                dayEl.classList.add('border-brand-gold/20', 'bg-black/30');
+                
+                // Today indicator
+                if (cellDate.getTime() === today.getTime()) {
+                    dayEl.classList.add('calendar-day-today');
+                }
+                
+                if (hasSlots(dateStr)) {
+                    dayEl.classList.add('calendar-day-available');
+                    dayEl.classList.remove('border-brand-gold/20');
+                }
+                
+                if (selectedDateStr === dateStr) {
+                    dayEl.classList.add('calendar-day-selected');
+                }
 
                 dayEl.addEventListener('click', () => {
                     if (!hasSlots(dateStr)) return;
@@ -525,6 +863,8 @@
                     selectedSlot = null;
                     renderCalendar();
                     renderTimeSlotsForDate(dateStr);
+                    updateProgress(2);
+                    updateStickyBar();
                 });
 
                 daysContainer.appendChild(dayEl);
@@ -536,6 +876,7 @@
             const container = document.getElementById('time-slots');
             const dateLabelEl = document.getElementById('selected-date-label');
             const treatLabelEl = document.getElementById('selected-treatment-label');
+            const therapistInfo = document.getElementById('therapist-info');
 
             if (!hasSlots(dateStr)) {
                 wrapper.classList.add('hidden');
@@ -548,26 +889,39 @@
             dateLabelEl.textContent = formatDateLabel(dateObj);
 
             const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-            treatLabelEl.textContent = (treat && selectedStandardDuration)
-                ? `${treat.label} • ${selectedStandardDuration} min`
+            const price = getPrice();
+            treatLabelEl.innerHTML = (treat && selectedStandardDuration)
+                ? `${treat.label} • ${selectedStandardDuration} min • <span class="text-brand-gold font-bold">$${price.base}+HST</span> <span class="text-brand-dim/60">(~$${price.total})</span>`
                 : '';
 
             const slots = availabilityByDate[dateStr];
             container.innerHTML = '';
 
+            // Show therapist info
+            if (slots.length > 0) {
+                therapistInfo.classList.remove('hidden');
+            }
+
             slots.forEach((slot) => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = "px-4 py-2 rounded-full border border-brand-gold/30 text-xs md:text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 flex items-center gap-2";
-                btn.innerHTML = '<i data-lucide="clock-4" class="w-3 h-3 text-brand-gold"></i><span>' + formatTimeLabel(slot) + '</span>';
+                btn.className = "time-slot-btn px-4 py-3 rounded-lg border border-brand-gold/30 text-sm text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex flex-col items-center justify-center gap-1";
+                
+                const timeLabel = formatTimeLabel(slot);
+                btn.innerHTML = `
+                    <i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i>
+                    <span class="font-semibold">${timeLabel}</span>
+                    <span class="text-[10px] text-brand-dim/60">EST</span>
+                `;
 
                 btn.addEventListener('click', () => {
                     selectedSlot = slot;
                     renderTimeSlotsForDate(dateStr);
+                    updateStickyBar();
                 });
 
                 if (selectedSlot && selectedSlot.start === slot.start) {
-                    btn.classList.add('bg-brand-gold/20', 'border-brand-gold');
+                    btn.classList.add('time-slot-selected');
                 }
 
                 container.appendChild(btn);
@@ -628,7 +982,9 @@
             durations.forEach(min => {
                 const opt = document.createElement('option');
                 opt.value = String(min);
-                opt.textContent = `${min} min`;
+                const price = PRICING[selectedServiceKey]?.[min] || 0;
+                const total = Math.round(price * 1.13);
+                opt.textContent = `${min} min - $${price}+HST (~$${total})`;
                 durationSelect.appendChild(opt);
             });
 
@@ -648,10 +1004,15 @@
             }
 
             try {
-                updateAvailabilityStatus("Checking live availability for this address...");
+                // Show skeleton
+                document.getElementById('calendar-skeleton').classList.remove('hidden');
+                document.getElementById('calendar-content').classList.add('hidden');
+                
+                updateAvailabilityStatus("Checking live availability for this address...", false);
                 selectedDateStr = null;
                 selectedSlot = null;
                 document.getElementById('time-slots-wrapper').classList.add('hidden');
+                updateStickyBar();
 
                 const { from, to } = computeMonthRange(calendarCurrent);
                 
@@ -660,15 +1021,15 @@
 
                 const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
 
-                // FIXED: Send both standard and block durations
+                // Send both standard and block durations
                 const payload = {
                     address: addrObj.address,
                     city: addrObj.city,
                     postal_code: addrObj.postal_code,
                     from,
                     to,
-                    durationMinutes: blockMinutes,                          // Block duration for Cliniko
-                    standardDurationMinutes: Number(selectedStandardDuration), // Standard duration for display/cache
+                    durationMinutes: blockMinutes,
+                    standardDurationMinutes: Number(selectedStandardDuration),
                     treatment_key: selectedServiceKey,
                     treatment_label: treat ? treat.label : ""
                 };
@@ -680,6 +1041,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                // Hide skeleton
+                document.getElementById('calendar-skeleton').classList.add('hidden');
+                document.getElementById('calendar-content').classList.remove('hidden');
 
                 if (!res.ok) {
                     console.error('❌ Availability error', res.status, await res.text());
@@ -701,6 +1066,10 @@
 
                 renderCalendar();
             } catch (e) {
+                // Hide skeleton on error
+                document.getElementById('calendar-skeleton').classList.add('hidden');
+                document.getElementById('calendar-content').classList.remove('hidden');
+                
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
             }
@@ -709,6 +1078,26 @@
         // ---------------- INIT ----------------
         function initializeApp() {
             if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Mobile menu
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.add('open');
+            });
+
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+
+            // Close mobile menu when clicking a link
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.remove('open');
+                });
+            });
 
             const serviceSelect = document.getElementById('service-select');
             const durationSelect = document.getElementById('duration-select');
@@ -775,15 +1164,24 @@
                 }
 
                 errorEl.classList.add('hidden');
-                labelEl.textContent = `Selected: ${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address}`;
+                const price = getPrice();
+                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
                 closeAddressModal();
+                updateProgress(2);
                 await loadAvailabilityForCurrentMonth();
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
-            document.getElementById('address-modal').classList.remove('hidden');
+            // Continue to booking button
+            document.getElementById('continue-to-booking-btn').addEventListener('click', () => {
+                // TODO: Proceed to step 3 - collect user details
+                alert('Proceeding to Step 3: Your Details (to be implemented)');
+            });
+
+            // Start with modal open
+            openAddressModal();
             renderCalendar();
         }
 
@@ -792,7 +1190,6 @@
     </script>
 
     <!-- Google Maps Places API -->
-    <!-- The key is here and will not be removed: AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
 </body>
 </html>
