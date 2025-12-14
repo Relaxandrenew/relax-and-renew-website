@@ -702,6 +702,22 @@
                     <input id="client-phone" type="tel" required placeholder="(555) 123-4567" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
                 </div>
 
+                <script>
+                // Phone number auto-formatting
+                document.getElementById('client-phone').addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 10) value = value.slice(0, 10);
+                    
+                    if (value.length >= 6) {
+                        e.target.value = `(${value.slice(0,3)}) ${value.slice(3,6)}-${value.slice(6)}`;
+                    } else if (value.length >= 3) {
+                        e.target.value = `(${value.slice(0,3)}) ${value.slice(3)}`;
+                    } else if (value.length > 0) {
+                        e.target.value = `(${value}`;
+                    }
+                });
+                </script>
+
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
                     <input id="client-address-display" type="text" readonly class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75">
@@ -1432,7 +1448,7 @@
             
             // TODO: Replace with your actual Stripe publishable key
             // REPLACE WITH YOUR STRIPE PUBLISHABLE KEY: https://dashboard.stripe.com/apikeys
-            const STRIPE_PUBLISHABLE_KEY = 'pk_test_1SFdlu2atTjzVbCkaofhJTrE'; // Get from Stripe Dashboard
+            const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_KEY_HERE'; // Get from Stripe Dashboard
             
             stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
             stripeElements = stripe.elements();
@@ -1680,6 +1696,44 @@
 
             document.getElementById('client-modal-close').addEventListener('click', closeClientDetailsModal);
 
+            // Confirmation modal functions
+            function showConfirmationModal(firstName, lastName, phone, email, dateStr, slot, travelCharge) {
+                const modal = document.getElementById('confirmation-modal');
+                
+                // Fill in details
+                document.getElementById('confirm-name').textContent = `${firstName} ${lastName}`;
+                document.getElementById('confirm-phone').textContent = phone;
+                document.getElementById('confirm-email').textContent = email;
+                
+                const [yy, mm, dd] = dateStr.split('-').map(Number);
+                const dateObj = new Date(yy, mm - 1, dd);
+                const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
+                const timeLabel = formatTimeLabel(slot);
+                
+                document.getElementById('confirm-date').textContent = dateLabel;
+                document.getElementById('confirm-time').textContent = `${timeLabel} EST`;
+                
+                // Show travel notice if applicable
+                if (travelCharge > 0) {
+                    const noticeEl = document.getElementById('confirm-travel-notice');
+                    const textEl = document.getElementById('confirm-travel-text');
+                    noticeEl.classList.remove('hidden');
+                    textEl.textContent = `Your credit card has been saved for no-show protection. A $${travelCharge} travel charge will be added to your total and collected after your treatment.`;
+                } else {
+                    document.getElementById('confirm-travel-notice').classList.add('hidden');
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+            
+            window.closeConfirmationModal = function() {
+                const modal = document.getElementById('confirmation-modal');
+                modal.classList.add('hidden');
+                // Optionally redirect to home
+                // window.location.href = 'index.html';
+            };
+
             // Handle client details form submission
             document.getElementById('client-details-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1775,13 +1829,14 @@
                     price_base: getPrice().base,
                     price_total: getPrice().total,
                     
-                    // Travel charge info
+                    // Travel charge info - GET FROM SLOT DATA
                     travel_charge: travelCharge,
-                    drive_time_minutes: driveTimeMinutes,
+                    drive_time_minutes: selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0,
                     stripe_payment_method_id: paymentMethodId
                 };
 
                 console.log('📋 Booking data ready:', bookingData);
+                console.log('🚗 Drive time being sent:', bookingData.drive_time_minutes, 'minutes');
 
                 // Send to booking webhook
                 submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Confirming Booking...</span>';
@@ -1798,15 +1853,8 @@
                     if (response.ok) {
                         const result = await response.json();
                         
-                        let message = `Booking confirmed!\n\nName: ${firstName} ${lastName}\nPhone: ${phone}\nDate: ${selectedDateStr}\nTime: ${formatTimeLabel(selectedSlot)}`;
-                        
-                        if (travelCharge > 0) {
-                            message += `\n\n✓ Credit card saved for no-show protection.\n   $${travelCharge} travel charge will be added to your total (paid after treatment).`;
-                        }
-                        
-                        message += '\n\nYou will receive a confirmation email shortly.';
-                        
-                        alert(message);
+                        // Show branded confirmation modal
+                        showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
                         
                         closeClientDetailsModal();
                         
@@ -1837,6 +1885,58 @@
         window.onload = initializeApp;
 
     </script>
+
+    <!-- CONFIRMATION SUCCESS MODAL -->
+    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]">
+        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up">
+            <div class="text-center">
+                <div class="inline-block bg-brand-gold/10 p-4 rounded-full mb-6">
+                    <i data-lucide="check-circle" class="w-16 h-16 text-brand-gold"></i>
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-4">Booking Confirmed!</h3>
+                
+                <div class="bg-brand-gold/5 border border-brand-gold/20 rounded-lg p-6 mb-6 text-left">
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Name:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-name"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Phone:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-phone"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Date:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-date"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Time:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-time"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="confirm-travel-notice" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6 text-left">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <div class="text-sm font-bold text-amber-500 mb-2">Card Saved for Protection</div>
+                            <div class="text-xs text-brand-light leading-relaxed" id="confirm-travel-text"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-sm text-brand-dim/80 mb-6">
+                    A confirmation email has been sent to <span class="text-brand-light font-semibold" id="confirm-email"></span>
+                </p>
+
+                <button onclick="closeConfirmationModal()" class="w-full btn-filled py-4 font-bold tracking-wider text-base">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span>Return to Home</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Google Maps Places API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
