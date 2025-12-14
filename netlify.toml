@@ -1,0 +1,7 @@
+[build]
+  # If you don't have a build, this can be empty or a simple command
+  command = ""
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
