@@ -1107,9 +1107,9 @@
 
             container.appendChild(groupRow);
 
-            // Create expand indicator row
+            // Create expand indicator row - HIDDEN ON MOBILE
             const expandRow = document.createElement('div');
-            expandRow.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6';
+            expandRow.className = 'hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6';
             
             Object.keys(timeGroups).forEach(groupKey => {
                 const group = timeGroups[groupKey];
@@ -1155,9 +1155,9 @@
                 // Sort slots by time
                 group.slots.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-                // Create grid for time slots
+                // Create grid for time slots - RESPONSIVE
                 const slotsGrid = document.createElement('div');
-                slotsGrid.className = 'grid grid-cols-4 gap-2';
+                slotsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2';
 
                 group.slots.forEach(slot => {
                     const slotBtn = document.createElement('button');
@@ -1431,7 +1431,8 @@
             if (stripe) return; // Already initialized
             
             // TODO: Replace with your actual Stripe publishable key
-            const STRIPE_PUBLISHABLE_KEY = 'pk_test_mk_1SFdlu2atTjzVbCkaofhJTrE'; // You need to add your real key
+            // REPLACE WITH YOUR STRIPE PUBLISHABLE KEY: https://dashboard.stripe.com/apikeys
+            const STRIPE_PUBLISHABLE_KEY = 'pk_test_1SFdlu2atTjzVbCkaofhJTrE'; // Get from Stripe Dashboard
             
             stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
             stripeElements = stripe.elements();
