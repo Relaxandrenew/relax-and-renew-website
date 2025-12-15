@@ -155,20 +155,26 @@
         input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.1); }
         
         /* Select dropdown highlight colors */
-        select option:checked,
-        select option:hover {
-            background-color: rgba(224, 197, 132, 0.2);
-            color: #E0C584;
-        }
-        
         select {
             color: #F0E2C0;
         }
-        
+
         select option {
-            background-color: #0a0a0a;
-            color: #F0E2C0;
+            background-color: #0a0a0a !important;
+            color: #F0E2C0 !important;
         }
+
+        /* Option styling support varies by browser/OS; these rules override the default blue highlight where supported. */
+        select option:hover,
+        select option:focus,
+        select option:active,
+        select option:checked {
+            background: rgba(224, 197, 132, 0.28) !important;
+            background-color: rgba(224, 197, 132, 0.28) !important;
+            color: #050505 !important;
+        }
+
+        
         
         .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 
@@ -268,6 +274,7 @@
                 let street = place.formatted_address || "";
                 let city = "";
                 let postal = "";
+                let countryCode = "";
                 let hasStreetNumber = false;
                 
                 if (place.address_components) {
@@ -276,7 +283,16 @@
                         if (t === "street_number") hasStreetNumber = true;
                         if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
                         if (t === "postal_code") postal = c.long_name;
+                        if (t === "country") countryCode = c.short_name || c.long_name || "";
                     }
+                }
+
+                // Restrict service addresses to Canada only
+                if (countryCode && String(countryCode).toUpperCase() !== "CA") {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                    window.__selectedAddress = null;
+                    return;
                 }
                 
                 // Require street number for valid address
@@ -287,10 +303,21 @@
                     return;
                 }
                 
-                window.__selectedAddress = { address: street, city, postal_code: postal };
+                window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
             } catch (e) {
                 console.warn("fillAddressFromPlace error", e);
             }
+        }
+
+        // Canadian postal validation helpers (also used to block US ZIP codes)
+        function normalizeCanadianPostal(postal) {
+            const p = String(postal || "").toUpperCase().replace(/\s+/g, "").trim();
+            if (p.length === 6) return p.slice(0,3) + " " + p.slice(3);
+            return String(postal || "").toUpperCase().trim();
+        }
+        function isCanadianPostal(postal) {
+            const p = String(postal || "").toUpperCase().replace(/\s+/g, "").trim();
+            return /^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(p);
         }
     </script>
     
@@ -774,11 +801,12 @@
                 </div>
 
                 <!-- Travel Charge Warning (populated dynamically if needed) -->
-                <div id="travel-charge-warning" class="hidden bg-amber-500/10 border-2 border-amber-500/40 rounded-lg p-4 mt-4">
+                <div id="travel-charge-warning" class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg">
                     <div class="flex items-start gap-3">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse"></i>
                         <div>
-                            <div class="text-sm font-bold text-amber-500 mb-2">Extended Travel Notice</div>
+                            <div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
+                            <div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
                             <div id="travel-charge-text" class="text-xs text-brand-light leading-relaxed"></div>
                         </div>
                     </div>
@@ -792,6 +820,11 @@
                     </div>
                     <div id="stripe-card-element" class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2">
                         <!-- Stripe Elements will be inserted here -->
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+                        <input id="stripe-postal-code" type="text" placeholder="A1A 1A1" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                        <p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
                     </div>
                     <div id="stripe-card-errors" class="text-xs text-red-400 mt-2 hidden"></div>
                     <p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
@@ -1180,7 +1213,6 @@
                         <div class="expand-arrows flex flex-col items-center -space-y-1">
                             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-3"></i>
                         </div>
                         <span class="text-xs text-brand-gold/80 uppercase tracking-wider font-semibold">Expand Times</span>
                     `;
@@ -1265,7 +1297,6 @@
                         <div class="flex flex-col items-center -space-y-1">
                             <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
                             <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
-                            <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
                         </div>
                     `;
                     expandBtn.querySelector('span').textContent = 'Collapse';
@@ -1280,7 +1311,6 @@
                         <div class="flex flex-col items-center -space-y-1">
                             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-3"></i>
                         </div>
                     `;
                     expandBtn.querySelector('span').textContent = 'Expand Times';
@@ -1308,10 +1338,15 @@
             if (isManual) {
                 const street = document.getElementById('manual-street').value.trim();
                 const city = document.getElementById('manual-city').value.trim();
-                const postal = document.getElementById('manual-postal').value.trim();
-                if (!street || !city || !postal) return null;
+                const postalRaw = document.getElementById('manual-postal').value.trim();
+                if (!street || !city || !postalRaw) return null;
+                if (!isCanadianPostal(postalRaw)) {
+                    alert('Please enter a valid Canadian postal code (e.g., L2A 1B2). We do not serve the USA.');
+                    return null;
+                }
+                const postal = normalizeCanadianPostal(postalRaw);
                 const full = `${street}, ${city} ${postal}`;
-                const addrObj = { address: full, city, postal_code: postal };
+                const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
                 return addrObj;
             }
@@ -1320,7 +1355,23 @@
 
             const raw = document.getElementById('address-input-initial').value.trim();
             if (!raw) return null;
-            const addrObj = { address: raw, city: "", postal_code: "" };
+            // Block obvious US addresses when lookup isn't available
+            const rawLower = raw.toLowerCase();
+            const looksLikeUS = /\busa\b|\bunited states\b|\bu\.s\.a\b/.test(rawLower) || /\b\d{5}(?:-\d{4})?\b/.test(raw);
+            const containsCanadianPostal = isCanadianPostal(raw);
+            if (looksLikeUS && !containsCanadianPostal) {
+                alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                return null;
+            }
+            // If lookup failed, require a Canadian postal code to ensure we do not accept US addresses
+            if (!containsCanadianPostal) {
+                alert('Please enter a Canadian address that includes a valid postal code (e.g., L2A 1B2). We do not serve the USA.');
+                return null;
+            }
+
+            const match = raw.toUpperCase().match(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/);
+            const postal = normalizeCanadianPostal(match ? match[0] : raw);
+            const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
             window.__selectedAddress = addrObj;
             return addrObj;
         }
@@ -1493,6 +1544,7 @@
             
             // Create card element with custom styling
             stripeCardElement = stripeElements.create('card', {
+                hidePostalCode: true, // We'll collect a Canadian postal code separately (labelled correctly)
                 style: {
                     base: {
                         color: '#E0C584',
@@ -1706,19 +1758,19 @@
                 
                 // Apply travel charges based on actual drive time
                 if (driveTimeMinutes >= 120) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes / 2+ hours), a <strong class="text-amber-400">$200 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-2 text-amber-300">A credit card on file is required as protection against no-shows/cancellations.</span>`;
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes / 2+ hours), a <strong class="text-amber-400">$200 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
                     warningEl.classList.remove('hidden');
                     requiresPayment = true;
                 } else if (driveTimeMinutes >= 60) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$100 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-2 text-amber-300">A credit card on file is required as protection against no-shows/cancellations.</span>`;
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$100 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
                     warningEl.classList.remove('hidden');
                     requiresPayment = true;
                 } else if (driveTimeMinutes >= 45) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$40 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-2 text-amber-300">A credit card on file is required as protection against no-shows/cancellations.</span>`;
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$40 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
                     warningEl.classList.remove('hidden');
                     requiresPayment = true;
                 } else if (driveTimeMinutes >= 36) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$20 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-2 text-amber-300">A credit card on file is required as protection against no-shows/cancellations.</span>`;
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$20 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
                     warningEl.classList.remove('hidden');
                     requiresPayment = true;
                 } else {
@@ -1729,6 +1781,12 @@
                 if (requiresPayment) {
                     stripeSection.classList.remove('hidden');
                     initializeStripe();
+                    // Pre-fill Canadian postal code (if available from Step 1)
+                    const postalEl = document.getElementById('stripe-postal-code');
+                    if (postalEl) {
+                        const p = window.__selectedAddress?.postal_code || '';
+                        postalEl.value = normalizeCanadianPostal(p);
+                    }
                 } else {
                     stripeSection.classList.add('hidden');
                 }
@@ -1817,6 +1875,14 @@
                     submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Processing Payment...</span>';
                     
                     try {
+                        // Ensure we collect a Canadian postal code (Stripe card element default label is "ZIP")
+                        const postalInputEl = document.getElementById('stripe-postal-code');
+                        const postalCandidate = (postalInputEl?.value || '').trim() || (window.__selectedAddress?.postal_code || '').trim();
+                        if (!isCanadianPostal(postalCandidate)) {
+                            throw new Error('Please enter a valid Canadian postal code (e.g., L2A 1B2).');
+                        }
+                        const postal = normalizeCanadianPostal(postalCandidate);
+
                         // Create payment method
                         const { paymentMethod, error } = await stripe.createPaymentMethod({
                             type: 'card',
@@ -1825,6 +1891,10 @@
                                 name: `${firstName} ${lastName}`,
                                 email: email,
                                 phone: phone,
+                                address: {
+                                    postal_code: postal,
+                                    country: 'CA',
+                                },
                             },
                         });
                         
