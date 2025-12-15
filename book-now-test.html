@@ -1861,7 +1861,7 @@
                 errorEl.classList.add('hidden');
                 
                 // Calculate travel charge
-                const driveTimeMinutes = window.__maxDriveTimeMinutes || 0;
+                const driveTimeMinutes = (selectedSlot?.driveTimeMinutes ?? window.__maxDriveTimeMinutes ?? 0);
                 let travelCharge = 0;
                 if (driveTimeMinutes >= 120) travelCharge = 200;
                 else if (driveTimeMinutes >= 60) travelCharge = 100;
@@ -1872,7 +1872,7 @@
                 let paymentMethodId = null;
                 if (travelCharge > 0 && stripeCardElement) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Processing Payment...</span>';
+                    submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Saving Card on File...</span>';
                     
                     try {
                         // Ensure we collect a Canadian postal code (Stripe card element default label is "ZIP")
@@ -1947,6 +1947,7 @@
                     
                     // Travel charge info - GET FROM SLOT DATA
                     travel_charge: travelCharge,
+                    travel_fee_cents: Math.round((Number(travelCharge) || 0) * 100),
                     drive_time_minutes: selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0,
                     stripe_payment_method_id: paymentMethodId
                 };
