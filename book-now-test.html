@@ -154,6 +154,22 @@
         
         input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.1); }
         
+        /* Select dropdown highlight colors */
+        select option:checked,
+        select option:hover {
+            background-color: rgba(224, 197, 132, 0.2);
+            color: #E0C584;
+        }
+        
+        select {
+            color: #F0E2C0;
+        }
+        
+        select option {
+            background-color: #0a0a0a;
+            color: #F0E2C0;
+        }
+        
         .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 
         /* Skeleton Loader */
@@ -186,12 +202,34 @@
         /* Payment Badge */
         .payment-badge { border: 1px solid rgba(224,197,132,0.25); }
         
-        /* Arrow animations */
-        @keyframes bounce-subtle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
+        /* Arrow animations - Runway Cascade Effect */
+        @keyframes cascade {
+            0% { 
+                opacity: 0.3;
+                transform: translateY(-8px) scale(0.8);
+            }
+            50% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% { 
+                opacity: 0.3;
+                transform: translateY(8px) scale(0.8);
+            }
         }
-        .animate-bounce-subtle { animation: bounce-subtle 1.5s ease-in-out infinite; }
+        
+        .animate-cascade-1 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0s;
+        }
+        .animate-cascade-2 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0.2s;
+        }
+        .animate-cascade-3 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0.4s;
+        }
 
         @media (max-width: 768px) {
             .calendar-grid { gap: 0.25rem; }
@@ -1140,9 +1178,9 @@
                 if (hasSlots) {
                     expandBtn.innerHTML = `
                         <div class="expand-arrows flex flex-col items-center -space-y-1">
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle" style="animation-delay: 0.1s"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle" style="animation-delay: 0.2s"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-3"></i>
                         </div>
                         <span class="text-xs text-brand-gold/80 uppercase tracking-wider font-semibold">Expand Times</span>
                     `;
@@ -1240,9 +1278,9 @@
                     groupBtn.classList.remove('bg-brand-gold/20', 'border-brand-gold');
                     expandBtn.querySelector('.expand-arrows').innerHTML = `
                         <div class="flex flex-col items-center -space-y-1">
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle" style="animation-delay: 0.1s"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-bounce-subtle" style="animation-delay: 0.2s"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-3"></i>
                         </div>
                     `;
                     expandBtn.querySelector('span').textContent = 'Expand Times';
@@ -1652,10 +1690,17 @@
                 const textEl = document.getElementById('travel-charge-text');
                 const stripeSection = document.getElementById('stripe-payment-section');
                 
-                // Get actual drive time from workflow
-                const driveTimeMinutes = window.__maxDriveTimeMinutes || 0;
+                // DEBUG: Log selected slot details
+                console.log('🔍 Selected Slot Full Object:', selectedSlot);
+                console.log('🔍 Slot Drive Time:', selectedSlot?.driveTimeMinutes);
+                console.log('🔍 Window Max Drive Time:', window.__maxDriveTimeMinutes);
+                
+                // Get drive time from SELECTED SLOT (most accurate)
+                const driveTimeMinutes = selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0;
                 
                 console.log('💳 Calculating travel charge for drive time:', driveTimeMinutes, 'minutes');
+                console.log('   From slot:', selectedSlot?.driveTimeMinutes);
+                console.log('   From max:', window.__maxDriveTimeMinutes);
                 
                 let requiresPayment = false;
                 
@@ -1820,10 +1865,11 @@
                     treatment_label: TREATMENT_RULES[selectedServiceKey]?.label,
                     duration: selectedStandardDuration,
                     
-                    // Time slot
+                    // Time slot - ALREADY IN UTC (no conversion needed)
                     slot_start: selectedSlot?.start,
                     slot_end: selectedSlot?.end,
                     date: selectedDateStr,
+                    times_already_utc: true, // Flag for workflow to skip timezone conversion
                     
                     // Pricing
                     price_base: getPrice().base,
