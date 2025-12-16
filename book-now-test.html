@@ -990,6 +990,13 @@
             return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
         }
 
+        // True when at least one slot is actually bookable (available !== false)
+        function hasAnyAvailableSlot(dateStr) {
+            const slots = availabilityByDate[dateStr];
+            if (!Array.isArray(slots) || slots.length === 0) return false;
+            return slots.some(s => s && s.available !== false);
+        }
+
         function updateAvailabilityStatus(message, isError = false) {
             const el = document.getElementById('availability-status');
             const iconClass = isError ? 'alert-circle' : 'info';
@@ -1085,7 +1092,7 @@
                     dayEl.classList.add('calendar-day-today');
                 }
                 
-                if (hasSlots(dateStr)) {
+                if (hasAnyAvailableSlot(dateStr)) {
                     dayEl.classList.add('calendar-day-available');
                     dayEl.classList.remove('border-brand-gold/20');
                 }
@@ -1108,6 +1115,7 @@
             }
         }
 
+        
         function renderTimeSlotsForDate(dateStr) {
             const wrapper = document.getElementById('time-slots-wrapper');
             const container = document.getElementById('time-slots');
@@ -1115,6 +1123,7 @@
             const treatLabelEl = document.getElementById('selected-treatment-label');
             const therapistInfo = document.getElementById('therapist-info');
 
+            // If this day has no returned slots at all (e.g., not a working day), hide the section
             if (!hasSlots(dateStr)) {
                 wrapper.classList.add('hidden');
                 container.innerHTML = '';
@@ -1131,32 +1140,32 @@
                 ? `<span class="text-base">${treat.label} • ${selectedStandardDuration} min</span> • <span class="text-brand-gold font-bold text-lg">$${price.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`
                 : '';
 
-            const availableSlots = availabilityByDate[dateStr] || [];
+            const daySlots = availabilityByDate[dateStr] || [];
             container.innerHTML = '';
 
-            if (availableSlots.length > 0) {
+            // Show therapist badge if the day has any slots (even if all are booked)
+            if (daySlots.length > 0) {
                 therapistInfo.classList.remove('hidden');
             }
 
-            // Group slots by time of day
+            // Group slots by time of day (show ALL slots, but disable/grey booked ones)
             const timeGroups = {
-                morning: { label: 'Morning', hours: [10, 11], slots: [] },
-                afternoon: { label: 'Afternoon', hours: [12, 13, 14, 15], slots: [] },
-                evening: { label: 'Evening', hours: [16, 17, 18, 19, 20], slots: [] }
+                morning:   { label: 'Morning',   slots: [] }, // 10-11
+                afternoon: { label: 'Afternoon', slots: [] }, // 12-15
+                evening:   { label: 'Evening',   slots: [] }, // 16-20
             };
 
-            availableSlots.forEach(slot => {
+            daySlots.forEach(slot => {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
-                
-                if (hour >= 10 && hour < 12) {
-                    timeGroups.morning.slots.push(slot);
-                } else if (hour >= 12 && hour < 16) {
-                    timeGroups.afternoon.slots.push(slot);
-                } else if (hour >= 16 && hour <= 20) {
-                    timeGroups.evening.slots.push(slot);
-                }
+
+                if (hour >= 10 && hour < 12) timeGroups.morning.slots.push(slot);
+                else if (hour >= 12 && hour < 16) timeGroups.afternoon.slots.push(slot);
+                else if (hour >= 16 && hour <= 20) timeGroups.evening.slots.push(slot);
             });
+
+            // Helper: determine if a group has at least one AVAILABLE slot
+            const groupHasAvailable = (group) => (group.slots || []).some(s => s && s.available !== false);
 
             // Create time-of-day row
             const groupRow = document.createElement('div');
@@ -1164,31 +1173,35 @@
 
             Object.keys(timeGroups).forEach(groupKey => {
                 const group = timeGroups[groupKey];
-                const hasSlots = group.slots.length > 0;
-                
+                const hasAny = group.slots.length > 0;
+                const hasAvail = groupHasAvailable(group);
+
                 const groupBtn = document.createElement('button');
                 groupBtn.type = 'button';
-                groupBtn.className = hasSlots 
-                    ? 'px-4 py-4 rounded-lg border-2 border-brand-gold/40 bg-black/50 hover:bg-brand-gold/10 text-brand-light font-bold text-lg transition-all'
-                    : 'px-4 py-3 rounded-lg border-2 border-brand-gold/10 bg-black/30 text-brand-dim/30 font-bold text-base opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
-                
-                groupBtn.disabled = !hasSlots;
-                
-                if (hasSlots) {
-                    groupBtn.textContent = group.label;
-                } else {
+
+                // If the group has slots, always allow expanding (even if all booked)
+                groupBtn.disabled = !hasAny;
+
+                if (!hasAny) {
+                    groupBtn.className = 'px-4 py-3 rounded-lg border-2 border-brand-gold/10 bg-black/30 text-brand-dim/30 font-bold text-base opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
                     groupBtn.innerHTML = `
                         <span>${group.label}</span>
-                        <span class="text-xs font-normal opacity-70">(Fully Booked)</span>
+                        <span class="text-xs font-normal opacity-70">(None)</span>
                     `;
-                }
-                
-                groupBtn.dataset.group = groupKey;
-                
-                if (hasSlots) {
+                } else if (!hasAvail) {
+                    groupBtn.className = 'px-4 py-4 rounded-lg border-2 border-brand-gold/25 bg-black/40 text-brand-dim/70 font-bold text-lg transition-all';
+                    groupBtn.innerHTML = `
+                        <span>${group.label}</span>
+                        <span class="text-xs font-normal opacity-80">(Fully Booked)</span>
+                    `;
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                } else {
+                    groupBtn.className = 'px-4 py-4 rounded-lg border-2 border-brand-gold/40 bg-black/50 hover:bg-brand-gold/10 text-brand-light font-bold text-lg transition-all';
+                    groupBtn.textContent = group.label;
                     groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
                 }
-                
+
+                groupBtn.dataset.group = groupKey;
                 groupRow.appendChild(groupBtn);
             });
 
@@ -1197,18 +1210,18 @@
             // Create expand indicator row - HIDDEN ON MOBILE
             const expandRow = document.createElement('div');
             expandRow.className = 'hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6';
-            
+
             Object.keys(timeGroups).forEach(groupKey => {
                 const group = timeGroups[groupKey];
-                const hasSlots = group.slots.length > 0;
-                
+                const hasAny = group.slots.length > 0;
+
                 const expandBtn = document.createElement('button');
                 expandBtn.type = 'button';
                 expandBtn.id = `expand-${groupKey}`;
                 expandBtn.className = 'flex flex-col items-center gap-1 py-2 transition-all';
-                expandBtn.disabled = !hasSlots;
-                
-                if (hasSlots) {
+                expandBtn.disabled = !hasAny;
+
+                if (hasAny) {
                     expandBtn.innerHTML = `
                         <div class="expand-arrows flex flex-col items-center -space-y-1">
                             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
@@ -1220,7 +1233,7 @@
                 } else {
                     expandBtn.innerHTML = `<div class="h-8"></div>`;
                 }
-                
+
                 expandRow.appendChild(expandBtn);
             });
 
@@ -1246,27 +1259,41 @@
                 slotsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2';
 
                 group.slots.forEach(slot => {
+                    const isAvail = slot && slot.available !== false;
+
                     const slotBtn = document.createElement('button');
                     slotBtn.type = 'button';
-                    slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center gap-2 transition-all min-w-[120px]';
-                    
+                    slotBtn.disabled = !isAvail;
+
+                    // IMPORTANT: keep label from API (it includes " (Booked)" when unavailable)
                     const timeLabel = formatTimeLabel(slot);
-                    slotBtn.innerHTML = `
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
-                        <span class="font-bold text-base">${timeLabel}</span>
-                        <span class="text-xs text-brand-dim/60">EST</span>
-                    `;
-                    
-                    slotBtn.addEventListener('click', () => {
-                        selectedSlot = slot;
-                        renderTimeSlotsForDate(dateStr);
-                        updateStickyBar();
-                    });
-                    
-                    if (selectedSlot && selectedSlot.start === slot.start) {
+
+                    if (isAvail) {
+                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center gap-2 transition-all min-w-[120px]';
+                        slotBtn.innerHTML = `
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
+                            <span class="font-bold text-base">${timeLabel}</span>
+                            <span class="text-xs text-brand-dim/60">EST</span>
+                        `;
+                        slotBtn.addEventListener('click', () => {
+                            selectedSlot = slot;
+                            renderTimeSlotsForDate(dateStr);
+                            updateStickyBar();
+                        });
+                    } else {
+                        // Greyed out + disabled
+                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-white/10 text-white/35 bg-white/5 flex items-center justify-center gap-2 min-w-[120px] cursor-not-allowed opacity-75';
+                        slotBtn.innerHTML = `
+                            <i data-lucide="lock" class="w-3.5 h-3.5 text-white/30 flex-shrink-0"></i>
+                            <span class="font-bold text-base">${timeLabel}</span>
+                            <span class="text-xs text-white/25">EST</span>
+                        `;
+                    }
+
+                    if (selectedSlot && selectedSlot.start === slot.start && isAvail) {
                         slotBtn.classList.add('time-slot-selected');
                     }
-                    
+
                     slotsGrid.appendChild(slotBtn);
                 });
 
@@ -1275,7 +1302,7 @@
             });
 
             wrapper.classList.remove('hidden');
-            
+
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
             // Toggle function
@@ -1283,42 +1310,49 @@
                 const section = document.getElementById(`slots-${groupKey}`);
                 const expandBtn = document.getElementById(`expand-${groupKey}`);
                 const groupBtn = document.querySelector(`button[data-group="${groupKey}"]`);
-                
+
                 if (!section) return;
-                
+
                 const isHidden = section.classList.contains('hidden');
-                
+
                 if (isHidden) {
-                    // Expand - show 3 arrows pointing up
+                    // Expand
                     section.classList.remove('hidden');
                     section.style.maxHeight = section.scrollHeight + 'px';
                     groupBtn.classList.add('bg-brand-gold/20', 'border-brand-gold');
-                    expandBtn.querySelector('.expand-arrows').innerHTML = `
-                        <div class="flex flex-col items-center -space-y-1">
-                            <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
-                            <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
-                        </div>
-                    `;
-                    expandBtn.querySelector('span').textContent = 'Collapse';
+
+                    if (expandBtn && expandBtn.querySelector('.expand-arrows')) {
+                        expandBtn.querySelector('.expand-arrows').innerHTML = `
+                            <div class="flex flex-col items-center -space-y-1">
+                                <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
+                                <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
+                            </div>
+                        `;
+                        const span = expandBtn.querySelector('span');
+                        if (span) span.textContent = 'Collapse';
+                    }
                 } else {
-                    // Collapse - show 3 arrows pointing down with animation
+                    // Collapse
                     section.style.maxHeight = '0';
-                    setTimeout(() => {
-                        section.classList.add('hidden');
-                    }, 400);
+                    setTimeout(() => section.classList.add('hidden'), 400);
                     groupBtn.classList.remove('bg-brand-gold/20', 'border-brand-gold');
-                    expandBtn.querySelector('.expand-arrows').innerHTML = `
-                        <div class="flex flex-col items-center -space-y-1">
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
-                        </div>
-                    `;
-                    expandBtn.querySelector('span').textContent = 'Expand Times';
+
+                    if (expandBtn && expandBtn.querySelector('.expand-arrows')) {
+                        expandBtn.querySelector('.expand-arrows').innerHTML = `
+                            <div class="flex flex-col items-center -space-y-1">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
+                            </div>
+                        `;
+                        const span = expandBtn.querySelector('span');
+                        if (span) span.textContent = 'Expand Times';
+                    }
                 }
-                
+
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
         }
+
 
         // ---------------- ADDRESS MODAL LOGIC ----------------
         function openAddressModal() {
@@ -1537,7 +1571,7 @@
             
             // TODO: Replace with your actual Stripe publishable key
             // REPLACE WITH YOUR STRIPE PUBLISHABLE KEY: https://dashboard.stripe.com/apikeys
-            const STRIPE_PUBLISHABLE_KEY = 'pk_test_mk_1SFdlu2atTjzVbCkwUphS3FA'; // Get from Stripe Dashboard
+            const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_KEY_HERE'; // Get from Stripe Dashboard
             
             stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
             stripeElements = stripe.elements();
@@ -1860,6 +1894,20 @@
 
                 errorEl.classList.add('hidden');
                 
+                // Hard guard: do not allow submitting without an available slot
+                if (!selectedSlot) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please select a time to continue.';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+                if (selectedSlot.available === false) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>That time is already booked. Please choose another.';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+
                 // Calculate travel charge
                 const driveTimeMinutes = (selectedSlot?.driveTimeMinutes ?? window.__maxDriveTimeMinutes ?? 0);
                 let travelCharge = 0;
