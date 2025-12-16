@@ -768,10 +768,82 @@
                 </div>
 
                 <script>
-                // Phone number auto-formatting
-                document.getElementById('client-phone').addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length > 10) value = value.slice(0, 10);
+                // Phone number force-formatting (BACKSPACE/DELETE SAFE)
+                (function setupPhoneFormatting() {
+                    const input = document.getElementById('client-phone');
+                    if (!input) return;
+
+                    const MAX_DIGITS = 10;
+
+                    function digitsOnly(v) {
+                        return (v || '').replace(/\D/g, '').slice(0, MAX_DIGITS);
+                    }
+
+                    function formatPhone(d) {
+                        if (!d) return '';
+                        if (d.length <= 3) return `(${d}`;
+                        if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+                        return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6,10)}`;
+                    }
+
+                    function countDigitsBeforeCaret(value, caretPos) {
+                        return value.slice(0, caretPos).replace(/\D/g, '').length;
+                    }
+
+                    function caretPosForDigitIndex(formattedValue, digitIndex) {
+                        if (digitIndex <= 0) return 0;
+                        let seen = 0;
+                        for (let i = 0; i < formattedValue.length; i++) {
+                            if (/\d/.test(formattedValue[i])) {
+                                seen++;
+                                if (seen === digitIndex) return i + 1;
+                            }
+                        }
+                        return formattedValue.length;
+                    }
+
+                    input.addEventListener('input', () => {
+                        const oldValue = input.value;
+                        const caret = input.selectionStart ?? oldValue.length;
+
+                        const digitsBefore = countDigitsBeforeCaret(oldValue, caret);
+                        const digits = digitsOnly(oldValue);
+
+                        const newValue = formatPhone(digits);
+                        input.value = newValue;
+
+                        const newCaret = caretPosForDigitIndex(newValue, digitsBefore);
+                        input.setSelectionRange(newCaret, newCaret);
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+
+                        const value = input.value;
+                        const start = input.selectionStart ?? 0;
+                        const end = input.selectionEnd ?? 0;
+
+                        if (start !== end) return;
+
+                        if (e.key === 'Backspace' && start > 0 && !/\d/.test(value[start - 1])) {
+                            e.preventDefault();
+                            const newPos = start - 1;
+                            input.setSelectionRange(newPos, newPos);
+                            return;
+                        }
+
+                        if (e.key === 'Delete' && start < value.length && !/\d/.test(value[start])) {
+                            e.preventDefault();
+                            const newPos = start + 1;
+                            input.setSelectionRange(newPos, newPos);
+                            return;
+                        }
+                    });
+
+                    input.setAttribute('inputmode', 'tel');
+                    input.setAttribute('autocomplete', 'tel');
+                })();
+if (value.length > 10) value = value.slice(0, 10);
                     
                     if (value.length >= 6) {
                         e.target.value = `(${value.slice(0,3)}) ${value.slice(3,6)}-${value.slice(6)}`;
