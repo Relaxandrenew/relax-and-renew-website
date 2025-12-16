@@ -1961,11 +1961,40 @@
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
-            window.closeConfirmationModal = function() {
+            window.closeConfirmationModal = async function() {
                 const modal = document.getElementById('confirmation-modal');
                 modal.classList.add('hidden');
-                // Optionally redirect to home
-                // window.location.href = 'index.html';
+
+                // 1) Immediately prevent "same slot again" from stale UI (optimistic lock)
+                try {
+                    if (selectedDateStr && selectedSlot && availabilityByDate?.[selectedDateStr]) {
+                        availabilityByDate[selectedDateStr] = availabilityByDate[selectedDateStr].map(s => {
+                            if (s?.start && selectedSlot?.start && s.start === selectedSlot.start) {
+                                return { ...s, available: false };
+                            }
+                            return s;
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Optimistic slot lock failed:', e);
+                }
+
+                // 2) Clear selection + hide times so they must pick again
+                selectedSlot = null;
+                selectedDateStr = null;
+
+                const timeWrap = document.getElementById('time-slots-wrapper');
+                if (timeWrap) timeWrap.classList.add('hidden');
+
+                try { updateStickyBar(); } catch (_) {}
+                try { renderCalendar(); } catch (_) {}
+
+                // 3) Re-pull live availability for the month from Cliniko
+                try {
+                    await loadAvailabilityForCurrentMonth();
+                } catch (e) {
+                    console.warn('Availability refresh failed:', e);
+                }
             };
 
             // Handle client details form submission
