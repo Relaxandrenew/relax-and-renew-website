@@ -648,26 +648,14 @@
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
                     <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all">
-                        <option value="" disabled selected>Select a treatment...</option>
+                        <option value="" disabled selected>Select a booking type...</option>
 
-                        <optgroup label="Core Therapeutic">
-                            <option value="relaxation">Relaxation Massage</option>
-                            <option value="deep_tissue">Deep Tissue Massage</option>
-                            <option value="sports">Sports Massage</option>
-                            <option value="senior">Senior Massage</option>
+                        <optgroup label="Multi-Client Bookings">
+                            <option value="duo">Duo Massage</option>
+                            <option value="group">Group Massage</option>
+                            <option value="event">Event Massage</option>
                         </optgroup>
-
-                        <optgroup label="Premium Therapeutic">
-                            <option value="hot_stone">Hot Stone Massage</option>
-                            <option value="cupping">Cupping Therapy</option>
-                        </optgroup>
-
-                        <optgroup label="Specialty">
-                            <option value="prenatal">Prenatal Massage</option>
-                            <option value="pediatric">Pediatric Massage</option>
-                            <option value="infant">Infant Massage</option>
-                        </optgroup>
-                    </select>
+</select>
                 </div>
 
                 <div>
@@ -675,7 +663,16 @@
                     <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
+                
+                <div id="participants-wrapper" class="hidden">
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Participants *</label>
+                    <select id="participants-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
+                        <option value="" disabled selected>Select # of participants...</option>
+                    </select>
+                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">This determines the time block reserved in the calendar.</p>
                 </div>
+
+            </div>
             </div>
 
             <!-- Payment Options -->
@@ -954,19 +951,15 @@
         
         // ---------------- CONFIG ----------------
         const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
-        const STATIC_SETUP_MINUTES = 25;
+        const STATIC_SETUP_MINUTES = 0;
 
         // Pricing data (base price before HST)
         const PRICING = {
-            relaxation:  { 60: 110, 75: 135, 90: 160, 120: 210 },
-            deep_tissue: { 60: 110, 75: 135, 90: 160, 120: 210 },
-            sports:      { 60: 110, 75: 135, 90: 160, 120: 210 },
-            senior:      { 60: 110, 75: 135, 90: 160, 120: 210 },
-            hot_stone:   { 60: 130, 75: 155, 90: 180, 120: 230 },
-            cupping:     { 60: 130, 75: 155, 90: 180, 120: 230 },
-            prenatal:    { 30: 70, 45: 95, 60: 110 },
-            pediatric:   { 30: 70, 45: 95 },
-            infant:      { 30: 70, 45: 95 },
+            // Per-person base price (before HST) for 60 minutes.
+            // 45-minute pricing is computed proportionally in getPrice() and rounded to the nearest $5.
+            duo:   { per_person_60: 100 },
+            group: { per_person_60: 90 },
+            event: { per_person_60: 80 },
         };
 
         // Therapist data
@@ -977,17 +970,9 @@
 
         // ---------------- RULES ----------------
         const TREATMENT_RULES = {
-            relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
-            deep_tissue: { label: "Deep Tissue Massage", durations: [60, 75, 90, 120] },
-            sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
-            senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
-
-            hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
-            cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
-
-            prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
-            pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
-            infant:      { label: "Infant Massage", durations: [30, 45] },
+            duo:   { label: "Duo Massage",   durations: [45, 60] },
+            group: { label: "Group Massage", durations: [45, 60] },
+            event: { label: "Event Massage", durations: [45, 60] },
         };
 
         // ---------------- STATE ----------------
@@ -999,6 +984,8 @@
 
         let selectedServiceKey = null;
         let selectedStandardDuration = null;
+        let selectedParticipantCount = 2; // default for Duo
+
 
         // ---------------- HELPERS ----------------
         function toDateStr(date) {
@@ -1028,10 +1015,27 @@
         }
 
         function getPrice() {
-            if (!selectedServiceKey || !selectedStandardDuration) return { base: 0, total: 0 };
-            const base = PRICING[selectedServiceKey]?.[selectedStandardDuration] || 0;
+            if (!selectedServiceKey || !selectedStandardDuration) return { base: 0, total: 0, perPerson: 0, participants: 0 };
+
+            const mins = Number(selectedStandardDuration) || 0;
+
+            // Participants:
+            // - Duo is always 2
+            // - Group uses dropdown (3-8)
+            // - Event uses dropdown (9-30)
+            const participants =
+                (selectedServiceKey === 'duo') ? 2 :
+                (Number(selectedParticipantCount) || 0);
+
+            const per60 = PRICING[selectedServiceKey]?.per_person_60 || 0;
+            const rawPerPerson = (per60 * (mins / 60));
+
+            // Round per-person to nearest $5 to keep pricing clean.
+            const perPerson = Math.round(rawPerPerson / 5) * 5;
+
+            const base = perPerson * participants;
             const total = Math.round(base * 1.13); // HST = 13%
-            return { base, total };
+            return { base, total, perPerson, participants };
         }
 
         function updateProgress(step) {
@@ -1129,7 +1133,8 @@
 
             const price = getPrice();
 
-            document.getElementById('summary-treatment').textContent = `${treat.label} (${selectedStandardDuration} min)`;
+            const p = getPrice();
+            document.getElementById('summary-treatment').textContent = `${treat.label} (${selectedStandardDuration} min/person • ${p.participants} participant${p.participants===1?'':'s'})`;
             document.getElementById('summary-datetime').innerHTML = `<i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${dateLabel} at ${timeLabel} EST`;
             document.getElementById('summary-price').textContent = `$${price.base}+HST`;
             document.getElementById('summary-total').textContent = `$${price.total}`;
@@ -1234,7 +1239,10 @@
             const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
             const price = getPrice();
             treatLabelEl.innerHTML = (treat && selectedStandardDuration)
-                ? `<span class="text-base">${treat.label} • ${selectedStandardDuration} min</span> • <span class="text-brand-gold font-bold text-lg">$${price.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`
+                ? (() => {
+                    const p = getPrice();
+                    return `<span class="text-base">${treat.label} • ${selectedStandardDuration} min/person • ${p.participants} participant${p.participants===1?'':'s'}</span> • <span class="text-brand-gold font-bold text-lg">$${p.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${p.total})</span>`;
+                })()
                 : '';
 
             const daySlots = availabilityByDate[dateStr] || [];
@@ -1507,6 +1515,45 @@
             return addrObj;
         }
 
+        function rebuildParticipantOptions() {
+            const wrapper = document.getElementById('participants-wrapper');
+            const select = document.getElementById('participants-select');
+            if (!wrapper || !select) return;
+
+            // Reset
+            select.innerHTML = '<option value="" disabled selected>Select # of participants...</option>';
+
+            const isGroup = selectedServiceKey === 'group';
+            const isEvent = selectedServiceKey === 'event';
+
+            if (!isGroup && !isEvent) {
+                wrapper.classList.add('hidden');
+                select.disabled = true;
+                selectedParticipantCount = 2; // Duo default
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            select.disabled = false;
+
+            const min = isGroup ? 3 : 9;
+            const max = isGroup ? 8 : 30;
+
+            for (let i = min; i <= max; i++) {
+                const opt = document.createElement('option');
+                opt.value = String(i);
+                opt.textContent = String(i);
+                select.appendChild(opt);
+            }
+
+            // Default selection (preserve if still valid)
+            const current = Number(selectedParticipantCount);
+            const fallback = min;
+            const next = (current >= min && current <= max) ? current : fallback;
+            selectedParticipantCount = next;
+            select.value = String(next);
+        }
+
         function rebuildDurationOptions() {
             const durationSelect = document.getElementById('duration-select');
             durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
@@ -1514,8 +1561,41 @@
             if (!selectedServiceKey || !TREATMENT_RULES[selectedServiceKey]) {
                 durationSelect.disabled = true;
                 selectedStandardDuration = null;
+                rebuildParticipantOptions();
                 return;
             }
+
+            // Participants UI depends on selected booking type
+            rebuildParticipantOptions();
+
+            const durations = TREATMENT_RULES[selectedServiceKey].durations;
+            durations.forEach(min => {
+                const opt = document.createElement('option');
+                opt.value = String(min);
+
+                // Build a clean price display (per person + total)
+                const tmpDuration = selectedStandardDuration;
+                const tmpParticipants = selectedParticipantCount;
+
+                selectedStandardDuration = Number(min);
+                const price = getPrice();
+
+                // restore
+                selectedStandardDuration = tmpDuration;
+                selectedParticipantCount = tmpParticipants;
+
+                const perPerson = price.perPerson || 0;
+                const base = price.base || 0;
+                const total = price.total || 0;
+                const participants = price.participants || ((selectedServiceKey === 'duo') ? 2 : 0);
+
+                opt.textContent = `${min} min  -  $${perPerson}/person  (x${participants})  =  $${base} + HST  (~$${total})`;
+                durationSelect.appendChild(opt);
+            });
+
+            durationSelect.disabled = false;
+            selectedStandardDuration = null;
+        }
 
             const durations = TREATMENT_RULES[selectedServiceKey].durations;
             durations.forEach(min => {
@@ -1556,7 +1636,13 @@
                 const { from, to } = computeMonthRange(calendarCurrent);
                 
                 // Calculate block minutes (what Cliniko needs to reserve)
-                const blockMinutes = Number(selectedStandardDuration) + STATIC_SETUP_MINUTES;
+                const perPersonMinutes = Number(selectedStandardDuration) || 0;
+                const participants =
+                    (selectedServiceKey === 'duo') ? 2 :
+                    (Number(selectedParticipantCount) || 0);
+
+                // Total time to reserve in Cliniko (participants × per-person duration) + optional setup (set to 0)
+                const blockMinutes = (perPersonMinutes * participants) + STATIC_SETUP_MINUTES;
 
                 const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
 
@@ -1568,6 +1654,8 @@
                     from,
                     to,
                     durationMinutes: blockMinutes,
+                    totalDurationMinutes: blockMinutes,
+                    participant_count: (selectedServiceKey === 'duo') ? 2 : Number(selectedParticipantCount),
                     standardDurationMinutes: Number(selectedStandardDuration),
                     treatment_key: selectedServiceKey,
                     treatment_label: treat ? treat.label : ""
@@ -1577,7 +1665,7 @@
                 console.log('🔍 Payload details:');
                 console.log('  - Address:', payload.address);
                 console.log('  - Standard duration (what client sees):', payload.standardDurationMinutes, 'minutes');
-                console.log('  - Block duration (standard + 25 setup):', payload.durationMinutes, 'minutes');
+                console.log('  - Block duration (participants x duration):', payload.durationMinutes, 'minutes');
                 console.log('  - Date range:', payload.from, 'to', payload.to);
                 console.log('  - Treatment:', payload.treatment_label);
 
@@ -1749,14 +1837,23 @@
 
             const serviceSelect = document.getElementById('service-select');
             const durationSelect = document.getElementById('duration-select');
+            const participantsSelect = document.getElementById('participants-select');
 
             serviceSelect.addEventListener('change', () => {
                 selectedServiceKey = serviceSelect.value || null;
+
+                // Default participants: Duo fixed at 2; Group/Event defaults will be set in rebuildParticipantOptions()
+                selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
+
                 rebuildDurationOptions();
             });
 
             durationSelect.addEventListener('change', () => {
                 selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+            });
+
+participantsSelect && participantsSelect.addEventListener('change', () => {
+                selectedParticipantCount = participantsSelect.value ? Number(participantsSelect.value) : null;
             });
 
             document.getElementById('prev-month-btn').addEventListener('click', async () => {
@@ -1810,10 +1907,17 @@
                     errorEl.classList.remove('hidden');
                     return;
                 }
+                // Require participants for Group/Event
+                if ((selectedServiceKey === 'group' || selectedServiceKey === 'event') && !(Number(selectedParticipantCount) > 0)) {
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
 
                 errorEl.classList.add('hidden');
                 const price = getPrice();
-                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                const p = getPrice();
+                const pCount = (selectedServiceKey === 'duo') ? 2 : Number(selectedParticipantCount);
+                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) • ${pCount} participant${pCount===1?'':'s'} • <span class="text-brand-gold">$${p.base}+HST</span>`;
                 closeAddressModal();
                 updateProgress(2);
                 await loadAvailabilityForCurrentMonth();
@@ -1840,7 +1944,8 @@
                 const price = getPrice();
                 
                 if (treat && selectedStandardDuration) {
-                    document.getElementById('summary-modal-treatment').textContent = `${treat.label} (${selectedStandardDuration} min)`;
+                    const p = getPrice();
+                    document.getElementById('summary-modal-treatment').textContent = `${treat.label} (${selectedStandardDuration} min/person • ${p.participants} participant${p.participants===1?'':'s'})`;
                 }
 
                 if (selectedSlot && selectedDateStr) {
@@ -2108,6 +2213,8 @@
                     treatment_key: selectedServiceKey,
                     treatment_label: TREATMENT_RULES[selectedServiceKey]?.label,
                     duration: selectedStandardDuration,
+                    participant_count: (selectedServiceKey === 'duo') ? 2 : Number(selectedParticipantCount),
+                    total_duration_minutes: ((Number(selectedStandardDuration) || 0) * ((selectedServiceKey === 'duo') ? 2 : Number(selectedParticipantCount) || 0)) + STATIC_SETUP_MINUTES,
                     
                     // Time slot - ALREADY IN UTC (no conversion needed)
                     slot_start: selectedSlot?.start,
