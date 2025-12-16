@@ -1,674 +1,148 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Now | Relax & Renew RMT</title>
-  <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing." />
-
-  <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3/"></script>
-
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --bg: #000000;
-      --gold: #E0C584;
-      --gold-hover: #F0D594;
-      --glass: rgba(0,0,0,0.55);
-      --glass-2: rgba(0,0,0,0.35);
-      --error: #f87171;
-      --success: #4ade80;
-    }
-
-    html, body { background: var(--bg); color: var(--gold); font-family: "Cormorant Garamond", serif; }
-    .panel { background: var(--glass); border: 1px solid rgba(224,197,132,0.35); backdrop-filter: blur(10px); border-radius: 18px; }
-    .btn-gold {
-      border: 1px solid rgba(224,197,132,0.7);
-      color: var(--gold);
-      background: rgba(0,0,0,0.45);
-      border-radius: 14px;
-      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-    }
-    .btn-gold:hover { background: rgba(0,0,0,0.6); transform: translateY(-1px); box-shadow: 0 10px 25px rgba(224,197,132,0.08); }
-    .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .input-dark {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(224,197,132,0.35);
-      background: rgba(0,0,0,0.35);
-      color: var(--gold);
-      outline: none;
-      transition: box-shadow .12s ease, border-color .12s ease;
-    }
-    .input-dark:focus { border-color: rgba(224,197,132,0.75); box-shadow: 0 0 0 3px rgba(224,197,132,0.12); }
-    .muted { color: rgba(224,197,132,0.75); }
-    .err { color: var(--error); }
-    .ok { color: var(--success); }
-  </style>
-</head>
-
-<body class="min-h-screen">
-  <div class="max-w-5xl mx-auto px-4 py-10">
-    <div class="mb-8">
-      <h1 class="text-4xl md:text-5xl font-bold text-[#E0C584]">Book Now</h1>
-      <p class="mt-2 text-[#E0C584]/80 text-lg">Mobile Registered Massage Therapy — Niagara Region</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- LEFT: Booking inputs -->
-      <div class="panel p-6">
-        <h2 class="text-2xl font-bold mb-4">Appointment Details</h2>
-
-        <div class="grid grid-cols-1 gap-4">
-          <div>
-            <label class="block mb-1 muted">Full Name</label>
-            <input id="fullName" class="input-dark" placeholder="First and last name" autocomplete="name" />
-          </div>
-
-          <div>
-            <label class="block mb-1 muted">Email</label>
-            <input id="email" class="input-dark" placeholder="you@email.com" autocomplete="email" />
-          </div>
-
-          <div>
-            <label class="block mb-1 muted">Phone</label>
-            <input id="phone" class="input-dark" placeholder="(555) 555-5555" autocomplete="tel" inputmode="tel" />
-            <div class="text-sm muted mt-1">We’ll only use this for booking updates.</div>
-          </div>
-
-          <div>
-            <label class="block mb-1 muted">Service Address</label>
-            <input id="address" class="input-dark" placeholder="Street address" autocomplete="street-address" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block mb-1 muted">City</label>
-              <input id="city" class="input-dark" placeholder="City" autocomplete="address-level2" />
-            </div>
-            <div>
-              <label class="block mb-1 muted">Postal Code</label>
-              <input id="postal" class="input-dark" placeholder="A1A 1A1" autocomplete="postal-code" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block mb-1 muted">Treatment</label>
-              <select id="treatment" class="input-dark">
-                <option value="Relaxation Massage">Relaxation Massage</option>
-                <option value="Deep Tissue Massage">Deep Tissue Massage</option>
-                <option value="Sports Massage">Sports Massage</option>
-                <option value="Senior Massage">Senior Massage</option>
-                <option value="Hot Stone Massage">Hot Stone Massage</option>
-                <option value="Cupping Therapy">Cupping Therapy</option>
-                <option value="Prenatal Massage">Prenatal Massage</option>
-                <option value="Pediatric Massage">Pediatric Massage</option>
-                <option value="Infant Massage">Infant Massage</option>
-              </select>
-            </div>
-            <div>
-              <label class="block mb-1 muted">Duration</label>
-              <select id="durationMinutes" class="input-dark">
-                <option value="60">60 min</option>
-                <option value="75">75 min</option>
-                <option value="90">90 min</option>
-                <option value="120">120 min</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block mb-1 muted">From</label>
-              <input id="fromDate" class="input-dark" type="date" />
-            </div>
-            <div>
-              <label class="block mb-1 muted">To</label>
-              <input id="toDate" class="input-dark" type="date" />
-            </div>
-          </div>
-
-          <button id="checkBtn" class="btn-gold py-3 font-bold text-lg mt-2">Check Availability</button>
-
-          <div id="status" class="text-sm mt-2"></div>
-        </div>
-      </div>
-
-      <!-- RIGHT: Slots + card on file -->
-      <div class="panel p-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-2xl font-bold">Available Times</h2>
-            <p class="text-[#E0C584]/80 mt-1">Booked times will appear greyed out and disabled.</p>
-          </div>
-          <div class="text-right text-sm text-[#E0C584]/70">
-            <div>Payment is collected after your treatment.</div>
-            <div>Card may be required for extended travel.</div>
-          </div>
-        </div>
-
-        <div class="mt-4" id="slotsContainer"></div>
-
-        <div class="mt-5 border-t border-white/10 pt-5">
-          <h3 class="text-xl font-bold">Card on File (if required)</h3>
-          <p class="text-[#E0C584]/75 text-sm mt-1">
-            If a travel charge applies, we’ll securely save a card on file. No payment is collected today.
-          </p>
-
-          <div id="cardSection" class="mt-4 hidden">
-            <div class="panel p-4" style="background: rgba(0,0,0,0.35); border-color: rgba(224,197,132,0.25);">
-              <div id="card-element"></div>
-              <div id="card-errors" class="err text-sm mt-2"></div>
-            </div>
-          </div>
-
-          <button id="continueBtn" class="btn-gold py-3 font-bold text-lg mt-4 w-full opacity-60 cursor-not-allowed" disabled>
-            Continue
-          </button>
-
-          <div id="submitStatus" class="text-sm mt-3"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ----------------------------
-    // STRIPE KEY (DO NOT REMOVE)
-    // ----------------------------
-    const STRIPE_PUBLISHABLE_KEY = "pk_live_51SFdlq2atTjzVbCkiLOJb4Ee0qufeDnGdHuYUnSLuaSK3AD97lPRgzO2y7eQTnz6xBF60dvF8yqWc4jaRxXbdC4W00NIigxRTD";
-    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-    const elements = stripe.elements();
-
-    // Optional: if you ever need a different base (reverse proxy / different domain)
-    // window.WEBHOOK_BASE_URL = "https://YOUR-N8N-DOMAIN";
-    const WEBHOOK_BASE = (window.WEBHOOK_BASE_URL || '').replace(/\/$/, '');
-
-    const AVAIL_URL = `${WEBHOOK_BASE}/webhook/cliniko-mobile-availability`;
-    const BOOK_URL  = `${WEBHOOK_BASE}/webhook/booking-confirmed`;
-
-    let cardElement = null;
-    let selectedSlot = null;
-    let lastAvailability = null;
-
-    const statusEl = document.getElementById('status');
-    const submitStatusEl = document.getElementById('submitStatus');
-    const cardSection = document.getElementById('cardSection');
-    const cardErrors = document.getElementById('card-errors');
-    const continueBtn = document.getElementById('continueBtn');
-
-    function setStatus(msg, kind = 'muted') {
-      statusEl.className = `text-sm mt-2 ${kind === 'err' ? 'err' : (kind === 'ok' ? 'ok' : 'muted')}`;
-      statusEl.textContent = msg || '';
-    }
-    function setSubmitStatus(msg, kind = 'muted') {
-      submitStatusEl.className = `text-sm mt-3 ${kind === 'err' ? 'err' : (kind === 'ok' ? 'ok' : 'muted')}`;
-      submitStatusEl.textContent = msg || '';
-    }
-
-    function requireField(id, label) {
-      const el = document.getElementById(id);
-      const v = (el.value || '').trim();
-      if (!v) throw new Error(`Missing ${label}.`);
-      return v;
-    }
-
-    function formatPrettyDate(yyyy_mm_dd) {
-      try {
-        const [y, m, d] = yyyy_mm_dd.split('-').map(Number);
-        const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-        return dt.toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      } catch {
-        return yyyy_mm_dd;
-      }
-    }
-
-    // ----------------------------
-    // Phone formatting (forced, but allows full backspace/delete)
-    // ----------------------------
-    (function setupPhoneFormatting() {
-      const input = document.getElementById('phone');
-      if (!input) return;
-
-      const MAX_DIGITS = 10;
-
-      function digitsOnly(v) {
-        return (v || '').replace(/\D/g, '').slice(0, MAX_DIGITS);
-      }
-
-      function formatPhone(d) {
-        if (!d) return '';
-        if (d.length <= 3) return `(${d}`;
-        if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`;
-        return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6,10)}`;
-      }
-
-      function countDigitsBeforeCaret(value, caretPos) {
-        return value.slice(0, caretPos).replace(/\D/g, '').length;
-      }
-
-      function caretPosForDigitIndex(formattedValue, digitIndex) {
-        if (digitIndex <= 0) return 0;
-        let seen = 0;
-        for (let i = 0; i < formattedValue.length; i++) {
-          if (/\d/.test(formattedValue[i])) {
-            seen++;
-            if (seen === digitIndex) return i + 1;
-          }
-        }
-        return formattedValue.length;
-      }
-
-      input.addEventListener('input', () => {
-        const oldValue = input.value;
-        const caret = input.selectionStart ?? oldValue.length;
-
-        const digitsBefore = countDigitsBeforeCaret(oldValue, caret);
-        const digits = digitsOnly(oldValue);
-
-        const newValue = formatPhone(digits);
-        input.value = newValue;
-
-        const newCaret = caretPosForDigitIndex(newValue, digitsBefore);
-        input.setSelectionRange(newCaret, newCaret);
-      });
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key !== 'Backspace' && e.key !== 'Delete') return;
-
-        const value = input.value;
-        const start = input.selectionStart ?? 0;
-        const end = input.selectionEnd ?? 0;
-
-        if (start !== end) return;
-
-        // If cursor is next to formatting characters, jump over them
-        if (e.key === 'Backspace' && start > 0 && !/\d/.test(value[start - 1])) {
-          e.preventDefault();
-          const newPos = start - 1;
-          input.setSelectionRange(newPos, newPos);
-          return;
-        }
-
-        if (e.key === 'Delete' && start < value.length && !/\d/.test(value[start])) {
-          e.preventDefault();
-          const newPos = start + 1;
-          input.setSelectionRange(newPos, newPos);
-          return;
-        }
-      });
-
-      input.setAttribute('inputmode', 'tel');
-      input.setAttribute('autocomplete', 'tel');
-    })();
-
-    // ----------------------------
-    // Slot helpers (support multiple key names)
-    // ----------------------------
-    function getSlotDriveTimeMinutes(slot) {
-      const v =
-        slot?.drive_time_minutes ??
-        slot?.driveTimeMinutes ??
-        slot?.drive_time ??
-        slot?.driveTime ??
-        null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function getSlotTravelFeeCents(slot) {
-      const v =
-        slot?.travel_fee_cents ??
-        slot?.travelFeeCents ??
-        slot?.travel_fee ??
-        slot?.travelFee ??
-        null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function getSlotTravelChargeDollars(slot) {
-      const v =
-        slot?.travel_charge ??
-        slot?.travelCharge ??
-        null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function getSlotAvailable(slot) {
-      // Treat undefined as available; only false means booked/blocked
-      return slot?.available !== false;
-    }
-
-    // ----------------------------
-    // Slot rendering (shows all, disables booked/invalid)
-    // ----------------------------
-    function setSelectedSlotUI(selectedButtonEl) {
-      document.querySelectorAll('#slotsContainer button[data-start]').forEach((btn) => {
-        btn.classList.remove('ring-2', 'ring-[#E0C584]', 'shadow-xl');
-      });
-
-      if (selectedButtonEl) {
-        selectedButtonEl.classList.add('ring-2', 'ring-[#E0C584]', 'shadow-xl');
-      }
-
-      const ok = !!(selectedSlot && getSlotAvailable(selectedSlot));
-      continueBtn.disabled = !ok;
-      continueBtn.className = continueBtn.className
-        .replace(/\bopacity-\d+\b/g, '')
-        .replace(/\bcursor-not-allowed\b/g, '')
-        .trim() + (ok ? '' : ' opacity-60 cursor-not-allowed');
-    }
-
-    function renderAvailability(data) {
-      const container = document.getElementById('slotsContainer');
-      container.innerHTML = '';
-      selectedSlot = null;
-      setSelectedSlotUI(null);
-
-      const dates = data?.dates || data?.days || [];
-      if (!Array.isArray(dates) || !dates.length) {
-        container.innerHTML = `<div class="text-[#E0C584] opacity-80">No availability found for this range.</div>`;
-        return;
-      }
-
-      for (const day of dates) {
-        const dayWrap = document.createElement('div');
-        dayWrap.className = 'mb-6';
-
-        const heading = document.createElement('div');
-        heading.className = 'text-[#E0C584] text-lg font-bold mb-2';
-        heading.textContent = formatPrettyDate(day.date || day.day || '');
-        dayWrap.appendChild(heading);
-
-        const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3';
-
-        const slots = day.slots || day.times || [];
-        for (const slot of slots) {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-
-          const isAvailable = getSlotAvailable(slot);
-
-          btn.className = [
-            'rounded-xl border px-3 py-3 text-left transition-all',
-            'leading-tight',
-            isAvailable
-              ? 'border-[#E0C584] bg-black/40 hover:bg-black/55 hover:-translate-y-[1px] hover:shadow-lg cursor-pointer'
-              : 'border-white/10 bg-white/5 text-white/40 cursor-not-allowed opacity-70',
-          ].join(' ');
-
-          btn.disabled = !isAvailable;
-          btn.setAttribute('aria-disabled', String(!isAvailable));
-
-          // Support both `start/end` and `starts_at/ends_at`
-          const slotStart = slot.start || slot.starts_at || slot.startsAt || '';
-          const slotEnd   = slot.end   || slot.ends_at   || slot.endsAt   || '';
-          btn.dataset.start = slotStart;
-          btn.dataset.end = slotEnd;
-
-          const label = slot.label || slot.timeLabel || slotStart || '';
-          const driveTimeMin = getSlotDriveTimeMinutes(slot);
-          const feeCents = getSlotTravelFeeCents(slot);
-          const feeDollars = feeCents ? (feeCents / 100) : getSlotTravelChargeDollars(slot);
-
-          const timeLine = document.createElement('div');
-          timeLine.className = isAvailable ? 'text-[#E0C584] text-base font-bold' : 'text-white/50 text-base font-bold';
-          timeLine.textContent = isAvailable ? label : `${label} (Booked)`;
-
-          const subLine = document.createElement('div');
-          subLine.className = isAvailable ? 'text-[#E0C584]/80 text-sm mt-1' : 'text-white/30 text-sm mt-1';
-
-          const parts = [];
-          if (driveTimeMin) parts.push(`Drive: ${driveTimeMin} min`);
-          if (feeDollars) parts.push(`Travel: $${feeDollars.toFixed(2)}`);
-          subLine.textContent = parts.join(' · ');
-
-          btn.appendChild(timeLine);
-          btn.appendChild(subLine);
-
-          btn.addEventListener('click', () => {
-            if (!isAvailable) return;
-            selectedSlot = slot;
-            setSelectedSlotUI(btn);
-            evaluateCardRequirement();
-          });
-
-          grid.appendChild(btn);
-        }
-
-        dayWrap.appendChild(grid);
-        container.appendChild(dayWrap);
-      }
-    }
-
-    // ----------------------------
-    // Card requirement logic (prefer backend-provided travel fee)
-    // ----------------------------
-    function travelFeeCentsForSelectedSlot() {
-      if (!selectedSlot) return 0;
-
-      const fromSlot = getSlotTravelFeeCents(selectedSlot);
-      if (fromSlot > 0) return fromSlot;
-
-      // If slot provides travel_charge dollars, convert to cents
-      const dollars = getSlotTravelChargeDollars(selectedSlot);
-      if (dollars > 0) return Math.round(dollars * 100);
-
-      // Fallback ONLY if slot didn’t include fee fields:
-      const driveTimeMinutes = getSlotDriveTimeMinutes(selectedSlot);
-      return (driveTimeMinutes >= 60) ? 2000 : 0; // conservative fallback
-    }
-
-    function evaluateCardRequirement() {
-      const travelFeeCents = travelFeeCentsForSelectedSlot();
-
-      if (travelFeeCents > 0) {
-        cardSection.classList.remove('hidden');
-
-        if (!cardElement) {
-          cardElement = elements.create('card', {
-            style: {
-              base: {
-                color: '#E0C584',
-                '::placeholder': { color: 'rgba(224,197,132,0.6)' }
-              }
-            }
-          });
-          cardElement.mount('#card-element');
-          cardElement.on('change', (e) => {
-            cardErrors.textContent = e.error ? e.error.message : '';
-          });
-        }
-      } else {
-        cardSection.classList.add('hidden');
-      }
-    }
-
-    async function fetchAvailability() {
-      setStatus('Checking availability…');
-      setSubmitStatus('');
-
-      const fullName = requireField('fullName', 'full name');
-      const email = requireField('email', 'email');
-      const phone = requireField('phone', 'phone number');
-      const address = requireField('address', 'address');
-      const city = requireField('city', 'city');
-      const postal = requireField('postal', 'postal code');
-
-      const treatment = document.getElementById('treatment').value;
-      const durationMinutes = Number(document.getElementById('durationMinutes').value);
-
-      const from = requireField('fromDate', 'from date');
-      const to = requireField('toDate', 'to date');
-
-      // Send redundant keys so it works with old/new booking-gate payload expectations
-      const payload = {
-        fullName,
-        email,
-        phone,
-        address,
-        city,
-        postal_code: postal,
-
-        treatment_label: treatment,
-
-        durationMinutes,
-        duration_minutes: durationMinutes,
-        duration: durationMinutes,
-
-        from,
-        to
-      };
-
-      const res = await fetch(AVAIL_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const t = await res.text().catch(() => '');
-        throw new Error(`Availability error: ${res.status}. ${t}`);
-      }
-
-      const data = await res.json();
-      lastAvailability = data;
-
-      renderAvailability(data);
-      setStatus('Availability loaded. Select a time to continue.', 'ok');
-    }
-
-    function assertValidSelectedSlotOrThrow() {
-      if (!selectedSlot) throw new Error('Please select an appointment time.');
-      if (!getSlotAvailable(selectedSlot)) throw new Error('That time is not available. Please choose a different time.');
-      const slotStart = selectedSlot.start || selectedSlot.starts_at || selectedSlot.startsAt;
-      const slotEnd   = selectedSlot.end   || selectedSlot.ends_at   || selectedSlot.endsAt;
-      if (!slotStart || !slotEnd) throw new Error('Selected slot is missing start/end.');
-    }
-
-    async function createPaymentMethodIfNeeded() {
-      const travelFeeCents = travelFeeCentsForSelectedSlot();
-
-      if (travelFeeCents <= 0) return { paymentMethodId: null, travelFeeCents };
-
-      if (!cardElement) throw new Error('Card entry is required for this booking.');
-      const fullName = requireField('fullName', 'full name');
-      const email = requireField('email', 'email');
-      const phone = requireField('phone', 'phone number');
-
-      setSubmitStatus('Saving card on file…');
-
-      const { paymentMethod, error } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          name: fullName,
-          email,
-          phone,
-        },
-      });
-
-      if (error) throw new Error(`Payment error: ${error.message}`);
-      return { paymentMethodId: paymentMethod.id, travelFeeCents };
-    }
-
-    async function submitBookingConfirmed() {
-      assertValidSelectedSlotOrThrow();
-      setSubmitStatus('');
-
-      const fullName = requireField('fullName', 'full name');
-      const email = requireField('email', 'email');
-      const phone = requireField('phone', 'phone number');
-      const address = requireField('address', 'address');
-      const city = requireField('city', 'city');
-      const postal = requireField('postal', 'postal code');
-
-      const treatment = document.getElementById('treatment').value;
-      const durationMinutes = Number(document.getElementById('durationMinutes').value);
-
-      const firstName = fullName.split(' ')[0] || fullName;
-      const lastName = fullName.split(' ').slice(1).join(' ') || '';
-
-      const slotStart = selectedSlot.start || selectedSlot.starts_at || selectedSlot.startsAt;
-      const slotEnd   = selectedSlot.end   || selectedSlot.ends_at   || selectedSlot.endsAt;
-
-      const driveTimeMinutes = getSlotDriveTimeMinutes(selectedSlot);
-      const travelFeeCents = travelFeeCentsForSelectedSlot();
-      const travelChargeDollars = travelFeeCents ? (travelFeeCents / 100) : getSlotTravelChargeDollars(selectedSlot);
-
-      const { paymentMethodId } = await createPaymentMethodIfNeeded();
-
-      const payload = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        postal_code: postal,
-
-        treatment_label: treatment,
-        duration_minutes: durationMinutes,
-
-        slot_start: slotStart,
-        slot_end: slotEnd,
-
-        drive_time_minutes: driveTimeMinutes,
-        travel_fee_cents: travelFeeCents,
-        travel_charge: travelChargeDollars,
-
-        // Optional: pass through practitioner name if your slots include it
-        practitioner_name: selectedSlot.practitioner_name || selectedSlot.practitionerName || 'Cassandra Simpson',
-
-        stripe_payment_method_id: paymentMethodId,
-      };
-
-      continueBtn.disabled = true;
-      setSubmitStatus('Submitting booking…');
-
-      const res = await fetch(BOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text().catch(() => '');
-      if (!res.ok) {
-        continueBtn.disabled = false;
-        throw new Error(`Booking error: ${res.status}. ${text}`);
-      }
-
-      setSubmitStatus('Booking confirmed. You will receive an email shortly.', 'ok');
-    }
-
-    document.getElementById('checkBtn').addEventListener('click', async () => {
-      try {
-        await fetchAvailability();
-      } catch (e) {
-        setStatus(e?.message || String(e), 'err');
-      }
-    });
-
-    continueBtn.addEventListener('click', async () => {
-      try {
-        await submitBookingConfirmed();
-      } catch (e) {
-        setSubmitStatus(e?.message || String(e), 'err');
-        continueBtn.disabled = false;
-      }
-    });
-  </script>
-</body>
-</html>
+<script>
+                // Phone number force-formatting (BACKSPACE/DELETE SAFE)
+                (function setupPhoneFormatting() {
+                    const input = document.getElementById('client-phone');
+                    if (!input) return;
+
+                    const MAX_DIGITS = 10;
+                    let isApplying = false;
+
+                    function digitsOnly(v) {
+                        return (v || '').replace(/\D/g, '').slice(0, MAX_DIGITS);
+                    }
+
+                    function formatPhone(d) {
+                        if (!d) return '';
+                        if (d.length <= 3) return `(${d}`;
+                        if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+                        return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6,10)}`;
+                    }
+
+                    function countDigitsBeforeCaret(value, caretPos) {
+                        return value.slice(0, caretPos).replace(/\D/g, '').length;
+                    }
+
+                    function caretPosForDigitIndex(formattedValue, digitIndex) {
+                        if (digitIndex <= 0) return 0;
+                        let seen = 0;
+                        for (let i = 0; i < formattedValue.length; i++) {
+                            if (/\d/.test(formattedValue[i])) {
+                                seen++;
+                                if (seen === digitIndex) return i + 1;
+                            }
+                        }
+                        return formattedValue.length;
+                    }
+
+                    function applyDigitsAndCaret(digits, caretDigitIndex) {
+                        const newValue = formatPhone(digitsOnly(digits));
+                        isApplying = true;
+                        input.value = newValue;
+                        const newCaret = caretPosForDigitIndex(newValue, caretDigitIndex);
+                        input.setSelectionRange(newCaret, newCaret);
+                        isApplying = false;
+                    }
+
+                    // Handle Backspace/Delete on formatting characters in ONE keypress
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+
+                        const value = input.value;
+                        const start = input.selectionStart ?? 0;
+                        const end = input.selectionEnd ?? 0;
+
+                        // If user has a selection, let the browser delete it; input handler will re-format.
+                        if (start !== end) return;
+
+                        if (e.key === 'Backspace') {
+                            // If the char just before caret is a formatting char, delete the previous digit instead.
+                            if (start > 0 && !/\d/.test(value[start - 1])) {
+                                e.preventDefault();
+                                const digits = digitsOnly(value);
+                                const digitsBefore = countDigitsBeforeCaret(value, start);
+                                if (digitsBefore <= 0) return;
+                                const newDigits = digits.slice(0, digitsBefore - 1) + digits.slice(digitsBefore);
+                                applyDigitsAndCaret(newDigits, digitsBefore - 1);
+                            }
+                        }
+
+                        if (e.key === 'Delete') {
+                            // If the char at caret is a formatting char, delete the next digit instead.
+                            if (start < value.length && !/\d/.test(value[start])) {
+                                e.preventDefault();
+                                const digits = digitsOnly(value);
+                                const digitsBefore = countDigitsBeforeCaret(value, start);
+                                if (digitsBefore >= digits.length) return;
+                                const newDigits = digits.slice(0, digitsBefore) + digits.slice(digitsBefore + 1);
+                                applyDigitsAndCaret(newDigits, digitsBefore);
+                            }
+                        }
+                    });
+
+                    // Mobile-friendly deletion support (covers cases where keydown may not fire)
+                    input.addEventListener('beforeinput', (e) => {
+                        if (isApplying) return;
+
+                        const t = e.inputType;
+                        const isDelete =
+                            t === 'deleteContentBackward' ||
+                            t === 'deleteContentForward' ||
+                            t === 'deleteByCut';
+
+                        if (!isDelete) return;
+
+                        const value = input.value;
+                        const start = input.selectionStart ?? 0;
+                        const end = input.selectionEnd ?? 0;
+
+                        const digits = digitsOnly(value);
+                        const dStart = countDigitsBeforeCaret(value, start);
+                        const dEnd = countDigitsBeforeCaret(value, end);
+
+                        // Remove selection (or cut) in digit-space
+                        if (dStart !== dEnd) {
+                            e.preventDefault();
+                            const newDigits = digits.slice(0, dStart) + digits.slice(dEnd);
+                            applyDigitsAndCaret(newDigits, dStart);
+                            return;
+                        }
+
+                        if (t === 'deleteContentBackward') {
+                            if (dStart <= 0) return;
+                            e.preventDefault();
+                            const newDigits = digits.slice(0, dStart - 1) + digits.slice(dStart);
+                            applyDigitsAndCaret(newDigits, dStart - 1);
+                            return;
+                        }
+
+                        if (t === 'deleteContentForward') {
+                            if (dStart >= digits.length) return;
+                            e.preventDefault();
+                            const newDigits = digits.slice(0, dStart) + digits.slice(dStart + 1);
+                            applyDigitsAndCaret(newDigits, dStart);
+                        }
+                    });
+
+                    // Format on any input (typing/paste), while preserving caret position in digit-space
+                    input.addEventListener('input', () => {
+                        if (isApplying) return;
+
+                        const oldValue = input.value;
+                        const caret = input.selectionStart ?? oldValue.length;
+
+                        const digitsBefore = countDigitsBeforeCaret(oldValue, caret);
+                        const digits = digitsOnly(oldValue);
+
+                        const newValue = formatPhone(digits);
+                        isApplying = true;
+                        input.value = newValue;
+
+                        const newCaret = caretPosForDigitIndex(newValue, digitsBefore);
+                        input.setSelectionRange(newCaret, newCaret);
+                        isApplying = false;
+                    });
+
+                    input.setAttribute('inputmode', 'tel');
+                    input.setAttribute('autocomplete', 'tel');
+                })();
+</script>
