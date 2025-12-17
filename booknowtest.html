@@ -2233,6 +2233,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 }
 
                 // Prepare booking data
+                const pricing = getPrice();
+
                 const bookingData = {
                     // Client info
                     firstName,
@@ -2250,6 +2252,13 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     treatment_key: selectedServiceKey,
                     treatment_label: TREATMENT_RULES[selectedServiceKey]?.label,
                     duration: selectedStandardDuration,
+
+                    // Multi-client support (needed for Duo / Group / Event)
+                    standardDurationMinutes: Number(selectedStandardDuration) || 0,
+                    participants: pricing.participants || 1,
+                    participant_count: pricing.participants || 1,
+                    totalDurationMinutes: ((Number(selectedStandardDuration) || 0) * (pricing.participants || 1)) + (Number(STATIC_SETUP_MINUTES) || 0),
+
                     
                     // Time slot - ALREADY IN UTC (no conversion needed)
                     slot_start: selectedSlot?.start,
@@ -2258,8 +2267,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     times_already_utc: true, // Flag for workflow to skip timezone conversion
                     
                     // Pricing
-                    price_base: getPrice().base,
-                    price_total: getPrice().total,
+                    price_base: pricing.base,
+                    price_total: pricing.total,
                     
                     // Travel charge info - GET FROM SLOT DATA
                     travel_charge: travelCharge,
