@@ -95,8 +95,8 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
     <!-- Auth0 Lock (Embedded Email + Password Window) -->
-    <link rel="stylesheet" href="https://cdn.auth0.com/js/lock/11.36.2/lock.min.css" />
-    <script src="https://cdn.auth0.com/js/lock/11.36.2/lock.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.auth0.com/js/lock/14.2.0/lock.min.css" />
+    <script src="https://cdn.auth0.com/js/lock/14.2.0/lock.min.js"></script>
 
     <style>
         body { 
@@ -210,9 +210,843 @@
             font-weight: 600 !important;
         }
 
+        
+        /* ===== Auth0 Lock theming (v4) — solid, sharp, full-width, no white ===== */
+        /* IMPORTANT: Lock v14 uses single-class selectors like .auth0-lock (not .auth0-lock.auth0-lock). */
+
+        /* Make the embedded widget fill the available width */
+        #auth0-lock-container { width: 100% !important; }
+
+        #auth0-lock-container .auth0-lock,
+        #auth0-lock-container .auth0-lock * {
+            font-family: 'Cormorant Garamond', serif !important;
+            border-radius: 0px !important;
+            box-shadow: none !important;
+        }
+
+        /* Shell: full width, solid black, gold border */
+        #auth0-lock-container .auth0-lock .auth0-lock-widget {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.45) !important;
+            overflow: hidden !important;
+        }
+
+        /* Remove Lock header/footer areas that can introduce light backgrounds */
+        #auth0-lock-container .auth0-lock .auth0-lock-header,
+        #auth0-lock-container .auth0-lock .auth0-lock-header-bg,
+        #auth0-lock-container .auth0-lock .auth0-lock-footer,
+        #auth0-lock-container .auth0-lock .auth0-lock-name,
+        #auth0-lock-container .auth0-lock .auth0-lock-badge {
+            display: none !important;
+        }
+
+        /* Pane/content hard reset (covers Sign In + Sign Up + password reset flows) */
+        #auth0-lock-container .auth0-lock,
+        #auth0-lock-container .auth0-lock .auth0-lock-content,
+        #auth0-lock-container .auth0-lock .auth0-lock-pane,
+        #auth0-lock-container .auth0-lock .auth0-lock-cred-pane,
+        #auth0-lock-container .auth0-lock .auth0-lock-center,
+        #auth0-lock-container .auth0-lock .auth0-lock-form,
+        #auth0-lock-container .auth0-lock .auth0-lock-body-content,
+        #auth0-lock-container .auth0-lock .auth0-lock-signup,
+        #auth0-lock-container .auth0-lock .auth0-lock-terms,
+        #auth0-lock-container .auth0-lock .auth0-lock-message,
+        #auth0-lock-container .auth0-lock .auth0-lock-warning,
+        #auth0-lock-container .auth0-lock .auth0-lock-error,
+        #auth0-lock-container .auth0-lock .auth0-lock-error-msg {
+            background: #000 !important;
+        }
+
+        /* Typography */
+        #auth0-lock-container .auth0-lock,
+        #auth0-lock-container .auth0-lock label,
+        #auth0-lock-container .auth0-lock p,
+        #auth0-lock-container .auth0-lock .auth0-lock-alternative,
+        #auth0-lock-container .auth0-lock .auth0-lock-terms {
+            color: rgba(240,226,192,0.92) !important;
+        }
+
+        #auth0-lock-container .auth0-lock label {
+            color: #E0C584 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        /* Tabs */
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs-container {
+            background: #000 !important;
+            border-bottom: 1px solid rgba(224,197,132,0.25) !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li a,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li span {
+            background: #000 !important;
+            color: rgba(240,226,192,0.70) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 700 !important;
+            font-size: 0.72rem !important;
+            padding: 18px 16px !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+            color: #E0C584 !important;
+        }
+
+        /* Inputs: square, gold border, solid black */
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.55) !important;
+            padding: 0 !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input,
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea {
+            background: #000 !important;
+            color: rgba(240,226,192,0.95) !important;
+            font-size: 1.05rem !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input::placeholder,
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea::placeholder {
+            color: rgba(240,226,192,0.45) !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap:focus-within {
+            border-color: #F0D594 !important;
+            box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
+        }
+
+        #auth0-lock-container .auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+            color: rgba(224,197,132,0.90) !important;
+        }
+
+        /* Primary submit button: big gold bar, square */
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button {
+            background: #E0C584 !important;
+            border: 1px solid #E0C584 !important;
+            color: #000 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.12em !important;
+            font-weight: 800 !important;
+            padding: 14px 16px !important;
+        }
+
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Separator / OR */
+        #auth0-lock-container .auth0-lock .auth0-lock-separator span {
+            background: #000 !important;
+            color: rgba(240,226,192,0.85) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.12em !important;
+            font-weight: 700 !important;
+            padding: 0 10px !important;
+        }
+        #auth0-lock-container .auth0-lock .auth0-lock-separator:before,
+        #auth0-lock-container .auth0-lock .auth0-lock-separator:after,
+        #auth0-lock-container .auth0-lock hr {
+            border-top: 1px solid rgba(224,197,132,0.35) !important;
+        }
+
+        /* Social buttons: black with gold border */
+        #auth0-lock-container .auth0-lock .auth0-lock-social-button {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.55) !important;
+            color: rgba(240,226,192,0.95) !important;
+            font-weight: 700 !important;
+        }
+        #auth0-lock-container .auth0-lock .auth0-lock-social-button:hover {
+            background: rgba(224,197,132,0.10) !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Bottom text (signup toggle) */
+        #auth0-lock-container .auth0-lock .auth0-lock-bottom-content,
+        #auth0-lock-container .auth0-lock .auth0-lock-bottom-content * {
+            background: #000 !important;
+            color: rgba(240,226,192,0.90) !important;
+        }
+
+        /* Links */
+        #auth0-lock-container .auth0-lock a,
+        #auth0-lock-container .auth0-lock .auth0-lock-link {
+            color: #E0C584 !important;
+        }
+        #auth0-lock-container .auth0-lock a:hover,
+        #auth0-lock-container .auth0-lock .auth0-lock-link:hover {
+            color: #F0E2C0 !important;
+            text-decoration: underline !important;
+        }
+
+/* Force Lock to be fully solid/black, gold borders, sharp corners, and remove remaining white elements. */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock * {
+            font-family: 'Cormorant Garamond', serif !important;
+            border-radius: 0px !important;
+        }
+
+        /* Remove Lock's own outer card styling (we wrap it ourselves) */
+        .auth0-lock.auth0-lock .auth0-lock-widget {
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+
+        /* Kill header/footer inside Lock (we render our own "Welcome" area) */
+        .auth0-lock.auth0-lock .auth0-lock-header,
+        .auth0-lock.auth0-lock .auth0-lock-header-bg,
+        .auth0-lock.auth0-lock .auth0-lock-name,
+        .auth0-lock.auth0-lock .auth0-lock-badge,
+        .auth0-lock.auth0-lock .auth0-lock-footer {
+            display: none !important;
+        }
+
+        /* Hard-set all panes/backgrounds to black */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock .auth0-lock-content,
+        .auth0-lock.auth0-lock .auth0-lock-pane,
+        .auth0-lock.auth0-lock .auth0-lock-cred-pane,
+        .auth0-lock.auth0-lock .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-body-content,
+        .auth0-lock.auth0-lock .auth0-lock-signup,
+        .auth0-lock.auth0-lock .auth0-lock-terms,
+        .auth0-lock.auth0-lock .auth0-lock-message,
+        .auth0-lock.auth0-lock .auth0-lock-warning {
+            background: #000 !important;
+        }
+
+        /* Text */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock label,
+        .auth0-lock.auth0-lock p,
+        .auth0-lock.auth0-lock .auth0-lock-alternative,
+        .auth0-lock.auth0-lock .auth0-lock-terms {
+            color: rgba(240,226,192,0.92) !important;
+        }
+
+        /* Labels: gold */
+        .auth0-lock.auth0-lock label {
+            color: #E0C584 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        /* Inputs: black with gold border */
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.75) !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input {
+            background: #000 !important;
+            color: rgba(240,226,192,0.95) !important;
+            font-size: 1.02rem !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input::placeholder {
+            color: rgba(240,226,192,0.45) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap:focus-within {
+            border-color: #F0D594 !important;
+            box-shadow: 0 0 0 3px rgba(224,197,132,0.16) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+            color: rgba(224,197,132,0.90) !important;
+        }
+
+        /* Forgot password link */
+        .auth0-lock.auth0-lock a,
+        .auth0-lock.auth0-lock .auth0-lock-link {
+            color: #E0C584 !important;
+            text-decoration: none !important;
+        }
+        .auth0-lock.auth0-lock a:hover,
+        .auth0-lock.auth0-lock .auth0-lock-link:hover {
+            color: #F0E2C0 !important;
+            text-decoration: underline !important;
+        }
+
+        /* Submit button: large gold bar */
+        .auth0-lock.auth0-lock button.auth0-lock-submit {
+            background: #E0C584 !important;
+            border: 1px solid #E0C584 !important;
+            color: #000 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.12em !important;
+            font-weight: 800 !important;
+            padding: 14px 14px !important;
+            }
+        .auth0-lock.auth0-lock button.auth0-lock-submit:hover {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* OR separator */
+        .auth0-lock.auth0-lock .auth0-lock-separator span {
+            color: rgba(240,226,192,0.80) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.12em !important;
+            font-weight: 700 !important;
+            background: #000 !important;
+            padding: 0 10px !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-separator:before,
+        .auth0-lock.auth0-lock .auth0-lock-separator:after,
+        .auth0-lock.auth0-lock hr {
+            border-top: 1px solid rgba(224,197,132,0.40) !important;
+        }
+
+        /* Social buttons: black with gold border */
+        .auth0-lock.auth0-lock .auth0-lock-social-button {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.75) !important;
+            color: rgba(240,226,192,0.95) !important;
+            text-transform: none !important;
+            letter-spacing: 0.02em !important;
+            font-weight: 700 !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-social-button:hover {
+            background: rgba(224,197,132,0.10) !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Signup toggle text (bottom) - remove white */
+        .auth0-lock.auth0-lock .auth0-lock-bottom-content,
+        .auth0-lock.auth0-lock .auth0-lock-bottom-content * {
+            background: #000 !important;
+            color: rgba(240,226,192,0.90) !important;
+        }
+
+        /* Any remaining white containers */
+        .auth0-lock.auth0-lock [style*="background"],
+        .auth0-lock.auth0-lock .auth0-lock-pane * {
+            background-color: inherit !important;
+        }
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock * {
+            font-family: 'Cormorant Garamond', serif !important;
+        }
+
+        /* HARD reset any rounding inside Lock */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock * {
+            border-radius: 0px !important;
+        }
+
+        /* Hard-reset common white backgrounds inside Lock (signin + signup) */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock .auth0-lock-widget,
+        .auth0-lock.auth0-lock .auth0-lock-widget-container,
+        .auth0-lock.auth0-lock .auth0-lock-cred-pane,
+        .auth0-lock.auth0-lock .auth0-lock-center,
+        .auth0-lock.auth0-lock .auth0-lock-content,
+        .auth0-lock.auth0-lock .auth0-lock-pane,
+        .auth0-lock.auth0-lock .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-body-content,
+        .auth0-lock.auth0-lock .auth0-lock-signup,
+        .auth0-lock.auth0-lock .auth0-lock-signup .auth0-lock-content,
+        .auth0-lock.auth0-lock .auth0-lock-signup .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-terms,
+        .auth0-lock.auth0-lock .auth0-lock-password-strength,
+        .auth0-lock.auth0-lock .auth0-lock-password-strength-bar,
+        .auth0-lock.auth0-lock .auth0-lock-message,
+        .auth0-lock.auth0-lock .auth0-lock-warning,
+        .auth0-lock.auth0-lock .auth0-lock-input-show-password,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap textarea {
+            background: #050505 !important;
+        }
+
+        /* Widget shell: solid black, gold border */
+        .auth0-lock.auth0-lock .auth0-lock-widget {
+            border: 1px solid rgba(224,197,132,0.40) !important;
+            box-shadow: 0 0 0 1px rgba(224,197,132,0.10) !important;
+            overflow: hidden !important;
+        }
+
+        /* Kill internal header/footer areas (often light) */
+        .auth0-lock.auth0-lock .auth0-lock-header,
+        .auth0-lock.auth0-lock .auth0-lock-header-bg,
+        .auth0-lock.auth0-lock .auth0-lock-name,
+        .auth0-lock.auth0-lock .auth0-lock-badge,
+        .auth0-lock.auth0-lock .auth0-lock-footer,
+        .auth0-lock.auth0-lock .auth0-lock-pane .auth0-lock-header {
+            display: none !important;
+        }
+
+        /* Text colors */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-form label,
+        .auth0-lock.auth0-lock .auth0-lock-form p,
+        .auth0-lock.auth0-lock .auth0-lock-terms,
+        .auth0-lock.auth0-lock .auth0-lock-alternative,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap textarea {
+            color: rgba(240,226,192,0.95) !important;
+        }
+
+        /* Tabs/buttons that toggle between Sign In / Sign Up */
+        .auth0-lock.auth0-lock .auth0-lock-tabs,
+        .auth0-lock.auth0-lock .auth0-lock-tabs-container {
+            background: #050505 !important;
+            border-bottom: 1px solid rgba(224,197,132,0.18) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-tabs li a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li span {
+            color: rgba(240,226,192,0.70) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 700 !important;
+            font-size: 0.72rem !important;
+            background: #050505 !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+            color: #E0C584 !important;
+        }
+
+        /* Inputs: gold border + square corners */
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap {
+            border: 1px solid rgba(224,197,132,0.40) !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input::placeholder,
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap textarea::placeholder {
+            color: rgba(240,226,192,0.45) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap:focus-within {
+            border-color: #F0D594 !important;
+            box-shadow: 0 0 0 3px rgba(224,197,132,0.15) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+            color: rgba(224,197,132,0.90) !important;
+        }
+
+        /* Dividers/lines that show up white (signup especially) */
+        .auth0-lock.auth0-lock hr,
+        .auth0-lock.auth0-lock .auth0-lock-separator,
+        .auth0-lock.auth0-lock .auth0-lock-separator span {
+            border-color: rgba(224,197,132,0.20) !important;
+            color: rgba(240,226,192,0.75) !important;
+            background: transparent !important;
+        }
+
+        /* Primary submit button: solid gold + square corners */
+        .auth0-lock.auth0-lock .auth0-lock-submit,
+        .auth0-lock.auth0-lock .auth0-lock-submit button,
+        .auth0-lock.auth0-lock .auth0-lock-submit span,
+        .auth0-lock.auth0-lock button.auth0-lock-submit {
+            background: #E0C584 !important;
+            color: #000 !important;
+            border: 1px solid #E0C584 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 800 !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-submit:hover,
+        .auth0-lock.auth0-lock button.auth0-lock-submit:hover {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Secondary buttons (eg. back, resend, etc.) that can be white */
+        .auth0-lock.auth0-lock .auth0-lock-action-button,
+        .auth0-lock.auth0-lock .auth0-lock-social-button,
+        .auth0-lock.auth0-lock .auth0-lock-authenticator,
+        .auth0-lock.auth0-lock .auth0-lock-resend-button {
+            background: #050505 !important;
+            color: #E0C584 !important;
+            border: 1px solid rgba(224,197,132,0.35) !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-action-button:hover,
+        .auth0-lock.auth0-lock .auth0-lock-social-button:hover,
+        .auth0-lock.auth0-lock .auth0-lock-resend-button:hover {
+            background: rgba(224,197,132,0.10) !important;
+            color: #F0E2C0 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Links */
+        .auth0-lock.auth0-lock a,
+        .auth0-lock.auth0-lock .auth0-lock-link {
+            color: #E0C584 !important;
+        }
+        .auth0-lock.auth0-lock a:hover,
+        .auth0-lock.auth0-lock .auth0-lock-link:hover {
+            color: #F0E2C0 !important;
+        }
+
+        /* Error messages */
+        .auth0-lock.auth0-lock .auth0-lock-error,
+        .auth0-lock.auth0-lock .auth0-lock-error-msg {
+            background: #050505 !important;
+            border: 1px solid rgba(248,113,113,0.45) !important;
+            color: rgba(240,226,192,0.95) !important;
+        }
+
+        /* Prevent overlay tint */
+        .auth0-lock.auth0-lock .auth0-lock-overlay {
+            background: transparent !important;
+        }
+
+/* Force all Lock text to inherit brand font */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock * {
+            font-family: 'Cormorant Garamond', serif !important;
+        }
+
+        /* Hard-reset common white backgrounds inside Lock */
+        .auth0-lock.auth0-lock .auth0-lock-widget,
+        .auth0-lock.auth0-lock .auth0-lock-widget-container,
+        .auth0-lock.auth0-lock .auth0-lock-cred-pane,
+        .auth0-lock.auth0-lock .auth0-lock-center,
+        .auth0-lock.auth0-lock .auth0-lock-content,
+        .auth0-lock.auth0-lock .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-body-content,
+        .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-body-content *,
+        .auth0-lock.auth0-lock .auth0-lock-pane,
+        .auth0-lock.auth0-lock .auth0-lock-pane .auth0-lock-content {
+            background: #050505 !important;
+        }
+
+        /* Widget shell: square corners, solid black, gold border */
+        .auth0-lock.auth0-lock .auth0-lock-widget {
+            background: #050505 !important;
+            border: 1px solid rgba(224,197,132,0.35) !important;
+            border-radius: 0px !important;
+            box-shadow: 0 0 0 1px rgba(224,197,132,0.10) !important;
+            overflow: hidden !important;
+        }
+
+        /* Remove header/logo area within Lock to blend */
+        .auth0-lock.auth0-lock .auth0-lock-header,
+        .auth0-lock.auth0-lock .auth0-lock-header-bg,
+        .auth0-lock.auth0-lock .auth0-lock-name,
+        .auth0-lock.auth0-lock .auth0-lock-badge,
+        .auth0-lock.auth0-lock .auth0-lock-footer {
+            display: none !important;
+        }
+
+        /* Text colors */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock .auth0-lock-form,
+        .auth0-lock.auth0-lock .auth0-lock-form label,
+        .auth0-lock.auth0-lock .auth0-lock-form p,
+        .auth0-lock.auth0-lock .auth0-lock-terms,
+        .auth0-lock.auth0-lock .auth0-lock-alternative {
+            color: rgba(240,226,192,0.92) !important;
+        }
+
+        /* Tabs (if they appear) */
+        .auth0-lock.auth0-lock .auth0-lock-tabs li a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li span {
+            color: rgba(240,226,192,0.70) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 700 !important;
+            font-size: 0.72rem !important;
+            background: #050505 !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+            color: #E0C584 !important;
+            background: #050505 !important;
+        }
+
+        /* Inputs: solid black, gold border, square corners */
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap {
+            background: #050505 !important;
+            border: 1px solid rgba(224,197,132,0.35) !important;
+            border-radius: 0px !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input {
+            background: #050505 !important;
+            color: rgba(240,226,192,0.95) !important;
+            font-size: 1.0rem !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input::placeholder {
+            color: rgba(240,226,192,0.45) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap:focus-within {
+            border-color: #F0D594 !important;
+            box-shadow: 0 0 0 3px rgba(224,197,132,0.15) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+            color: rgba(224,197,132,0.85) !important;
+        }
+
+        /* Checkbox/radio + divider lines sometimes appear white */
+        .auth0-lock.auth0-lock .auth0-lock-remember-me label,
+        .auth0-lock.auth0-lock .auth0-lock-remember-me label span,
+        .auth0-lock.auth0-lock .auth0-lock-remember-me input + span:before,
+        .auth0-lock.auth0-lock hr,
+        .auth0-lock.auth0-lock .auth0-lock-separator {
+            color: rgba(240,226,192,0.85) !important;
+            border-color: rgba(224,197,132,0.20) !important;
+            background: rgba(224,197,132,0.20) !important;
+        }
+
+        /* Primary submit button: solid gold, square corners */
+        .auth0-lock.auth0-lock .auth0-lock-submit {
+            background: #E0C584 !important;
+            color: #000 !important;
+            border: 1px solid #E0C584 !important;
+            border-radius: 0px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 800 !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-submit:hover {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Secondary buttons/links: remove white button styles */
+        .auth0-lock.auth0-lock button,
+        .auth0-lock.auth0-lock .auth0-lock-social-button,
+        .auth0-lock.auth0-lock .auth0-lock-authenticator {
+            border-radius: 0px !important;
+        }
+
+        /* Links */
+        .auth0-lock.auth0-lock a,
+        .auth0-lock.auth0-lock .auth0-lock-link {
+            color: #E0C584 !important;
+        }
+        .auth0-lock.auth0-lock a:hover,
+        .auth0-lock.auth0-lock .auth0-lock-link:hover {
+            color: #F0E2C0 !important;
+        }
+
+        /* Error messages: keep dark */
+        .auth0-lock.auth0-lock .auth0-lock-error,
+        .auth0-lock.auth0-lock .auth0-lock-error-msg {
+            background: #050505 !important;
+            border: 1px solid rgba(248,113,113,0.40) !important;
+            color: rgba(240,226,192,0.95) !important;
+            border-radius: 0px !important;
+        }
+
+        /* Prevent overlay tint */
+        .auth0-lock.auth0-lock .auth0-lock-overlay {
+            background: transparent !important;
+        }
+/* The Lock widget is rendered inside your right-side card; this styles the internal UI. */
+        .auth0-lock.auth0-lock,
+        .auth0-lock.auth0-lock * {
+            font-family: 'Cormorant Garamond', serif !important;
+        }
+
+        /* Widget shell */
+        .auth0-lock.auth0-lock .auth0-lock-widget {
+            background: rgba(0,0,0,0.00) !important;
+            border: 1px solid rgba(224,197,132,0.22) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 0 0 1px rgba(224,197,132,0.10), 0 12px 30px rgba(0,0,0,0.45) !important;
+            overflow: hidden !important;
+        }
+
+        /* Remove default header and logo area (we already brand the card) */
+        .auth0-lock.auth0-lock .auth0-lock-header,
+        .auth0-lock.auth0-lock .auth0-lock-header-bg,
+        .auth0-lock.auth0-lock .auth0-lock-name {
+            display: none !important;
+        }
+
+        /* Content background */
+        .auth0-lock.auth0-lock .auth0-lock-content {
+            background: rgba(0,0,0,0.55) !important;
+            padding-top: 18px !important;
+        }
+
+        /* Tabs / text */
+        .auth0-lock.auth0-lock .auth0-lock-tabs li a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li span {
+            color: rgba(240,226,192,0.75) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 700 !important;
+            font-size: 0.78rem !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+        .auth0-lock.auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+            color: #E0C584 !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-alternative,
+        .auth0-lock.auth0-lock .auth0-lock-form p,
+        .auth0-lock.auth0-lock .auth0-lock-form label,
+        .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-input-wrap,
+        .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-input-wrap input {
+            color: rgba(240,226,192,0.92) !important;
+        }
+
+        /* Input fields */
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap {
+            background: rgba(0,0,0,0.35) !important;
+            border: 1px solid rgba(224,197,132,0.22) !important;
+            border-radius: 12px !important;
+            box-shadow: none !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input {
+            background: transparent !important;
+            color: rgba(240,226,192,0.92) !important;
+            font-size: 1.0rem !important;
+            letter-spacing: 0.02em !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap input::placeholder {
+            color: rgba(240,226,192,0.45) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap:focus-within {
+            border-color: rgba(240,213,148,0.75) !important;
+            box-shadow: 0 0 0 3px rgba(224,197,132,0.12) !important;
+        }
+
+        /* Icons inside inputs */
+        .auth0-lock.auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+            color: rgba(224,197,132,0.75) !important;
+        }
+
+        /* Primary submit button */
+        .auth0-lock.auth0-lock .auth0-lock-submit,
+        .auth0-lock.auth0-lock .auth0-lock-submit:active,
+        .auth0-lock.auth0-lock .auth0-lock-submit:focus {
+            background: #E0C584 !important;
+            color: #000 !important;
+            border: 1px solid #E0C584 !important;
+            border-radius: 12px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.14em !important;
+            font-weight: 800 !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
+        }
+        .auth0-lock.auth0-lock .auth0-lock-submit:hover {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+        }
+
+        /* Links (Forgot password, Sign up, etc.) */
+        .auth0-lock.auth0-lock a,
+        .auth0-lock.auth0-lock .auth0-lock-link {
+            color: #E0C584 !important;
+        }
+        .auth0-lock.auth0-lock a:hover,
+        .auth0-lock.auth0-lock .auth0-lock-link:hover {
+            color: #F0E2C0 !important;
+        }
+
+        /* Error messages */
+        .auth0-lock.auth0-lock .auth0-lock-error,
+        .auth0-lock.auth0-lock .auth0-lock-error-msg {
+            background: rgba(248,113,113,0.10) !important;
+            border: 1px solid rgba(248,113,113,0.30) !important;
+            color: rgba(240,226,192,0.95) !important;
+            border-radius: 12px !important;
+        }
+
+        /* Remove extra outer page background that can clash */
+        .auth0-lock.auth0-lock .auth0-lock-overlay {
+            background: transparent !important;
+        }
+
+
+        /* v2: Force the right-side login card to match the screenshot exactly */
+        #portal-login-card.card-fancy {
+            background: #000 !important;
+            border: 1px solid rgba(224,197,132,0.45) !important;
+            border-radius: 0px !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        #portal-login-card.card-fancy:hover { transform: none !important; }
+        #portal-login-card .login-frame {
+            border: 1px solid rgba(224,197,132,0.45) !important;
+            background: #000 !important;
+            padding: 22px !important;
+        }
+        
+
+        /* v5: Force chevrons/arrows to gold (tabs + submit) */
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs *::after,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs *::before,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit *::after,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit *::before {
+            color: #E0C584 !important;
+            border-color: #E0C584 !important;
+        }
+        #auth0-lock-container .auth0-lock svg,
+        #auth0-lock-container .auth0-lock svg * {
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li a,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li span {
+            color: rgba(240,226,192,0.70) !important;
+        }
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+        #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+            color: #E0C584 !important;
+        }
+        #auth0-lock-container .auth0-lock .auth0-lock-submit,
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button {
+            color: #000 !important;
+        }
+
+
+        /* v6: Remove extra framing borders (keep only Lock widget border) */
+        #portal-login-card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        #portal-login-card.card-fancy::before { display: none !important; }
+        #portal-login-card .login-frame {
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+        }
+
+        /* v8: Clean hover/active/focus states for the embedded submit button */
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button {
+            transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease !important;
+        }
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover,
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit:focus,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button:focus,
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit:active,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button:active {
+            background: #F0D594 !important;
+            border-color: #F0D594 !important;
+            color: #000 !important;
+            box-shadow: none !important;
+            outline: none !important;
+            transform: none !important;
+            filter: none !important;
+        }
+        #auth0-lock-container .auth0-lock button.auth0-lock-submit::-moz-focus-inner,
+        #auth0-lock-container .auth0-lock .auth0-lock-submit button::-moz-focus-inner {
+            border: 0 !important;
+        }
+
 </style>
 </head>
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+    <!-- SIGN-IN EMBEDDED LOCK VERSION: v2-match-screenshot -->
 
     <!-- ORIGINAL THIN HEADER BAR -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-brand-gold/15">
@@ -331,17 +1165,23 @@
                 </section>
 
                 <!-- RIGHT COLUMN: SIGN IN WINDOW (ONLY CHANGED AREA) -->
-                <aside class="card-fancy max-w-xl mx-auto w-full">
-                    <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-brand-gold/80">
-                        <i data-lucide="lock" class="w-4 h-4"></i>
-                        Sign in
-                    </div>
-                    <h2 class="text-2xl text-brand-light mb-2">Email &amp; Password</h2>
-                    <p class="text-brand-dim text-sm mb-5">
-                        If you just set your password from the welcome link, you can sign in now.
-                    </p>
+                <aside id="portal-login-card" class="card-fancy max-w-xl mx-auto w-full">
+                    <div class="text-center">
+                        <div class="mx-auto flex items-center justify-center">
+                            <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+                                 alt="Relax & Renew"
+                                 class="w-16 h-16 object-contain opacity-95" />
+                        </div>
 
-                    <div id="auth0-lock-container"></div>
+                        <h2 class="text-3xl text-brand-gold mt-5">Welcome</h2>
+                        <p class="text-brand-dim text-sm mt-2">
+                            Sign in to your client portal to continue.
+                        </p>
+                    </div>
+
+                    <div class="login-frame mt-6">
+                        <div id="auth0-lock-container"></div>
+                    </div>
 
                     <p class="text-[11px] text-brand-dim/80 leading-snug mt-4">
                         By logging in, you agree to our
@@ -350,7 +1190,7 @@
                         <a href="/terms" class="underline text-brand-gold hover:text-brand-light">Terms</a>.
                     </p>
 
-                    <div id="auth0-error" class="hidden mt-4 text-sm border border-red-500/30 bg-red-500/10 rounded-lg p-3"></div>
+                    <div id="auth0-error" class="hidden mt-4 text-sm border border-red-500/30 bg-red-500/10 p-3"></div>
                 </aside>
             </div>
         </div>
@@ -384,7 +1224,7 @@
         });
 
         // ===== AUTH0 CONFIG =====
-        const AUTH0_DOMAIN = "dev-sbhcygzz4xcoa2ij.us.auth0.com";
+        const AUTH0_DOMAIN = "auth.relaxandrenew.ca";
         const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
         const AUTH0_DB_CONNECTION = "Username-Password-Authentication";
 
@@ -415,7 +1255,7 @@
                 logo: 'https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png',
                 primaryColor: '#E0C584'
             },
-            languageDictionary: { title: "" },
+            languageDictionary: { title: "", emailInputPlaceholder: "Email", passwordInputPlaceholder: "Password" },
             auth: {
                 redirect: false,
                 responseType: 'token id_token',
@@ -423,6 +1263,7 @@
                 params: { scope: 'openid profile email' }
             },
             allowedConnections: [AUTH0_DB_CONNECTION],
+                usernameStyle: "email",
             rememberLastLogin: true,
             autofocus: true,
             autoclose: true,
