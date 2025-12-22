@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Now | Relax & Renew RMT</title>
+    <meta name="description" content="Book your mobile RMT massage therapy session in Niagara Region. View services and pricing.">
+
+    <!-- Meta Pixel -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '701194265870298');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    /></noscript>
+
+    <!-- Google Tag / Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-J4NC9FL44H');
+        gtag('config', 'AW-17575022013');
+    </script>
+
+    <!-- Error suppression for third-party scripts -->
+    <script>
+        window.onerror = function(msg, url) {
+            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) return true;
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) { event.preventDefault(); });
+
+        window.gm_authFailure = function() {
+            console.warn("Google Maps API: Authentication restricted.");
+            const inputs = document.querySelectorAll('#address-input-initial');
+            inputs.forEach(el => {
+                el.placeholder = "Address lookup unavailable";
+                el.disabled = false;
+                el.style.opacity = "0.8";
+            });
+        };
+    </script>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0',
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: { serif: ['"Cormorant Garamond"', 'serif'] },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
+                        'shimmer': 'shimmer 1.5s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseSubtle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.7' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '200% 0' },
+                            '100%': { backgroundPosition: '-200% 0' }
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+
+        /* Navigation - Matching Main Site */
+        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); }
+        
+        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.12em; text-decoration: none; position: relative; padding-bottom: 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Mobile Menu */
+        .mobile-menu { transform: translateX(100%); transition: transform 0.3s ease; }
+        .mobile-menu.open { transform: translateX(0); }
+
+        .card-fancy { background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(10,10,10,0.95)); border: 1px solid rgba(224, 197, 132, 0.15); backdrop-filter: blur(10px); transition: all 0.4s ease; padding: 2.5rem 2rem; position: relative; overflow: hidden; border-radius: 8px; }
+        .card-fancy::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #E0C584, transparent); transform: scaleX(0); transition: transform 0.5s ease; }
+        .card-fancy:hover::before { transform: scaleX(1); }
+
+        .btn-gold { border: 2px solid #E0C584; color: #E0C584; padding: 0.7rem 2rem; text-transform: uppercase; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.08em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
+        .btn-gold:hover { background: rgba(224, 197, 132, 0.15); color: #F0E2C0; border-color: #F0D594; }
+
+        .btn-filled { background: #E0C584; color: #000; border: 2px solid #E0C584; padding: 0.75rem 2.5rem; text-transform: uppercase; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.08em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); }
+
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; border-radius: 4px; }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
+        .pac-item-query { color: #E0C584; }
+
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); z-index: 100; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+        .calendar-day-disabled { opacity: 0.25; cursor: not-allowed; }
+        .calendar-day-available { border: 2px solid rgba(224,197,132,0.4); cursor: pointer; transition: all 0.3s ease; background: rgba(224,197,132,0.05); font-size: 1.1rem; font-weight: 600; }
+        .calendar-day-available:hover { background: rgba(224,197,132,0.15); border-color: rgba(224,197,132,0.7); transform: translateY(-2px); }
+        .calendar-day-selected { background: rgba(224,197,132,0.25); border-color: #E0C584; font-weight: 700; }
+        .calendar-day-today::after { content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #E0C584; border-radius: 50%; }
+        
+        .time-slot-btn { transition: all 0.3s ease; position: relative; overflow: hidden; font-size: 1rem; }
+        .time-slot-btn:hover { background: rgba(224,197,132,0.15); border-color: #E0C584; }
+        .time-slot-selected { background: linear-gradient(135deg, rgba(224,197,132,0.25), rgba(224,197,132,0.15)) !important; border-color: #E0C584 !important; box-shadow: 0 0 0 2px rgba(224,197,132,0.3), 0 4px 12px rgba(224,197,132,0.2) !important; font-weight: 700; }
+
+        .therapist-badge { background: linear-gradient(135deg, rgba(224,197,132,0.1), rgba(224,197,132,0.05)); border: 1px solid rgba(224,197,132,0.3); border-radius: 6px; padding: 0.75rem 1rem; }
+        
+        input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.1); }
+        
+        /* Select dropdown highlight colors */
+        select {
+            color: #F0E2C0;
+        }
+
+        select option {
+            background-color: #0a0a0a !important;
+            color: #F0E2C0 !important;
+        }
+
+        /* Option styling support varies by browser/OS; these rules override the default blue highlight where supported. */
+        select option:hover,
+        select option:focus,
+        select option:active,
+        select option:checked {
+            background: rgba(224, 197, 132, 0.28) !important;
+            background-color: rgba(224, 197, 132, 0.28) !important;
+            color: #050505 !important;
+        }
+
+        
+        
+        .loading-shimmer { background: linear-gradient(90deg, rgba(224,197,132,0.1) 25%, rgba(224,197,132,0.2) 50%, rgba(224,197,132,0.1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+
+        /* Skeleton Loader */
+        .skeleton { background: linear-gradient(90deg, rgba(224,197,132,0.05) 25%, rgba(224,197,132,0.15) 50%, rgba(224,197,132,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+
+        /* Progress Steps */
+        .progress-step { position: relative; flex: 1; }
+        .progress-step::before { content: ''; position: absolute; top: 20px; left: 50%; width: 100%; height: 2px; background: rgba(224,197,132,0.2); z-index: 0; }
+        .progress-step:first-child::before { left: 50%; width: 50%; }
+        .progress-step:last-child::before { width: 50%; }
+        .progress-step.active .step-circle { background: #E0C584; color: #000; border-color: #E0C584; }
+        .progress-step.completed .step-circle { background: rgba(224,197,132,0.3); border-color: #E0C584; }
+        .progress-step.completed::before { background: #E0C584; }
+        .step-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(224,197,132,0.3); background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; margin: 0 auto; transition: all 0.3s ease; }
+
+        /* Sticky Bar */
+        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(5,5,5,0.98), rgba(5,5,5,0.95)); backdrop-filter: blur(20px); border-top: 1px solid rgba(224,197,132,0.3); z-index: 40; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -4px 30px rgba(0,0,0,0.5); }
+        .sticky-bar.show { transform: translateY(0); }
+
+        /* Header hero section */
+        .header-hero { 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(5,5,5,1)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Therapist Avatar */
+        .therapist-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #E0C584; object-fit: cover; }
+
+        /* Payment Badge */
+        .payment-badge { border: 1px solid rgba(224,197,132,0.25); }
+        
+        /* Arrow animations - Runway Cascade Effect */
+        @keyframes cascade {
+            0% { 
+                opacity: 0.3;
+                transform: translateY(-8px) scale(0.8);
+            }
+            50% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% { 
+                opacity: 0.3;
+                transform: translateY(8px) scale(0.8);
+            }
+        }
+        
+        .animate-cascade-1 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0s;
+        }
+        .animate-cascade-2 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0.2s;
+        }
+        .animate-cascade-3 { 
+            animation: cascade 1.5s ease-in-out infinite;
+            animation-delay: 0.4s;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid { gap: 0.25rem; }
+            .card-fancy { padding: 1.5rem 1rem; }
+        }
+    </style>
+
+    <!-- Address autocomplete bootstrap -->
+    <script>
+        function initAllAutocompletes() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                    console.error("Google Maps API not loaded.");
+                    return;
+                }
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput) {
+                    const ac = new google.maps.places.Autocomplete(addrInput, {
+                        componentRestrictions: { country: "ca" },
+                        fields: ["address_components", "formatted_address"],
+                        types: ["geocode"],
+                    });
+                    ac.addListener("place_changed", () => {
+                        const place = ac.getPlace();
+                        if (!place) return;
+                        fillAddressFromPlace(place);
+                    });
+                }
+            } catch (e) {
+                console.warn("Maps init error", e);
+            }
+        }
+
+        function fillAddressFromPlace(place) {
+            try {
+                let street = place.formatted_address || "";
+                let city = "";
+                let postal = "";
+                let countryCode = "";
+                let hasStreetNumber = false;
+                
+                if (place.address_components) {
+                    for (const c of place.address_components) {
+                        const t = c.types[0];
+                        if (t === "street_number") hasStreetNumber = true;
+                        if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
+                        if (t === "postal_code") postal = c.long_name;
+                        if (t === "country") countryCode = c.short_name || c.long_name || "";
+                    }
+                }
+
+                // Restrict service addresses to Canada only
+                if (countryCode && String(countryCode).toUpperCase() !== "CA") {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                    window.__selectedAddress = null;
+                    return;
+                }
+                
+                // Require street number for valid address
+                if (!hasStreetNumber) {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('Please enter a complete address with a street number (e.g., "123 Main St, Hamilton")');
+                    window.__selectedAddress = null;
+                    return;
+                }
+                
+                window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
+            } catch (e) {
+                console.warn("fillAddressFromPlace error", e);
+            }
+        }
+
+        // Canadian postal validation helpers (also used to block US ZIP codes)
+        function normalizeCanadianPostal(postal) {
+            const p = String(postal || "").toUpperCase().replace(/\s+/g, "").trim();
+            if (p.length === 6) return p.slice(0,3) + " " + p.slice(3);
+            return String(postal || "").toUpperCase().trim();
+        }
+        function isCanadianPostal(postal) {
+            const p = String(postal || "").toUpperCase().replace(/\s+/g, "").trim();
+            return /^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(p);
+        }
+    </script>
+    
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+    <!-- NAVIGATION -->
+    <nav id="navbar" class="fixed-nav">
+        <div class="container mx-auto px-6 flex justify-between items-center h-20">
+            <a href="index.html" class="flex items-center gap-3 no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <div class="hidden md:flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                </div>
+            </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
+                <a href="index.html#services" class="nav-link">Services</a>
+                <a href="index.html#pricing" class="nav-link">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
+                <a href="index.html#area" class="nav-link">Service Area</a>
+                <a href="index.html#faq" class="nav-link">FAQ</a>
+                <a href="therapists.html" class="nav-link">Our Therapists</a>
+                <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
+                <a href="/client-portal" class="nav-link text-brand-gold/80 hover:text-brand-gold">
+                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                    Client Portal
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="lg:hidden text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-8">
+                <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
+                <button id="mobile-menu-close" class="text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-6">
+                <a href="index.html#services" class="nav-link text-lg">Services</a>
+                <a href="index.html#pricing" class="nav-link text-lg">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link text-lg">Gift Cards</a>
+                <a href="index.html#area" class="nav-link text-lg">Service Area</a>
+                <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
+                <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
+                <a href="membership.html" class="nav-link text-lg text-brand-gold font-bold">Membership</a>
+                <a href="/client-portal" class="nav-link text-lg text-brand-gold/80 hover:text-brand-gold border-t border-brand-gold/20 pt-6 mt-6">
+                    <i data-lucide="user-check" class="w-5 h-5 inline mr-2"></i>
+                    Client Portal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER HERO WITH PROGRESS INDICATOR -->
+    <header class="header-hero pt-28 pb-16 border-b border-brand-gold/20">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-center mb-12 max-w-3xl mx-auto">
+                <div class="progress-step active" id="step-1">
+                    <div class="step-circle">
+                        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-6 h-6 object-contain" />
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-sm uppercase tracking-[0.15em] text-brand-gold font-bold">Step 1</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Location & Service</div>
+                    </div>
+                </div>
+                <div class="progress-step" id="step-2">
+                    <div class="step-circle">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-sm uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 2</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Date & Time</div>
+                    </div>
+                </div>
+                <div class="progress-step" id="step-3">
+                    <div class="step-circle">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="text-sm uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 3</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Your Details</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="animate-slide-up text-center">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl text-brand-light mt-3 mb-5 font-serif leading-tight">
+                    Book Your Mobile Massage
+                </h1>
+                <p class="text-brand-dim text-base md:text-lg max-w-2xl leading-relaxed mx-auto">
+                    We'll calculate drive-time between appointments and show you times that work for your location.
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- BOOKING CALENDAR SECTION -->
+    <section id="booking" class="py-12 bg-brand-black border-b border-brand-light/5">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <div class="card-fancy animate-fade-in">
+                <!-- Top helper row -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-brand-gold/10">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-brand-gold/10 p-2 rounded-full">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-brand-gold"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold/70 font-bold mb-1">Service Location</div>
+                            <div class="text-base md:text-lg text-brand-light font-medium" id="selected-address-label">Service address + treatment required to view availability</div>
+                        </div>
+                    </div>
+                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        <span>Change Selection</span>
+                    </button>
+                </div>
+
+                <!-- Skeleton Loader -->
+                <div id="calendar-skeleton" class="hidden space-y-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="skeleton h-8 w-48"></div>
+                        <div class="skeleton h-8 w-32"></div>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                        <div class="skeleton h-12"></div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-2 mt-2">
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                        <div class="skeleton h-16"></div>
+                    </div>
+                </div>
+
+                <!-- Calendar controls -->
+                <div id="calendar-content" class="">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-4">
+                            <button id="prev-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                                <i data-lucide="chevron-left" class="w-5 h-5 text-brand-gold"></i>
+                            </button>
+                            <div class="text-brand-light text-lg md:text-xl font-serif">
+                                <span id="calendar-month-label"></span>
+                            </div>
+                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4 md:gap-6 text-[0.65rem] md:text-[0.7rem] uppercase tracking-[0.16em] text-brand-dim">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold/20"></span> 
+                                <span class="hidden sm:inline">No Availability</span>
+                                <span class="sm:hidden">None</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold/70 bg-brand-gold/15"></span> 
+                                <span class="hidden sm:inline">Available</span>
+                                <span class="sm:hidden">Open</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded border border-brand-gold bg-brand-gold/30"></span> 
+                                <span class="hidden sm:inline">Selected</span>
+                                <span class="sm:hidden">Picked</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekday header -->
+                    <div class="calendar-grid text-[0.7rem] md:text-[0.75rem] uppercase tracking-[0.16em] text-brand-gold/70 mb-3 font-bold">
+                        <div class="text-center py-2">Sun</div>
+                        <div class="text-center py-2">Mon</div>
+                        <div class="text-center py-2">Tue</div>
+                        <div class="text-center py-2">Wed</div>
+                        <div class="text-center py-2">Thu</div>
+                        <div class="text-center py-2">Fri</div>
+                        <div class="text-center py-2">Sat</div>
+                    </div>
+
+                    <!-- Calendar days -->
+                    <div id="calendar-days" class="calendar-grid text-sm mb-8"></div>
+
+                    <!-- Availability status -->
+                    <div id="availability-status" class="text-sm text-brand-dim/80 mb-6 p-4 rounded bg-brand-gold/5 border border-brand-gold/10">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-brand-gold"></i>
+                            <span>Enter your address and select a treatment to load live availability.</span>
+                        </div>
+                    </div>
+
+                    <!-- Time slots for selected date -->
+                    <div id="time-slots-wrapper" class="border-t border-brand-gold/20 pt-6 mt-4 hidden animate-slide-up">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <div class="text-sm uppercase tracking-[0.18em] text-brand-gold flex items-center gap-2 mb-2 font-bold">
+                                    <i data-lucide="clock" class="w-4 h-4"></i>
+                                    <span id="selected-date-label">Available Times</span>
+                                </div>
+                                <div class="text-sm text-brand-dim/80">
+                                    <span id="selected-treatment-label"></span>
+                                </div>
+                            </div>
+                            <div id="therapist-info" class="hidden therapist-badge">
+                                <div class="flex items-center gap-3">
+                                    <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg" alt="Cassandra - RMT" class="therapist-avatar">
+                                    <div>
+                                        <div class="text-sm font-bold text-brand-light" id="therapist-name">Cassandra</div>
+                                        <div class="text-[10px] text-brand-dim/70 uppercase tracking-wider">Registered Massage Therapist</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="time-slots" class=""></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STICKY BOTTOM BAR -->
+    <div id="sticky-bar" class="sticky-bar">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Summary -->
+                <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+                    <div class="flex items-center gap-3">
+                        <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg" alt="Cassandra" class="therapist-avatar hidden md:block">
+                        <div>
+                            <div class="text-sm font-bold text-brand-light flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-brand-gold"></i>
+                                <span id="summary-treatment">Treatment Selected</span>
+                            </div>
+                            <div class="text-sm md:text-base text-brand-dim/80 mt-1" id="summary-datetime">Date & Time</div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-px h-12 bg-brand-gold/20"></div>
+                    <div class="text-sm">
+                        <div class="text-brand-gold font-bold text-xl" id="summary-price">$110+HST</div>
+                        <div class="text-xs text-brand-dim/80">(~<span id="summary-total">$124</span> total)</div>
+                    </div>
+                </div>
+                
+                <!-- CTA Button -->
+                <button id="continue-to-booking-btn" class="btn-filled py-4 px-8 font-bold tracking-wider text-base whitespace-nowrap">
+                    <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
+                    <span>Continue to Booking</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
+        <div class="container mx-auto px-6">
+            <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
+            <div class="flex justify-center gap-6 text-brand-gold mb-8">
+                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                <a href="/cdn-cgi/l/email-protection#ea83848c85aa988f868b928b848e988f848f9dc4898b" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+            </div>
+            <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline transition-colors">Return to Main Website</a>
+        </div>
+    </footer>
+
+    <!-- ADDRESS MODAL -->
+    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="text-center mb-8">
+                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+                    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 object-contain" />
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-2">Where will we be visiting?</h3>
+                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+                    We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+                </p>
+            </div>
+
+            <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+            <input id="address-input-initial" type="text" autocomplete="off" placeholder="Start typing your address..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all mb-2">
+            <button id="toggle-manual-address" class="text-xs underline text-brand-gold/80 hover:text-brand-light transition-colors mb-6">
+                Can't find your address? Enter it manually.
+            </button>
+
+            <div id="manual-address-wrapper" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Street Address *</label>
+                    <input id="manual-street" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">City *</label>
+                        <input id="manual-city" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+                        <input id="manual-postal" type="text" class="w-full bg-white/5 border border-brand-gold/30 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treatment + Duration -->
+            <div class="mt-8 space-y-4">
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
+                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all">
+                        <option value="" disabled selected>Select a treatment...</option>
+
+                        <optgroup label="Core Therapeutic">
+                            <option value="relaxation">Relaxation Massage</option>
+                            <option value="deep_tissue">Deep Tissue Massage</option>
+                            <option value="sports">Sports Massage</option>
+                            <option value="senior">Senior Massage</option>
+                        </optgroup>
+
+                        <optgroup label="Premium Therapeutic">
+                            <option value="hot_stone">Hot Stone Massage</option>
+                            <option value="cupping">Cupping Therapy</option>
+                        </optgroup>
+
+                        <optgroup label="Specialty">
+                            <option value="prenatal">Prenatal Massage</option>
+                            <option value="pediatric">Pediatric Massage</option>
+                            <option value="infant">Infant Massage</option>
+                        </optgroup>
+                    
+                        <optgroup label="Multi-Client Bookings">
+                            <option value="duo">Duo Massage</option>
+                            <option value="group">Group Massage</option>
+                            <option value="event">Event Massage</option>
+                        </optgroup>
+</select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
+                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
+                        <option value="" disabled selected>Select a duration...</option>
+                    </select>
+
+                <div id="participants-wrapper" class="hidden">
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Participants *</label>
+                    <select id="participants-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
+                        <option value="" disabled selected>Select # of participants...</option>
+                    </select>
+                    <p class="text-xs text-brand-dim/60 mt-2 leading-snug">For Group bookings we support up to 8 participants; for Events up to 30.</p>
+                </div>
+
+                </div>
+            </div>
+
+            <!-- Payment Options -->
+            <div class="mt-6 payment-badge rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <div class="bg-brand-gold/10 p-2 rounded-full mt-0.5">
+                        <i data-lucide="credit-card" class="w-4 h-4 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs uppercase tracking-[0.15em] text-brand-gold font-bold mb-2">Payment Options</div>
+                        <div class="text-xs text-brand-dim/80 leading-relaxed">
+                            We accept <strong class="text-brand-light">Cash, Credit Card, and E-Transfer</strong>. We also offer <strong class="text-brand-light">Direct Billing</strong> for most insurance companies. <strong class="text-brand-light">Payment is collected after treatment completion.</strong> No credit card required to book.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="address-continue-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+                <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
+                <span>Show Available Times</span>
+            </button>
+
+            <a href="/client-portal" class="w-full border-2 border-brand-gold text-brand-gold hover:bg-brand-gold/10 rounded-lg py-4 mt-3 font-bold tracking-wider text-base flex items-center justify-center gap-2 transition-all no-underline">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+                <span>Returning Clients</span>
+            </a>
+
+            <p id="address-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
+                Please provide an address, treatment, and duration before continuing.
+            </p>
+        </div>
+    </div>
+
+    <!-- CLIENT DETAILS MODAL (STEP 3) -->
+    <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="client-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+                    <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
+                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+                    Please provide your details to complete the booking.
+                </p>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+                <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Treatment:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Date & Time:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-brand-dim/80">Location:</span>
+                        <span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-brand-gold/20">
+                        <span class="text-brand-gold font-bold">Total:</span>
+                        <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$110+HST (~$124)</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="client-details-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
+                        <input id="client-first-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
+                        <input id="client-last-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
+                    <input id="client-phone" type="tel" required placeholder="(555) 123-4567" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                </div>
+
+                <script>
+                // Phone number force-formatting (BACKSPACE/DELETE SAFE)
+                (function setupPhoneFormatting() {
+                    const input = document.getElementById('client-phone');
+                    if (!input) return;
+
+                    const MAX_DIGITS = 10;
+
+                    function digitsOnly(v) {
+                        return (v || '').replace(/\D/g, '').slice(0, MAX_DIGITS);
+                    }
+
+                    function formatPhone(d) {
+                        if (!d) return '';
+                        if (d.length <= 3) return `(${d}`;
+                        if (d.length <= 6) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+                        return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+                    }
+
+                    function caretPosForDigitIndex(formatted, digitIndex) {
+                        if (digitIndex <= 0) return 0;
+                        let count = 0;
+                        for (let i = 0; i < formatted.length; i++) {
+                            if (/\d/.test(formatted[i])) {
+                                count++;
+                                if (count === digitIndex) return i + 1;
+                            }
+                        }
+                        return formatted.length;
+                    }
+
+                    function setCaretByDigitIndex(digitIndex) {
+                        const pos = caretPosForDigitIndex(input.value, digitIndex);
+                        input.setSelectionRange(pos, pos);
+                    }
+
+                    function reformatPreservingCaret(caretDigitIndex) {
+                        const d = digitsOnly(input.value);
+                        input.value = formatPhone(d);
+                        setCaretByDigitIndex(Math.min(caretDigitIndex, d.length));
+                    }
+
+                    input.addEventListener('keydown', (e) => {
+                        const key = e.key;
+                        const selStart = input.selectionStart ?? 0;
+                        const selEnd = input.selectionEnd ?? 0;
+
+                        // Only handle collapsed selection; normal selection delete works fine
+                        if (selStart !== selEnd) return;
+
+                        const val = input.value || '';
+
+                        // Helper: digits count to the left of a given cursor position in current value
+                        const digitsBeforePos = (pos) => (val.slice(0, pos).replace(/\D/g, '').length);
+
+                        if (key === 'Backspace') {
+                            if (selStart > 0 && /\D/.test(val[selStart - 1])) {
+                                // Backspacing on formatting char: remove previous digit instead
+                                e.preventDefault();
+
+                                // Move left over any formatting chars
+                                let pos = selStart;
+                                while (pos > 0 && /\D/.test(val[pos - 1])) pos--;
+
+                                const before = digitsBeforePos(pos);
+                                if (before <= 0) {
+                                    input.value = '';
+                                    input.setSelectionRange(0, 0);
+                                    return;
+                                }
+
+                                const d = digitsOnly(val);
+                                const removeIndex = before - 1;
+                                const newDigits = d.slice(0, removeIndex) + d.slice(removeIndex + 1);
+
+                                input.value = formatPhone(newDigits);
+                                setCaretByDigitIndex(removeIndex);
+                            }
+                        } else if (key === 'Delete') {
+                            if (selStart < val.length && /\D/.test(val[selStart])) {
+                                // Deleting on formatting char: remove next digit instead
+                                e.preventDefault();
+
+                                const before = digitsBeforePos(selStart);
+                                const d = digitsOnly(val);
+                                if (before >= d.length) return;
+
+                                const removeIndex = before; // next digit
+                                const newDigits = d.slice(0, removeIndex) + d.slice(removeIndex + 1);
+
+                                input.value = formatPhone(newDigits);
+                                setCaretByDigitIndex(before);
+                            }
+                        }
+                    });
+
+                    input.addEventListener('input', () => {
+                        const raw = input.value || '';
+                        const caret = input.selectionStart ?? raw.length;
+                        const digitIndex = raw.slice(0, caret).replace(/\D/g, '').length;
+                        reformatPreservingCaret(digitIndex);
+                    });
+
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const paste = (e.clipboardData || window.clipboardData).getData('text');
+                        const d = digitsOnly(paste);
+                        input.value = formatPhone(d);
+                        setCaretByDigitIndex(d.length);
+                    });
+                })();
+                </script>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+                    <input id="client-address-display" type="text" readonly class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75">
+                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
+                    <input id="client-email" type="email" required placeholder="your.email@example.com" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
+                    <textarea id="client-notes" rows="3" placeholder="Any special requests, health concerns, or preferences..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none"></textarea>
+                </div>
+
+                <!-- Travel Charge Warning (populated dynamically if needed) -->
+                <div id="travel-charge-warning" class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse"></i>
+                        <div>
+                            <div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
+                            <div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
+                            <div id="travel-charge-text" class="text-xs text-brand-light leading-relaxed"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stripe Payment Element (shows when travel charges apply) -->
+                <div id="stripe-payment-section" class="hidden mt-6 bg-brand-gold/5 border-2 border-brand-gold/30 rounded-lg p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-brand-gold"></i>
+                        <h4 class="text-sm font-bold text-brand-gold uppercase tracking-wider">Card on File (No-Show Protection)</h4>
+                    </div>
+                    <div id="stripe-card-element" class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2">
+                        <!-- Stripe Elements will be inserted here -->
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+                        <input id="stripe-postal-code" type="text" placeholder="A1A 1A1" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
+                        <p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
+                    </div>
+                    <div id="stripe-card-errors" class="text-xs text-red-400 mt-2 hidden"></div>
+                    <p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
+                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                        Your card is <strong class="text-brand-light">saved for no-show protection only</strong>. Payment for treatment and travel charge is collected after your appointment. You may pay with cash, credit, or e-transfer.
+                    </p>
+                </div>
+
+                <button type="submit" id="submit-booking-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>Confirm Booking</span>
+                </button>
+            </form>
+
+            <p id="client-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
+                Please fill in all required fields.
+            </p>
+        </div>
+    </div>
+
+    <!-- SCRIPT: AVAILABILITY -->
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // ============================================================================
+        // WORKFLOW INTEGRATION DEBUGGING GUIDE
+        // ============================================================================
+        // The workflow handles travel time calculations between appointments.
+        // Open browser console to see detailed logs of what's being sent/received.
+        // ============================================================================
+        
+        // ---------------- CONFIG ----------------
+        const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
+        const STATIC_SETUP_MINUTES = 25;
+
+        // Pricing data (base price before HST)
+        const PRICING = {
+            relaxation:  { 60: 110, 75: 135, 90: 160, 120: 210 },
+            deep_tissue: { 60: 110, 75: 135, 90: 160, 120: 210 },
+            sports:      { 60: 110, 75: 135, 90: 160, 120: 210 },
+            senior:      { 60: 110, 75: 135, 90: 160, 120: 210 },
+            hot_stone:   { 60: 130, 75: 155, 90: 180, 120: 230 },
+            cupping:     { 60: 130, 75: 155, 90: 180, 120: 230 },
+            prenatal:    { 30: 70, 45: 95, 60: 110 },
+            pediatric:   { 30: 70, 45: 95 },
+            infant:      { 30: 70, 45: 95 },
+
+            // Multi-client bookings (per person base price for 60 minutes)
+            duo:         { per_person_60: 100 },
+            group:       { per_person_60: 90 },
+            event:       { per_person_60: 80 },
+        };
+
+        // Therapist data
+        const THERAPISTS = {
+            'cassandra': { name: 'Cassandra', specialty: 'Deep Tissue & Sports' },
+            'default': { name: 'Available Therapist', specialty: 'All Services' }
+        };
+
+        // ---------------- RULES ----------------
+        const TREATMENT_RULES = {
+            relaxation:  { label: "Relaxation Massage", durations: [60, 75, 90, 120] },
+            deep_tissue: { label: "Deep Tissue Massage", durations: [60, 75, 90, 120] },
+            sports:      { label: "Sports Massage", durations: [60, 75, 90, 120] },
+            senior:      { label: "Senior Massage", durations: [60, 75, 90, 120] },
+
+            hot_stone:   { label: "Hot Stone Massage", durations: [60, 75, 90, 120] },
+            cupping:     { label: "Cupping Therapy", durations: [60, 75, 90, 120] },
+
+            prenatal:    { label: "Prenatal Massage", durations: [30, 45, 60] },
+            pediatric:   { label: "Pediatric Massage", durations: [30, 45] },
+            infant:      { label: "Infant Massage", durations: [30, 45] },
+
+            // Multi-client bookings
+            duo:         { label: "Duo Massage", durations: [45, 60] },
+            group:       { label: "Group Massage", durations: [45, 60] },
+            event:       { label: "Event Massage", durations: [45, 60] },
+        };
+
+        // ---------------- STATE ----------------
+        let availabilityByDate = {};
+        let calendarCurrent = new Date();
+        let selectedDateStr = null;
+        let selectedSlot = null;
+        window.__selectedAddress = null;
+
+        let selectedServiceKey = null;
+        let selectedStandardDuration = null;
+
+        
+        let selectedParticipantCount = null;
+// ---------------- HELPERS ----------------
+        function toDateStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDateLabel(date) {
+            return date.toLocaleDateString('en-CA', {
+                weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        function parseISODate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return null;
+            return d;
+        }
+
+        function formatTimeLabel(slot) {
+            if (slot.label) return slot.label;
+            const dateObj = parseISODate(slot.start);
+            if (!dateObj) return 'Time';
+            return dateObj.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        function getPrice() {
+            if (!selectedServiceKey || !selectedStandardDuration) {
+                return { base: 0, total: 0, perPerson: 0, participants: 0 };
+            }
+
+            const mins = Number(selectedStandardDuration) || 0;
+            const isMulti = (selectedServiceKey === 'duo' || selectedServiceKey === 'group' || selectedServiceKey === 'event');
+
+            if (isMulti) {
+                const participants =
+                    (selectedServiceKey === 'duo') ? 2 :
+                    (Number(selectedParticipantCount) || 0);
+
+                const per60 = PRICING[selectedServiceKey]?.per_person_60 || 0;
+                const rawPerPerson = per60 * (mins / 60);
+                const perPerson = Math.round(rawPerPerson / 5) * 5; // clean increments
+
+                const base = perPerson * participants;
+                const total = Math.round(base * 1.13);
+                return { base, total, perPerson, participants };
+            }
+
+            const base = PRICING[selectedServiceKey]?.[mins] || 0;
+            const total = Math.round(base * 1.13); // HST = 13%
+            return { base, total, perPerson: 0, participants: 1 };
+        }
+
+        function updateProgress(step) {
+            const steps = ['step-1', 'step-2', 'step-3'];
+            steps.forEach((s, idx) => {
+                const el = document.getElementById(s);
+                if (idx < step - 1) {
+                    el.classList.add('completed');
+                    el.classList.remove('active');
+                } else if (idx === step - 1) {
+                    el.classList.add('active');
+                    el.classList.remove('completed');
+                } else {
+                    el.classList.remove('active', 'completed');
+                }
+            });
+        }
+
+        function setAvailabilityFromResponse(data) {
+            availabilityByDate = {};
+
+            console.log('🔍 Raw API Response:', data);
+            console.log('🔍 Type:', typeof data);
+
+            if (!data) return;
+
+            // Handle object with dates property (expected from n8n)
+            if (data.dates && Array.isArray(data.dates)) {
+                console.log('✅ Processing dates array from response');
+                data.dates.forEach(day => {
+                    if (!day || !day.date || !Array.isArray(day.slots)) return;
+                    availabilityByDate[day.date] = day.slots;
+                });
+                console.log('📅 Availability by date:', availabilityByDate);
+                return;
+            }
+
+            // Fallback: Handle direct array
+            if (Array.isArray(data)) {
+                console.log('✅ Processing as direct array');
+                data.forEach(day => {
+                    if (!day || !day.date || !Array.isArray(day.slots)) return;
+                    availabilityByDate[day.date] = day.slots;
+                });
+                console.log('📅 Availability by date:', availabilityByDate);
+                return;
+            }
+
+            console.error('❌ Could not parse availability data structure');
+        }
+
+        function hasSlots(dateStr) {
+            return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
+        }
+
+        // True when at least one slot is actually bookable (available !== false)
+        function hasAnyAvailableSlot(dateStr) {
+            const slots = availabilityByDate[dateStr];
+            if (!Array.isArray(slots) || slots.length === 0) return false;
+            return slots.some(s => s && s.available !== false);
+        }
+
+        function updateAvailabilityStatus(message, isError = false) {
+            const el = document.getElementById('availability-status');
+            const iconClass = isError ? 'alert-circle' : 'info';
+            el.innerHTML = `<div class="flex items-center gap-2"><i data-lucide="${iconClass}" class="w-4 h-4 ${isError ? 'text-red-400' : 'text-brand-gold'}"></i><span>${message}</span></div>`;
+            el.className = "text-xs mb-6 p-4 rounded border " + (isError ? "text-red-400 bg-red-500/10 border-red-500/30" : "text-brand-dim/80 bg-brand-gold/5 border-brand-gold/10");
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function computeMonthRange(monthDate) {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const y = monthDate.getFullYear();
+            const m = monthDate.getMonth();
+            const first = new Date(y, m, 1); first.setHours(0,0,0,0);
+            const last = new Date(y, m + 1, 0); last.setHours(0,0,0,0);
+
+            const from = (y === now.getFullYear() && m === now.getMonth()) ? now : first;
+            return { from: toDateStr(from), to: toDateStr(last) };
+        }
+
+        function updateStickyBar() {
+            const bar = document.getElementById('sticky-bar');
+            const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+            
+            if (!selectedSlot || !selectedDateStr || !treat) {
+                bar.classList.remove('show');
+                return;
+            }
+
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            const timeLabel = formatTimeLabel(selectedSlot);
+            const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            const price = getPrice();
+
+            const isMulti = (selectedServiceKey === 'duo' || selectedServiceKey === 'group' || selectedServiceKey === 'event');
+
+            const participants = (selectedServiceKey === 'duo') ? 2 : (isMulti ? Number(selectedParticipantCount || 0) : 1);
+
+            document.getElementById('summary-treatment').textContent = isMulti
+                ? `${treat.label} (${selectedStandardDuration} min/person x${participants})`
+                : `${treat.label} (${selectedStandardDuration} min)`;
+            document.getElementById('summary-datetime').innerHTML = `<i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${dateLabel} at ${timeLabel} EST`;
+            document.getElementById('summary-price').textContent = `$${price.base}+HST`;
+            document.getElementById('summary-total').textContent = `$${price.total}`;
+
+            bar.classList.add('show');
+            
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ---------------- CALENDAR RENDER ----------------
+        function renderCalendar() {
+            const monthLabelEl = document.getElementById('calendar-month-label');
+            const daysContainer = document.getElementById('calendar-days');
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            const year = calendarCurrent.getFullYear();
+            const month = calendarCurrent.getMonth();
+            const firstOfMonth = new Date(year, month, 1);
+            const lastOfMonth = new Date(year, month + 1, 0);
+
+            monthLabelEl.textContent = calendarCurrent.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+
+            const startDow = firstOfMonth.getDay();
+            const daysInMonth = lastOfMonth.getDate();
+            daysContainer.innerHTML = '';
+
+            const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+            for (let cellIndex = 0; cellIndex < totalCells; cellIndex++) {
+                const dayEl = document.createElement('button');
+                dayEl.type = 'button';
+                dayEl.className = "relative text-center py-4 text-lg md:text-xl font-semibold rounded-lg border transition-all";
+
+                const dayNumber = cellIndex - startDow + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                    dayEl.classList.add('opacity-0', 'pointer-events-none', 'border-transparent');
+                    daysContainer.appendChild(dayEl);
+                    continue;
+                }
+
+                const cellDate = new Date(year, month, dayNumber);
+                cellDate.setHours(0,0,0,0);
+                const dateStr = toDateStr(cellDate);
+
+                dayEl.textContent = dayNumber;
+
+                if (cellDate < today) {
+                    dayEl.classList.add('calendar-day-disabled', 'border-brand-gold/10', 'bg-black/30');
+                    daysContainer.appendChild(dayEl);
+                    continue;
+                }
+
+                dayEl.classList.add('border-brand-gold/20', 'bg-black/30');
+                
+                // Today indicator
+                if (cellDate.getTime() === today.getTime()) {
+                    dayEl.classList.add('calendar-day-today');
+                }
+                
+                if (hasAnyAvailableSlot(dateStr)) {
+                    dayEl.classList.add('calendar-day-available');
+                    dayEl.classList.remove('border-brand-gold/20');
+                }
+                
+                if (selectedDateStr === dateStr) {
+                    dayEl.classList.add('calendar-day-selected');
+                }
+
+                dayEl.addEventListener('click', () => {
+                    if (!hasSlots(dateStr)) return;
+                    selectedDateStr = dateStr;
+                    selectedSlot = null;
+                    renderCalendar();
+                    renderTimeSlotsForDate(dateStr);
+                    updateProgress(2);
+                    updateStickyBar();
+                });
+
+                daysContainer.appendChild(dayEl);
+            }
+        }
+
+        
+        function renderTimeSlotsForDate(dateStr) {
+            const wrapper = document.getElementById('time-slots-wrapper');
+            const container = document.getElementById('time-slots');
+            const dateLabelEl = document.getElementById('selected-date-label');
+            const treatLabelEl = document.getElementById('selected-treatment-label');
+            const therapistInfo = document.getElementById('therapist-info');
+
+            // If this day has no returned slots at all (e.g., not a working day), hide the section
+            if (!hasSlots(dateStr)) {
+                wrapper.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            const [yy, mm, dd] = dateStr.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            dateLabelEl.textContent = formatDateLabel(dateObj);
+
+            const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+            const price = getPrice();
+            treatLabelEl.innerHTML = (treat && selectedStandardDuration)
+                ? `<span class="text-base">${treat.label} • ${selectedStandardDuration} min</span> • <span class="text-brand-gold font-bold text-lg">$${price.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`
+                : '';
+
+            const daySlots = availabilityByDate[dateStr] || [];
+            container.innerHTML = '';
+
+            // Show therapist badge if the day has any slots (even if all are booked)
+            if (daySlots.length > 0) {
+                therapistInfo.classList.remove('hidden');
+            }
+
+            // Group slots by time of day (show ALL slots, but disable/grey booked ones)
+            const timeGroups = {
+                morning:   { label: 'Morning',   slots: [] }, // 10-11
+                afternoon: { label: 'Afternoon', slots: [] }, // 12-15
+                evening:   { label: 'Evening',   slots: [] }, // 16-20
+            };
+
+            daySlots.forEach(slot => {
+                const startTime = new Date(slot.start);
+                const hour = startTime.getHours();
+
+                if (hour >= 10 && hour < 12) timeGroups.morning.slots.push(slot);
+                else if (hour >= 12 && hour < 16) timeGroups.afternoon.slots.push(slot);
+                else if (hour >= 16 && hour <= 20) timeGroups.evening.slots.push(slot);
+            });
+
+            // Helper: determine if a group has at least one AVAILABLE slot
+            const groupHasAvailable = (group) => (group.slots || []).some(s => s && s.available !== false);
+
+            // Create time-of-day row
+            const groupRow = document.createElement('div');
+            groupRow.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                const hasAny = group.slots.length > 0;
+                const hasAvail = groupHasAvailable(group);
+
+                const groupBtn = document.createElement('button');
+                groupBtn.type = 'button';
+
+                // If the group has slots, always allow expanding (even if all booked)
+                groupBtn.disabled = !hasAny;
+
+                if (!hasAny) {
+                    groupBtn.className = 'px-4 py-3 rounded-lg border-2 border-brand-gold/10 bg-black/30 text-brand-dim/30 font-bold text-base opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
+                    groupBtn.innerHTML = `
+                        <span>${group.label}</span>
+                        <span class="text-xs font-normal opacity-70">(None)</span>
+                    `;
+                } else if (!hasAvail) {
+                    groupBtn.className = 'px-4 py-4 rounded-lg border-2 border-brand-gold/25 bg-black/40 text-brand-dim/70 font-bold text-lg transition-all';
+                    groupBtn.innerHTML = `
+                        <span>${group.label}</span>
+                        <span class="text-xs font-normal opacity-80">(Fully Booked)</span>
+                    `;
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                } else {
+                    groupBtn.className = 'px-4 py-4 rounded-lg border-2 border-brand-gold/40 bg-black/50 hover:bg-brand-gold/10 text-brand-light font-bold text-lg transition-all';
+                    groupBtn.textContent = group.label;
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                }
+
+                groupBtn.dataset.group = groupKey;
+                groupRow.appendChild(groupBtn);
+            });
+
+            container.appendChild(groupRow);
+
+            // Create expand indicator row - HIDDEN ON MOBILE
+            const expandRow = document.createElement('div');
+            expandRow.className = 'hidden sm:grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6';
+
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                const hasAny = group.slots.length > 0;
+
+                const expandBtn = document.createElement('button');
+                expandBtn.type = 'button';
+                expandBtn.id = `expand-${groupKey}`;
+                expandBtn.className = 'flex flex-col items-center gap-1 py-2 transition-all';
+                expandBtn.disabled = !hasAny;
+
+                if (hasAny) {
+                    expandBtn.innerHTML = `
+                        <div class="expand-arrows flex flex-col items-center -space-y-1">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
+                        </div>
+                        <span class="text-xs text-brand-gold/80 uppercase tracking-wider font-semibold">Expand Times</span>
+                    `;
+                    expandBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                } else {
+                    expandBtn.innerHTML = `<div class="h-8"></div>`;
+                }
+
+                expandRow.appendChild(expandBtn);
+            });
+
+            container.appendChild(expandRow);
+
+            // Create expandable sections for each time group
+            Object.keys(timeGroups).forEach(groupKey => {
+                const group = timeGroups[groupKey];
+                if (group.slots.length === 0) return;
+
+                const expandSection = document.createElement('div');
+                expandSection.id = `slots-${groupKey}`;
+                expandSection.className = 'hidden mb-6 expand-section';
+                expandSection.style.maxHeight = '0';
+                expandSection.style.overflow = 'hidden';
+                expandSection.style.transition = 'max-height 0.4s ease-out';
+
+                // Sort slots by time
+                group.slots.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                // Create grid for time slots - RESPONSIVE
+                const slotsGrid = document.createElement('div');
+                slotsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2';
+
+                group.slots.forEach(slot => {
+                    const isAvail = slot && slot.available !== false;
+
+                    const slotBtn = document.createElement('button');
+                    slotBtn.type = 'button';
+                    slotBtn.disabled = !isAvail;
+
+                    // IMPORTANT: keep label from API (it includes " (Booked)" when unavailable)
+                    const timeLabel = formatTimeLabel(slot);
+
+                    if (isAvail) {
+                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center gap-2 transition-all min-w-[120px]';
+                        slotBtn.innerHTML = `
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
+                            <span class="font-bold text-base">${timeLabel}</span>
+                            <span class="text-xs text-brand-dim/60">EST</span>
+                        `;
+                        slotBtn.addEventListener('click', () => {
+                            selectedSlot = slot;
+                            renderTimeSlotsForDate(dateStr);
+                            updateStickyBar();
+                        });
+                    } else {
+                        // Greyed out + disabled
+                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-white/10 text-white/35 bg-white/5 flex items-center justify-center gap-2 min-w-[120px] cursor-not-allowed opacity-75';
+                        slotBtn.innerHTML = `
+                            <i data-lucide="lock" class="w-3.5 h-3.5 text-white/30 flex-shrink-0"></i>
+                            <span class="font-bold text-base">${timeLabel}</span>
+                            <span class="text-xs text-white/25">EST</span>
+                        `;
+                    }
+
+                    if (selectedSlot && selectedSlot.start === slot.start && isAvail) {
+                        slotBtn.classList.add('time-slot-selected');
+                    }
+
+                    slotsGrid.appendChild(slotBtn);
+                });
+
+                expandSection.appendChild(slotsGrid);
+                container.appendChild(expandSection);
+            });
+
+            wrapper.classList.remove('hidden');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Toggle function
+            function toggleGroupExpansion(groupKey) {
+                const section = document.getElementById(`slots-${groupKey}`);
+                const expandBtn = document.getElementById(`expand-${groupKey}`);
+                const groupBtn = document.querySelector(`button[data-group="${groupKey}"]`);
+
+                if (!section) return;
+
+                const isHidden = section.classList.contains('hidden');
+
+                if (isHidden) {
+                    // Expand
+                    section.classList.remove('hidden');
+                    section.style.maxHeight = section.scrollHeight + 'px';
+                    groupBtn.classList.add('bg-brand-gold/20', 'border-brand-gold');
+
+                    if (expandBtn && expandBtn.querySelector('.expand-arrows')) {
+                        expandBtn.querySelector('.expand-arrows').innerHTML = `
+                            <div class="flex flex-col items-center -space-y-1">
+                                <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
+                                <i data-lucide="chevron-up" class="w-4 h-4 text-brand-gold"></i>
+                            </div>
+                        `;
+                        const span = expandBtn.querySelector('span');
+                        if (span) span.textContent = 'Collapse';
+                    }
+                } else {
+                    // Collapse
+                    section.style.maxHeight = '0';
+                    setTimeout(() => section.classList.add('hidden'), 400);
+                    groupBtn.classList.remove('bg-brand-gold/20', 'border-brand-gold');
+
+                    if (expandBtn && expandBtn.querySelector('.expand-arrows')) {
+                        expandBtn.querySelector('.expand-arrows').innerHTML = `
+                            <div class="flex flex-col items-center -space-y-1">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-1"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold animate-cascade-2"></i>
+                            </div>
+                        `;
+                        const span = expandBtn.querySelector('span');
+                        if (span) span.textContent = 'Expand Times';
+                    }
+                }
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+
+        // ---------------- ADDRESS MODAL LOGIC ----------------
+        function openAddressModal() {
+            const modal = document.getElementById('address-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+        
+        function closeAddressModal() {
+            const modal = document.getElementById('address-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function getAddressFromModal() {
+            const manualWrapper = document.getElementById('manual-address-wrapper');
+            const isManual = !manualWrapper.classList.contains('hidden');
+
+            if (isManual) {
+                const street = document.getElementById('manual-street').value.trim();
+                const city = document.getElementById('manual-city').value.trim();
+                const postalRaw = document.getElementById('manual-postal').value.trim();
+                if (!street || !city || !postalRaw) return null;
+                if (!isCanadianPostal(postalRaw)) {
+                    alert('Please enter a valid Canadian postal code (e.g., L2A 1B2). We do not serve the USA.');
+                    return null;
+                }
+                const postal = normalizeCanadianPostal(postalRaw);
+                const full = `${street}, ${city} ${postal}`;
+                const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
+                window.__selectedAddress = addrObj;
+                return addrObj;
+            }
+
+            if (window.__selectedAddress && window.__selectedAddress.address) return window.__selectedAddress;
+
+            const raw = document.getElementById('address-input-initial').value.trim();
+            if (!raw) return null;
+            // Block obvious US addresses when lookup isn't available
+            const rawLower = raw.toLowerCase();
+            const looksLikeUS = /\busa\b|\bunited states\b|\bu\.s\.a\b/.test(rawLower) || /\b\d{5}(?:-\d{4})?\b/.test(raw);
+            const containsCanadianPostal = isCanadianPostal(raw);
+            if (looksLikeUS && !containsCanadianPostal) {
+                alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                return null;
+            }
+            // If lookup failed, require a Canadian postal code to ensure we do not accept US addresses
+            if (!containsCanadianPostal) {
+                alert('Please enter a Canadian address that includes a valid postal code (e.g., L2A 1B2). We do not serve the USA.');
+                return null;
+            }
+
+            const match = raw.toUpperCase().match(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/);
+            const postal = normalizeCanadianPostal(match ? match[0] : raw);
+            const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
+            window.__selectedAddress = addrObj;
+            return addrObj;
+        }
+
+        function rebuildParticipantOptions() {
+            const wrapper = document.getElementById('participants-wrapper');
+            const select = document.getElementById('participants-select');
+            if (!wrapper || !select) return;
+
+            const isGroup = selectedServiceKey === 'group';
+            const isEvent = selectedServiceKey === 'event';
+
+            // Default: hide/disable for standard services and Duo (fixed at 2)
+            if (!isGroup && !isEvent) {
+                wrapper.classList.add('hidden');
+                select.disabled = true;
+                select.innerHTML = '<option value="" disabled selected>Select # of participants...</option>';
+                selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : null;
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            select.disabled = false;
+
+            select.innerHTML = '<option value="" disabled>Select # of participants...</option>';
+
+            const min = isGroup ? 3 : 9;
+            const max = isGroup ? 8 : 30;
+
+            for (let i = min; i <= max; i++) {
+                const opt = document.createElement('option');
+                opt.value = String(i);
+                opt.textContent = String(i);
+                select.appendChild(opt);
+            }
+
+            const current = Number(selectedParticipantCount);
+            const next = (current >= min && current <= max) ? current : min;
+            selectedParticipantCount = next;
+            select.value = String(next);
+        }
+
+        function rebuildDurationOptions() {
+            const durationSelect = document.getElementById('duration-select');
+            durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
+
+            // Always rebuild participants when service changes (so the dropdown appears immediately)
+            rebuildParticipantOptions();
+
+            if (!selectedServiceKey || !TREATMENT_RULES[selectedServiceKey]) {
+                durationSelect.disabled = true;
+                selectedStandardDuration = null;
+                return;
+            }
+
+            const isMulti = (selectedServiceKey === 'duo' || selectedServiceKey === 'group' || selectedServiceKey === 'event');
+
+            const durations = TREATMENT_RULES[selectedServiceKey].durations;
+            durations.forEach(min => {
+                const opt = document.createElement('option');
+                opt.value = String(min);
+
+                if (isMulti) {
+                    const participants =
+                        (selectedServiceKey === 'duo') ? 2 :
+                        (Number(selectedParticipantCount) || ((selectedServiceKey === 'group') ? 3 : 9));
+
+                    const per60 = PRICING[selectedServiceKey]?.per_person_60 || 0;
+                    const rawPerPerson = per60 * (min / 60);
+                    const perPerson = Math.round(rawPerPerson / 5) * 5;
+
+                    const base = perPerson * participants;
+                    const total = Math.round(base * 1.13);
+
+                    opt.textContent = `${min} min/person  -  $${perPerson}/person (x${participants})  =  $${base} + HST  (~$${total})`;
+                } else {
+                    const price = PRICING[selectedServiceKey]?.[min] || 0;
+                    const total = Math.round(price * 1.13);
+                    opt.textContent = `${min} min  -  $${price} + HST  (~$${total})`;
+                }
+
+                durationSelect.appendChild(opt);
+            });
+
+            durationSelect.disabled = false;
+            selectedStandardDuration = null;
+        }
+
+        async function loadAvailabilityForCurrentMonth() {
+            const addrObj = window.__selectedAddress;
+            if (!addrObj || !addrObj.address) {
+                updateAvailabilityStatus("Enter your address to load live availability.", false);
+                return;
+            }
+            if (!selectedServiceKey || !selectedStandardDuration) {
+                updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+                return;
+            }
+
+            try {
+                // Show skeleton
+                document.getElementById('calendar-skeleton').classList.remove('hidden');
+                document.getElementById('calendar-content').classList.add('hidden');
+                
+                updateAvailabilityStatus("Checking live availability for this address...", false);
+                selectedDateStr = null;
+                selectedSlot = null;
+                document.getElementById('time-slots-wrapper').classList.add('hidden');
+                updateStickyBar();
+
+                const { from, to } = computeMonthRange(calendarCurrent);
+                
+                // Calculate block minutes (what Cliniko needs to reserve)
+                const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipantCount || 0) : 1);
+                const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
+
+                const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+                // Send both standard and block durations
+                const payload = {
+                    address: addrObj.address,
+                    city: addrObj.city,
+                    postal_code: addrObj.postal_code,
+                    from,
+                    to,
+                    durationMinutes: blockMinutes,
+                    standardDurationMinutes: Number(selectedStandardDuration),
+                    participants: participants,
+                    treatment_key: selectedServiceKey,
+                    treatment_label: treat ? treat.label : ""
+                };
+
+                console.log('📤 Sending payload:', payload);
+                console.log('🔍 Payload details:');
+                console.log('  - Address:', payload.address);
+                console.log('  - Standard duration (what client sees):', payload.standardDurationMinutes, 'minutes');
+                console.log('  - Block duration (standard + 25 setup):', payload.durationMinutes, 'minutes');
+                console.log('  - Date range:', payload.from, 'to', payload.to);
+                console.log('  - Treatment:', payload.treatment_label);
+
+                const res = await fetch(AVAILABILITY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Hide skeleton
+                document.getElementById('calendar-skeleton').classList.add('hidden');
+                document.getElementById('calendar-content').classList.remove('hidden');
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('❌ Availability API Error');
+                    console.error('  Status:', res.status);
+                    console.error('  Response:', errorText);
+                    setAvailabilityFromResponse(null);
+                    renderCalendar();
+                    updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
+                    return;
+                }
+
+                const data = await res.json();
+                console.log('📥 Response received:', data);
+                console.log('📊 Response structure check:');
+                console.log('  - Has dates property?', 'dates' in data);
+                console.log('  - Is array?', Array.isArray(data));
+                console.log('  - dates.length:', data.dates?.length || 0);
+                if (data.dates && data.dates.length > 0) {
+                    console.log('  - First date sample:', data.dates[0]);
+                    console.log('  - First date has slots?', data.dates[0]?.slots?.length || 0);
+                }
+                
+                // Store max drive time for travel charge calculation
+                window.__maxDriveTimeMinutes = data.maxDriveTimeMinutes || 0;
+                console.log('🚗 Max drive time:', window.__maxDriveTimeMinutes, 'minutes');
+                
+                setAvailabilityFromResponse(data);
+
+                const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
+                
+                // Debug: Show what dates have availability
+                console.log('📅 Availability Summary:');
+                Object.keys(availabilityByDate).forEach(date => {
+                    const slots = availabilityByDate[date];
+                    if (slots && slots.length > 0) {
+                        console.log(`  ${date}: ${slots.length} slots available`);
+                        slots.forEach(slot => {
+                            const start = new Date(slot.start);
+                            const end = new Date(slot.end);
+                            console.log(`    - ${start.toLocaleTimeString('en-CA')} to ${end.toLocaleTimeString('en-CA')}`);
+                        });
+                    }
+                });
+                
+                if (!any) {
+                    console.log('⚠️  No availability found. This could mean:');
+                    console.log('  1. All slots are already booked');
+                    console.log('  2. Travel time from other appointments blocks these times');
+                    console.log('  3. No working hours on these dates');
+                    console.log('Check n8n workflow logs for detailed filtering reasons.');
+                    updateAvailabilityStatus("No mobile availability found for this month with the selected treatment and duration. This may be due to existing appointments and travel time constraints. Please try another month or contact us.", false);
+                } else {
+                    updateAvailabilityStatus("Select a date to see available times.", false);
+                }
+
+                renderCalendar();
+            } catch (e) {
+                // Hide skeleton on error
+                document.getElementById('calendar-skeleton').classList.add('hidden');
+                document.getElementById('calendar-content').classList.remove('hidden');
+                
+                console.error('❌ Availability exception', e);
+                updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
+            }
+        }
+
+        // ---------------- INIT ----------------
+        // ============= STRIPE PAYMENT INTEGRATION =============
+        let stripe = null;
+        let stripeElements = null;
+        let stripeCardElement = null;
+        
+        function initializeStripe() {
+            if (stripe) return; // Already initialized
+            
+            // TODO: Replace with your actual Stripe publishable key
+            // REPLACE WITH YOUR STRIPE PUBLISHABLE KEY: https://dashboard.stripe.com/apikeys
+            const STRIPE_PUBLISHABLE_KEY = 'pk_live_51SFdlq2atTjzVbCkiLOJb4Ee0qufeDnGdHuYUnSLuaSK3AD97lPRgzO2y7eQTnz6xBF60dvF8yqWc4jaRxXbdC4W00NIigxRTD'; // Get from Stripe Dashboard
+            
+            stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+            stripeElements = stripe.elements();
+            
+            // Create card element with custom styling
+            stripeCardElement = stripeElements.create('card', {
+                hidePostalCode: true, // We'll collect a Canadian postal code separately (labelled correctly)
+                style: {
+                    base: {
+                        color: '#E0C584',
+                        fontFamily: '"Inter", system-ui, sans-serif',
+                        fontSize: '14px',
+                        '::placeholder': {
+                            color: 'rgba(224, 197, 132, 0.5)',
+                        },
+                    },
+                    invalid: {
+                        color: '#ef4444',
+                    },
+                },
+            });
+            
+            // Mount the card element
+            stripeCardElement.mount('#stripe-card-element');
+            
+            // Handle validation errors
+            stripeCardElement.on('change', (event) => {
+                const errorEl = document.getElementById('stripe-card-errors');
+                if (event.error) {
+                    errorEl.textContent = event.error.message;
+                    errorEl.classList.remove('hidden');
+                } else {
+                    errorEl.textContent = '';
+                    errorEl.classList.add('hidden');
+                }
+            });
+        }
+        
+        async function createStripePaymentIntent(amount, description) {
+            // This should call your backend to create a payment intent
+            // For now, this is a placeholder
+            const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: amount * 100, // Convert to cents
+                    description: description
+                })
+            });
+            
+            return await response.json();
+        }
+
+        // ============= END STRIPE INTEGRATION =============
+
+        function initializeApp() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Mobile menu
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.add('open');
+            });
+
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+
+            // Close mobile menu when clicking a link
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.remove('open');
+                });
+            });
+
+            const serviceSelect = document.getElementById('service-select');
+            const durationSelect = document.getElementById('duration-select');
+            const participantsSelect = document.getElementById('participants-select');
+
+            serviceSelect.addEventListener('change', () => {
+                selectedServiceKey = serviceSelect.value || null;
+
+                // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
+                selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
+
+                rebuildDurationOptions();
+            });
+
+            durationSelect.addEventListener('change', async () => {
+                selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+
+                // If availability is already being shown, reload using the new block duration
+                if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
+                    await loadAvailabilityForCurrentMonth();
+                }
+            });
+
+            participantsSelect.addEventListener('change', async () => {
+                selectedParticipantCount = participantsSelect.value ? Number(participantsSelect.value) : null;
+
+                // Rebuild duration labels (pricing) but preserve the selected duration if possible
+                const prevDuration = selectedStandardDuration;
+                rebuildDurationOptions();
+                if (prevDuration) {
+                    durationSelect.value = String(prevDuration);
+                    selectedStandardDuration = prevDuration;
+                }
+
+                if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
+                    await loadAvailabilityForCurrentMonth();
+                }
+            });
+
+
+document.getElementById('prev-month-btn').addEventListener('click', async () => {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
+
+                if (isCurrentMonth) return;
+                
+                calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
+                await loadAvailabilityForCurrentMonth();
+                updatePrevMonthButton();
+            });
+            
+            function updatePrevMonthButton() {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
+                document.getElementById('prev-month-btn').disabled = isCurrentMonth;
+            }
+            updatePrevMonthButton();
+
+            document.getElementById('next-month-btn').addEventListener('click', async () => {
+                calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
+                await loadAvailabilityForCurrentMonth();
+                updatePrevMonthButton();
+            });
+
+            document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
+                e.preventDefault();
+                const manualWrapper = document.getElementById('manual-address-wrapper');
+                const autoInput = document.getElementById('address-input-initial');
+                const isHidden = manualWrapper.classList.contains('hidden');
+
+                if (isHidden) {
+                    manualWrapper.classList.remove('hidden');
+                    autoInput.classList.add('hidden');
+                    e.target.textContent = "Use address lookup instead.";
+                } else {
+                    manualWrapper.classList.add('hidden');
+                    autoInput.classList.remove('hidden');
+                    e.target.textContent = "Can't find your address? Enter it manually.";
+                }
+            });
+
+            document.getElementById('address-continue-btn').addEventListener('click', async () => {
+                const addr = getAddressFromModal();
+                const errorEl = document.getElementById('address-error');
+                const labelEl = document.getElementById('selected-address-label');
+                const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+                if (!addr || !selectedStandardDuration || !treat) {
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                errorEl.classList.add('hidden');
+                const price = getPrice();
+                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                closeAddressModal();
+                updateProgress(2);
+                await loadAvailabilityForCurrentMonth();
+            });
+
+            document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
+            document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
+            
+            // Continue to booking button - opens Step 3
+            document.getElementById('continue-to-booking-btn').addEventListener('click', () => {
+                openClientDetailsModal();
+            });
+
+            // Client details modal functions
+            function openClientDetailsModal() {
+                const modal = document.getElementById('client-details-modal');
+                if (!modal) return;
+
+                // Update progress to Step 3
+                updateProgress(3);
+
+                // Fill in booking summary
+                const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+                const price = getPrice();
+                
+                if (treat && selectedStandardDuration) {
+                    document.getElementById('summary-modal-treatment').textContent = `${treat.label} (${selectedStandardDuration} min)`;
+                }
+
+                if (selectedSlot && selectedDateStr) {
+                    const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+                    const dateObj = new Date(yy, mm - 1, dd);
+                    const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const timeLabel = formatTimeLabel(selectedSlot);
+                    document.getElementById('summary-modal-datetime').textContent = `${dateLabel} at ${timeLabel} EST`;
+                }
+
+                const addrObj = window.__selectedAddress;
+                if (addrObj) {
+                    const addressDisplay = addrObj.city ? `${addrObj.city}, ${addrObj.postal_code}` : addrObj.address;
+                    document.getElementById('summary-modal-address').textContent = addressDisplay;
+                    document.getElementById('client-address-display').value = addrObj.address;
+                }
+
+                document.getElementById('summary-modal-price').textContent = `$${price.base}+HST (~$${price.total})`;
+
+                // Calculate and show travel charge if applicable
+                // Note: This is a simplified version. The actual drive time would come from the workflow
+                calculateAndShowTravelCharge();
+
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+            
+            function calculateAndShowTravelCharge() {
+                const warningEl = document.getElementById('travel-charge-warning');
+                const textEl = document.getElementById('travel-charge-text');
+                const stripeSection = document.getElementById('stripe-payment-section');
+                
+                // DEBUG: Log selected slot details
+                console.log('🔍 Selected Slot Full Object:', selectedSlot);
+                console.log('🔍 Slot Drive Time:', selectedSlot?.driveTimeMinutes);
+                console.log('🔍 Window Max Drive Time:', window.__maxDriveTimeMinutes);
+                
+                // Get drive time from SELECTED SLOT (most accurate)
+                const driveTimeMinutes = selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0;
+                
+                console.log('💳 Calculating travel charge for drive time:', driveTimeMinutes, 'minutes');
+                console.log('   From slot:', selectedSlot?.driveTimeMinutes);
+                console.log('   From max:', window.__maxDriveTimeMinutes);
+                
+                let requiresPayment = false;
+                
+                // Apply travel charges based on actual drive time
+                if (driveTimeMinutes >= 120) {
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes / 2+ hours), a <strong class="text-amber-400">$200 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
+                    warningEl.classList.remove('hidden');
+                    requiresPayment = true;
+                } else if (driveTimeMinutes >= 60) {
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$100 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
+                    warningEl.classList.remove('hidden');
+                    requiresPayment = true;
+                } else if (driveTimeMinutes >= 45) {
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$40 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
+                    warningEl.classList.remove('hidden');
+                    requiresPayment = true;
+                } else if (driveTimeMinutes >= 36) {
+                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$20 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
+                    warningEl.classList.remove('hidden');
+                    requiresPayment = true;
+                } else {
+                    warningEl.classList.add('hidden');
+                }
+                
+                // Show/hide Stripe payment section
+                if (requiresPayment) {
+                    stripeSection.classList.remove('hidden');
+                    initializeStripe();
+                    // Pre-fill Canadian postal code (if available from Step 1)
+                    const postalEl = document.getElementById('stripe-postal-code');
+                    if (postalEl) {
+                        const p = window.__selectedAddress?.postal_code || '';
+                        postalEl.value = normalizeCanadianPostal(p);
+                    }
+                } else {
+                    stripeSection.classList.add('hidden');
+                }
+            }
+
+            function closeClientDetailsModal() {
+                const modal = document.getElementById('client-details-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+
+            document.getElementById('client-modal-close').addEventListener('click', closeClientDetailsModal);
+
+            // Confirmation modal functions
+            function showConfirmationModal(firstName, lastName, phone, email, dateStr, slot, travelCharge) {
+                const modal = document.getElementById('confirmation-modal');
+                
+                // Fill in details
+                document.getElementById('confirm-name').textContent = `${firstName} ${lastName}`;
+                document.getElementById('confirm-phone').textContent = phone;
+                document.getElementById('confirm-email').textContent = email;
+                
+                const [yy, mm, dd] = dateStr.split('-').map(Number);
+                const dateObj = new Date(yy, mm - 1, dd);
+                const dateLabel = dateObj.toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
+                const timeLabel = formatTimeLabel(slot);
+                
+                document.getElementById('confirm-date').textContent = dateLabel;
+                document.getElementById('confirm-time').textContent = `${timeLabel} EST`;
+                
+                // Show travel notice if applicable
+                if (travelCharge > 0) {
+                    const noticeEl = document.getElementById('confirm-travel-notice');
+                    const textEl = document.getElementById('confirm-travel-text');
+                    noticeEl.classList.remove('hidden');
+                    textEl.textContent = `Your credit card has been saved for no-show protection. A $${travelCharge} travel charge will be added to your total and collected after your treatment.`;
+                } else {
+                    document.getElementById('confirm-travel-notice').classList.add('hidden');
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+            
+            window.closeConfirmationModal = async function() {
+                const modal = document.getElementById('confirmation-modal');
+                modal.classList.add('hidden');
+
+                // 1) Immediately prevent "same slot again" from stale UI (optimistic lock)
+                try {
+                    if (selectedDateStr && selectedSlot && availabilityByDate?.[selectedDateStr]) {
+                        availabilityByDate[selectedDateStr] = availabilityByDate[selectedDateStr].map(s => {
+                            if (s?.start && selectedSlot?.start && s.start === selectedSlot.start) {
+                                return { ...s, available: false };
+                            }
+                            return s;
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Optimistic slot lock failed:', e);
+                }
+
+                // 2) Clear selection + hide times so they must pick again
+                selectedSlot = null;
+                selectedDateStr = null;
+
+                const timeWrap = document.getElementById('time-slots-wrapper');
+                if (timeWrap) timeWrap.classList.add('hidden');
+
+                try { updateStickyBar(); } catch (_) {}
+                try { renderCalendar(); } catch (_) {}
+
+                // 3) Re-pull live availability for the month from Cliniko
+                try {
+                    await loadAvailabilityForCurrentMonth();
+                } catch (e) {
+                    console.warn('Availability refresh failed:', e);
+                }
+            };
+
+            // Handle client details form submission
+            document.getElementById('client-details-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('submit-booking-btn');
+                const originalBtnText = submitBtn.innerHTML;
+                
+                const firstName = document.getElementById('client-first-name').value.trim();
+                const lastName = document.getElementById('client-last-name').value.trim();
+                const phone = document.getElementById('client-phone').value.trim();
+                const email = document.getElementById('client-email').value.trim();
+                const notes = document.getElementById('client-notes').value.trim();
+                const errorEl = document.getElementById('client-error');
+
+                // Validation
+                if (!firstName || !lastName || !phone || !email) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please fill in all required fields.';
+                    return;
+                }
+
+                errorEl.classList.add('hidden');
+                
+                // Hard guard: do not allow submitting without an available slot
+                if (!selectedSlot) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please select a time to continue.';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+                if (selectedSlot.available === false) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>That time is already booked. Please choose another.';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+
+                // Calculate travel charge
+                const driveTimeMinutes = (selectedSlot?.driveTimeMinutes ?? window.__maxDriveTimeMinutes ?? 0);
+                let travelCharge = 0;
+                if (driveTimeMinutes >= 120) travelCharge = 200;
+                else if (driveTimeMinutes >= 60) travelCharge = 100;
+                else if (driveTimeMinutes >= 45) travelCharge = 40;
+                else if (driveTimeMinutes >= 36) travelCharge = 20;
+                
+                // If travel charge applies, process Stripe payment
+                let paymentMethodId = null;
+                if (travelCharge > 0 && stripeCardElement) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Saving Card on File...</span>';
+                    
+                    try {
+                        // Ensure we collect a Canadian postal code (Stripe card element default label is "ZIP")
+                        const postalInputEl = document.getElementById('stripe-postal-code');
+                        const postalCandidate = (postalInputEl?.value || '').trim() || (window.__selectedAddress?.postal_code || '').trim();
+                        if (!isCanadianPostal(postalCandidate)) {
+                            throw new Error('Please enter a valid Canadian postal code (e.g., L2A 1B2).');
+                        }
+                        const postal = normalizeCanadianPostal(postalCandidate);
+
+                        // Create payment method
+                        const { paymentMethod, error } = await stripe.createPaymentMethod({
+                            type: 'card',
+                            card: stripeCardElement,
+                            billing_details: {
+                                name: `${firstName} ${lastName}`,
+                                email: email,
+                                phone: phone,
+                                address: {
+                                    postal_code: postal,
+                                    country: 'CA',
+                                },
+                            },
+                        });
+                        
+                        if (error) {
+                            throw new Error(error.message);
+                        }
+                        
+                        paymentMethodId = paymentMethod.id;
+                        console.log('💳 Payment method created:', paymentMethodId);
+                        
+                    } catch (error) {
+                        console.error('Payment error:', error);
+                        errorEl.classList.remove('hidden');
+                        errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Payment error: ${error.message}`;
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        return;
+                    }
+                }
+
+                // Prepare booking data
+                const pricing = getPrice();
+
+                const bookingData = {
+                    // Client info
+                    firstName,
+                    lastName,
+                    phone,
+                    email,
+                    notes,
+                    
+                    // Appointment details
+                    address: window.__selectedAddress?.address,
+                    city: window.__selectedAddress?.city,
+                    postal_code: window.__selectedAddress?.postal_code,
+                    
+                    // Treatment details
+                    treatment_key: selectedServiceKey,
+                    treatment_label: TREATMENT_RULES[selectedServiceKey]?.label,
+                    duration: selectedStandardDuration,
+
+                    // Multi-client support (needed for Duo / Group / Event)
+                    standardDurationMinutes: Number(selectedStandardDuration) || 0,
+                    participants: pricing.participants || 1,
+                    participant_count: pricing.participants || 1,
+                    totalDurationMinutes: ((Number(selectedStandardDuration) || 0) * (pricing.participants || 1)) + (Number(STATIC_SETUP_MINUTES) || 0),
+
+                    
+                    // Time slot - ALREADY IN UTC (no conversion needed)
+                    slot_start: selectedSlot?.start,
+                    slot_end: selectedSlot?.end,
+                    date: selectedDateStr,
+                    times_already_utc: true, // Flag for workflow to skip timezone conversion
+                    
+                    // Pricing
+                    price_base: pricing.base,
+                    price_total: pricing.total,
+                    
+                    // Travel charge info - GET FROM SLOT DATA
+                    travel_charge: travelCharge,
+                    travel_fee_cents: Math.round((Number(travelCharge) || 0) * 100),
+                    drive_time_minutes: selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0,
+                    stripe_payment_method_id: paymentMethodId
+                };
+
+                console.log('📋 Booking data ready:', bookingData);
+                console.log('🚗 Drive time being sent:', bookingData.drive_time_minutes, 'minutes');
+
+                // Send to booking webhook
+                submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Confirming Booking...</span>';
+                
+                try {
+                    const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/booking-confirmed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bookingData)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        
+                        // Show branded confirmation modal
+                        showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
+                        
+                        closeClientDetailsModal();
+                        
+                        // Reset form
+                        document.getElementById('client-details-form').reset();
+                        if (stripeCardElement) {
+                            stripeCardElement.clear();
+                        }
+                    } else {
+                        throw new Error('Booking submission failed');
+                    }
+                } catch (error) {
+                    console.error('Booking error:', error);
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>There was an error submitting your booking. Please try again or contact us directly.`;
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            });
+
+            // Start with modal open
+            openAddressModal();
+            renderCalendar();
+        }
+
+        window.onload = initializeApp;
+
+    </script>
+
+    <!-- CONFIRMATION SUCCESS MODAL -->
+    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]">
+        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up">
+            <div class="text-center">
+                <div class="inline-block bg-brand-gold/10 p-4 rounded-full mb-6">
+                    <i data-lucide="check-circle" class="w-16 h-16 text-brand-gold"></i>
+                </div>
+                <h3 class="text-3xl text-brand-gold font-serif mb-4">Booking Confirmed!</h3>
+                
+                <div class="bg-brand-gold/5 border border-brand-gold/20 rounded-lg p-6 mb-6 text-left">
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Name:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-name"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Phone:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-phone"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Date:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-date"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-brand-dim/80">Time:</span>
+                            <span class="text-brand-light font-semibold" id="confirm-time"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="confirm-travel-notice" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6 text-left">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <div class="text-sm font-bold text-amber-500 mb-2">Card Saved for Protection</div>
+                            <div class="text-xs text-brand-light leading-relaxed" id="confirm-travel-text"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-sm text-brand-dim/80 mb-6">
+                    A confirmation email has been sent to <span class="text-brand-light font-semibold" id="confirm-email"></span>
+                </p>
+
+                <button onclick="closeConfirmationModal()" class="w-full btn-filled py-4 font-bold tracking-wider text-base">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span>Return to Home</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Maps Places API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+</body>
+</html>

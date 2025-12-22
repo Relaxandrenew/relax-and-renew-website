@@ -1,566 +1,1266 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Portal | Relax & Renew RMT</title>
-    <meta name="description" content="Secure client portal for Relax & Renew RMT. View your profile, appointments, and receipts.">
-    
-    <!-- Meta Pixel -->
-    <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '701194265870298');
-    fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
-    /></noscript>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Portal | Relax & Renew RMT</title>
+  <meta name="description" content="Relax & Renew Client Portal — rebook appointments using your saved profile." />
 
-    <!-- Google Analytics / Ads -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
 
-      gtag('config', 'G-J4NC9FL44H');   // GA4 Property
-      gtag('config', 'AW-17575022013'); // Google Ads Account
-    </script>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Suppress noisy third-party errors -->
-    <script>
-        window.onerror = function(msg, url, line, col, error) {
-            if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) {
-                return true;
-            }
-            return false;
-        };
-        window.addEventListener('unhandledrejection', function(event) {
-            event.preventDefault();
-        });
-    </script>
+  <!-- Lucide Icons (UMD) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-    <!-- Tailwind + Brand Config -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            gold: '#E0C584',
-                            goldHover: '#F0D594',
-                            light: '#F0E2C0', 
-                            dim: 'rgba(240, 226, 192, 0.6)',
-                            black: '#050505',
-                            dark: '#0a0a0a',
-                            panel: 'rgba(20, 20, 20, 0.7)',
-                        }
-                    },
-                    fontFamily: {
-                        serif: ['"Cormorant Garamond"', 'serif'],
-                    },
-                    backgroundImage: {
-                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
-                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')"
-                    },
-                    animation: {
-                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        subtleBounce: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-6px)' },
-                        }
-                    }
-                }
-            }
-        };
-    </script>
+  <!-- Auth0 SPA SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root{
+      --brand-black:#000000;
+      --brand-gold:#E0C584;
+      --brand-gold-hover:#F0D594;
+      --brand-light:#F6F0DD;
+      --brand-dim:rgba(246,240,221,.72);
 
-    <!-- Auth0 SPA SDK -->
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+      --radius:0px; /* square corners */
+      --shadow:0 10px 30px rgba(0,0,0,.55);
+    }
 
-    <style>
-        body { 
-            background-color: #050505; 
-            color: #F0E2C0; 
-            font-family: 'Cormorant Garamond', serif; 
-            font-size: 1.15rem; 
-            line-height: 1.7; 
-            overflow-x: hidden; 
-        }
-        html { scroll-behavior: smooth; }
+    html, body { height:100%; }
+    body{
+      font-family:'Cormorant Garamond', serif;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(224,197,132,.08), transparent 55%),
+        radial-gradient(circle at 70% 80%, rgba(224,197,132,.05), transparent 55%),
+        #000;
+      color:var(--brand-light);
+      overflow-x:hidden;
+    }
 
-        .card-fancy { 
-            background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9)); 
-            border: 1px solid rgba(224, 197, 132, 0.1); 
-            backdrop-filter: blur(10px); 
-            transition: all 0.4s ease; 
-            padding: 2.0rem 1.8rem; 
-            position: relative; 
-            overflow: hidden; 
-        }
-        .card-fancy::before { 
-            content: ''; 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100%; height: 2px; 
-            background: linear-gradient(90deg, transparent, #E0C584, transparent); 
-            transform: scaleX(0); 
-            transition: transform 0.5s ease; 
-        }
-        .card-fancy:hover { 
-            transform: translateY(-4px); 
-            border-color: rgba(224, 197, 132, 0.3); 
-        }
-        .card-fancy:hover::before { 
-            transform: scaleX(1); 
-        }
+    /* Header / Nav (booknow-style) */
+    .fixed-nav{
+      position:fixed; top:0; left:0; right:0;
+      z-index:50;
+      background:rgba(0,0,0,.82);
+      border-bottom:1px solid rgba(224,197,132,.22);
+      backdrop-filter: blur(10px);
+    }
+    .nav-link{
+      color:rgba(246,240,221,.8);
+      font-size:0.9rem;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      transition: color .2s ease;
+      white-space:nowrap;
+    }
+    .nav-link:hover{ color:var(--brand-gold); }
 
-        .btn-gold { 
-            border: 1px solid #E0C584; 
-            color: #E0C584; 
-            padding: 0.6rem 2rem; 
-            text-transform: uppercase; 
-            font-weight: 700; 
-            letter-spacing: 0.1em; 
-            transition: 0.3s; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 0.5rem; 
-            cursor: pointer; 
-        }
-        .btn-gold:hover { 
-            background: rgba(224, 197, 132, 0.1); 
-            color: #F0E2C0; 
-            border-color: #F0D594; 
-            box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); 
-        }
+    .mobile-menu{ transform:translateX(100%); transition:transform .25s ease; }
+    .mobile-menu.open{ transform:translateX(0); }
 
-        .btn-filled { 
-            background: #E0C584; 
-            color: #000; 
-            border: 1px solid #E0C584; 
-            padding: 0.6rem 2rem; 
-            text-transform: uppercase; 
-            font-weight: 700; 
-            letter-spacing: 0.1em; 
-            transition: 0.3s; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 0.5rem; 
-            cursor: pointer; 
-        }
-        .btn-filled:hover { 
-            background: #F0D594; 
-            border-color: #F0D594; 
-            transform: translateY(-1px); 
-            box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); 
-        }
+    /* Panels (square) */
+    .glass-panel{
+      background:rgba(0,0,0,.72);
+      border:1px solid rgba(224,197,132,.22);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      backdrop-filter: blur(10px);
+    }
+    .card{
+      background:rgba(0,0,0,.65);
+      border:1px solid rgba(224,197,132,.18);
+      border-radius:var(--radius);
+    }
 
-        .hidden { display: none; }
-    </style>
+    /* Inputs / Buttons */
+    .input{
+      width:100%;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(224,197,132,.22);
+      color:var(--brand-light);
+      padding:.85rem .9rem;
+      border-radius:var(--radius);
+      outline:none;
+    }
+    .input:focus{
+      border-color: rgba(224,197,132,.55);
+      box-shadow: 0 0 0 1px rgba(224,197,132,.25);
+    }
+
+    .btn-outline{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      border:1px solid rgba(224,197,132,.35);
+      color:var(--brand-gold);
+      background:rgba(0,0,0,.45);
+      padding:.75rem 1rem;
+      border-radius:var(--radius);
+      transition: all .18s ease;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-size:.85rem;
+      user-select:none;
+    }
+    .btn-outline:hover{
+      border-color: rgba(224,197,132,.6);
+      background:rgba(224,197,132,.08);
+      color:var(--brand-gold-hover);
+    }
+    .btn-filled{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      border:1px solid rgba(224,197,132,.55);
+      color:#000;
+      background: linear-gradient(180deg, rgba(224,197,132,1), rgba(224,197,132,.9));
+      padding:.95rem 1.1rem;
+      border-radius:var(--radius);
+      transition: all .18s ease;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-size:.85rem;
+      user-select:none;
+    }
+    .btn-filled:hover{ filter:brightness(1.04); }
+    .btn-disabled{ opacity:.45; cursor:not-allowed; }
+
+    /* Sidebar */
+    .sidebar-btn{
+      width:100%;
+      display:flex;
+      gap:.7rem;
+      align-items:center;
+      padding:.75rem .85rem;
+      border:1px solid transparent;
+      border-radius:var(--radius);
+      color:rgba(246,240,221,.78);
+      transition: all .15s ease;
+      font-size:1.05rem;
+      user-select:none;
+    }
+    .sidebar-btn:hover{
+      background:rgba(224,197,132,.06);
+      border-color:rgba(224,197,132,.22);
+      color:var(--brand-light);
+    }
+    .sidebar-btn.active{
+      background:rgba(224,197,132,.10);
+      border-color:rgba(224,197,132,.35);
+      color:var(--brand-gold);
+    }
+
+    /* Calendar */
+    .calendar-day{
+      width:100%;
+      aspect-ratio:1/1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(224,197,132,.14);
+      border-radius:var(--radius);
+      font-weight:700;
+      transition: all .12s ease;
+      user-select:none;
+    }
+    .calendar-day-available{
+      background:rgba(0,0,0,.35);
+      cursor:pointer;
+    }
+    .calendar-day-available:hover{
+      border-color: rgba(224,197,132,.4);
+      background:rgba(224,197,132,.07);
+    }
+    .calendar-day-disabled{
+      background:rgba(0,0,0,.25);
+      color:rgba(246,240,221,.35);
+      cursor:not-allowed;
+    }
+    .calendar-day-selected{
+      border-color: rgba(224,197,132,.65) !important;
+      background:rgba(224,197,132,.12) !important;
+      color:var(--brand-gold) !important;
+    }
+
+    .time-slot-btn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:.5rem;
+      padding:.7rem .65rem;
+      border:1px solid rgba(224,197,132,.22);
+      background:rgba(0,0,0,.35);
+      border-radius:var(--radius);
+      transition:all .12s ease;
+      font-weight:700;
+      user-select:none;
+    }
+    .time-slot-btn:hover{
+      border-color: rgba(224,197,132,.55);
+      background:rgba(224,197,132,.07);
+    }
+    .time-slot-unavailable{ opacity:.45; cursor:not-allowed; }
+    .time-slot-selected{
+      border-color: rgba(224,197,132,.75) !important;
+      background:rgba(224,197,132,.14) !important;
+      color:var(--brand-gold) !important;
+    }
+
+    /* Helpers */
+    .muted{ color:var(--brand-dim); }
+    .divider{ border-color: rgba(224,197,132,.16); }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.25rem .55rem;
+      border:1px solid rgba(224,197,132,.22);
+      background:rgba(224,197,132,.06);
+      color:rgba(246,240,221,.82);
+      border-radius:var(--radius);
+      font-size:.9rem;
+      letter-spacing:.05em;
+      user-select:none;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.85);
+      border:1px solid rgba(224,197,132,.25);
+      box-shadow:var(--shadow);
+      padding:.85rem 1rem;
+      display:flex;
+      gap:.75rem;
+      align-items:center;
+      border-radius:var(--radius);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease;
+      z-index:1000;
+    }
+    .toast.show{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateX(-50%) translateY(-4px);
+    }
+  </style>
+
+  <script>
+    // =========================================================
+    // CONFIG (already filled with your Auth0 SPA details)
+    // =========================================================
+    const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
+    const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
+    const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
+
+    const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
+    const STATIC_SETUP_MINUTES = 25;
+
+    // Auth0 SPA (Portal validates session and redirects to /sign-in if missing)
+    const AUTH0_ENABLED = true;
+    const AUTH0_CONFIG = {
+      domain: "dev-sbhcygzz4xcoa2ij.us.auth0.com",
+      clientId: "T8FERqkpcryRN77voMnLeaXIkha1eqK1",
+      authorizationParams: {
+        // If Auth0 redirects here with code/state, this portal will handle it safely.
+        redirect_uri: window.location.origin + window.location.pathname
+      },
+      cacheLocation: "localstorage",
+      useRefreshTokens: true
+    };
+
+    // If you use custom claims for address/profile:
+    const CLAIM_PROFILE_OBJ  = "https://relaxandrenew.ca/profile";
+    const CLAIM_ADDRESS      = "https://relaxandrenew.ca/address";
+    const CLAIM_CITY         = "https://relaxandrenew.ca/city";
+    const CLAIM_POSTAL       = "https://relaxandrenew.ca/postal_code";
+    const CLAIM_PHONE        = "https://relaxandrenew.ca/phone";
+  </script>
 </head>
-<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
-    <!-- HEADER / HERO -->
-    <header class="relative pt-10 pb-10 text-center bg-hero-pattern bg-cover bg-center bg-no-repeat border-b border-brand-gold/20">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-        <div class="relative z-10">
-            <a href="/index.html" class="inline-block group">
-                <img 
-                    src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" 
-                    alt="Relax & Renew Logo" 
-                    class="h-16 w-auto mx-auto mb-3 transition-transform group-hover:scale-105">
-                <div class="flex flex-col items-center">
-                    <span class="text-brand-gold font-bold tracking-[0.2em] text-lg leading-none">
-                        RELAX & RENEW
-                    </span>
-                    <span class="text-brand-light text-[0.7rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">
-                        Mobile RMT
-                    </span>
+<body>
+  <!-- NAV -->
+  <nav class="fixed-nav">
+    <div class="container mx-auto px-6 flex justify-between items-center h-20">
+      <a href="index.html" class="flex items-center gap-3 no-underline group">
+        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+        <div class="hidden md:flex flex-col">
+          <span class="text-[var(--brand-gold)] font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+          <span class="text-[var(--brand-light)] text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+        </div>
+      </a>
+
+      <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
+        <a href="index.html#services" class="nav-link">Services</a>
+        <a href="index.html#pricing" class="nav-link">Pricing</a>
+        <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
+        <a href="index.html#area" class="nav-link">Service Area</a>
+        <a href="index.html#faq" class="nav-link">FAQ</a>
+        <a href="therapists.html" class="nav-link">Our Therapists</a>
+        <a href="membership.html" class="nav-link">Membership</a>
+        <span class="nav-link text-[var(--brand-gold)] font-bold">
+          <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+          Client Portal
+        </span>
+      </div>
+
+      <button id="mobile-menu-btn" class="lg:hidden text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-black border-l border-[rgba(224,197,132,.30)] z-50 lg:hidden overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-8">
+        <span class="text-[var(--brand-gold)] font-bold tracking-[0.2em] text-sm">MENU</span>
+        <button id="mobile-menu-close" class="text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div class="flex flex-col space-y-6">
+        <a href="index.html#services" class="nav-link text-lg">Services</a>
+        <a href="index.html#pricing" class="nav-link text-lg">Pricing</a>
+        <a href="index.html#giftcards" class="nav-link text-lg">Gift Cards</a>
+        <a href="index.html#area" class="nav-link text-lg">Service Area</a>
+        <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
+        <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
+        <a href="membership.html" class="nav-link text-lg">Membership</a>
+        <hr class="divider mt-2">
+        <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200">
+          <i data-lucide="log-out" class="w-5 h-5 inline mr-2"></i>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-20" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="pt-10 pb-10 border-b border-[rgba(224,197,132,.18)]">
+    <div class="container mx-auto px-6 max-w-6xl">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <div class="text-[0.75rem] tracking-[0.45em] uppercase text-[rgba(246,240,221,.65)]">Relax & Renew RMT</div>
+          <h1 class="text-4xl md:text-5xl font-bold text-[var(--brand-gold)] mt-2">Client Portal</h1>
+          <p class="muted mt-3 text-lg">Rebook quickly using your saved profile. Other features show <span class="pill">Coming Soon</span>.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="pill">
+            <i data-lucide="user" class="w-4 h-4 text-[var(--brand-gold)]"></i>
+            <span id="welcome-pill">Checking sign-in…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="min-h-screen">
+    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
+
+        <!-- Sidebar -->
+        <aside class="hidden lg:block">
+          <div class="glass-panel p-5 sticky top-[110px]">
+            <div class="flex items-center gap-3 mb-6 pb-6 border-b border-[rgba(224,197,132,.14)]">
+              <div class="w-11 h-11 border border-[rgba(224,197,132,.25)] bg-[rgba(224,197,132,.06)] flex items-center justify-center text-[var(--brand-gold)]" style="border-radius:var(--radius)">
+                <i data-lucide="user" class="w-5 h-5"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[0.65rem] text-[rgba(246,240,221,.6)] uppercase tracking-widest">Welcome back</div>
+                <div class="text-[var(--brand-light)] font-semibold text-sm leading-tight truncate" id="nav-user-name">—</div>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <button class="sidebar-btn active">
+                <i data-lucide="calendar-check" class="w-5 h-5 text-[var(--brand-gold)]"></i>
+                <span>Rebook</span>
+              </button>
+
+              <button class="sidebar-btn" disabled>
+                <i data-lucide="badge-percent" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <span>Membership</span>
+                <span class="ml-auto pill">Coming Soon</span>
+              </button>
+
+              <button class="sidebar-btn" disabled>
+                <i data-lucide="history" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <span>History</span>
+                <span class="ml-auto pill">Coming Soon</span>
+              </button>
+
+              <button class="sidebar-btn" disabled>
+                <i data-lucide="settings" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <span>Profile</span>
+                <span class="ml-auto pill">Coming Soon</span>
+              </button>
+
+              <hr class="divider my-3">
+
+              <button id="logout-btn" class="sidebar-btn text-red-300 hover:text-red-200">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <section>
+          <div class="glass-panel p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              <div>
+                <h2 class="text-3xl font-bold text-[var(--brand-light)]">Quick Rebook</h2>
+                <p class="muted mt-2">We use your saved client profile. No typing required.</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-address">Address: —</span></span>
+                <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-phone">Phone: —</span></span>
+              </div>
+            </div>
+
+            <div id="profile-missing" class="mt-6 card p-4 hidden">
+              <div class="flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 mt-0.5"></i>
+                <div>
+                  <div class="font-bold text-[var(--brand-light)]">Profile data is missing</div>
+                  <div class="muted mt-1">
+                    We could not find your address/city/postal code. Because this is a mobile service, we cannot load availability without it.
+                    Please contact us to update your profile.
+                  </div>
+                  <div class="mt-3">
+                    <a class="btn-outline" href="mailto:info@relaxandrenew.ca">
+                      <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
+                    </a>
+                  </div>
                 </div>
-            </a>
-
-            <!-- Simple nav -->
-            <div class="mt-6 flex items-center justify-center gap-4 text-xs uppercase tracking-[0.2em] text-brand-light/70">
-                <a href="/book-now.html" class="hover:text-brand-gold transition-colors flex items-center gap-1">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Book Now
-                </a>
-                <span class="w-px h-4 bg-brand-gold/40"></span>
-                <a href="/gift-cards.html" class="hover:text-brand-gold transition-colors flex items-center gap-1">
-                    <i data-lucide="gift" class="w-4 h-4"></i> Gift Cards
-                </a>
-                <span class="w-px h-4 bg-brand-gold/40"></span>
-                <span class="text-brand-gold flex items-center gap-1">
-                    <i data-lucide="user-circle-2" class="w-4 h-4"></i> Client Portal
-                </span>
+              </div>
             </div>
-        </div>
-    </header>
+          </div>
 
-    <!-- MAIN PORTAL CONTENT -->
-    <main class="py-16 bg-alternate-pattern bg-cover bg-center bg-fixed relative">
-        <div class="absolute inset-0 bg-brand-black/65"></div>
-        <div class="relative z-10 container mx-auto px-6 max-w-6xl">
-            <div class="grid lg:grid-cols-[1.1fr,0.9fr] gap-10 items-start">
+          <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+            <!-- Calendar + slots -->
+            <div class="glass-panel p-6">
+              <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+                <div>
+                  <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 1</div>
+                  <h3 class="text-2xl font-bold mt-1">Select Treatment</h3>
+                  <p class="muted mt-2">Choose a treatment and duration to load availability for this month.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                  <select id="treatment-select" class="input">
+                    <option value="">Select treatment…</option>
+                    <option value="relaxation">Relaxation Massage</option>
+                    <option value="deep-tissue">Deep Tissue Massage</option>
+                    <option value="sports">Sports Massage</option>
+                    <option value="senior">Senior Massage</option>
+                    <option value="hot-stone">Hot Stone Massage</option>
+                    <option value="cupping">Cupping Therapy</option>
+                    <option value="prenatal">Prenatal Massage</option>
+                    <option value="pediatric">Pediatric Massage</option>
+                    <option value="infant">Infant Massage</option>
+                  </select>
 
-                <!-- LEFT COLUMN: OVERVIEW -->
-                <section class="space-y-6 animate-fade-in-up">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-gold/30 bg-black/40 text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/80">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                        Secure Client Portal
-                    </div>
+                  <select id="duration-select" class="input" disabled>
+                    <option value="">Select a treatment first…</option>
+                  </select>
+                </div>
+              </div>
 
-                    <h1 class="text-4xl md:text-5xl text-brand-light mt-4 mb-2 leading-tight">
-                        Your Massage History, Receipts & Bookings in One Place
-                    </h1>
+              <hr class="divider my-6">
 
-                    <p class="text-brand-dim text-base max-w-2xl">
-                        Sign in to your Relax & Renew Client Portal to review past sessions, see upcoming bookings,
-                        download receipts for insurance, and keep your address and preferences up to date — all under a secure login.
-                    </p>
+              <div class="flex items-center justify-between gap-3">
+                <button id="prev-month-btn" class="btn-outline">
+                  <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                  <span>Prev</span>
+                </button>
+                <div class="text-xl font-bold text-[var(--brand-gold)] tracking-wide" id="calendar-month-label">—</div>
+                <button id="next-month-btn" class="btn-outline">
+                  <span>Next</span>
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+              </div>
 
-                    <div class="grid md:grid-cols-3 gap-4 mt-6 text-sm">
-                        <div class="card-fancy">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i data-lucide="user" class="w-5 h-5 text-brand-gold"></i>
-                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Profile</span>
-                            </div>
-                            <p class="text-brand-dim text-sm">
-                                Confirm your contact details, service address, and preferred city so we can calculate
-                                travel time and availability accurately.
-                            </p>
-                        </div>
-                        <div class="card-fancy">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
-                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Appointments</span>
-                            </div>
-                            <p class="text-brand-dim text-sm">
-                                View past and upcoming massage appointments, with drive-time aware scheduling coming soon.
-                            </p>
-                        </div>
-                        <div class="card-fancy">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i data-lucide="file-text" class="w-5 h-5 text-brand-gold"></i>
-                                <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/90">Receipts</span>
-                            </div>
-                            <p class="text-brand-dim text-sm">
-                                Access treatment receipts and invoices to submit to your extended health insurance provider.
-                            </p>
-                        </div>
-                    </div>
+              <div class="mt-4 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.25em] muted">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+              </div>
 
-                    <p class="text-xs text-brand-dim/70 mt-4 max-w-xl">
-                        Note: This portal is for returning clients only. New to Relax & Renew?
-                        You can still <a href="/book-now.html" class="text-brand-gold underline hover:text-brand-light">book your first session here</a> — 
-                        we will create your portal login after your first visit.
-                    </p>
-                </section>
+              <div id="calendar-days" class="mt-3 grid grid-cols-7 gap-2"></div>
 
-                <!-- RIGHT COLUMN: AUTH / DASHBOARD CARD -->
-                <aside class="card-fancy max-w-xl mx-auto w-full">
-                    <!-- LOADING STATE -->
-                    <div id="state-loading">
-                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-brand-gold/80">
-                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                            Checking login
-                        </div>
-                        <h2 class="text-2xl text-brand-light mb-2">Relax & Renew Client Portal</h2>
-                        <p class="text-brand-dim text-sm mb-4">
-                            One moment while we securely check your session.
-                        </p>
-                    </div>
+              <div class="mt-5 card p-4">
+                <div class="flex items-start gap-3">
+                  <i data-lucide="info" class="w-5 h-5 text-[var(--brand-gold)] mt-0.5"></i>
+                  <div class="flex-1">
+                    <div class="font-bold text-[var(--brand-light)]" id="availability-status-title">Availability</div>
+                    <div class="muted mt-1" id="availability-status-body">Select your treatment and duration to load live availability.</div>
+                    <div class="muted mt-3 text-sm" id="availability-meta"></div>
+                  </div>
+                </div>
+              </div>
 
-                    <!-- LOGGED OUT STATE -->
-                    <div id="state-logged-out" class="hidden">
-                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-brand-gold/80">
-                            <i data-lucide="lock" class="w-4 h-4"></i>
-                            Sign in required
-                        </div>
-                        <h2 class="text-2xl text-brand-light mb-2">Log in to your portal</h2>
-                        <p class="text-brand-dim text-sm mb-5">
-                            Use the email you book with to create or access your Relax & Renew portal account.
-                            Your password is managed securely by Auth0.
-                        </p>
-                        <button id="btn-login" class="btn-filled w-full justify-center py-3 mb-3">
-                            <i data-lucide="log-in" class="w-4 h-4"></i>
-                            Log In / Sign Up
-                        </button>
-                        <p class="text-[11px] text-brand-dim/80 leading-snug mt-2">
-                            By logging in, you agree to our
-                            <a href="/privacy-policy" class="underline text-brand-gold hover:text-brand-light">Privacy Policy</a>
-                            and
-                            <a href="/terms" class="underline text-brand-gold hover:text-brand-light">Terms</a>.
-                        </p>
-                    </div>
+              <div id="selected-date-info" class="mt-6 hidden">
+                <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 2</div>
+                <h3 class="text-2xl font-bold mt-1">Select a Time</h3>
+                <div class="mt-2 pill">
+                  <i data-lucide="calendar" class="w-4 h-4 text-[var(--brand-gold)]"></i>
+                  <span id="selected-date-display">—</span>
+                </div>
+              </div>
 
-                    <!-- LOGGED IN STATE -->
-                    <div id="state-logged-in" class="hidden">
-                        <div class="flex items-center gap-2 mb-2 text-xs tracking-[0.2em] uppercase text-emerald-400/90">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i>
-                            Logged in securely
-                        </div>
-                        <h2 class="text-2xl text-brand-light mb-1">Welcome back</h2>
-                        <p class="text-brand-dim text-sm mb-4">
-                            You are now securely signed in to your Relax & Renew client portal.
-                        </p>
+              <div id="time-slots-container" class="mt-4 hidden">
+                <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+              </div>
 
-                        <!-- PROFILE SUMMARY -->
-                        <div class="border border-brand-gold/20 rounded-lg p-3 mb-4 bg-black/40 text-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
-                                    <span class="text-xs tracking-[0.18em] uppercase text-brand-gold/80">Profile</span>
-                                </div>
-                            </div>
-                            <p class="text-brand-dim text-sm">
-                                <span class="font-semibold text-brand-light">Name:</span>
-                                <span id="profile-name" class="ml-1"></span>
-                            </p>
-                            <p class="text-brand-dim text-sm">
-                                <span class="font-semibold text-brand-light">Email:</span>
-                                <span id="profile-email" class="ml-1"></span>
-                            </p>
-                        </div>
-
-                        <!-- PLACEHOLDER DASHBOARD SECTIONS -->
-                        <div class="grid gap-3 text-sm mb-5">
-                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-gold"></i>
-                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Appointments</span>
-                                    </div>
-                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
-                                </div>
-                                <p class="text-brand-dim text-[13px]">
-                                    Your past and upcoming massage appointments will appear here.
-                                </p>
-                            </div>
-
-                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="file-text" class="w-4 h-4 text-brand-gold"></i>
-                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Receipts</span>
-                                    </div>
-                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
-                                </div>
-                                <p class="text-brand-dim text-[13px]">
-                                    Download treatment receipts and invoices for insurance claims.
-                                </p>
-                            </div>
-
-                            <div class="border border-brand-gold/15 rounded-lg p-3 bg-black/30">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="megaphone" class="w-4 h-4 text-brand-gold"></i>
-                                        <span class="text-xs tracking-[0.16em] uppercase text-brand-gold/80">Updates</span>
-                                    </div>
-                                    <span class="text-[10px] text-brand-dim/70">Coming soon</span>
-                                </div>
-                                <p class="text-brand-dim text-[13px]">
-                                    Important clinic news, membership offers, and schedule changes will be shown here.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- ACTION BUTTONS -->
-                        <div class="flex flex-col sm:flex-row gap-3 mt-4">
-                            <a href="/book-now.html" class="btn-gold flex-1 justify-center py-2">
-                                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
-                                Book a Session
-                            </a>
-                            <button id="btn-logout" class="btn-gold flex-1 justify-center py-2">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                Log Out
-                            </button>
-                        </div>
-
-                        <p class="text-[11px] text-brand-dim/80 mt-3">
-                            Your session token is stored securely in your browser and will be used to connect to our systems.
-                        </p>
-                    </div>
-                </aside>
+              <div id="no-slots" class="mt-4 hidden card p-4">
+                <div class="flex items-start gap-3">
+                  <i data-lucide="calendar-x" class="w-5 h-5 text-red-300 mt-0.5"></i>
+                  <div>
+                    <div class="font-bold text-[var(--brand-light)]">No slots available</div>
+                    <div class="muted mt-1">Please choose a different day.</div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-    </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-neutral-950 py-10 border-t border-brand-gold/20 text-center">
-        <div class="container mx-auto px-6">
-            <p class="text-brand-dim/60 text-sm mb-4">
-                Professional, registered mobile massage therapy across Niagara Region.
-            </p>
-            <div class="flex justify-center gap-6 text-brand-gold mb-6">
-                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
-                    <i data-lucide="facebook" class="w-4 h-4"></i>
-                </a>
-                <a href="mailto:info@relaxandrenew.ca" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full">
-                    <i data-lucide="mail" class="w-4 h-4"></i>
-                </a>
+            <!-- Confirm -->
+            <div class="glass-panel p-6">
+              <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 3</div>
+              <h3 class="text-2xl font-bold mt-1">Confirm</h3>
+              <p class="muted mt-2">We will create the Cliniko appointment and send your confirmation automatically.</p>
+
+              <hr class="divider my-5">
+
+              <div class="space-y-3">
+                <div class="card p-4">
+                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Client</div>
+                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-client">—</div>
+                  <div class="muted mt-1" id="summary-email">—</div>
+                </div>
+
+                <div class="card p-4">
+                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Booking</div>
+                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-treatment">Select a treatment</div>
+                  <div class="muted mt-1" id="summary-datetime">Select a date and time</div>
+                </div>
+
+                <div class="card p-4">
+                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Travel</div>
+                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-travel-fee">$0.00</div>
+                  <div class="muted mt-1" id="summary-drive-time">—</div>
+                </div>
+              </div>
+
+              <button id="confirm-booking-btn" class="btn-filled w-full mt-6 py-4 btn-disabled" disabled>
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span id="confirm-btn-text">Confirm Booking</span>
+              </button>
+
+              <div class="muted mt-4 text-sm">
+                Profile editing is <span class="pill">Coming Soon</span>.
+              </div>
             </div>
-            <a href="/index.html" class="text-brand-gold hover:text-brand-light text-sm underline">
-                Return to Main Website
-            </a>
-        </div>
-    </footer>
+          </div>
 
-    <!-- PORTAL / AUTH0 LOGIC -->
-    <script>
-        // Run lucide icons
-        document.addEventListener('DOMContentLoaded', function() {
-            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch(e) {}
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div class="bg-black/20 p-1.5" style="border-radius:var(--radius)">
+      <i id="toast-icon" data-lucide="check" class="w-4 h-4 text-[var(--brand-gold)]"></i>
+    </div>
+    <span id="toast-message">—</span>
+  </div>
+
+  <script>
+    // =========================================================
+    // STATE
+    // =========================================================
+    let auth0Client = null;
+    let portalProfile = null;
+
+    let calendarCurrent = new Date();
+    calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+
+    let selectedDateStr = null;
+    let selectedSlot = null;
+
+    let availabilityByDate = {};
+    let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+    const availabilityCache = new Map();
+
+    const treatmentSelect = document.getElementById("treatment-select");
+    const durationSelect  = document.getElementById("duration-select");
+
+    let selectedServiceKey = null;
+    let selectedStandardDuration = null;
+
+    const TREATMENT_RULES = {
+      "relaxation":  { label: "Relaxation Massage", durations: [60,75,90,120] },
+      "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
+      "sports":      { label: "Sports Massage", durations: [60,75,90,120] },
+      "senior":      { label: "Senior Massage", durations: [60,75,90,120] },
+      "hot-stone":   { label: "Hot Stone Massage", durations: [60,75,90,120] },
+      "cupping":     { label: "Cupping Therapy", durations: [60,75,90,120] },
+      "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
+      "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
+      "infant":      { label: "Infant Massage", durations: [30,45] },
+    };
+
+    // =========================================================
+    // UTIL
+    // =========================================================
+    function createIconsSafe(){
+      try {
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+          window.lucide.createIcons();
+        }
+      } catch(e) {}
+    }
+
+    function showToast(message, isError=false) {
+      const toast = document.getElementById("toast");
+      const msgEl = document.getElementById("toast-message");
+      const iconEl = document.getElementById("toast-icon");
+
+      msgEl.textContent = message || "—";
+      iconEl.setAttribute("data-lucide", isError ? "alert-circle" : "check");
+      createIconsSafe();
+
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+
+    function toDateStr(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function computeMonthRange(date) {
+      const first = new Date(date.getFullYear(), date.getMonth(), 1);
+      const last  = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      return { from: toDateStr(first), to: toDateStr(last) };
+    }
+
+    function normalizeAmPmLabel(label) {
+      return String(label || "")
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/\./g, "");
+    }
+
+    function formatTimeLabel(slot) {
+      if (slot && slot.label) return normalizeAmPmLabel(slot.label);
+      if (slot && slot.start) {
+        const d = new Date(slot.start);
+        const raw = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
+        return normalizeAmPmLabel(raw);
+      }
+      return "—";
+    }
+
+    function formatDatePretty(dateStr) {
+      const [y,m,d] = dateStr.split("-").map(Number);
+      const dt = new Date(y, m-1, d);
+      return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+    }
+
+    function setConfirmEnabled(enabled) {
+      const btn = document.getElementById("confirm-booking-btn");
+      btn.disabled = !enabled;
+      btn.classList.toggle("btn-disabled", !enabled);
+    }
+
+    function updateAvailabilityStatus(body, loaded) {
+      document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
+      document.getElementById("availability-status-body").textContent = body || "";
+      const metaEl = document.getElementById("availability-meta");
+      const buffer = Number(availabilityMeta.effective_travel_buffer_minutes || 0);
+      const maxDrive = Number(availabilityMeta.maxDriveTimeMinutes || 0);
+      metaEl.textContent = (loaded && (buffer || maxDrive))
+        ? `Travel buffer applied: ${buffer} min • Max drive time used: ${maxDrive} min`
+        : "";
+    }
+
+    // =========================================================
+    // PROFILE (No typing)
+    // =========================================================
+    function loadProfileFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem("rnr_portal_profile");
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        if (!p) return null;
+        return {
+          firstName: p.firstName || p.given_name || "",
+          lastName:  p.lastName || p.family_name || "",
+          email:     p.email || "",
+          phone:     p.phone || p.phone_number || "",
+          address:   p.address || "",
+          city:      p.city || "",
+          postal_code: p.postal_code || p.postal || ""
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function normalizeProfileFromAuth0User(user) {
+      if (!user) return null;
+
+      const claimObj = user[CLAIM_PROFILE_OBJ] || user.profile || user.user_metadata || null;
+      const addressObj = user.address || null;
+
+      const firstName = user.given_name || (user.name ? String(user.name).split(" ")[0] : "") || "";
+      const lastName  = user.family_name || (user.name ? String(user.name).split(" ").slice(1).join(" ") : "") || "";
+
+      const address = (claimObj && claimObj.address) || user[CLAIM_ADDRESS] || (addressObj && (addressObj.street_address || addressObj.formatted)) || "";
+      const city    = (claimObj && claimObj.city) || user[CLAIM_CITY] || (addressObj && addressObj.locality) || "";
+      const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || user[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
+      const phone   = (claimObj && claimObj.phone) || user[CLAIM_PHONE] || user.phone_number || "";
+
+      return { firstName, lastName, email: user.email || "", phone, address, city, postal_code: postal };
+    }
+
+    function hydrateProfileUI() {
+      document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
+      document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Signed in");
+
+      const addrLine = portalProfile?.address
+        ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim()
+        : "—";
+      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
+      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
+
+      const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
+      document.getElementById("profile-missing").classList.toggle("hidden", !missing);
+
+      if (missing) {
+        updateAvailabilityStatus("Missing address/city/postal code in your profile.", false);
+        availabilityByDate = {};
+        renderCalendar();
+        clearSelectionUI();
+        setConfirmEnabled(false);
+      } else {
+        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+      }
+
+      updateSummary();
+    }
+
+    // =========================================================
+    // AUTH GATE (hard redirect to /sign-in if not authenticated)
+    // =========================================================
+    async function ensureAuthenticatedAndLoadProfile() {
+      const returnTo = window.location.pathname + window.location.search + window.location.hash;
+      const goSignIn = () => window.location.replace("/sign-in?returnTo=" + encodeURIComponent(returnTo));
+
+      if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
+
+      auth0Client = await createAuth0Client(AUTH0_CONFIG);
+
+      // If Auth0 redirects directly to portal with code/state, handle it
+      const url = new URL(window.location.href);
+      const hasCode = url.searchParams.has("code");
+      const hasState = url.searchParams.has("state");
+
+      if (hasCode && hasState) {
+        try {
+          await auth0Client.handleRedirectCallback();
+          // Clean OAuth params from URL
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          url.searchParams.delete("error");
+          url.searchParams.delete("error_description");
+          const cleaned = url.pathname + (url.searchParams.toString() ? ("?" + url.searchParams.toString()) : "") + url.hash;
+          window.history.replaceState({}, document.title, cleaned);
+        } catch (e) {
+          return goSignIn();
+        }
+      }
+
+      const authed = await auth0Client.isAuthenticated().catch(() => false);
+      if (!authed) return goSignIn();
+
+      const user = await auth0Client.getUser();
+      portalProfile = normalizeProfileFromAuth0User(user) || null;
+
+      // Optional merge: if you also store profile fields in localStorage
+      const local = loadProfileFromLocalStorage();
+      if (local) portalProfile = { ...(portalProfile || {}), ...local };
+
+      hydrateProfileUI();
+    }
+
+    async function handleLogout() {
+      try { localStorage.removeItem("rnr_portal_profile"); } catch(e) {}
+      try {
+        if (auth0Client) {
+          await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/sign-in" } });
+          return;
+        }
+      } catch(e) {}
+      window.location.href = "/sign-in";
+    }
+
+    // =========================================================
+    // SUMMARY
+    // =========================================================
+    function updateSummary() {
+      const name = portalProfile ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() : "";
+      document.getElementById("summary-client").textContent = name || "—";
+      document.getElementById("summary-email").textContent = portalProfile?.email || "—";
+
+      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+      document.getElementById("summary-treatment").textContent = (treat && selectedStandardDuration)
+        ? `${treat.label} — ${selectedStandardDuration} min`
+        : "Select a treatment";
+
+      document.getElementById("summary-datetime").textContent = (selectedDateStr && selectedSlot)
+        ? `${formatDatePretty(selectedDateStr)} at ${formatTimeLabel(selectedSlot)}`
+        : "Select a date and time";
+
+      const drive = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      document.getElementById("summary-travel-fee").textContent = "$0.00";
+      document.getElementById("summary-drive-time").textContent = drive ? `${drive} min drive time (approx.)` : "—";
+
+      setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+    }
+
+    // =========================================================
+    // TREATMENT / DURATION
+    // =========================================================
+    function rebuildDurationOptions() {
+      durationSelect.innerHTML = "";
+      const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+      if (!rule) {
+        durationSelect.disabled = true;
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Select a treatment first…";
+        durationSelect.appendChild(opt);
+        selectedStandardDuration = null;
+        updateSummary();
+        return;
+      }
+
+      const firstOpt = document.createElement("option");
+      firstOpt.value = "";
+      firstOpt.textContent = "Select…";
+      durationSelect.appendChild(firstOpt);
+
+      rule.durations.forEach(min => {
+        const opt = document.createElement("option");
+        opt.value = String(min);
+        opt.textContent = `${min} min`;
+        durationSelect.appendChild(opt);
+      });
+
+      durationSelect.disabled = false;
+      selectedStandardDuration = null;
+      updateSummary();
+    }
+
+    // =========================================================
+    // AVAILABILITY (Calendar Gate)
+    // =========================================================
+    function clearSelectionUI() {
+      selectedDateStr = null;
+      selectedSlot = null;
+
+      document.getElementById("selected-date-info").classList.add("hidden");
+      document.getElementById("time-slots-container").classList.add("hidden");
+      document.getElementById("no-slots").classList.add("hidden");
+      setConfirmEnabled(false);
+      updateSummary();
+    }
+
+    function buildAvailabilityPayload() {
+      const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
+      if (!addrOk) return { error: "Missing address/city/postal code in profile." };
+      if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
+
+      const { from, to } = computeMonthRange(calendarCurrent);
+      const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
+
+      return {
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
+        from,
+        to,
+        standardDurationMinutes: Number(selectedStandardDuration),
+        blockDurationMinutes: Number(blockMinutes),
+        slotIntervalMinutes: 15,
+        practitionerId: DEFAULT_PRACTITIONER_ID,
+        travel_time_buffer_minutes: 0
+      };
+    }
+
+    function getRequestCacheKey(payload) {
+      return [
+        payload.from, payload.to,
+        payload.standardDurationMinutes, payload.blockDurationMinutes,
+        payload.practitionerId,
+        payload.address, payload.city, payload.postal_code
+      ].join("|");
+    }
+
+    function parseAvailabilityResponse(data) {
+      availabilityByDate = {};
+      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+
+      if (!data) return;
+
+      availabilityMeta.maxDriveTimeMinutes = Number(data.maxDriveTimeMinutes || 0);
+      availabilityMeta.effective_travel_buffer_minutes = Number(data.effective_travel_buffer_minutes || 0);
+
+      if (data.dates && Array.isArray(data.dates)) {
+        data.dates.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        data.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+      }
+    }
+
+    async function maybeLoadAvailabilityForCurrentMonth() {
+      const payload = buildAvailabilityPayload();
+      if (payload.error) {
+        updateAvailabilityStatus(payload.error, false);
+        availabilityByDate = {};
+        renderCalendar();
+        clearSelectionUI();
+        return;
+      }
+
+      const cacheKey = getRequestCacheKey(payload);
+      clearSelectionUI();
+      updateAvailabilityStatus("Checking live availability for this month…", false);
+
+      try {
+        if (availabilityCache.has(cacheKey)) {
+          parseAvailabilityResponse(availabilityCache.get(cacheKey));
+          renderCalendar();
+          updateAvailabilityStatus("Availability loaded for this month.", true);
+          return;
+        }
+
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
 
-        // ===== AUTH0 CONFIG - EDIT THESE TWO LINES =====
-        const AUTH0_DOMAIN = "dev-sbhcygzz4xcoa2ij.us.auth0.com";      // e.g. "relaxandrenew.us.auth0.com"
-        const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
-        const AUTH0_REDIRECT_URI = "https://relaxandrenew.ca/client-portal";
-        const AUTH0_LOGOUT_RETURN_TO = "https://relaxandrenew.ca/client-portal";
-
-        let auth0Client = null;
-
-        function showState(state) {
-            const loading = document.getElementById("state-loading");
-            const loggedOut = document.getElementById("state-logged-out");
-            const loggedIn = document.getElementById("state-logged-in");
-
-            if (loading) loading.classList.add("hidden");
-            if (loggedOut) loggedOut.classList.add("hidden");
-            if (loggedIn) loggedIn.classList.add("hidden");
-
-            if (state === "loading" && loading) loading.classList.remove("hidden");
-            if (state === "logged-out" && loggedOut) loggedOut.classList.remove("hidden");
-            if (state === "logged-in" && loggedIn) loggedIn.classList.remove("hidden");
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Availability error (${res.status}): ${text || res.statusText}`);
         }
 
-        async function initAuth0() {
-            auth0Client = await createAuth0Client({
-                domain: AUTH0_DOMAIN,
-                clientId: AUTH0_CLIENT_ID,
-                authorizationParams: {
-                    redirect_uri: AUTH0_REDIRECT_URI
-                },
-                cacheLocation: "localstorage",
-                useRefreshTokens: true
-            });
+        const data = await res.json();
+        availabilityCache.set(cacheKey, data);
+        parseAvailabilityResponse(data);
+        renderCalendar();
+        updateAvailabilityStatus("Live availability loaded for this month.", true);
+
+      } catch (e) {
+        console.error(e);
+        availabilityByDate = {};
+        renderCalendar();
+        updateAvailabilityStatus("Could not load availability. Please try again.", false);
+        showToast("Unable to load availability.", true);
+      }
+    }
+
+    // =========================================================
+    // CALENDAR
+    // =========================================================
+    function renderCalendar() {
+      const monthLabelEl = document.getElementById("calendar-month-label");
+      const daysContainer = document.getElementById("calendar-days");
+
+      monthLabelEl.textContent = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+
+      const year = calendarCurrent.getFullYear();
+      const month = calendarCurrent.getMonth();
+
+      const firstDay = new Date(year, month, 1);
+      const startDayOfWeek = firstDay.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      daysContainer.innerHTML = "";
+
+      for (let i = 0; i < startDayOfWeek; i++) {
+        const blank = document.createElement("div");
+        blank.className = "opacity-0";
+        blank.textContent = ".";
+        daysContainer.appendChild(blank);
+      }
+
+      const todayStr = toDateStr(new Date());
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDate = new Date(year, month, day);
+        const dateStr = toDateStr(dayDate);
+
+        const slots = availabilityByDate[dateStr] || [];
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(s => !!s.available);
+
+        const isPast = dateStr < todayStr;
+        const isSelected = selectedDateStr === dateStr;
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "calendar-day";
+
+        if (isPast || !hasAnyAvailable || !selectedServiceKey || !selectedStandardDuration) {
+          cell.classList.add("calendar-day-disabled");
+          cell.disabled = true;
+        } else {
+          cell.classList.add("calendar-day-available");
+          if (isSelected) cell.classList.add("calendar-day-selected");
+          cell.addEventListener("click", () => selectDate(dateStr));
         }
 
-        async function handleAuth0Redirect() {
-            const query = window.location.search;
-            if (query.includes("code=") && query.includes("state=")) {
-                try {
-                    await auth0Client.handleRedirectCallback();
-                } catch (err) {
-                    console.error("Error handling redirect callback:", err);
-                } finally {
-                    // Clean up ?code= & ?state= from URL
-                    window.history.replaceState({}, document.title, "/client-portal");
-                }
-            }
+        cell.textContent = String(day);
+        daysContainer.appendChild(cell);
+      }
+
+      createIconsSafe();
+    }
+
+    function selectDate(dateStr) {
+      selectedDateStr = dateStr;
+      selectedSlot = null;
+      renderCalendar();
+      updateSummary();
+
+      document.getElementById("selected-date-info").classList.remove("hidden");
+      document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
+
+      loadTimeSlots(dateStr);
+    }
+
+    function loadTimeSlots(dateStr) {
+      const container = document.getElementById("time-slots-container");
+      const grid = document.getElementById("time-slots-grid");
+      const noSlots = document.getElementById("no-slots");
+
+      container.classList.remove("hidden");
+      grid.innerHTML = "";
+
+      const slots = availabilityByDate[dateStr] || [];
+      const usable = Array.isArray(slots) ? slots.slice() : [];
+
+      if (!usable.length) {
+        noSlots.classList.remove("hidden");
+        container.classList.add("hidden");
+        return;
+      }
+
+      usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+      let anyAvailable = false;
+
+      usable.forEach(slot => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "time-slot-btn";
+        const label = formatTimeLabel(slot);
+
+        btn.innerHTML = slot.available
+          ? `<i data-lucide="clock" class="w-4 h-4 text-[var(--brand-gold)]"></i><span>${label}</span>`
+          : `<i data-lucide="x" class="w-4 h-4 text-red-300"></i><span>${label}</span>`;
+
+        if (!slot.available) {
+          btn.classList.add("time-slot-unavailable");
+          btn.disabled = true;
+        } else {
+          anyAvailable = true;
+          btn.addEventListener("click", () => selectTimeSlot(slot, btn));
         }
 
-        async function refreshUI() {
-            showState("loading");
+        grid.appendChild(btn);
+      });
 
-            const isAuthenticated = await auth0Client.isAuthenticated();
+      noSlots.classList.toggle("hidden", anyAvailable);
+      container.classList.toggle("hidden", !anyAvailable);
 
-            if (!isAuthenticated) {
-                // Clear token if any
-                window.localStorage.removeItem("rnr_auth_token");
-                showState("logged-out");
-                return;
-            }
+      createIconsSafe();
+    }
 
-            const user = await auth0Client.getUser();
+    function selectTimeSlot(slot, btnElement) {
+      selectedSlot = slot;
+      document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
+      btnElement.classList.add("time-slot-selected");
+      updateSummary();
+    }
 
-            const nameEl = document.getElementById("profile-name");
-            const emailEl = document.getElementById("profile-email");
-            if (nameEl) nameEl.textContent = user.name || "";
-            if (emailEl) emailEl.textContent = user.email || "";
+    function prevMonth() {
+      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
+      renderCalendar();
+      maybeLoadAvailabilityForCurrentMonth();
+    }
 
-            try {
-                const token = await auth0Client.getTokenSilently();
-                window.localStorage.setItem("rnr_auth_token", token);
-            } catch (err) {
-                console.error("Error getting token silently:", err);
-            }
+    function nextMonth() {
+      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+      renderCalendar();
+      maybeLoadAvailabilityForCurrentMonth();
+    }
 
-            showState("logged-in");
-        }
+    // =========================================================
+    // BOOKING CONFIRMED
+    // =========================================================
+    async function confirmBooking() {
+      if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
+        showToast("Please select treatment, duration, date, and time.", true);
+        return;
+      }
 
-        function setupEventHandlers() {
-            const loginBtn = document.getElementById("btn-login");
-            const logoutBtn = document.getElementById("btn-logout");
+      const treat = TREATMENT_RULES[selectedServiceKey];
 
-            if (loginBtn) {
-                loginBtn.addEventListener("click", async () => {
-                    try {
-                        if (typeof gtag === "function") {
-                            gtag("event", "client_portal_login_click", {
-                                event_category: "engagement",
-                                event_label: "Client Portal Log In"
-                            });
-                        }
-                        if (typeof fbq === "function") {
-                            fbq("trackCustom", "ClientPortalLoginClick");
-                        }
-                    } catch (e) {}
+      const payload = {
+        firstName: portalProfile.firstName || "",
+        lastName: portalProfile.lastName || "",
+        email: portalProfile.email || "",
+        phone: portalProfile.phone || "",
 
-                    await auth0Client.loginWithRedirect({
-                        authorizationParams: {
-                            redirect_uri: AUTH0_REDIRECT_URI
-                        }
-                    });
-                });
-            }
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
 
-            if (logoutBtn) {
-                logoutBtn.addEventListener("click", () => {
-                    window.localStorage.removeItem("rnr_auth_token");
-                    auth0Client.logout({
-                        logoutParams: {
-                            returnTo: AUTH0_LOGOUT_RETURN_TO
-                        }
-                    });
-                });
-            }
-        }
+        treatment_key: selectedServiceKey,
+        treatment_label: treat ? treat.label : "",
+        duration: Number(selectedStandardDuration),
 
-        window.addEventListener("load", async () => {
-            try {
-                showState("loading");
-                await initAuth0();
-                await handleAuth0Redirect();
-                setupEventHandlers();
-                await refreshUI();
-            } catch (err) {
-                console.error("Error during Auth0 init:", err);
-                showState("logged-out");
-            }
+        slot_start: selectedSlot.start,
+        slot_end: selectedSlot.end,
+        times_already_utc: true,
+
+        notes: "Booked via Client Portal."
+      };
+
+      const btn = document.getElementById("confirm-booking-btn");
+      const btnText = document.getElementById("confirm-btn-text");
+      const originalText = btnText.textContent;
+
+      btn.disabled = true;
+      btn.classList.add("btn-disabled");
+      btnText.textContent = "Booking…";
+      showToast("Creating your appointment…");
+
+      try {
+        const res = await fetch(BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-    </script>
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Booking error (${res.status}): ${text || res.statusText}`);
+        }
+
+        await res.json().catch(() => ({}));
+
+        showToast("Booking confirmed.");
+        availabilityCache.clear();
+        await maybeLoadAvailabilityForCurrentMonth();
+        clearSelectionUI();
+
+      } catch (e) {
+        console.error(e);
+        showToast("Booking failed. Please try again.", true);
+      } finally {
+        btnText.textContent = originalText;
+        updateSummary();
+      }
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    async function init() {
+      createIconsSafe();
+
+      // Mobile menu
+      const mm = document.getElementById("mobile-menu");
+      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
+      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+
+      // Calendar nav
+      document.getElementById("prev-month-btn").addEventListener("click", prevMonth);
+      document.getElementById("next-month-btn").addEventListener("click", nextMonth);
+
+      // Treatment
+      treatmentSelect.addEventListener("change", () => {
+        selectedServiceKey = treatmentSelect.value || null;
+        rebuildDurationOptions();
+        availabilityByDate = {};
+        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        clearSelectionUI();
+        renderCalendar();
+        updateAvailabilityStatus(selectedServiceKey ? "Now choose a duration to load live availability." : "Select your treatment and duration to load live availability.", false);
+      });
+
+      // Duration
+      durationSelect.addEventListener("change", () => {
+        selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+        availabilityByDate = {};
+        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        clearSelectionUI();
+        renderCalendar();
+        if (selectedStandardDuration) maybeLoadAvailabilityForCurrentMonth();
+        updateSummary();
+      });
+
+      // Confirm
+      document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
+
+      // Logout
+      document.getElementById("logout-btn").addEventListener("click", handleLogout);
+      document.getElementById("logout-btn-mobile").addEventListener("click", handleLogout);
+
+      renderCalendar();
+
+      // Hard auth gate
+      await ensureAuthenticatedAndLoadProfile();
+
+      // If auth gate did not redirect, continue
+      updateSummary();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      init().catch(e => {
+        console.error(e);
+        showToast("Page error. Check console for details.", true);
+      });
+    });
+  </script>
 </body>
 </html>
