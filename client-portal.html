@@ -766,113 +766,59 @@
     }
 
     // =========================================================
-    // AUTH GATE (Lock-based tokens from /sign-in)
-    //
-    // This portal expects /sign-in (Auth0 Lock) to store:
-    //   - rnr_id_token (JWT)
-    //   - rnr_auth_token (optional)
-    //   - rnr_expires_at (optional epoch ms)
-    //
-    // If missing/expired, user is redirected back to /sign-in.
+    // AUTH GATE (hard redirect to /sign-in if not authenticated)
     // =========================================================
-    function b64UrlToUtf8(b64url) {
-      const base64 = String(b64url).replace(/-/g, "+").replace(/_/g, "/");
-      const pad = base64.length % 4 ? "=".repeat(4 - (base64.length % 4)) : "";
-      const b64 = base64 + pad;
-      const bin = atob(b64);
-      let out = "";
-      for (let i = 0; i < bin.length; i++) out += String.fromCharCode(bin.charCodeAt(i));
-      // Decode UTF-8 safely
-      try {
-        return decodeURIComponent(Array.prototype.map.call(out, c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
-      } catch (e) {
-        return out;
-      }
-    }
-
-    function parseJwt(token) {
-      try {
-        const parts = String(token).split(".");
-        if (parts.length !== 3) return null;
-        return JSON.parse(b64UrlToUtf8(parts[1]));
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function isJwtExpired(payload) {
-      try {
-        if (!payload || !payload.exp) return true;
-        const expMs = Number(payload.exp) * 1000;
-        return expMs <= (Date.now() + 30_000); // 30s skew
-      } catch (e) {
-        return true;
-      }
-    }
-
-    function readStoredSession() {
-      try {
-        const idToken = localStorage.getItem("rnr_id_token");
-        const accessToken = localStorage.getItem("rnr_auth_token");
-        const expiresAtRaw = localStorage.getItem("rnr_expires_at");
-
-        if (!idToken) return null;
-
-        const payload = parseJwt(idToken);
-        if (!payload) return null;
-
-        // Prefer explicit expires_at if present
-        if (expiresAtRaw && Number(expiresAtRaw) > 0) {
-          const isExpired = Number(expiresAtRaw) <= (Date.now() + 30_000);
-          return { idToken, accessToken, payload, isExpired };
-        }
-
-        return { idToken, accessToken, payload, isExpired: isJwtExpired(payload) };
-      } catch (e) {
-        return null;
-      }
-    }
-
     async function ensureAuthenticatedAndLoadProfile() {
       const returnTo = window.location.pathname + window.location.search + window.location.hash;
       const goSignIn = () => window.location.replace("/sign-in?returnTo=" + encodeURIComponent(returnTo));
 
-      const session = readStoredSession();
-      if (!session || session.isExpired) return goSignIn();
+      if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
 
-      // Use existing normalizer (expects an Auth0-like user object)
-      portalProfile = normalizeProfileFromAuth0User(session.payload) || null;
+      auth0Client = await createAuth0Client(AUTH0_CONFIG);
+
+      // If Auth0 redirects directly to portal with code/state, handle it
+      const url = new URL(window.location.href);
+      const hasCode = url.searchParams.has("code");
+      const hasState = url.searchParams.has("state");
+
+      if (hasCode && hasState) {
+        try {
+          await auth0Client.handleRedirectCallback();
+          // Clean OAuth params from URL
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          url.searchParams.delete("error");
+          url.searchParams.delete("error_description");
+          const cleaned = url.pathname + (url.searchParams.toString() ? ("?" + url.searchParams.toString()) : "") + url.hash;
+          window.history.replaceState({}, document.title, cleaned);
+        } catch (e) {
+          return goSignIn();
+        }
+      }
+
+      const authed = await auth0Client.isAuthenticated().catch(() => false);
+      if (!authed) return goSignIn();
+
+      const user = await auth0Client.getUser();
+      portalProfile = normalizeProfileFromAuth0User(user) || null;
 
       // Optional merge: if you also store profile fields in localStorage
       const local = loadProfileFromLocalStorage();
       if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-      // Basic sanity: require at least an email claim
-      if (!portalProfile || !portalProfile.email) return goSignIn();
-
       hydrateProfileUI();
     }
 
     async function handleLogout() {
+      try { localStorage.removeItem("rnr_portal_profile"); } catch(e) {}
       try {
-        localStorage.removeItem("rnr_id_token");
-        localStorage.removeItem("rnr_auth_token");
-        localStorage.removeItem("rnr_expires_at");
-        localStorage.removeItem("rnr_userinfo");
-        localStorage.removeItem("rnr_portal_profile");
+        if (auth0Client) {
+          await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/sign-in" } });
+          return;
+        }
       } catch(e) {}
-
-      // Best-effort: clear Auth0 SSO cookies (if any) then return to /sign-in
-      try {
-        const returnTo = encodeURIComponent(window.location.origin + "/sign-in");
-        const url = "https://" + AUTH0_CONFIG.domain + "/v2/logout?client_id=" + encodeURIComponent(AUTH0_CONFIG.clientId) + "&returnTo=" + returnTo;
-        window.location.href = url;
-        return;
-      } catch(e) {}
-
       window.location.href = "/sign-in";
     }
-
 
     // =========================================================
     // SUMMARY
@@ -895,8 +841,7 @@
       document.getElementById("summary-travel-fee").textContent = "$0.00";
       document.getElementById("summary-drive-time").textContent = drive ? `${drive} min drive time (approx.)` : "—";
 
-      const profileReady = !!(portalProfile && portalProfile.firstName && portalProfile.lastName && portalProfile.email && portalProfile.phone && portalProfile.address && portalProfile.city && portalProfile.postal_code);
-      setConfirmEnabled(!!(profileReady && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+      setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
     }
 
     // =========================================================
@@ -1192,9 +1137,8 @@
     // BOOKING CONFIRMED
     // =========================================================
     async function confirmBooking() {
-      const profileReady = !!(portalProfile && portalProfile.firstName && portalProfile.lastName && portalProfile.email && portalProfile.phone && portalProfile.address && portalProfile.city && portalProfile.postal_code);
-      if (!(profileReady && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
-        showToast("Missing saved profile info or selection. Please re-sign in or contact us for help.", true);
+      if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
+        showToast("Please select treatment, duration, date, and time.", true);
         return;
       }
 
