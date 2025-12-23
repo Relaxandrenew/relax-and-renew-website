@@ -6,8 +6,44 @@
   <title>Client Portal | Relax & Renew RMT</title>
   <meta name="description" content="Relax & Renew Client Portal — rebook appointments, view your details, and manage your membership." />
 
+  <!-- Meta Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '701194265870298');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+  /></noscript>
+
+  <!-- Google Analytics / Ads -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J4NC9FL44H');
+    gtag('config', 'AW-17575022013');
+  </script>
+
+  <!-- Suppress noisy third-party errors -->
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      if (!url || (msg && String(msg).toLowerCase().indexOf("script error") > -1)) return true;
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) { event.preventDefault(); });
+  </script>
+
   <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,8 +51,9 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Auth0 SPA SDK (optional but recommended) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+  <!-- Auth0 Lock (Embedded Email + Password Window) -->
+  <link rel="stylesheet" href="https://cdn.auth0.com/js/lock/14.2.0/lock.min.css" />
+  <script src="https://cdn.auth0.com/js/lock/14.2.0/lock.min.js"></script>
 
   <style>
     :root{
@@ -25,11 +62,7 @@
       --brand-gold-hover:#F0D594;
       --brand-light:#F6F0DD;
       --brand-dim:rgba(246,240,221,.72);
-
-      /* Square corners */
       --radius:0px;
-
-      /* Subtle (reduced) glow */
       --glow:0 0 0 1px rgba(224,197,132,.22);
       --shadow:0 10px 30px rgba(0,0,0,.55);
     }
@@ -44,7 +77,7 @@
       color:var(--brand-light);
     }
 
-    /* Header / Nav styling closely aligned to booknowtest.html */
+    /* Header / Nav */
     .fixed-nav{
       position:fixed; top:0; left:0; right:0;
       z-index:50;
@@ -122,7 +155,6 @@
       user-select:none;
     }
     .btn-filled:hover{ filter:brightness(1.04); }
-
     .btn-disabled{ opacity:.45; cursor:not-allowed; }
 
     .input{
@@ -137,8 +169,7 @@
       line-height:1.35;
       min-height:48px;
     }
-        select.input{ padding-right:2.6rem; }
-
+    select.input{ padding-right:2.6rem; }
     .input:focus{
       border-color: rgba(224,197,132,.55);
       box-shadow: 0 0 0 1px rgba(224,197,132,.25);
@@ -248,6 +279,7 @@
       opacity:0;
       pointer-events:none;
       transition:opacity .2s ease, transform .2s ease;
+      z-index:200;
     }
     .toast.show{
       opacity:1;
@@ -268,44 +300,183 @@
     }
     .muted{ color:var(--brand-dim); }
     .divider{ border-color: rgba(224,197,132,.16); }
+
+    /* =========================================================
+       LOGIN OVERLAY STYLES
+       ========================================================= */
+    #login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.95);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #login-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .login-card {
+      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
+      border: 1px solid rgba(224, 197, 132, 0.25);
+      backdrop-filter: blur(10px);
+      padding: 2.5rem 2rem;
+      max-width: 420px;
+      width: 90%;
+      position: relative;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, #E0C584, transparent);
+    }
+
+    /* Auth0 Lock theming */
+    #auth0-lock-container { width: 100% !important; }
+    #auth0-lock-container .auth0-lock,
+    #auth0-lock-container .auth0-lock * {
+      font-family: 'Cormorant Garamond', serif !important;
+      border-radius: 0px !important;
+      box-shadow: none !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-widget {
+      background: #000 !important;
+      border: 1px solid rgba(224,197,132,0.45) !important;
+      overflow: hidden !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-header,
+    #auth0-lock-container .auth0-lock .auth0-lock-header-bg,
+    #auth0-lock-container .auth0-lock .auth0-lock-footer,
+    #auth0-lock-container .auth0-lock .auth0-lock-name,
+    #auth0-lock-container .auth0-lock .auth0-lock-badge {
+      display: none !important;
+    }
+    #auth0-lock-container .auth0-lock,
+    #auth0-lock-container .auth0-lock .auth0-lock-content,
+    #auth0-lock-container .auth0-lock .auth0-lock-pane,
+    #auth0-lock-container .auth0-lock .auth0-lock-cred-pane,
+    #auth0-lock-container .auth0-lock .auth0-lock-center,
+    #auth0-lock-container .auth0-lock .auth0-lock-form,
+    #auth0-lock-container .auth0-lock .auth0-lock-body-content,
+    #auth0-lock-container .auth0-lock .auth0-lock-signup,
+    #auth0-lock-container .auth0-lock .auth0-lock-terms,
+    #auth0-lock-container .auth0-lock .auth0-lock-message,
+    #auth0-lock-container .auth0-lock .auth0-lock-warning,
+    #auth0-lock-container .auth0-lock .auth0-lock-error,
+    #auth0-lock-container .auth0-lock .auth0-lock-error-msg {
+      background: #000 !important;
+    }
+    #auth0-lock-container .auth0-lock,
+    #auth0-lock-container .auth0-lock label,
+    #auth0-lock-container .auth0-lock p,
+    #auth0-lock-container .auth0-lock .auth0-lock-alternative,
+    #auth0-lock-container .auth0-lock .auth0-lock-terms {
+      color: rgba(240,226,192,0.92) !important;
+    }
+    #auth0-lock-container .auth0-lock label {
+      color: #E0C584 !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.04em !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs,
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs-container {
+      background: #000 !important;
+      border-bottom: 1px solid rgba(224,197,132,0.25) !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs li a,
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs li span {
+      background: #000 !important;
+      color: rgba(240,226,192,0.70) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.14em !important;
+      font-weight: 700 !important;
+      font-size: 0.72rem !important;
+      padding: 18px 16px !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
+    #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
+      color: #E0C584 !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap {
+      background: #000 !important;
+      border: 1px solid rgba(224,197,132,0.55) !important;
+      padding: 0 !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input,
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea {
+      background: #000 !important;
+      color: rgba(240,226,192,0.95) !important;
+      font-size: 1.05rem !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input::placeholder,
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea::placeholder {
+      color: rgba(240,226,192,0.45) !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap:focus-within {
+      border-color: #F0D594 !important;
+      box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+      color: rgba(224,197,132,0.90) !important;
+    }
+    #auth0-lock-container .auth0-lock button.auth0-lock-submit,
+    #auth0-lock-container .auth0-lock .auth0-lock-submit button {
+      background: #E0C584 !important;
+      border: 1px solid #E0C584 !important;
+      color: #000 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.12em !important;
+      font-weight: 800 !important;
+      padding: 14px 16px !important;
+    }
+    #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
+    #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
+      background: #F0D594 !important;
+      border-color: #F0D594 !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-separator span {
+      background: #000 !important;
+      color: rgba(240,226,192,0.85) !important;
+    }
+    #auth0-lock-container .auth0-lock .auth0-lock-separator:before,
+    #auth0-lock-container .auth0-lock .auth0-lock-separator:after {
+      background: rgba(224,197,132,0.25) !important;
+    }
+    #auth0-lock-container .auth0-lock a {
+      color: #E0C584 !important;
+    }
+    #auth0-lock-container .auth0-lock a:hover {
+      color: #F0D594 !important;
+    }
   </style>
 
   <script>
-    // (Removed) Canonical-host enforcement was causing redirect loops when Netlify/DNS also redirects between apex and www.
-// =========================================================
+    // =========================================================
     // CONFIG
     // =========================================================
-    // n8n Webhook endpoints (defaults align with your booknowtest.html Railway base)
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
-
-    // Your calendar gate workflow expects a practitionerId (Cassandra by default).
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
-
-    // Setup buffer to convert standard -> block minutes (60 => 85, etc.)
     const STATIC_SETUP_MINUTES = 25;
-
-    // Travel fee rules (portal-side approximation; workflow can refine later)
-    const EXTENDED_ZONE_TRAVEL_FEE = 20; // dollars (before HST)
+    const EXTENDED_ZONE_TRAVEL_FEE = 20;
     const EXTENDED_ZONE_CITIES = new Set(["hamilton", "grimsby"]);
 
-    // Auth0 (optional but recommended). If you do not want Auth0 on this page,
-    // have your /sign-in page store a profile in localStorage under "rnr_portal_profile".
-    const AUTH0_ENABLED = true; // set false if sign-in page handles everything and stores profile locally
-    const AUTH0_CONFIG = {
-      domain: "auth.relaxandrenew.ca",
-      clientId: "T8FERqkpcryRN77voMnLeaXIkha1eqK1",
-      authorizationParams: {
-        redirect_uri: window.location.origin + window.location.pathname,
-        // audience: "YOUR_API_AUDIENCE", // if you use one
-        // scope: "openid profile email"
-      },
-      cacheLocation: "localstorage",
-      useRefreshTokens: true
-    };
+    // Auth0 Config
+    const AUTH0_DOMAIN = "auth.relaxandrenew.ca";
+    const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
+    const AUTH0_DB_CONNECTION = "Username-Password-Authentication";
 
-    // Custom claim keys (Auth0 Action/Rule) you may already be using.
+    // Custom claim keys
     const CLAIM_PROFILE_OBJ  = "https://relaxandrenew.ca/profile";
     const CLAIM_ADDRESS      = "https://relaxandrenew.ca/address";
     const CLAIM_CITY         = "https://relaxandrenew.ca/city";
@@ -315,7 +486,44 @@
 </head>
 
 <body>
-  <!-- NAV (matched to booknowtest.html) -->
+  <!-- =========================================================
+       LOGIN OVERLAY (shows on top of portal until authenticated)
+       ========================================================= -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center">
+          <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+               alt="Relax & Renew"
+               class="w-16 h-16 object-contain opacity-95" />
+        </div>
+        <h2 class="text-3xl text-[var(--brand-gold)] mt-5 font-bold">Welcome</h2>
+        <p class="text-[var(--brand-dim)] text-sm mt-2">
+          Sign in to your client portal to continue.
+        </p>
+      </div>
+
+      <div class="mt-6">
+        <div id="auth0-lock-container"></div>
+      </div>
+
+      <p class="text-[11px] text-[var(--brand-dim)] leading-snug mt-4 text-center opacity-80">
+        By logging in, you agree to our
+        <a href="/privacy-policy" class="underline text-[var(--brand-gold)] hover:text-[var(--brand-light)]">Privacy Policy</a>
+        and
+        <a href="/terms" class="underline text-[var(--brand-gold)] hover:text-[var(--brand-light)]">Terms</a>.
+      </p>
+
+      <div id="auth0-error" class="hidden mt-4 text-sm border border-red-500/30 bg-red-500/10 p-3 text-red-300"></div>
+
+      <p class="text-xs text-[var(--brand-dim)] mt-6 text-center opacity-70">
+        Note: This portal is for returning clients only. New to Relax &amp; Renew?
+        <a href="/book" class="text-[var(--brand-gold)] underline hover:text-[var(--brand-light)]">Book your first session here</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- NAV -->
   <nav id="navbar" class="fixed-nav">
     <div class="container mx-auto px-6 flex justify-between items-center h-20">
       <a href="index.html" class="flex items-center gap-3 no-underline group">
@@ -471,7 +679,7 @@
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline" href="/cdn-cgi/l/email-protection#91f8fff7fed1e3f4fdf0e9f0fff5e3f4fff4e6bff2f0">
+                      <a class="btn-outline" href="mailto:info@relaxandrenew.ca">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -644,25 +852,24 @@
     <span id="toast-message">Success</span>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script>
     // =========================================================
     // STATE
     // =========================================================
-    let auth0Client = null;
-    let portalUser = null;      // Auth0 user object (if enabled)
-    let portalProfile = null;   // Normalized profile { firstName,lastName,email,phone,address,city,postal_code }
+    let lock = null;
+    let portalProfile = null;
 
     let calendarCurrent = new Date();
     let selectedDateStr = null;
     let selectedSlot = null;
 
-    let availabilityByDate = {}; // { 'YYYY-MM-DD': [slots...] }
+    let availabilityByDate = {};
     let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
 
     const availabilityCache = new Map();
 
-    const treatmentSelect = document.getElementById("treatment-select");
-    const durationSelect  = document.getElementById("duration-select");
+    let treatmentSelect = null;
+    let durationSelect = null;
 
     let selectedServiceKey = null;
     let selectedStandardDuration = null;
@@ -672,10 +879,8 @@
       "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
       "sports":      { label: "Sports Massage", durations: [60,75,90,120] },
       "senior":      { label: "Senior Massage", durations: [60,75,90,120] },
-
       "hot-stone":   { label: "Hot Stone Massage", durations: [60,75,90,120] },
       "cupping":     { label: "Cupping Therapy", durations: [60,75,90,120] },
-
       "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
       "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
       "infant":      { label: "Infant Massage", durations: [30,45] },
@@ -689,15 +894,22 @@
       const msgEl = document.getElementById("toast-message");
       msgEl.textContent = message || title || "—";
       toast.classList.add("show");
-
-      // swap icon
       const iconWrap = toast.querySelector("i");
-      if (iconWrap) {
-        iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
-      }
+      if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
-
       setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('auth0-error');
+      if (!el) return;
+      el.textContent = msg || "Sign in failed. Please try again.";
+      el.classList.remove('hidden');
+    }
+
+    function hideAuthError() {
+      const el = document.getElementById('auth0-error');
+      if (el) el.classList.add('hidden');
     }
 
     function toDateStr(date) {
@@ -714,10 +926,7 @@
     }
 
     function normalizeAmPmLabel(label) {
-      return String(label || "")
-        .toLowerCase()
-        .replace(/\s+/g, "")
-        .replace(/\./g, "");
+      return String(label || "").toLowerCase().replace(/\s+/g, "").replace(/\./g, "");
     }
 
     function formatTimeLabel(slot) {
@@ -751,13 +960,11 @@
     }
 
     function updateSummary() {
-      // client
       document.getElementById("summary-client").textContent = portalProfile
         ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() || "—"
         : "—";
       document.getElementById("summary-email").textContent = portalProfile?.email || "—";
 
-      // treatment
       const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
       if (treat && selectedStandardDuration) {
         document.getElementById("summary-treatment").textContent = `${treat.label} — ${selectedStandardDuration} min`;
@@ -765,14 +972,12 @@
         document.getElementById("summary-treatment").textContent = "Select a treatment";
       }
 
-      // date/time
       if (selectedDateStr && selectedSlot) {
         document.getElementById("summary-datetime").textContent = `${formatDatePretty(selectedDateStr)} at ${formatTimeLabel(selectedSlot)}`;
       } else {
         document.getElementById("summary-datetime").textContent = "Select a date and time";
       }
 
-      // travel
       const travelFee = calcTravelFee(portalProfile);
       const drive = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
       document.getElementById("summary-travel-fee").textContent = `$${Number(travelFee || 0).toFixed(2)}`;
@@ -798,7 +1003,20 @@
     }
 
     // =========================================================
-    // PROFILE (NO USER TYPING)
+    // LOGIN OVERLAY CONTROL
+    // =========================================================
+    function showLoginOverlay() {
+      document.getElementById("login-overlay").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+
+    function hideLoginOverlay() {
+      document.getElementById("login-overlay").classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    // =========================================================
+    // PROFILE
     // =========================================================
     function hydrateProfileUI() {
       document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
@@ -811,7 +1029,6 @@
       const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
       document.getElementById("profile-missing").classList.toggle("hidden", !missing);
 
-      // If missing, disable confirm + avoid availability load
       if (missing) {
         updateAvailabilityStatus("Missing address/city/postal code in portal profile.", false);
         availabilityByDate = {};
@@ -842,34 +1059,8 @@
       }
     }
 
-    function normalizeProfileFromAuth0User(user) {
-      if (!user) return null;
-
-      // Try custom profile object claim
-      const claimObj = user[CLAIM_PROFILE_OBJ] || user.profile || user.user_metadata || null;
-      const addressObj = user.address || null;
-
-      const firstName = user.given_name || (user.name ? String(user.name).split(" ")[0] : "") || "";
-      const lastName  = user.family_name || (user.name ? String(user.name).split(" ").slice(1).join(" ") : "") || "";
-
-      const address = (claimObj && claimObj.address) || user[CLAIM_ADDRESS] || (addressObj && (addressObj.street_address || addressObj.formatted)) || "";
-      const city    = (claimObj && claimObj.city) || user[CLAIM_CITY] || (addressObj && addressObj.locality) || "";
-      const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || user[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
-      const phone   = (claimObj && claimObj.phone) || user[CLAIM_PHONE] || user.phone_number || "";
-
-      return {
-        firstName, lastName,
-        email: user.email || "",
-        phone,
-        address,
-        city,
-        postal_code: postal
-      };
-    }
-
-    
     // =========================================================
-    // TOKEN FALLBACK (when /sign-in uses Auth0 Lock and stores tokens)
+    // TOKEN / JWT HELPERS
     // =========================================================
     function base64UrlDecode(str) {
       try {
@@ -938,75 +1129,198 @@
     async function tryEnrichProfileFromUserInfo(accessToken, currentProfile) {
       if (!accessToken) return currentProfile;
       try {
-        const res = await fetch("https://auth.relaxandrenew.ca/userinfo", {
+        const res = await fetch(`https://${AUTH0_DOMAIN}/userinfo`, {
           headers: { "Authorization": "Bearer " + accessToken }
         });
         if (!res.ok) return currentProfile;
         const u = await res.json();
-        const p2 = normalizeProfileFromAuth0User(u) || {};
+        
+        const claimObj = u[CLAIM_PROFILE_OBJ] || u.profile || u.user_metadata || null;
+        const addressObj = u.address || null;
+
+        const firstName = u.given_name || (u.name ? String(u.name).split(" ")[0] : "") || "";
+        const lastName  = u.family_name || (u.name ? String(u.name).split(" ").slice(1).join(" ") : "") || "";
+
+        const address = (claimObj && claimObj.address) || u[CLAIM_ADDRESS] || (addressObj && (addressObj.street_address || addressObj.formatted)) || "";
+        const city    = (claimObj && claimObj.city) || u[CLAIM_CITY] || (addressObj && addressObj.locality) || "";
+        const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || u[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
+        const phone   = (claimObj && claimObj.phone) || u[CLAIM_PHONE] || u.phone_number || "";
+
+        const p2 = { firstName, lastName, email: u.email || "", phone, address, city, postal_code: postal };
         return { ...(currentProfile || {}), ...p2 };
       } catch (e) {
         return currentProfile;
       }
     }
 
-async function ensureAuthenticatedAndLoadProfile() {
-      const returnTo = window.location.pathname + window.location.search + window.location.hash;
-      const goSignIn = () => window.location.replace("/sign-in?returnTo=" + encodeURIComponent(returnTo));
-
-      // Primary path: /sign-in uses Auth0 Lock and stores tokens in localStorage
+    // =========================================================
+    // AUTH CHECK ON LOAD
+    // =========================================================
+    async function checkExistingAuth() {
       const { idToken, accessToken } = getStoredLockTokens();
+      
       if (idToken) {
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
+          // Valid token exists - user is authenticated
           portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-          // Optional merge: locally cached profile (if you store it)
+          // Merge with localStorage profile if exists
           const local = loadProfileFromLocalStorage();
           if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-          // Best-effort: enrich from /userinfo using the access token (may fail if CORS not allowed)
+          // Try to enrich from userinfo
           portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
 
+          // Hide login overlay and show portal
+          hideLoginOverlay();
           hydrateProfileUI();
-          return;
+          renderCalendar();
+          
+          // Track login
+          try {
+            if (typeof gtag === "function") gtag("event", "client_portal_session_restored");
+          } catch (e) {}
+          
+          return true;
         } else {
-          // Token exists but is expired - clear it and redirect to sign-in
-          console.warn("ID token expired, redirecting to sign-in...");
+          // Token expired - clear it
           localStorage.removeItem("rnr_id_token");
           localStorage.removeItem("rnr_auth_token");
-          goSignIn();
-          return;
         }
       }
-
-      // No token found - redirect to sign-in
-      console.warn("No authentication token found, redirecting to sign-in...");
-      goSignIn();
+      
+      // No valid auth - show login overlay and initialize Lock
+      showLoginOverlay();
+      initAuth0Lock();
+      return false;
     }
 
+    // =========================================================
+    // AUTH0 LOCK INITIALIZATION
+    // =========================================================
+    function initAuth0Lock() {
+      lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
+        container: 'auth0-lock-container',
+        theme: {
+          logo: 'https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png',
+          primaryColor: '#E0C584'
+        },
+        languageDictionary: { 
+          title: "", 
+          emailInputPlaceholder: "Email", 
+          passwordInputPlaceholder: "Password" 
+        },
+        auth: {
+          redirect: false,
+          responseType: 'token id_token',
+          sso: false,
+          params: { scope: 'openid profile email' }
+        },
+        allowedConnections: [AUTH0_DB_CONNECTION],
+        usernameStyle: "email",
+        rememberLastLogin: true,
+        autofocus: true,
+        autoclose: false,
+        closable: false
+      });
+
+      // Show the Lock widget
+      lock.show();
+
+      // Handle successful authentication
+      lock.on('authenticated', async function(authResult) {
+        hideAuthError();
+        
+        try {
+          // Store tokens
+          if (authResult && authResult.accessToken) {
+            localStorage.setItem('rnr_auth_token', authResult.accessToken);
+          }
+          if (authResult && authResult.idToken) {
+            localStorage.setItem('rnr_id_token', authResult.idToken);
+          }
+
+          // Build profile from ID token
+          const payload = decodeJwtPayload(authResult.idToken);
+          portalProfile = buildProfileFromJwtPayload(payload) || null;
+
+          // Merge with localStorage profile
+          const local = loadProfileFromLocalStorage();
+          if (local) portalProfile = { ...(portalProfile || {}), ...local };
+
+          // Try to enrich from userinfo
+          portalProfile = await tryEnrichProfileFromUserInfo(authResult.accessToken, portalProfile);
+
+          // Track login success
+          try {
+            if (typeof gtag === "function") gtag("event", "client_portal_login_success");
+            if (typeof fbq === "function") fbq("trackCustom", "ClientPortalLoginSuccess");
+          } catch (e) {}
+
+          // Hide login overlay with slight delay for smooth transition
+          setTimeout(() => {
+            hideLoginOverlay();
+            hydrateProfileUI();
+            renderCalendar();
+            showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`);
+          }, 300);
+
+        } catch (e) {
+          console.error("Auth processing error:", e);
+          showAuthError("Sign in succeeded but there was an error loading your profile. Please refresh.");
+        }
+      });
+
+      // Handle auth errors
+      lock.on('authorization_error', function(err) {
+        console.error('Auth0 authorization_error:', err);
+        showAuthError("Sign in failed. Please check your email/password and try again.");
+      });
+
+      lock.on('unrecoverable_error', function(err) {
+        console.error('Auth0 unrecoverable_error:', err);
+        showAuthError("An error occurred. Please refresh the page and try again.");
+      });
+    }
+
+    // =========================================================
+    // LOGOUT
+    // =========================================================
     async function handleLogout() {
-      // Clear any locally stored profile/tokens
+      // Clear tokens
       try {
         localStorage.removeItem("rnr_portal_profile");
         localStorage.removeItem("rnr_id_token");
         localStorage.removeItem("rnr_auth_token");
       } catch(e) {}
 
-      // If SPA client is active, also trigger Auth0 logout
-      try {
-        if (auth0Client) {
-          await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/sign-in" } });
-          return;
-        }
-      } catch(e) {}
-
-      window.location.href = "/sign-in";
+      // Reset state
+      portalProfile = null;
+      
+      // Show login overlay and reinitialize Lock
+      showLoginOverlay();
+      
+      // Destroy existing Lock instance and create new one
+      if (lock) {
+        try { lock.hide(); } catch(e) {}
+      }
+      
+      // Clear the container and reinitialize
+      document.getElementById("auth0-lock-container").innerHTML = "";
+      initAuth0Lock();
+      
+      showToast("Signed out", "You have been signed out successfully.");
     }
+
     // =========================================================
     // TREATMENT / DURATION
     // =========================================================
     function rebuildDurationOptions() {
+      if (!durationSelect) {
+        console.error("durationSelect not found");
+        return;
+      }
       durationSelect.innerHTML = "";
 
       const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
@@ -1039,7 +1353,7 @@ async function ensureAuthenticatedAndLoadProfile() {
     }
 
     // =========================================================
-    // AVAILABILITY (Calendar Gate workflow)
+    // AVAILABILITY
     // =========================================================
     function clearSelectionUI() {
       selectedDateStr = null;
@@ -1181,7 +1495,6 @@ async function ensureAuthenticatedAndLoadProfile() {
 
       daysContainer.innerHTML = "";
 
-      // Leading blanks
       for (let i = 0; i < startDayOfWeek; i++) {
         const blank = document.createElement("div");
         blank.className = "opacity-0";
@@ -1252,7 +1565,6 @@ async function ensureAuthenticatedAndLoadProfile() {
         return;
       }
 
-      // Sort by start time
       usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
       let anyAvailable = false;
@@ -1309,7 +1621,7 @@ async function ensureAuthenticatedAndLoadProfile() {
     }
 
     // =========================================================
-    // BOOKING CONFIRMATION (Booking Confirmed workflow)
+    // BOOKING CONFIRMATION
     // =========================================================
     async function confirmBooking() {
       if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
@@ -1322,41 +1634,29 @@ async function ensureAuthenticatedAndLoadProfile() {
       const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
 
       const bookingPayload = {
-        // Client info
         firstName: portalProfile.firstName || "",
         lastName:  portalProfile.lastName || "",
         email:     portalProfile.email || "",
         phone:     portalProfile.phone || "",
-
-        // Address
         address: portalProfile.address,
         city: portalProfile.city,
         postal_code: portalProfile.postal_code,
-
-        // Treatment
         treatment_key: selectedServiceKey,
         treatment_label: treat ? treat.label : "",
         duration: Number(selectedStandardDuration),
         standardDurationMinutes: Number(selectedStandardDuration),
         participants: 1,
         participant_count: 1,
-
-        // Slot (already UTC from calendar gate)
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
         date: selectedDateStr,
         times_already_utc: true,
-
-        // Travel info (for notes + any downstream logic)
         travel_charge: Number(travelFee || 0),
         drive_time_minutes: Number(driveTime || 0),
         travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
-
-        // Notes
         notes: "Booked via Client Portal."
       };
 
-      // Save for debugging
       try { localStorage.setItem("rnr_portal_last_booking_payload", JSON.stringify(bookingPayload)); } catch(e) {}
 
       const btn = document.getElementById("confirm-booking-btn");
@@ -1385,14 +1685,11 @@ async function ensureAuthenticatedAndLoadProfile() {
         showToast("Booked", "Your appointment has been confirmed.");
         updateAvailabilityStatus("Booking confirmed. Reloading availability…", true);
 
-        // Reload availability after booking
-        availabilityCache.clear(); // avoid stale cache for this range
+        availabilityCache.clear();
         await maybeLoadAvailabilityForCurrentMonth();
 
-        // Clear selection
         clearSelectionUI();
 
-        // Optional: keep a confirmation message in console
         console.log("Booking confirmed:", result);
 
       } catch (e) {
@@ -1429,6 +1726,10 @@ async function ensureAuthenticatedAndLoadProfile() {
       const mm = document.getElementById("mobile-menu");
       document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
       document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+
+      // Get form elements
+      treatmentSelect = document.getElementById("treatment-select");
+      durationSelect = document.getElementById("duration-select");
 
       // Tabs
       document.querySelectorAll(".sidebar-btn").forEach(btn => {
@@ -1487,7 +1788,12 @@ async function ensureAuthenticatedAndLoadProfile() {
       // Initial tab
       switchTab("dashboard");
 
-      // Load profile (and then availability)
-      await ensureAuthenticatedAndLoadProfile();
+      // Check for existing authentication - this will either show login or load the portal
+      await checkExistingAuth();
+    }
 
-     
+    // Run on DOM ready
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
