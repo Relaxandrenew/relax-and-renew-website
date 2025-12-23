@@ -271,20 +271,8 @@
   </style>
 
   <script>
-    // =========================================================
-    // CANONICAL HOST (prevents localStorage split between www and non-www)
-    // =========================================================
-    (function enforceCanonicalHost(){
-      const CANONICAL_HOST = "www.relaxandrenew.ca";
-      if (window.location.hostname && window.location.hostname !== CANONICAL_HOST) {
-        // Only force between apex and www for this site
-        if (window.location.hostname === "relaxandrenew.ca") {
-          window.location.replace(window.location.protocol + "//" + CANONICAL_HOST + window.location.pathname + window.location.search + window.location.hash);
-        }
-      }
-    })();
-
-    // =========================================================
+    // (Removed) Canonical-host enforcement was causing redirect loops when Netlify/DNS also redirects between apex and www.
+// =========================================================
     // CONFIG
     // =========================================================
     // n8n Webhook endpoints (defaults align with your booknowtest.html Railway base)
@@ -966,109 +954,24 @@ async function ensureAuthenticatedAndLoadProfile() {
       const returnTo = window.location.pathname + window.location.search + window.location.hash;
       const goSignIn = () => window.location.replace("/sign-in?returnTo=" + encodeURIComponent(returnTo));
 
-      // 1) Primary path: /sign-in uses Auth0 Lock and stores tokens in localStorage
+      // Primary path: /sign-in uses Auth0 Lock and stores tokens in localStorage
       const { idToken, accessToken } = getStoredLockTokens();
       if (idToken) {
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
           portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-          // Optional merge: local cached profile fields (if you store them)
+          // Optional merge: locally cached profile (if you store it)
           const local = loadProfileFromLocalStorage();
           if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-          // Best-effort: enrich from /userinfo (may be blocked by CORS depending on Auth0 settings)
+          // Best-effort: enrich from /userinfo using the access token (may fail if CORS not allowed)
           portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
 
           hydrateProfileUI();
           return;
         }
 
-        // Token expired/invalid; clear and send to sign-in
-        try {
-          localStorage.removeItem("rnr_id_token");
-          localStorage.removeItem("rnr_auth_token");
-        } catch (e) {}
-        return goSignIn();
-      }
-
-      // 2) Fallback: Auth0 SPA session (only if you later switch the portal to SPA auth)
-      if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
-
-      auth0Client = await createAuth0Client(AUTH0_CONFIG);
-
-      const url = new URL(window.location.href);
-      const hasCode = url.searchParams.has("code");
-      const hasState = url.searchParams.has("state");
-
-      if (hasCode && hasState) {
-        try {
-          await auth0Client.handleRedirectCallback();
-          url.searchParams.delete("code");
-          url.searchParams.delete("state");
-          url.searchParams.delete("error");
-          url.searchParams.delete("error_description");
-          const cleaned = url.pathname + (url.searchParams.toString() ? ("?" + url.searchParams.toString()) : "") + url.hash;
-          window.history.replaceState({}, document.title, cleaned);
-        } catch (e) {
-          return goSignIn();
-        }
-      }
-
-      const authed = await auth0Client.isAuthenticated().catch(() => false);
-      if (!authed) return goSignIn();
-
-      const user = await auth0Client.getUser();
-      portalProfile = normalizeProfileFromAuth0User(user) || null;
-
-      const local = loadProfileFromLocalStorage();
-      if (local) portalProfile = { ...(portalProfile || {}), ...local };
-
-      hydrateProfileUI();
-    }
-
-        // Token expired/invalid; clear and send to sign-in
-        try {
-          localStorage.removeItem("rnr_id_token");
-          localStorage.removeItem("rnr_auth_token");
-        } catch (e) {}
-        return goSignIn();
-      }
-
-      // 2) Fallback: Auth0 SPA session (if you later switch portal to SPA login)
-      if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
-
-      auth0Client = await createAuth0Client(AUTH0_CONFIG);
-
-      const url = new URL(window.location.href);
-      const hasCode = url.searchParams.has("code");
-      const hasState = url.searchParams.has("state");
-
-      if (hasCode && hasState) {
-        try {
-          await auth0Client.handleRedirectCallback();
-          url.searchParams.delete("code");
-          url.searchParams.delete("state");
-          url.searchParams.delete("error");
-          url.searchParams.delete("error_description");
-          const cleaned = url.pathname + (url.searchParams.toString() ? ("?" + url.searchParams.toString()) : "") + url.hash;
-          window.history.replaceState({}, document.title, cleaned);
-        } catch (e) {
-          return goSignIn();
-        }
-      }
-
-      const authed = await auth0Client.isAuthenticated().catch(() => false);
-      if (!authed) return goSignIn();
-
-      const user = await auth0Client.getUser();
-      portalProfile = normalizeProfileFromAuth0User(user) || null;
-
-      const local = loadProfileFromLocalStorage();
-      if (local) portalProfile = { ...(portalProfile || {}), ...local };
-
-      hydrateProfileUI();
-    }
 
     async function handleLogout() {
       // Clear any locally stored profile/tokens
