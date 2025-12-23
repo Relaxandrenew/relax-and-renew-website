@@ -240,7 +240,8 @@
             <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
             <a href="membership.html" class="text-3xl text-brand-gold font-medium transition-colors toggle-menu-link">Membership</a>
             <a href="portal.html" class="text-3xl text-brand-gold font-bold transition-colors toggle-menu-link">Client Portal</a>
-            <button onclick="openBookingModal()" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Book Online</button>
+            <!-- CHANGED: Book Online now redirects to https://www.relaxandrenew.ca/book-now -->
+            <button onclick="window.location.href='https://www.relaxandrenew.ca/book-now'" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Book Online</button>
         </nav>
         <div class="absolute bottom-10 flex gap-6 text-brand-gold/60">
             <a href="https://www.facebook.com/share/1F1fYU6yrF/"><i data-lucide="facebook"></i></a>
@@ -262,7 +263,8 @@
                 Serving the Niagara Region. We bring the massage table, linens, and relaxation to your home, so you don't have to travel.
             </p>
             <div class="flex flex-col md:flex-row gap-6 justify-center mb-16 animate-fade-in-up" style="animation-delay: 0.7s;">
-                <button onclick="openBookingModal()" class="btn-filled text-black min-w-[200px] animate-subtle-bounce">
+                <!-- CHANGED: Book Appointment now redirects to https://www.relaxandrenew.ca/book-now -->
+                <button onclick="window.location.href='https://www.relaxandrenew.ca/book-now'" class="btn-filled text-black min-w-[200px] animate-subtle-bounce">
                     <i data-lucide="calendar-check" class="w-4 h-4 inline mr-2"></i> Book Appointment
                 </button>
                 <a href="#services" class="btn-gold backdrop-blur-sm min-w-[200px]">View Services</a>
@@ -355,7 +357,8 @@
                 </div>
             </div>
             <div class="flex flex-col md:flex-row justify-center gap-6 mt-16">
-                <button onclick="openBookingModal()" class="btn-gold animate-subtle-bounce">Book Your Session</button>
+                <!-- CHANGED: Book Your Session redirects to https://www.relaxandrenew.ca/book-now -->
+                <button onclick="window.location.href='https://www.relaxandrenew.ca/book-now'" class="btn-gold animate-subtle-bounce">Book Your Session</button>
                 <a href="#pricing" class="btn-gold backdrop-blur-sm">Prices</a>
             </div>
         </div>
@@ -445,7 +448,10 @@
                     <div class="flex items-center gap-2 mt-4 md:mt-0"><i data-lucide="badge-percent" class="w-5 h-5 text-brand-gold"></i><span class="text-brand-gold text-base font-bold">Seniors / First Responders / Veterans: 10% Off</span></div>
                 </div>
             </div>
-            <div class="flex flex-col md:flex-row justify-center gap-6 mt-12"><button onclick="openBookingModal()" class="btn-filled text-lg px-12 py-4 tracking-widest animate-subtle-bounce">SECURE YOUR APPOINTMENT</button></div>
+            <div class="flex flex-col md:flex-row justify-center gap-6 mt-12">
+                <!-- CHANGED: SECURE YOUR APPOINTMENT redirects to https://www.relaxandrenew.ca/book-now -->
+                <button onclick="window.location.href='https://www.relaxandrenew.ca/book-now'" class="btn-filled text-lg px-12 py-4 tracking-widest animate-subtle-bounce">SECURE YOUR APPOINTMENT</button>
+            </div>
         </div>
     </section>
 
