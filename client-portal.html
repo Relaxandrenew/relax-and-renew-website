@@ -4,18 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Client Portal | Relax & Renew RMT</title>
-  <meta name="description" content="Relax & Renew Client Portal — rebook appointments using your saved profile." />
+  <meta name="description" content="Relax & Renew Client Portal — rebook appointments, view your details, and manage your membership." />
 
-  <!-- Fonts -->
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CDN -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Lucide Icons (UMD) -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Auth0 SPA SDK -->
+  <!-- Auth0 SPA SDK (optional but recommended) -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 
   <style>
@@ -26,7 +26,11 @@
       --brand-light:#F6F0DD;
       --brand-dim:rgba(246,240,221,.72);
 
-      --radius:0px; /* square corners */
+      /* Square corners */
+      --radius:0px;
+
+      /* Subtle (reduced) glow */
+      --glow:0 0 0 1px rgba(224,197,132,.22);
       --shadow:0 10px 30px rgba(0,0,0,.55);
     }
 
@@ -38,10 +42,9 @@
         radial-gradient(circle at 70% 80%, rgba(224,197,132,.05), transparent 55%),
         #000;
       color:var(--brand-light);
-      overflow-x:hidden;
     }
 
-    /* Header / Nav (booknow-style) */
+    /* Header / Nav styling closely aligned to booknowtest.html */
     .fixed-nav{
       position:fixed; top:0; left:0; right:0;
       z-index:50;
@@ -59,10 +62,17 @@
     }
     .nav-link:hover{ color:var(--brand-gold); }
 
-    .mobile-menu{ transform:translateX(100%); transition:transform .25s ease; }
+    .mobile-menu{
+      transform:translateX(100%);
+      transition:transform .25s ease;
+    }
     .mobile-menu.open{ transform:translateX(0); }
 
-    /* Panels (square) */
+    .header-hero{
+      background:linear-gradient(to bottom, rgba(0,0,0,.75), rgba(0,0,0,.55));
+    }
+
+    /* Portal UI */
     .glass-panel{
       background:rgba(0,0,0,.72);
       border:1px solid rgba(224,197,132,.22);
@@ -70,39 +80,25 @@
       border-radius:var(--radius);
       backdrop-filter: blur(10px);
     }
-    .card{
+    .card-fancy{
       background:rgba(0,0,0,.65);
       border:1px solid rgba(224,197,132,.18);
+      box-shadow:var(--glow);
       border-radius:var(--radius);
     }
-
-    /* Inputs / Buttons */
-    .input{
-      width:100%;
-      background:rgba(0,0,0,.55);
-      border:1px solid rgba(224,197,132,.22);
-      color:var(--brand-light);
-      padding:.85rem .9rem;
-      border-radius:var(--radius);
-      outline:none;
-    }
-    .input:focus{
-      border-color: rgba(224,197,132,.55);
-      box-shadow: 0 0 0 1px rgba(224,197,132,.25);
-    }
-
     .btn-outline{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1px solid rgba(224,197,132,.35);
       color:var(--brand-gold);
       background:rgba(0,0,0,.45);
-      padding:.75rem 1rem;
+      padding:.42rem 1.9rem;
+      min-height:34px;
       border-radius:var(--radius);
       transition: all .18s ease;
       font-weight:700;
       letter-spacing:.08em;
       text-transform:uppercase;
-      font-size:.85rem;
+      font-size:.82rem;
       user-select:none;
     }
     .btn-outline:hover{
@@ -115,17 +111,38 @@
       border:1px solid rgba(224,197,132,.55);
       color:#000;
       background: linear-gradient(180deg, rgba(224,197,132,1), rgba(224,197,132,.9));
-      padding:.95rem 1.1rem;
+      padding:.48rem 1.9rem;
+      min-height:36px;
       border-radius:var(--radius);
       transition: all .18s ease;
       font-weight:800;
       letter-spacing:.08em;
       text-transform:uppercase;
-      font-size:.85rem;
+      font-size:.82rem;
       user-select:none;
     }
     .btn-filled:hover{ filter:brightness(1.04); }
+
     .btn-disabled{ opacity:.45; cursor:not-allowed; }
+
+    .input{
+      width:100%;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(224,197,132,.22);
+      color:var(--brand-light);
+      padding:.65rem 1rem;
+      border-radius:var(--radius);
+      outline:none;
+      font-size:1.05rem;
+      line-height:1.35;
+      min-height:48px;
+    }
+        select.input{ padding-right:2.6rem; }
+
+    .input:focus{
+      border-color: rgba(224,197,132,.55);
+      box-shadow: 0 0 0 1px rgba(224,197,132,.25);
+    }
 
     /* Sidebar */
     .sidebar-btn{
@@ -133,13 +150,12 @@
       display:flex;
       gap:.7rem;
       align-items:center;
-      padding:.75rem .85rem;
+      padding:.6rem .85rem;
       border:1px solid transparent;
       border-radius:var(--radius);
       color:rgba(246,240,221,.78);
       transition: all .15s ease;
       font-size:1.05rem;
-      user-select:none;
     }
     .sidebar-btn:hover{
       background:rgba(224,197,132,.06);
@@ -183,6 +199,9 @@
       background:rgba(224,197,132,.12) !important;
       color:var(--brand-gold) !important;
     }
+    .calendar-day-today{
+      border-color: rgba(224,197,132,.35);
+    }
 
     .time-slot-btn{
       width:100%;
@@ -190,41 +209,26 @@
       align-items:center;
       justify-content:center;
       gap:.5rem;
-      padding:.7rem .65rem;
+      padding:.48rem .65rem;
       border:1px solid rgba(224,197,132,.22);
       background:rgba(0,0,0,.35);
       border-radius:var(--radius);
       transition:all .12s ease;
       font-weight:700;
-      user-select:none;
+      min-height:34px;
     }
     .time-slot-btn:hover{
       border-color: rgba(224,197,132,.55);
       background:rgba(224,197,132,.07);
     }
-    .time-slot-unavailable{ opacity:.45; cursor:not-allowed; }
+    .time-slot-unavailable{
+      opacity:.45;
+      cursor:not-allowed;
+    }
     .time-slot-selected{
       border-color: rgba(224,197,132,.75) !important;
       background:rgba(224,197,132,.14) !important;
       color:var(--brand-gold) !important;
-    }
-
-    /* Helpers */
-    .muted{ color:var(--brand-dim); }
-    .divider{ border-color: rgba(224,197,132,.16); }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:.4rem;
-      padding:.25rem .55rem;
-      border:1px solid rgba(224,197,132,.22);
-      background:rgba(224,197,132,.06);
-      color:rgba(246,240,221,.82);
-      border-radius:var(--radius);
-      font-size:.9rem;
-      letter-spacing:.05em;
-      user-select:none;
     }
 
     /* Toast */
@@ -244,40 +248,76 @@
       opacity:0;
       pointer-events:none;
       transition:opacity .2s ease, transform .2s ease;
-      z-index:1000;
     }
     .toast.show{
       opacity:1;
       pointer-events:auto;
       transform:translateX(-50%) translateY(-4px);
     }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.4rem;
+      padding:.25rem .55rem;
+      border:1px solid rgba(224,197,132,.22);
+      background:rgba(224,197,132,.06);
+      color:rgba(246,240,221,.82);
+      border-radius:var(--radius);
+      font-size:.9rem;
+      letter-spacing:.05em;
+    }
+    .muted{ color:var(--brand-dim); }
+    .divider{ border-color: rgba(224,197,132,.16); }
   </style>
 
   <script>
     // =========================================================
-    // CONFIG (already filled with your Auth0 SPA details)
+    // CANONICAL HOST (prevents localStorage split between www and non-www)
     // =========================================================
+    (function enforceCanonicalHost(){
+      const CANONICAL_HOST = "www.relaxandrenew.ca";
+      if (window.location.hostname && window.location.hostname !== CANONICAL_HOST) {
+        // Only force between apex and www for this site
+        if (window.location.hostname === "relaxandrenew.ca") {
+          window.location.replace(window.location.protocol + "//" + CANONICAL_HOST + window.location.pathname + window.location.search + window.location.hash);
+        }
+      }
+    })();
+
+    // =========================================================
+    // CONFIG
+    // =========================================================
+    // n8n Webhook endpoints (defaults align with your booknowtest.html Railway base)
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
 
+    // Your calendar gate workflow expects a practitionerId (Cassandra by default).
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
+
+    // Setup buffer to convert standard -> block minutes (60 => 85, etc.)
     const STATIC_SETUP_MINUTES = 25;
 
-    // Auth0 SPA (Portal validates session and redirects to /sign-in if missing)
-    const AUTH0_ENABLED = true;
+    // Travel fee rules (portal-side approximation; workflow can refine later)
+    const EXTENDED_ZONE_TRAVEL_FEE = 20; // dollars (before HST)
+    const EXTENDED_ZONE_CITIES = new Set(["hamilton", "grimsby"]);
+
+    // Auth0 (optional but recommended). If you do not want Auth0 on this page,
+    // have your /sign-in page store a profile in localStorage under "rnr_portal_profile".
+    const AUTH0_ENABLED = true; // set false if sign-in page handles everything and stores profile locally
     const AUTH0_CONFIG = {
-      domain: "dev-sbhcygzz4xcoa2ij.us.auth0.com",
+      domain: "auth.relaxandrenew.ca",
       clientId: "T8FERqkpcryRN77voMnLeaXIkha1eqK1",
       authorizationParams: {
-        // If Auth0 redirects here with code/state, this portal will handle it safely.
-        redirect_uri: window.location.origin + window.location.pathname
+        redirect_uri: window.location.origin + window.location.pathname,
+        // audience: "YOUR_API_AUDIENCE", // if you use one
+        // scope: "openid profile email"
       },
       cacheLocation: "localstorage",
       useRefreshTokens: true
     };
 
-    // If you use custom claims for address/profile:
+    // Custom claim keys (Auth0 Action/Rule) you may already be using.
     const CLAIM_PROFILE_OBJ  = "https://relaxandrenew.ca/profile";
     const CLAIM_ADDRESS      = "https://relaxandrenew.ca/address";
     const CLAIM_CITY         = "https://relaxandrenew.ca/city";
@@ -287,8 +327,8 @@
 </head>
 
 <body>
-  <!-- NAV -->
-  <nav class="fixed-nav">
+  <!-- NAV (matched to booknowtest.html) -->
+  <nav id="navbar" class="fixed-nav">
     <div class="container mx-auto px-6 flex justify-between items-center h-20">
       <a href="index.html" class="flex items-center gap-3 no-underline group">
         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
@@ -298,6 +338,7 @@
         </div>
       </a>
 
+      <!-- Desktop Menu -->
       <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
         <a href="index.html#services" class="nav-link">Services</a>
         <a href="index.html#pricing" class="nav-link">Pricing</a>
@@ -312,13 +353,14 @@
         </span>
       </div>
 
+      <!-- Mobile Menu Button -->
       <button id="mobile-menu-btn" class="lg:hidden text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
         <i data-lucide="menu" class="w-6 h-6"></i>
       </button>
     </div>
   </nav>
 
-  <!-- Mobile Menu -->
+  <!-- Mobile Menu Overlay -->
   <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-black border-l border-[rgba(224,197,132,.30)] z-50 lg:hidden overflow-y-auto">
     <div class="p-6">
       <div class="flex justify-between items-center mb-8">
@@ -335,7 +377,9 @@
         <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
         <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
         <a href="membership.html" class="nav-link text-lg">Membership</a>
+
         <hr class="divider mt-2">
+
         <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200">
           <i data-lucide="log-out" class="w-5 h-5 inline mr-2"></i>
           Sign Out
@@ -344,33 +388,33 @@
     </div>
   </div>
 
-  <div class="h-20" aria-hidden="true"></div>
+  <!-- Spacer -->
+  <div aria-hidden="true" class="h-20"></div>
 
-  <!-- Header -->
-  <header class="pt-10 pb-10 border-b border-[rgba(224,197,132,.18)]">
+  <!-- HEADER HERO -->
+  <header class="header-hero pt-12 pb-10 border-b border-[rgba(224,197,132,.18)]">
     <div class="container mx-auto px-6 max-w-6xl">
       <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div>
           <div class="text-[0.75rem] tracking-[0.45em] uppercase text-[rgba(246,240,221,.65)]">Relax & Renew RMT</div>
           <h1 class="text-4xl md:text-5xl font-bold text-[var(--brand-gold)] mt-2">Client Portal</h1>
-          <p class="muted mt-3 text-lg">Rebook quickly using your saved profile. Other features show <span class="pill">Coming Soon</span>.</p>
+          <p class="text-[var(--brand-dim)] mt-3 text-lg">Rebook quickly using your saved profile.</p>
         </div>
         <div class="flex items-center gap-3">
           <div class="pill">
             <i data-lucide="user" class="w-4 h-4 text-[var(--brand-gold)]"></i>
-            <span id="welcome-pill">Checking sign-in…</span>
+            <span id="welcome-pill">Loading profile…</span>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Main -->
+  <!-- MAIN -->
   <main class="min-h-screen">
     <div class="container mx-auto max-w-7xl px-4 md:px-6 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
-
-        <!-- Sidebar -->
+        <!-- SIDEBAR -->
         <aside class="hidden lg:block">
           <div class="glass-panel p-5 sticky top-[110px]">
             <div class="flex items-center gap-3 mb-6 pb-6 border-b border-[rgba(224,197,132,.14)]">
@@ -384,31 +428,26 @@
             </div>
 
             <div class="space-y-2">
-              <button class="sidebar-btn active">
+              <button class="sidebar-btn active" data-tab="dashboard">
                 <i data-lucide="calendar-check" class="w-5 h-5 text-[var(--brand-gold)]"></i>
                 <span>Rebook</span>
               </button>
-
-              <button class="sidebar-btn" disabled>
+              <button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
                 <span>Membership</span>
                 <span class="ml-auto pill">Coming Soon</span>
               </button>
-
-              <button class="sidebar-btn" disabled>
+              <button class="sidebar-btn" data-tab="history" disabled>
                 <i data-lucide="history" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
                 <span>History</span>
                 <span class="ml-auto pill">Coming Soon</span>
               </button>
-
-              <button class="sidebar-btn" disabled>
+              <button class="sidebar-btn" data-tab="profile" disabled>
                 <i data-lucide="settings" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
                 <span>Profile</span>
                 <span class="ml-auto pill">Coming Soon</span>
               </button>
-
               <hr class="divider my-3">
-
               <button id="logout-btn" class="sidebar-btn text-red-300 hover:text-red-200">
                 <i data-lucide="log-out" class="w-5 h-5"></i>
                 <span>Sign Out</span>
@@ -417,174 +456,204 @@
           </div>
         </aside>
 
-        <!-- Content -->
+        <!-- CONTENT -->
         <section>
-          <div class="glass-panel p-6 mb-8">
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-              <div>
-                <h2 class="text-3xl font-bold text-[var(--brand-light)]">Quick Rebook</h2>
-                <p class="muted mt-2">We use your saved client profile. No typing required.</p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-address">Address: —</span></span>
-                <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-phone">Phone: —</span></span>
-              </div>
-            </div>
-
-            <div id="profile-missing" class="mt-6 card p-4 hidden">
-              <div class="flex items-start gap-3">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 mt-0.5"></i>
+          <!-- Dashboard / Rebook -->
+          <div id="tab-dashboard" class="tab-content">
+            <!-- Profile summary -->
+            <div class="glass-panel p-6 mb-8">
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <div class="font-bold text-[var(--brand-light)]">Profile data is missing</div>
-                  <div class="muted mt-1">
-                    We could not find your address/city/postal code. Because this is a mobile service, we cannot load availability without it.
-                    Please contact us to update your profile.
-                  </div>
-                  <div class="mt-3">
-                    <a class="btn-outline" href="mailto:info@relaxandrenew.ca">
-                      <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
-                    </a>
-                  </div>
+                  <h2 class="text-3xl font-bold text-[var(--brand-light)]">Quick Rebook</h2>
+                  <p class="muted mt-2">We use your saved client profile. No typing required.</p>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-            <!-- Calendar + slots -->
-            <div class="glass-panel p-6">
-              <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
-                <div>
-                  <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 1</div>
-                  <h3 class="text-2xl font-bold mt-1">Select Treatment</h3>
-                  <p class="muted mt-2">Choose a treatment and duration to load availability for this month.</p>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                  <select id="treatment-select" class="input">
-                    <option value="">Select treatment…</option>
-                    <option value="relaxation">Relaxation Massage</option>
-                    <option value="deep-tissue">Deep Tissue Massage</option>
-                    <option value="sports">Sports Massage</option>
-                    <option value="senior">Senior Massage</option>
-                    <option value="hot-stone">Hot Stone Massage</option>
-                    <option value="cupping">Cupping Therapy</option>
-                    <option value="prenatal">Prenatal Massage</option>
-                    <option value="pediatric">Pediatric Massage</option>
-                    <option value="infant">Infant Massage</option>
-                  </select>
-
-                  <select id="duration-select" class="input" disabled>
-                    <option value="">Select a treatment first…</option>
-                  </select>
+                <div class="flex flex-wrap gap-2">
+                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-address">Address: —</span></span>
+                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-phone">Phone: —</span></span>
                 </div>
               </div>
 
-              <hr class="divider my-6">
-
-              <div class="flex items-center justify-between gap-3">
-                <button id="prev-month-btn" class="btn-outline">
-                  <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                  <span>Prev</span>
-                </button>
-                <div class="text-xl font-bold text-[var(--brand-gold)] tracking-wide" id="calendar-month-label">—</div>
-                <button id="next-month-btn" class="btn-outline">
-                  <span>Next</span>
-                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-              </div>
-
-              <div class="mt-4 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.25em] muted">
-                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-              </div>
-
-              <div id="calendar-days" class="mt-3 grid grid-cols-7 gap-2"></div>
-
-              <div class="mt-5 card p-4">
+              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden">
                 <div class="flex items-start gap-3">
-                  <i data-lucide="info" class="w-5 h-5 text-[var(--brand-gold)] mt-0.5"></i>
-                  <div class="flex-1">
-                    <div class="font-bold text-[var(--brand-light)]" id="availability-status-title">Availability</div>
-                    <div class="muted mt-1" id="availability-status-body">Select your treatment and duration to load live availability.</div>
-                    <div class="muted mt-3 text-sm" id="availability-meta"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div id="selected-date-info" class="mt-6 hidden">
-                <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 2</div>
-                <h3 class="text-2xl font-bold mt-1">Select a Time</h3>
-                <div class="mt-2 pill">
-                  <i data-lucide="calendar" class="w-4 h-4 text-[var(--brand-gold)]"></i>
-                  <span id="selected-date-display">—</span>
-                </div>
-              </div>
-
-              <div id="time-slots-container" class="mt-4 hidden">
-                <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-              </div>
-
-              <div id="no-slots" class="mt-4 hidden card p-4">
-                <div class="flex items-start gap-3">
-                  <i data-lucide="calendar-x" class="w-5 h-5 text-red-300 mt-0.5"></i>
+                  <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 mt-0.5"></i>
                   <div>
-                    <div class="font-bold text-[var(--brand-light)]">No slots available</div>
-                    <div class="muted mt-1">Please choose a different day.</div>
+                    <div class="font-bold text-[var(--brand-light)]">Profile data is missing</div>
+                    <div class="muted mt-1">
+                      We could not find a saved address (and/or city/postal code) for your portal account. Because this is a mobile service, we cannot load availability without it.
+                      Please contact us to update your profile.
+                    </div>
+                    <div class="mt-3">
+                      <a class="btn-outline" href="mailto:info@relaxandrenew.ca">
+                        <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Confirm -->
-            <div class="glass-panel p-6">
-              <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 3</div>
-              <h3 class="text-2xl font-bold mt-1">Confirm</h3>
-              <p class="muted mt-2">We will create the Cliniko appointment and send your confirmation automatically.</p>
+            <!-- Booking UI -->
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+              <!-- Calendar + slots -->
+              <div class="glass-panel p-6">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+                  <div>
+                    <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 1</div>
+                    <h3 class="text-2xl font-bold mt-1">Select Treatment</h3>
+                    <p class="muted mt-2">Choose a treatment and duration to load availability for this month.</p>
+                  </div>
+                  <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <select id="treatment-select" class="input flex-1 min-w-[240px]">
+                      <option value="">Select treatment…</option>
+                      <option value="relaxation">Relaxation Massage</option>
+                      <option value="deep-tissue">Deep Tissue Massage</option>
+                      <option value="sports">Sports Massage</option>
+                      <option value="senior">Senior Massage</option>
+                      <option value="hot-stone">Hot Stone Massage</option>
+                      <option value="cupping">Cupping Therapy</option>
+                      <option value="prenatal">Prenatal Massage</option>
+                      <option value="pediatric">Pediatric Massage</option>
+                      <option value="infant">Infant Massage</option>
+                    </select>
 
-              <hr class="divider my-5">
-
-              <div class="space-y-3">
-                <div class="card p-4">
-                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Client</div>
-                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-client">—</div>
-                  <div class="muted mt-1" id="summary-email">—</div>
+                    <select id="duration-select" class="input flex-1 min-w-[240px]" disabled>
+                      <option value="">Select a treatment first…</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div class="card p-4">
-                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Booking</div>
-                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-treatment">Select a treatment</div>
-                  <div class="muted mt-1" id="summary-datetime">Select a date and time</div>
+                <hr class="divider my-6">
+
+                <div class="flex items-center justify-between gap-3">
+                  <button id="prev-month-btn" class="btn-outline">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    <span>Prev</span>
+                  </button>
+                  <div class="text-xl font-bold text-[var(--brand-gold)] tracking-wide" id="calendar-month-label">—</div>
+                  <button id="next-month-btn" class="btn-outline">
+                    <span>Next</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                  </button>
                 </div>
 
-                <div class="card p-4">
-                  <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Travel</div>
-                  <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-travel-fee">$0.00</div>
-                  <div class="muted mt-1" id="summary-drive-time">—</div>
+                <div class="mt-4 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.25em] muted">
+                  <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+
+                <div id="calendar-days" class="mt-3 grid grid-cols-7 gap-2"></div>
+
+                <div class="mt-5 card-fancy p-4">
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-[var(--brand-gold)] mt-0.5"></i>
+                    <div class="flex-1">
+                      <div class="font-bold text-[var(--brand-light)]" id="availability-status-title">Availability</div>
+                      <div class="muted mt-1" id="availability-status-body">Select your treatment and duration to load live availability.</div>
+                      <div class="muted mt-3 text-sm" id="availability-meta"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Selected Date -->
+                <div id="selected-date-info" class="mt-6 hidden">
+                  <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 2</div>
+                  <h3 class="text-2xl font-bold mt-1">Select a Time</h3>
+                  <div class="mt-2 pill">
+                    <i data-lucide="calendar" class="w-4 h-4 text-[var(--brand-gold)]"></i>
+                    <span id="selected-date-display">—</span>
+                  </div>
+                </div>
+
+                <!-- Time slots -->
+                <div id="time-slots-container" class="mt-4 hidden">
+                  <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                </div>
+
+                <div id="no-slots" class="mt-4 hidden card-fancy p-4">
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="calendar-x" class="w-5 h-5 text-red-300 mt-0.5"></i>
+                    <div>
+                      <div class="font-bold text-[var(--brand-light)]">No slots available</div>
+                      <div class="muted mt-1">Please choose a different day.</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <button id="confirm-booking-btn" class="btn-filled w-full mt-6 py-4 btn-disabled" disabled>
-                <i data-lucide="check-circle" class="w-5 h-5"></i>
-                <span id="confirm-btn-text">Confirm Booking</span>
-              </button>
+              <!-- Summary + confirm -->
+              <div class="glass-panel p-6">
+                <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 3</div>
+                <h3 class="text-2xl font-bold mt-1">Confirm</h3>
+                <p class="muted mt-2">We will confirm your booking and send your confirmation automatically.</p>
 
-              <div class="muted mt-4 text-sm">
-                Profile editing is <span class="pill">Coming Soon</span>.
+                <hr class="divider my-5">
+
+                <div class="space-y-3">
+                  <div class="card-fancy p-4">
+                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Client</div>
+                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-client">—</div>
+                    <div class="muted mt-1" id="summary-email">—</div>
+                  </div>
+
+                  <div class="card-fancy p-4">
+                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Booking</div>
+                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-treatment">Select a treatment</div>
+                    <div class="muted mt-1" id="summary-datetime">Select a date and time</div>
+                  </div>
+
+                  <div class="card-fancy p-4">
+                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Travel</div>
+                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-travel-fee">$0.00</div>
+                    <div class="muted mt-1" id="summary-drive-time">—</div>
+                  </div>
+                </div>
+
+                <button id="confirm-booking-btn" class="btn-filled w-full mt-6 btn-disabled" disabled>
+                  <i data-lucide="check-circle" class="w-5 h-5"></i>
+                  <span id="confirm-btn-text">Confirm Booking</span>
+                </button>
+
+                <div class="muted mt-4 text-sm">
+                  If you need to change your address, please contact us. Profile editing is <span class="pill">Coming Soon</span>.
+                </div>
               </div>
             </div>
           </div>
 
-        </section>
+          <!-- Membership -->
+          <div id="tab-membership" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Membership</h2>
+            <div class="card-fancy p-6">
+              <div class="pill">Coming Soon</div>
+              <p class="muted mt-4">Membership management will be available here.</p>
+            </div>
+          </div>
 
+          <!-- History -->
+          <div id="tab-history" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Session History</h2>
+            <div class="card-fancy p-6">
+              <div class="pill">Coming Soon</div>
+              <p class="muted mt-4">Your session history will appear here.</p>
+            </div>
+          </div>
+
+          <!-- Profile -->
+          <div id="tab-profile" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Profile</h2>
+            <div class="card-fancy p-6">
+              <div class="pill">Coming Soon</div>
+              <p class="muted mt-4">Profile updates will be available here.</p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </main>
 
   <!-- Toast -->
   <div id="toast" class="toast">
-    <div class="bg-black/20 p-1.5" style="border-radius:var(--radius)">
-      <i id="toast-icon" data-lucide="check" class="w-4 h-4 text-[var(--brand-gold)]"></i>
-    </div>
-    <span id="toast-message">—</span>
+    <div class="bg-black/20 p-1.5" style="border-radius:var(--radius)"><i data-lucide="check" class="w-4 h-4 text-[var(--brand-gold)]"></i></div>
+    <span id="toast-message">Success</span>
   </div>
 
   <script>
@@ -592,16 +661,16 @@
     // STATE
     // =========================================================
     let auth0Client = null;
-    let portalProfile = null;
+    let portalUser = null;      // Auth0 user object (if enabled)
+    let portalProfile = null;   // Normalized profile { firstName,lastName,email,phone,address,city,postal_code }
 
     let calendarCurrent = new Date();
-    calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-
     let selectedDateStr = null;
     let selectedSlot = null;
 
-    let availabilityByDate = {};
+    let availabilityByDate = {}; // { 'YYYY-MM-DD': [slots...] }
     let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+
     const availabilityCache = new Map();
 
     const treatmentSelect = document.getElementById("treatment-select");
@@ -615,8 +684,10 @@
       "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
       "sports":      { label: "Sports Massage", durations: [60,75,90,120] },
       "senior":      { label: "Senior Massage", durations: [60,75,90,120] },
+
       "hot-stone":   { label: "Hot Stone Massage", durations: [60,75,90,120] },
       "cupping":     { label: "Cupping Therapy", durations: [60,75,90,120] },
+
       "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
       "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
       "infant":      { label: "Infant Massage", durations: [30,45] },
@@ -625,24 +696,19 @@
     // =========================================================
     // UTIL
     // =========================================================
-    function createIconsSafe(){
-      try {
-        if (window.lucide && typeof window.lucide.createIcons === "function") {
-          window.lucide.createIcons();
-        }
-      } catch(e) {}
-    }
-
-    function showToast(message, isError=false) {
+    function showToast(title, message, isError=false) {
       const toast = document.getElementById("toast");
       const msgEl = document.getElementById("toast-message");
-      const iconEl = document.getElementById("toast-icon");
-
-      msgEl.textContent = message || "—";
-      iconEl.setAttribute("data-lucide", isError ? "alert-circle" : "check");
-      createIconsSafe();
-
+      msgEl.textContent = message || title || "—";
       toast.classList.add("show");
+
+      // swap icon
+      const iconWrap = toast.querySelector("i");
+      if (iconWrap) {
+        iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
+      }
+      if (typeof lucide !== "undefined") lucide.createIcons();
+
       setTimeout(() => toast.classList.remove("show"), 3200);
     }
 
@@ -682,26 +748,92 @@
       return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
     }
 
+    function safeLower(s){ return String(s||"").trim().toLowerCase(); }
+
+    function calcTravelFee(profile) {
+      const city = safeLower(profile?.city);
+      if (EXTENDED_ZONE_CITIES.has(city)) return EXTENDED_ZONE_TRAVEL_FEE;
+      return 0;
+    }
+
     function setConfirmEnabled(enabled) {
       const btn = document.getElementById("confirm-booking-btn");
       btn.disabled = !enabled;
       btn.classList.toggle("btn-disabled", !enabled);
     }
 
+    function updateSummary() {
+      // client
+      document.getElementById("summary-client").textContent = portalProfile
+        ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() || "—"
+        : "—";
+      document.getElementById("summary-email").textContent = portalProfile?.email || "—";
+
+      // treatment
+      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+      if (treat && selectedStandardDuration) {
+        document.getElementById("summary-treatment").textContent = `${treat.label} — ${selectedStandardDuration} min`;
+      } else {
+        document.getElementById("summary-treatment").textContent = "Select a treatment";
+      }
+
+      // date/time
+      if (selectedDateStr && selectedSlot) {
+        document.getElementById("summary-datetime").textContent = `${formatDatePretty(selectedDateStr)} at ${formatTimeLabel(selectedSlot)}`;
+      } else {
+        document.getElementById("summary-datetime").textContent = "Select a date and time";
+      }
+
+      // travel
+      const travelFee = calcTravelFee(portalProfile);
+      const drive = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      document.getElementById("summary-travel-fee").textContent = `$${Number(travelFee || 0).toFixed(2)}`;
+      document.getElementById("summary-drive-time").textContent = drive ? `${drive} min drive time (approx.)` : "—";
+
+      setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+    }
+
     function updateAvailabilityStatus(body, loaded) {
       document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
       document.getElementById("availability-status-body").textContent = body || "";
       const metaEl = document.getElementById("availability-meta");
-      const buffer = Number(availabilityMeta.effective_travel_buffer_minutes || 0);
-      const maxDrive = Number(availabilityMeta.maxDriveTimeMinutes || 0);
+      const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
+      const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
       metaEl.textContent = (loaded && (buffer || maxDrive))
         ? `Travel buffer applied: ${buffer} min • Max drive time used: ${maxDrive} min`
         : "";
     }
 
+    function setCalendarLoading(isLoading) {
+      const monthLabel = document.getElementById("calendar-month-label");
+      if (isLoading) monthLabel.textContent = "Loading…";
+    }
+
     // =========================================================
-    // PROFILE (No typing)
+    // PROFILE (NO USER TYPING)
     // =========================================================
+    function hydrateProfileUI() {
+      document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
+      document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
+
+      const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
+      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
+      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
+
+      const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
+      document.getElementById("profile-missing").classList.toggle("hidden", !missing);
+
+      // If missing, disable confirm + avoid availability load
+      if (missing) {
+        updateAvailabilityStatus("Missing address/city/postal code in portal profile.", false);
+        availabilityByDate = {};
+        renderCalendar();
+        clearSelectionUI();
+        setConfirmEnabled(false);
+      }
+      updateSummary();
+    }
+
     function loadProfileFromLocalStorage() {
       try {
         const raw = localStorage.getItem("rnr_portal_profile");
@@ -725,6 +857,7 @@
     function normalizeProfileFromAuth0User(user) {
       if (!user) return null;
 
+      // Try custom profile object claim
       const claimObj = user[CLAIM_PROFILE_OBJ] || user.profile || user.user_metadata || null;
       const addressObj = user.address || null;
 
@@ -736,47 +869,134 @@
       const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || user[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
       const phone   = (claimObj && claimObj.phone) || user[CLAIM_PHONE] || user.phone_number || "";
 
-      return { firstName, lastName, email: user.email || "", phone, address, city, postal_code: postal };
+      return {
+        firstName, lastName,
+        email: user.email || "",
+        phone,
+        address,
+        city,
+        postal_code: postal
+      };
     }
 
-    function hydrateProfileUI() {
-      document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
-      document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Signed in");
+    
+    // =========================================================
+    // TOKEN FALLBACK (when /sign-in uses Auth0 Lock and stores tokens)
+    // =========================================================
+    function base64UrlDecode(str) {
+      try {
+        const pad = str.length % 4;
+        const base64 = (str + (pad ? "=".repeat(4 - pad) : "")).replace(/-/g, "+").replace(/_/g, "/");
+        const decoded = atob(base64);
+        try { return decodeURIComponent(decoded.split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")); }
+        catch { return decoded; }
+      } catch (e) { return null; }
+    }
 
-      const addrLine = portalProfile?.address
-        ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim()
-        : "—";
-      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
-      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
+    function decodeJwtPayload(token) {
+      if (!token || typeof token !== "string" || token.split(".").length < 2) return null;
+      const payloadB64 = token.split(".")[1];
+      const json = base64UrlDecode(payloadB64);
+      if (!json) return null;
+      try { return JSON.parse(json); } catch { return null; }
+    }
 
-      const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
-      document.getElementById("profile-missing").classList.toggle("hidden", !missing);
+    function isJwtExpired(payload) {
+      const exp = payload && payload.exp ? Number(payload.exp) : 0;
+      if (!exp) return false;
+      const now = Math.floor(Date.now() / 1000);
+      return now >= exp;
+    }
 
-      if (missing) {
-        updateAvailabilityStatus("Missing address/city/postal code in your profile.", false);
-        availabilityByDate = {};
-        renderCalendar();
-        clearSelectionUI();
-        setConfirmEnabled(false);
-      } else {
-        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+    function buildProfileFromJwtPayload(payload) {
+      if (!payload) return null;
+
+      const email = payload.email || "";
+      const firstName = payload.given_name || (payload.name ? String(payload.name).split(" ")[0] : "") || "";
+      const lastName  = payload.family_name || (payload.name ? String(payload.name).split(" ").slice(1).join(" ") : "") || "";
+      const phone = payload.phone_number || payload[CLAIM_PHONE] || "";
+
+      const claimObj = payload[CLAIM_PROFILE_OBJ] || null;
+      const address = (claimObj && claimObj.address) || payload[CLAIM_ADDRESS] || "";
+      const city    = (claimObj && claimObj.city) || payload[CLAIM_CITY] || "";
+      const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || payload[CLAIM_POSTAL] || "";
+
+      const addrObj = payload.address || null;
+      const addr2 = addrObj && (addrObj.street_address || addrObj.formatted) ? (addrObj.street_address || addrObj.formatted) : "";
+      const city2 = addrObj && addrObj.locality ? addrObj.locality : "";
+      const postal2 = addrObj && addrObj.postal_code ? addrObj.postal_code : "";
+
+      return {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address: address || addr2 || "",
+        city: city || city2 || "",
+        postal_code: postal || postal2 || ""
+      };
+    }
+
+    function getStoredLockTokens() {
+      try {
+        const idToken = localStorage.getItem("rnr_id_token") || "";
+        const accessToken = localStorage.getItem("rnr_auth_token") || "";
+        return { idToken, accessToken };
+      } catch (e) {
+        return { idToken: "", accessToken: "" };
       }
-
-      updateSummary();
     }
 
-    // =========================================================
-    // AUTH GATE (hard redirect to /sign-in if not authenticated)
-    // =========================================================
-    async function ensureAuthenticatedAndLoadProfile() {
+    async function tryEnrichProfileFromUserInfo(accessToken, currentProfile) {
+      if (!accessToken) return currentProfile;
+      try {
+        const res = await fetch("https://auth.relaxandrenew.ca/userinfo", {
+          headers: { "Authorization": "Bearer " + accessToken }
+        });
+        if (!res.ok) return currentProfile;
+        const u = await res.json();
+        const p2 = normalizeProfileFromAuth0User(u) || {};
+        return { ...(currentProfile || {}), ...p2 };
+      } catch (e) {
+        return currentProfile;
+      }
+    }
+
+async function ensureAuthenticatedAndLoadProfile() {
       const returnTo = window.location.pathname + window.location.search + window.location.hash;
       const goSignIn = () => window.location.replace("/sign-in?returnTo=" + encodeURIComponent(returnTo));
 
+      // 1) Primary path: /sign-in uses Auth0 Lock and stores tokens in localStorage
+      const { idToken, accessToken } = getStoredLockTokens();
+      if (idToken) {
+        const payload = decodeJwtPayload(idToken);
+        if (payload && !isJwtExpired(payload)) {
+          portalProfile = buildProfileFromJwtPayload(payload) || null;
+
+          // Optional merge: local cached profile fields (if you store them)
+          const local = loadProfileFromLocalStorage();
+          if (local) portalProfile = { ...(portalProfile || {}), ...local };
+
+          // Best-effort: enrich from /userinfo (may be blocked by CORS depending on Auth0 settings)
+          portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
+
+          hydrateProfileUI();
+          return;
+        }
+
+        // Token expired/invalid; clear and send to sign-in
+        try {
+          localStorage.removeItem("rnr_id_token");
+          localStorage.removeItem("rnr_auth_token");
+        } catch (e) {}
+        return goSignIn();
+      }
+
+      // 2) Fallback: Auth0 SPA session (only if you later switch the portal to SPA auth)
       if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
 
       auth0Client = await createAuth0Client(AUTH0_CONFIG);
 
-      // If Auth0 redirects directly to portal with code/state, handle it
       const url = new URL(window.location.href);
       const hasCode = url.searchParams.has("code");
       const hasState = url.searchParams.has("state");
@@ -784,7 +1004,6 @@
       if (hasCode && hasState) {
         try {
           await auth0Client.handleRedirectCallback();
-          // Clean OAuth params from URL
           url.searchParams.delete("code");
           url.searchParams.delete("state");
           url.searchParams.delete("error");
@@ -802,7 +1021,49 @@
       const user = await auth0Client.getUser();
       portalProfile = normalizeProfileFromAuth0User(user) || null;
 
-      // Optional merge: if you also store profile fields in localStorage
+      const local = loadProfileFromLocalStorage();
+      if (local) portalProfile = { ...(portalProfile || {}), ...local };
+
+      hydrateProfileUI();
+    }
+
+        // Token expired/invalid; clear and send to sign-in
+        try {
+          localStorage.removeItem("rnr_id_token");
+          localStorage.removeItem("rnr_auth_token");
+        } catch (e) {}
+        return goSignIn();
+      }
+
+      // 2) Fallback: Auth0 SPA session (if you later switch portal to SPA login)
+      if (!AUTH0_ENABLED || !window.createAuth0Client) return goSignIn();
+
+      auth0Client = await createAuth0Client(AUTH0_CONFIG);
+
+      const url = new URL(window.location.href);
+      const hasCode = url.searchParams.has("code");
+      const hasState = url.searchParams.has("state");
+
+      if (hasCode && hasState) {
+        try {
+          await auth0Client.handleRedirectCallback();
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          url.searchParams.delete("error");
+          url.searchParams.delete("error_description");
+          const cleaned = url.pathname + (url.searchParams.toString() ? ("?" + url.searchParams.toString()) : "") + url.hash;
+          window.history.replaceState({}, document.title, cleaned);
+        } catch (e) {
+          return goSignIn();
+        }
+      }
+
+      const authed = await auth0Client.isAuthenticated().catch(() => false);
+      if (!authed) return goSignIn();
+
+      const user = await auth0Client.getUser();
+      portalProfile = normalizeProfileFromAuth0User(user) || null;
+
       const local = loadProfileFromLocalStorage();
       if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
@@ -810,47 +1071,30 @@
     }
 
     async function handleLogout() {
-      try { localStorage.removeItem("rnr_portal_profile"); } catch(e) {}
+      // Clear any locally stored profile/tokens
+      try {
+        localStorage.removeItem("rnr_portal_profile");
+        localStorage.removeItem("rnr_id_token");
+        localStorage.removeItem("rnr_auth_token");
+      } catch(e) {}
+
+      // If SPA client is active, also trigger Auth0 logout
       try {
         if (auth0Client) {
           await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/sign-in" } });
           return;
         }
       } catch(e) {}
+
       window.location.href = "/sign-in";
     }
-
-    // =========================================================
-    // SUMMARY
-    // =========================================================
-    function updateSummary() {
-      const name = portalProfile ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() : "";
-      document.getElementById("summary-client").textContent = name || "—";
-      document.getElementById("summary-email").textContent = portalProfile?.email || "—";
-
-      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-      document.getElementById("summary-treatment").textContent = (treat && selectedStandardDuration)
-        ? `${treat.label} — ${selectedStandardDuration} min`
-        : "Select a treatment";
-
-      document.getElementById("summary-datetime").textContent = (selectedDateStr && selectedSlot)
-        ? `${formatDatePretty(selectedDateStr)} at ${formatTimeLabel(selectedSlot)}`
-        : "Select a date and time";
-
-      const drive = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
-      document.getElementById("summary-travel-fee").textContent = "$0.00";
-      document.getElementById("summary-drive-time").textContent = drive ? `${drive} min drive time (approx.)` : "—";
-
-      setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
-    }
-
     // =========================================================
     // TREATMENT / DURATION
     // =========================================================
     function rebuildDurationOptions() {
       durationSelect.innerHTML = "";
-      const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
 
+      const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
       if (!rule) {
         durationSelect.disabled = true;
         const opt = document.createElement("option");
@@ -880,7 +1124,7 @@
     }
 
     // =========================================================
-    // AVAILABILITY (Calendar Gate)
+    // AVAILABILITY (Calendar Gate workflow)
     // =========================================================
     function clearSelectionUI() {
       selectedDateStr = null;
@@ -889,13 +1133,14 @@
       document.getElementById("selected-date-info").classList.add("hidden");
       document.getElementById("time-slots-container").classList.add("hidden");
       document.getElementById("no-slots").classList.add("hidden");
+      document.getElementById("confirm-booking-btn").classList.add("btn-disabled");
       setConfirmEnabled(false);
       updateSummary();
     }
 
     function buildAvailabilityPayload() {
       const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
-      if (!addrOk) return { error: "Missing address/city/postal code in profile." };
+      if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
       const { from, to } = computeMonthRange(calendarCurrent);
@@ -961,13 +1206,15 @@
 
       const cacheKey = getRequestCacheKey(payload);
       clearSelectionUI();
+      setCalendarLoading(true);
       updateAvailabilityStatus("Checking live availability for this month…", false);
 
       try {
         if (availabilityCache.has(cacheKey)) {
-          parseAvailabilityResponse(availabilityCache.get(cacheKey));
+          const cached = availabilityCache.get(cacheKey);
+          parseAvailabilityResponse(cached);
           renderCalendar();
-          updateAvailabilityStatus("Availability loaded for this month.", true);
+          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           return;
         }
 
@@ -985,6 +1232,7 @@
         const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
+
         renderCalendar();
         updateAvailabilityStatus("Live availability loaded for this month.", true);
 
@@ -992,19 +1240,22 @@
         console.error(e);
         availabilityByDate = {};
         renderCalendar();
-        updateAvailabilityStatus("Could not load availability. Please try again.", false);
-        showToast("Unable to load availability.", true);
+        updateAvailabilityStatus("Could not load availability. Please try again or contact support.", false);
+        showToast("Availability error", "Unable to load availability.", true);
+      } finally {
+        setCalendarLoading(false);
       }
     }
 
     // =========================================================
-    // CALENDAR
+    // CALENDAR RENDERING
     // =========================================================
     function renderCalendar() {
       const monthLabelEl = document.getElementById("calendar-month-label");
       const daysContainer = document.getElementById("calendar-days");
 
-      monthLabelEl.textContent = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+      const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+      monthLabelEl.textContent = monthName;
 
       const year = calendarCurrent.getFullYear();
       const month = calendarCurrent.getMonth();
@@ -1015,6 +1266,7 @@
 
       daysContainer.innerHTML = "";
 
+      // Leading blanks
       for (let i = 0; i < startDayOfWeek; i++) {
         const blank = document.createElement("div");
         blank.className = "opacity-0";
@@ -1033,6 +1285,7 @@
 
         const isPast = dateStr < todayStr;
         const isSelected = selectedDateStr === dateStr;
+        const isToday = dateStr === todayStr;
 
         const cell = document.createElement("button");
         cell.type = "button";
@@ -1043,6 +1296,7 @@
           cell.disabled = true;
         } else {
           cell.classList.add("calendar-day-available");
+          if (isToday) cell.classList.add("calendar-day-today");
           if (isSelected) cell.classList.add("calendar-day-selected");
           cell.addEventListener("click", () => selectDate(dateStr));
         }
@@ -1051,7 +1305,7 @@
         daysContainer.appendChild(cell);
       }
 
-      createIconsSafe();
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
     function selectDate(dateStr) {
@@ -1075,7 +1329,7 @@
       grid.innerHTML = "";
 
       const slots = availabilityByDate[dateStr] || [];
-      const usable = Array.isArray(slots) ? slots.slice() : [];
+      const usable = Array.isArray(slots) ? slots : [];
 
       if (!usable.length) {
         noSlots.classList.remove("hidden");
@@ -1083,6 +1337,7 @@
         return;
       }
 
+      // Sort by start time
       usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
       let anyAvailable = false;
@@ -1091,7 +1346,9 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "time-slot-btn";
+
         const label = formatTimeLabel(slot);
+        const reason = slot.available ? "" : (slot.blockedReason || "Booked");
 
         btn.innerHTML = slot.available
           ? `<i data-lucide="clock" class="w-4 h-4 text-[var(--brand-gold)]"></i><span>${label}</span>`
@@ -1100,6 +1357,7 @@
         if (!slot.available) {
           btn.classList.add("time-slot-unavailable");
           btn.disabled = true;
+          btn.title = reason;
         } else {
           anyAvailable = true;
           btn.addEventListener("click", () => selectTimeSlot(slot, btn));
@@ -1111,13 +1369,15 @@
       noSlots.classList.toggle("hidden", anyAvailable);
       container.classList.toggle("hidden", !anyAvailable);
 
-      createIconsSafe();
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
     function selectTimeSlot(slot, btnElement) {
       selectedSlot = slot;
+
       document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
       btnElement.classList.add("time-slot-selected");
+
       updateSummary();
     }
 
@@ -1134,36 +1394,55 @@
     }
 
     // =========================================================
-    // BOOKING CONFIRMED
+    // BOOKING CONFIRMATION (Booking Confirmed workflow)
     // =========================================================
     async function confirmBooking() {
       if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
-        showToast("Please select treatment, duration, date, and time.", true);
+        showToast("Missing info", "Please select a treatment, duration, date, and time.", true);
         return;
       }
 
       const treat = TREATMENT_RULES[selectedServiceKey];
+      const travelFee = calcTravelFee(portalProfile);
+      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
 
-      const payload = {
+      const bookingPayload = {
+        // Client info
         firstName: portalProfile.firstName || "",
-        lastName: portalProfile.lastName || "",
-        email: portalProfile.email || "",
-        phone: portalProfile.phone || "",
+        lastName:  portalProfile.lastName || "",
+        email:     portalProfile.email || "",
+        phone:     portalProfile.phone || "",
 
+        // Address
         address: portalProfile.address,
         city: portalProfile.city,
         postal_code: portalProfile.postal_code,
 
+        // Treatment
         treatment_key: selectedServiceKey,
         treatment_label: treat ? treat.label : "",
         duration: Number(selectedStandardDuration),
+        standardDurationMinutes: Number(selectedStandardDuration),
+        participants: 1,
+        participant_count: 1,
 
+        // Slot (already UTC from calendar gate)
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
+        date: selectedDateStr,
         times_already_utc: true,
 
+        // Travel info (for notes + any downstream logic)
+        travel_charge: Number(travelFee || 0),
+        drive_time_minutes: Number(driveTime || 0),
+        travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
+
+        // Notes
         notes: "Booked via Client Portal."
       };
+
+      // Save for debugging
+      try { localStorage.setItem("rnr_portal_last_booking_payload", JSON.stringify(bookingPayload)); } catch(e) {}
 
       const btn = document.getElementById("confirm-booking-btn");
       const btnText = document.getElementById("confirm-btn-text");
@@ -1172,13 +1451,13 @@
       btn.disabled = true;
       btn.classList.add("btn-disabled");
       btnText.textContent = "Booking…";
-      showToast("Creating your appointment…");
+      showToast("Booking", "Creating your appointment…", false);
 
       try {
         const res = await fetch(BOOKING_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(bookingPayload)
         });
 
         if (!res.ok) {
@@ -1186,16 +1465,24 @@
           throw new Error(`Booking error (${res.status}): ${text || res.statusText}`);
         }
 
-        await res.json().catch(() => ({}));
+        const result = await res.json().catch(() => ({}));
 
-        showToast("Booking confirmed.");
-        availabilityCache.clear();
+        showToast("Booked", "Your appointment has been confirmed.");
+        updateAvailabilityStatus("Booking confirmed. Reloading availability…", true);
+
+        // Reload availability after booking
+        availabilityCache.clear(); // avoid stale cache for this range
         await maybeLoadAvailabilityForCurrentMonth();
+
+        // Clear selection
         clearSelectionUI();
+
+        // Optional: keep a confirmation message in console
+        console.log("Booking confirmed:", result);
 
       } catch (e) {
         console.error(e);
-        showToast("Booking failed. Please try again.", true);
+        showToast("Booking failed", "We could not confirm your booking. Please try again or contact support.", true);
       } finally {
         btnText.textContent = originalText;
         updateSummary();
@@ -1203,64 +1490,96 @@
     }
 
     // =========================================================
+    // TAB SWITCHING
+    // =========================================================
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      const active = document.getElementById("tab-" + tabId);
+      if (active) active.classList.remove("hidden");
+
+      document.querySelectorAll(".sidebar-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tabId);
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // =========================================================
     // INIT
     // =========================================================
     async function init() {
-      createIconsSafe();
+      if (typeof lucide !== "undefined") lucide.createIcons();
 
       // Mobile menu
       const mm = document.getElementById("mobile-menu");
       document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
       document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
 
+      // Tabs
+      document.querySelectorAll(".sidebar-btn").forEach(btn => {
+        const tab = btn.dataset.tab;
+        if (!tab) return;
+        if (btn.disabled) {
+          btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
+          return;
+        }
+        btn.addEventListener("click", () => switchTab(tab));
+      });
+
       // Calendar nav
       document.getElementById("prev-month-btn").addEventListener("click", prevMonth);
       document.getElementById("next-month-btn").addEventListener("click", nextMonth);
 
-      // Treatment
+      // Treatment selection
       treatmentSelect.addEventListener("change", () => {
         selectedServiceKey = treatmentSelect.value || null;
         rebuildDurationOptions();
+
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
         clearSelectionUI();
         renderCalendar();
-        updateAvailabilityStatus(selectedServiceKey ? "Now choose a duration to load live availability." : "Select your treatment and duration to load live availability.", false);
+
+        if (!selectedServiceKey) {
+          updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        } else {
+          updateAvailabilityStatus("Now choose a duration to load live availability.", false);
+        }
       });
 
-      // Duration
+      // Duration selection
       durationSelect.addEventListener("change", () => {
         selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
         clearSelectionUI();
         renderCalendar();
-        if (selectedStandardDuration) maybeLoadAvailabilityForCurrentMonth();
+
+        if (selectedStandardDuration) {
+          maybeLoadAvailabilityForCurrentMonth();
+        }
         updateSummary();
       });
 
-      // Confirm
+      // Confirm booking
       document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
 
       // Logout
       document.getElementById("logout-btn").addEventListener("click", handleLogout);
       document.getElementById("logout-btn-mobile").addEventListener("click", handleLogout);
 
-      renderCalendar();
+      // Initial tab
+      switchTab("dashboard");
 
-      // Hard auth gate
+      // Load profile (and then availability)
       await ensureAuthenticatedAndLoadProfile();
 
-      // If auth gate did not redirect, continue
-      updateSummary();
+      // Initial calendar render
+      renderCalendar();
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      init().catch(e => {
-        console.error(e);
-        showToast("Page error. Check console for details.", true);
-      });
-    });
+    document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
