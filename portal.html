@@ -47,6 +47,37 @@
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')",
+                        'gift-card-bg': "url('https://static.wixstatic.com/media/bf8fef_9da7c8e6be37443d89cac9f6884ec878~mv2.jpg')"
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    }
+                }
+            }
+        };
+  </script>
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -56,331 +87,191 @@
   <script src="https://cdn.auth0.com/js/lock/14.2.0/lock.min.js"></script>
 
   <style>
-    :root{
-      --brand-black:#050505;
-      --brand-dark:#0a0a0a;
-      --brand-gold:#E0C584;
-      --brand-gold-hover:#F0D594;
-      --brand-light:#F0E2C0;
-      --brand-dim:rgba(240, 226, 192, 0.6);
-      --brand-panel:rgba(20, 20, 20, 0.7);
-      --radius:0px;
-      --glow:0 0 0 1px rgba(224,197,132,.22);
-      --shadow:0 10px 30px rgba(0,0,0,.55);
+    :root {
+      --brand-black: #050505;
+      --brand-gold: #E0C584;
+      --brand-gold-hover: #F0D594;
+      --brand-light: #F0E2C0;
+      --brand-dim: rgba(240, 226, 192, 0.6);
+      --radius: 0.25rem;
+      --shadow: 0 10px 30px rgba(0,0,0,0.55);
     }
 
-    html, body { height:100%; scroll-behavior: smooth; }
-    body{
-      font-family:'Cormorant Garamond', serif;
-      font-size: 1.15rem;
-      line-height: 1.7;
-      background-color: #050505;
-      background-image: 
-        radial-gradient(circle at 30% 20%, rgba(224,197,132,.06), transparent 50%),
-        radial-gradient(circle at 70% 80%, rgba(224,197,132,.04), transparent 50%);
-      color:var(--brand-light);
+    html, body { height:100%; }
+    
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background-color: #050505; 
+      color: var(--brand-light);
       overflow-x: hidden;
     }
 
-    /* Header / Nav */
-    .fixed-nav{
-      position:fixed; top:0; left:0; right:0;
-      z-index:50;
-      background:rgba(0,0,0,.82);
-      border-bottom:1px solid rgba(224,197,132,.22);
-      backdrop-filter: blur(10px);
+    /* =========================================
+       FIXED: Header Navigation (From Index.html)
+       ========================================= */
+    .fixed-nav { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 80px; 
+        z-index: 50; 
+        transition: all 0.4s ease; 
+        background: rgba(5, 5, 5, 0.95); 
+        backdrop-filter: blur(15px); 
+        border-bottom: 1px solid rgba(224, 197, 132, 0.2); 
+        display: flex; align-items: center; 
     }
-    .nav-link{
-      color:rgba(246,240,221,.8);
-      font-size:0.9rem;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      transition: color .2s ease;
-      white-space:nowrap;
+    
+    .nav-link { 
+        color: #F0E2C0; 
+        text-transform: uppercase; 
+        font-size: 0.8rem; 
+        font-weight: 600; 
+        letter-spacing: 0.15em; 
+        text-decoration: none; 
+        position: relative; 
+        padding-bottom: 5px; 
     }
-    .nav-link:hover{ color:var(--brand-gold); }
+    .nav-link::after { 
+        content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; 
+        background: #E0C584; transition: width 0.3s ease; 
+    }
+    .nav-link:hover::after { width: 100%; }
 
-    .mobile-menu{
-      transform:translateX(100%);
-      transition:transform .25s ease;
+    /* Mobile Menu */
+    .mobile-menu {
+      background: #050505;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .mobile-menu.open{ transform:translateX(0); }
+    .mobile-menu.open { transform: translateX(0); }
 
-    .header-hero{
-      background:linear-gradient(to bottom, rgba(0,0,0,.75), rgba(0,0,0,.55));
-    }
+    .header-hero { background: transparent; }
 
-    /* Portal UI */
-    .glass-panel{
+    /* Cards */
+    .card-fancy, .glass-panel {
       background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9));
-      border:1px solid rgba(224,197,132,.1);
-      box-shadow:var(--shadow);
-      border-radius:var(--radius);
+      border: 1px solid rgba(224, 197, 132, 0.1);
       backdrop-filter: blur(10px);
+      transition: all 0.4s ease;
       position: relative;
       overflow: hidden;
-      transition: all 0.4s ease;
+      border-radius: var(--radius);
     }
-    .glass-panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--brand-gold), transparent);
-      transform: scaleX(0);
-      transition: transform 0.5s ease;
+    .card-fancy::before, .glass-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, #E0C584, transparent);
+      transform: scaleX(0); transition: transform 0.5s ease;
     }
-    .glass-panel:hover::before { transform: scaleX(1); }
-    .glass-panel:hover { border-color: rgba(224,197,132,.3); }
+    .card-fancy:hover, .glass-panel:hover { border-color: rgba(224, 197, 132, 0.3); }
+    .card-fancy:hover::before, .glass-panel:hover::before { transform: scaleX(1); }
 
-    .card-fancy{
-      background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9));
-      border:1px solid rgba(224,197,132,.1);
-      box-shadow:var(--glow);
-      border-radius:var(--radius);
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.4s ease;
+    /* Buttons */
+    .btn-outline {
+      border: 1px solid #E0C584; color: #E0C584; background: transparent;
+      padding: 0.6rem 1.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;
+      transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;
     }
-    .card-fancy::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--brand-gold), transparent);
-      transform: scaleX(0);
-      transition: transform 0.5s ease;
+    .btn-outline:hover {
+      background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594;
+      box-shadow: 0 0 15px rgba(224, 197, 132, 0.2);
     }
-    .card-fancy:hover { transform: translateY(-3px); border-color: rgba(224,197,132,.3); }
-    .card-fancy:hover::before { transform: scaleX(1); }
-    .btn-outline{
-      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
-      border:1px solid var(--brand-gold);
-      color:var(--brand-gold);
-      background:transparent;
-      padding:.6rem 2rem;
-      min-height:34px;
-      border-radius:var(--radius);
-      transition: all 0.3s ease;
-      font-weight:700;
-      letter-spacing:.1em;
-      text-transform:uppercase;
-      font-size:.82rem;
-      user-select:none;
-      cursor: pointer;
+    .btn-filled {
+      background: #E0C584; color: #000; border: 1px solid #E0C584;
+      padding: 0.6rem 1.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;
+      transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;
     }
-    .btn-outline:hover{
-      background: rgba(224,197,132,.1);
-      color: var(--brand-gold-hover);
-      border-color: var(--brand-gold-hover);
-      box-shadow: 0 0 15px rgba(224,197,132,.2);
+    .btn-filled:hover {
+      background: #F0D594; border-color: #F0D594; transform: translateY(-1px);
+      box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3);
     }
-    .btn-filled{
-      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
-      border:1px solid var(--brand-gold);
-      color:#000;
-      background: var(--brand-gold);
-      padding:.6rem 2rem;
-      min-height:36px;
-      border-radius:var(--radius);
-      transition: all 0.3s ease;
-      font-weight:700;
-      letter-spacing:.1em;
-      text-transform:uppercase;
-      font-size:.82rem;
-      user-select:none;
-      cursor: pointer;
+    .btn-disabled {
+      opacity: 0.5; cursor: not-allowed; background: #333 !important; border-color: #444 !important; color: #777 !important;
+      box-shadow: none !important; transform: none !important;
     }
-    .btn-filled:hover{ 
-      background: var(--brand-gold-hover);
-      border-color: var(--brand-gold-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 5px 15px rgba(224,197,132,.3);
-    }
-    .btn-disabled{ opacity:.45; cursor:not-allowed; }
 
-    .input{
-      width:100%;
-      background: rgba(20,20,20,.8);
-      border:1px solid rgba(224,197,132,.2);
-      color:var(--brand-light);
-      padding:.65rem 1rem;
-      border-radius:var(--radius);
-      outline:none;
-      font-size:1.05rem;
-      line-height:1.35;
-      min-height:48px;
-      font-family: 'Cormorant Garamond', serif;
-      transition: all 0.3s ease;
+    /* Inputs */
+    .input {
+      width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(224, 197, 132, 0.3);
+      color: var(--brand-light); padding: 0.6rem 1rem; border-radius: 0.25rem; outline: none; font-size: 1rem;
+      min-height: 48px;
+      max-width: 100%; /* Prevent overflow */
     }
-    select.input{ padding-right:2.6rem; }
-    .input:focus{
-      border-color: var(--brand-gold);
-      box-shadow: 0 0 0 2px rgba(224,197,132,.15);
+    /* Fixed Dropdowns: Custom arrow, dark background for options */
+    select.input {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 2.5rem;
+      background-color: rgba(5,5,5,0.8);
+      /* Custom Gold Chevron */
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23E0C584' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
     }
-    .input::placeholder {
-      color: rgba(240, 226, 192, 0.4);
+    .input:focus { border-color: #E0C584; background-color: rgba(255, 255, 255, 0.1); }
+    
+    /* Ensure Dropdown Options are Black */
+    select.input option {
+      background-color: #050505;
+      color: #F0E2C0;
+      padding: 10px;
     }
 
     /* Sidebar */
-    .sidebar-btn{
-      width:100%;
-      display:flex;
-      gap:.7rem;
-      align-items:center;
-      padding:.6rem .85rem;
-      border:1px solid transparent;
-      border-radius:var(--radius);
-      color:var(--brand-dim);
-      transition: all 0.3s ease;
-      font-size:1.05rem;
+    .sidebar-btn {
+      width: 100%; display: flex; gap: 0.7rem; align-items: center; padding: 0.75rem 1rem;
+      border: 1px solid transparent; border-radius: var(--radius); color: rgba(240, 226, 192, 0.6);
+      transition: all 0.3s ease; font-size: 1.05rem; background: transparent;
     }
-    .sidebar-btn:hover{
-      background: rgba(224,197,132,.08);
-      border-color: rgba(224,197,132,.2);
-      color:var(--brand-light);
-    }
-    .sidebar-btn.active{
-      background: rgba(224,197,132,.12);
-      border-color: rgba(224,197,132,.4);
-      color:var(--brand-gold);
-    }
-    .sidebar-btn.active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 60%;
-      background: var(--brand-gold);
-    }
+    .sidebar-btn:hover { background: rgba(224, 197, 132, 0.05); color: #E0C584; }
+    .sidebar-btn.active { background: rgba(224, 197, 132, 0.1); border: 1px solid rgba(224, 197, 132, 0.2); color: #E0C584; }
 
     /* Calendar */
-    .calendar-day{
-      width:100%;
-      aspect-ratio:1/1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border:1px solid rgba(224,197,132,.1);
-      border-radius:var(--radius);
-      font-weight:700;
-      transition: all 0.3s ease;
-      user-select:none;
+    .calendar-day {
+      width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(224, 197, 132, 0.1); background: rgba(255,255,255,0.02);
+      border-radius: var(--radius); font-weight: 600; transition: all 0.2s ease; user-select: none; color: var(--brand-light);
     }
-    .calendar-day-available{
-      background: rgba(20,20,20,.6);
-      cursor:pointer;
+    .calendar-day-available { cursor: pointer; }
+    .calendar-day-available:hover { border-color: #E0C584; background: rgba(224, 197, 132, 0.1); transform: scale(1.05); }
+    .calendar-day-disabled { background: rgba(0, 0, 0, 0.3); color: rgba(240, 226, 192, 0.2); cursor: not-allowed; border-color: transparent; }
+    .calendar-day-selected { background: #E0C584 !important; color: #000 !important; border-color: #E0C584 !important; font-weight: bold; box-shadow: 0 0 10px rgba(224,197,132,0.3); }
+    .calendar-day-today { border-color: #F0E2C0; }
+
+    /* Slots */
+    .time-slot-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.6rem; border: 1px solid rgba(224, 197, 132, 0.2); background: rgba(255,255,255,0.03);
+      border-radius: var(--radius); transition: all 0.2s ease; font-weight: 600; color: var(--brand-light);
     }
-    .calendar-day-available:hover{
-      border-color: rgba(224,197,132,.5);
-      background: rgba(224,197,132,.1);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    .time-slot-btn:hover { border-color: #E0C584; background: rgba(224, 197, 132, 0.1); }
+    .time-slot-selected { background: #E0C584 !important; color: #000 !important; border-color: #E0C584 !important; }
+    .time-slot-unavailable { opacity: 0.4; cursor: not-allowed; border-color: transparent; }
+
+    .pill {
+      background: rgba(224, 197, 132, 0.08); border: 1px solid rgba(224, 197, 132, 0.2); color: #F0E2C0;
+      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.8rem; border-radius: 4px;
+      font-size: 0.9rem; letter-spacing: 0.05em;
     }
-    .calendar-day-disabled{
-      background: rgba(10,10,10,.4);
-      color: rgba(240,226,192,.25);
-      cursor:not-allowed;
-    }
-    .calendar-day-selected{
-      border-color: var(--brand-gold) !important;
-      background: rgba(224,197,132,.15) !important;
-      color:var(--brand-gold) !important;
-      box-shadow: 0 0 15px rgba(224,197,132,.2);
-    }
-    .calendar-day-today{
-      border-color: rgba(224,197,132,.4);
+    .muted { color: var(--brand-dim); }
+    .divider { border-color: rgba(224, 197, 132, 0.15); }
+    
+    .toast {
+      background: rgba(20, 20, 20, 0.95); border: 1px solid #E0C584; color: #E0C584;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
     }
 
-    .time-slot-btn{
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:.5rem;
-      padding:.48rem .65rem;
-      border:1px solid rgba(224,197,132,.15);
-      background: rgba(20,20,20,.6);
-      border-radius:var(--radius);
-      transition:all 0.3s ease;
-      font-weight:700;
-      min-height:34px;
-    }
-    .time-slot-btn:hover{
-      border-color: rgba(224,197,132,.6);
-      background: rgba(224,197,132,.1);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,.3);
-    }
-    .time-slot-unavailable{
-      opacity:.4;
-      cursor:not-allowed;
-    }
-    .time-slot-selected{
-      border-color: var(--brand-gold) !important;
-      background: rgba(224,197,132,.18) !important;
-      color:var(--brand-gold) !important;
-      box-shadow: 0 0 15px rgba(224,197,132,.2);
-    }
-
-    /* Toast */
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:24px;
-      transform:translateX(-50%);
-      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
-      border:1px solid rgba(224,197,132,.3);
-      box-shadow: 0 10px 40px rgba(0,0,0,.6);
-      padding:.85rem 1.25rem;
-      display:flex;
-      gap:.75rem;
-      align-items:center;
-      border-radius:var(--radius);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .3s ease, transform .3s ease;
-      z-index:200;
-    }
-    .toast.show{
-      opacity:1;
-      pointer-events:auto;
-      transform:translateX(-50%) translateY(-4px);
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:.4rem;
-      padding:.3rem .8rem;
-      border:1px solid rgba(224,197,132,.2);
-      background: rgba(224,197,132,.08);
-      color:var(--brand-light);
-      border-radius:4px;
-      font-size:.9rem;
-      letter-spacing:.05em;
-    }
-    .muted{ color:var(--brand-dim); }
-    .divider{ border-color: rgba(224,197,132,.15); }
-
-    /* =========================================================
-       LOGIN OVERLAY STYLES
-       ========================================================= */
+    /* =========================================
+       FIXED: Login Overlay CSS
+       ========================================= */
     #login-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 100;
-      background: rgba(5,5,5,0.95);
-      backdrop-filter: blur(15px);
+      z-index: 200; /* Higher than nav */
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -393,24 +284,21 @@
     }
     .login-card {
       background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
-      border: 1px solid rgba(224, 197, 132, 0.2);
+      border: 1px solid rgba(224, 197, 132, 0.25);
       backdrop-filter: blur(10px);
       padding: 2.5rem 2rem;
       max-width: 420px;
       width: 90%;
       position: relative;
-      overflow: hidden;
-      box-shadow: 0 25px 50px rgba(0,0,0,.5);
     }
     .login-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 2px;
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
-    /* Auth0 Lock theming */
+    /* =========================================
+       FIXED: Auth0 Lock Styles (Robust Overrides)
+       ========================================= */
     #auth0-lock-container { width: 100% !important; }
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock * {
@@ -420,7 +308,7 @@
     }
     #auth0-lock-container .auth0-lock .auth0-lock-widget {
       background: #050505 !important;
-      border: 1px solid rgba(224,197,132,0.35) !important;
+      border: 1px solid rgba(224,197,132,0.45) !important;
       overflow: hidden !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-header,
@@ -460,7 +348,7 @@
     #auth0-lock-container .auth0-lock .auth0-lock-tabs,
     #auth0-lock-container .auth0-lock .auth0-lock-tabs-container {
       background: #050505 !important;
-      border-bottom: 1px solid rgba(224,197,132,0.2) !important;
+      border-bottom: 1px solid rgba(224,197,132,0.25) !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-tabs li a,
     #auth0-lock-container .auth0-lock .auth0-lock-tabs li span {
@@ -478,7 +366,7 @@
     }
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap {
       background: #050505 !important;
-      border: 1px solid rgba(224,197,132,0.4) !important;
+      border: 1px solid rgba(224,197,132,0.55) !important;
       padding: 0 !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input,
@@ -489,31 +377,29 @@
     }
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input::placeholder,
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea::placeholder {
-      color: rgba(240,226,192,0.4) !important;
+      color: rgba(240,226,192,0.45) !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap:focus-within {
-      border-color: var(--brand-gold) !important;
-      box-shadow: 0 0 0 2px rgba(224,197,132,.15) !important;
+      border-color: #F0D594 !important;
+      box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
       color: rgba(224,197,132,0.90) !important;
     }
     #auth0-lock-container .auth0-lock button.auth0-lock-submit,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button {
-      background: var(--brand-gold) !important;
-      border: 1px solid var(--brand-gold) !important;
+      background: #E0C584 !important;
+      border: 1px solid #E0C584 !important;
       color: #000 !important;
       text-transform: uppercase !important;
-      letter-spacing: 0.1em !important;
-      font-weight: 700 !important;
+      letter-spacing: 0.12em !important;
+      font-weight: 800 !important;
       padding: 14px 16px !important;
-      transition: all 0.3s ease !important;
     }
     #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
-      background: var(--brand-gold-hover) !important;
-      border-color: var(--brand-gold-hover) !important;
-      box-shadow: 0 5px 15px rgba(224,197,132,.3) !important;
+      background: #F0D594 !important;
+      border-color: #F0D594 !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-separator span {
       background: #050505 !important;
@@ -521,57 +407,13 @@
     }
     #auth0-lock-container .auth0-lock .auth0-lock-separator:before,
     #auth0-lock-container .auth0-lock .auth0-lock-separator:after {
-      background: rgba(224,197,132,0.2) !important;
+      background: rgba(224,197,132,0.25) !important;
     }
     #auth0-lock-container .auth0-lock a {
       color: #E0C584 !important;
     }
     #auth0-lock-container .auth0-lock a:hover {
       color: #F0D594 !important;
-    }
-
-    /* Animations matching Index.html */
-    @keyframes fadeInUp {
-      0% { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes subtleBounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
-    .animate-fade-in-up {
-      animation: fadeInUp 1s ease-out forwards;
-    }
-    .animate-subtle-bounce {
-      animation: subtleBounce 3s ease-in-out infinite;
-    }
-
-    /* Selection styling */
-    ::selection {
-      background: var(--brand-gold);
-      color: #000;
-    }
-
-    /* Scrollbar styling */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(10,10,10,.5);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(224,197,132,.3);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(224,197,132,.5);
-    }
-
-    /* Calendar picker icon styling for dark backgrounds */
-    ::-webkit-calendar-picker-indicator {
-      filter: invert(86%) sepia(19%) saturate(986%) hue-rotate(357deg) brightness(92%) contrast(89%);
-      cursor: pointer;
     }
   </style>
 
@@ -601,7 +443,8 @@
   </script>
 </head>
 
-<body>
+<body class="bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900 text-brand-light">
+  
   <!-- =========================================================
        LOGIN OVERLAY (shows on top of portal until authenticated)
        ========================================================= -->
@@ -613,8 +456,8 @@
                alt="Relax & Renew"
                class="w-16 h-16 object-contain opacity-95" />
         </div>
-        <h2 class="text-3xl text-[var(--brand-gold)] mt-5 font-bold">Welcome</h2>
-        <p class="text-[var(--brand-dim)] text-sm mt-2">
+        <h2 class="text-3xl text-brand-gold mt-5 font-bold">Welcome</h2>
+        <p class="text-brand-dim text-sm mt-2">
           Sign in to your client portal to continue.
         </p>
       </div>
@@ -623,30 +466,40 @@
         <div id="auth0-lock-container"></div>
       </div>
 
-      <p class="text-[11px] text-[var(--brand-dim)] leading-snug mt-4 text-center opacity-80">
+      <p class="text-[11px] text-brand-dim leading-snug mt-4 text-center opacity-80">
         By logging in, you agree to our
-        <a href="/privacy-policy" class="underline text-[var(--brand-gold)] hover:text-[var(--brand-light)]">Privacy Policy</a>
+        <a href="/privacy-policy" class="underline text-brand-gold hover:text-brand-light">Privacy Policy</a>
         and
-        <a href="/terms" class="underline text-[var(--brand-gold)] hover:text-[var(--brand-light)]">Terms</a>.
+        <a href="/terms" class="underline text-brand-gold hover:text-brand-light">Terms</a>.
       </p>
 
       <div id="auth0-error" class="hidden mt-4 text-sm border border-red-500/30 bg-red-500/10 p-3 text-red-300"></div>
 
-      <p class="text-xs text-[var(--brand-dim)] mt-6 text-center opacity-70">
+      <!-- DEV ACCESS BYPASS -->
+      <div class="mt-6 pt-4 border-t border-brand-gold/20">
+        <p class="text-[10px] text-brand-dim/50 uppercase tracking-widest text-center mb-3">Developer Access</p>
+        <div class="flex gap-2">
+          <input type="text" id="dev-user" placeholder="User" class="input h-8 text-xs bg-black/50 border-brand-gold/20 min-h-[32px]">
+          <input type="password" id="dev-pass" placeholder="Pass" class="input h-8 text-xs bg-black/50 border-brand-gold/20 min-h-[32px]">
+          <button onclick="handleDevLogin()" class="btn-outline h-8 px-3 text-xs border-brand-gold/30 hover:border-brand-gold">Login</button>
+        </div>
+      </div>
+
+      <p class="text-xs text-brand-dim mt-6 text-center opacity-70">
         Note: This portal is for returning clients only. New to Relax &amp; Renew?
-        <a href="/book" class="text-[var(--brand-gold)] underline hover:text-[var(--brand-light)]">Book your first session here</a>.
+        <a href="index.html" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
       </p>
     </div>
   </div>
 
   <!-- NAV -->
-  <nav id="navbar" class="fixed-nav">
-    <div class="container mx-auto px-6 flex justify-between items-center h-20">
+  <nav id="navbar" class="fixed-nav h-20 flex items-center">
+    <div class="container mx-auto px-6 flex justify-between items-center h-full">
       <a href="index.html" class="flex items-center gap-3 no-underline group">
         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
         <div class="hidden md:flex flex-col">
-          <span class="text-[var(--brand-gold)] font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
-          <span class="text-[var(--brand-light)] text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+          <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+          <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
         </div>
       </a>
 
@@ -659,26 +512,26 @@
         <a href="index.html#faq" class="nav-link">FAQ</a>
         <a href="therapists.html" class="nav-link">Our Therapists</a>
         <a href="membership.html" class="nav-link">Membership</a>
-        <span class="nav-link text-[var(--brand-gold)] font-bold">
+        <span class="nav-link text-brand-gold font-bold border-b border-brand-gold">
           <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
           Client Portal
         </span>
       </div>
 
       <!-- Mobile Menu Button -->
-      <button id="mobile-menu-btn" class="lg:hidden text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
-        <i data-lucide="menu" class="w-6 h-6"></i>
+      <button id="mobile-menu-btn" class="lg:hidden text-brand-gold p-2 hover:text-brand-light transition-colors">
+        <i data-lucide="menu" class="w-8 h-8"></i>
       </button>
     </div>
   </nav>
 
   <!-- Mobile Menu Overlay -->
-  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-black border-l border-[rgba(224,197,132,.30)] z-50 lg:hidden overflow-y-auto">
+  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
     <div class="p-6">
       <div class="flex justify-between items-center mb-8">
-        <span class="text-[var(--brand-gold)] font-bold tracking-[0.2em] text-sm">MENU</span>
-        <button id="mobile-menu-close" class="text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
-          <i data-lucide="x" class="w-6 h-6"></i>
+        <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
+        <button id="mobile-menu-close" class="text-brand-gold p-2 hover:rotate-90 transition-transform">
+          <i data-lucide="x" class="w-8 h-8"></i>
         </button>
       </div>
       <div class="flex flex-col space-y-6">
@@ -704,17 +557,17 @@
   <div aria-hidden="true" class="h-20"></div>
 
   <!-- HEADER HERO -->
-  <header class="header-hero pt-12 pb-10 border-b border-[rgba(224,197,132,.18)]">
+  <header class="header-hero pt-12 pb-10 border-b border-brand-gold/20">
     <div class="container mx-auto px-6 max-w-6xl">
       <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-        <div>
-          <div class="text-[0.75rem] tracking-[0.45em] uppercase text-[rgba(246,240,221,.65)]">Relax & Renew RMT</div>
-          <h1 class="text-4xl md:text-5xl font-bold text-[var(--brand-gold)] mt-2">Client Portal</h1>
-          <p class="text-[var(--brand-dim)] mt-3 text-lg">Rebook quickly using your saved profile.</p>
+        <div class="animate-fade-in-up">
+          <div class="text-[0.75rem] tracking-[0.45em] uppercase text-brand-dim">Relax & Renew RMT</div>
+          <h1 class="text-4xl md:text-5xl font-serif text-brand-gold mt-2">Client Portal</h1>
+          <p class="text-brand-dim mt-3 text-lg font-light">Rebook quickly using your saved profile.</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 animate-fade-in-up" style="animation-delay:0.1s">
           <div class="pill">
-            <i data-lucide="user" class="w-4 h-4 text-[var(--brand-gold)]"></i>
+            <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
             <span id="welcome-pill">Loading profile…</span>
           </div>
         </div>
@@ -729,38 +582,38 @@
         <!-- SIDEBAR -->
         <aside class="hidden lg:block">
           <div class="glass-panel p-5 sticky top-[110px]">
-            <div class="flex items-center gap-3 mb-6 pb-6 border-b border-[rgba(224,197,132,.14)]">
-              <div class="w-11 h-11 border border-[rgba(224,197,132,.25)] bg-[rgba(224,197,132,.06)] flex items-center justify-center text-[var(--brand-gold)]" style="border-radius:var(--radius)">
+            <div class="flex items-center gap-3 mb-6 pb-6 border-b border-brand-gold/10">
+              <div class="w-11 h-11 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
                 <i data-lucide="user" class="w-5 h-5"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-[0.65rem] text-[rgba(246,240,221,.6)] uppercase tracking-widest">Welcome back</div>
-                <div class="text-[var(--brand-light)] font-semibold text-sm leading-tight truncate" id="nav-user-name">—</div>
+                <div class="text-[0.65rem] text-brand-dim uppercase tracking-widest">Welcome back</div>
+                <div class="text-brand-light font-serif text-sm leading-tight truncate" id="nav-user-name">—</div>
               </div>
             </div>
 
             <div class="space-y-2">
               <button class="sidebar-btn active" data-tab="dashboard">
-                <i data-lucide="calendar-check" class="w-5 h-5 text-[var(--brand-gold)]"></i>
+                <i data-lucide="calendar-check" class="w-5 h-5 text-brand-gold"></i>
                 <span>Rebook</span>
               </button>
               <button class="sidebar-btn" data-tab="membership" disabled>
-                <i data-lucide="badge-percent" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
-                <span class="ml-auto pill">Coming Soon</span>
+                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <button class="sidebar-btn" data-tab="history" disabled>
-                <i data-lucide="history" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <i data-lucide="history" class="w-5 h-5 text-brand-dim"></i>
                 <span>History</span>
-                <span class="ml-auto pill">Coming Soon</span>
+                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <button class="sidebar-btn" data-tab="profile" disabled>
-                <i data-lucide="settings" class="w-5 h-5 text-[rgba(246,240,221,.55)]"></i>
+                <i data-lucide="settings" class="w-5 h-5 text-brand-dim"></i>
                 <span>Profile</span>
-                <span class="ml-auto pill">Coming Soon</span>
+                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <hr class="divider my-3">
-              <button id="logout-btn" class="sidebar-btn text-red-300 hover:text-red-200">
+              <button id="logout-btn" class="sidebar-btn text-red-400 hover:text-red-200 hover:bg-red-900/10 hover:border-red-900/30">
                 <i data-lucide="log-out" class="w-5 h-5"></i>
                 <span>Sign Out</span>
               </button>
@@ -771,31 +624,31 @@
         <!-- CONTENT -->
         <section>
           <!-- Dashboard / Rebook -->
-          <div id="tab-dashboard" class="tab-content">
+          <div id="tab-dashboard" class="tab-content animate-fade-in-up">
             <!-- Profile summary -->
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-3xl font-bold text-[var(--brand-light)]">Quick Rebook</h2>
-                  <p class="muted mt-2">We use your saved client profile. No typing required.</p>
+                  <h2 class="text-3xl font-serif text-brand-light">Quick Rebook</h2>
+                  <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-address">Address: —</span></span>
-                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-[var(--brand-gold)]"></i><span id="pill-phone">Phone: —</span></span>
+                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
+                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
                 </div>
               </div>
 
-              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden">
+              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
                 <div class="flex items-start gap-3">
-                  <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 mt-0.5"></i>
+                  <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
                   <div>
-                    <div class="font-bold text-[var(--brand-light)]">Profile data is missing</div>
-                    <div class="muted mt-1">
+                    <div class="font-bold text-brand-light">Profile data is missing</div>
+                    <div class="muted mt-1 text-sm">
                       We could not find a saved address (and/or city/postal code) for your portal account. Because this is a mobile service, we cannot load availability without it.
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline" href="/cdn-cgi/l/email-protection#9bf2f5fdf4dbe9fef7fae3faf5ffe9fef5feecb5f8fa">
+                      <a class="btn-outline text-xs py-2" href="mailto:info@relaxandrenew.ca">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -810,12 +663,12 @@
               <div class="glass-panel p-6">
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
                   <div>
-                    <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 1</div>
-                    <h3 class="text-2xl font-bold mt-1">Select Treatment</h3>
-                    <p class="muted mt-2">Choose a treatment and duration to load availability for this month.</p>
+                    <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 1</div>
+                    <h3 class="text-2xl font-serif mt-1">Select Treatment</h3>
+                    <p class="muted mt-2 text-sm">Choose a treatment and duration to load availability.</p>
                   </div>
-                  <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                    <select id="treatment-select" class="input flex-1 min-w-[240px]">
+                  <div class="flex flex-col gap-3 w-full md:w-72">
+                    <select id="treatment-select" class="input w-full">
                       <option value="">Select treatment…</option>
                       <option value="relaxation">Relaxation Massage</option>
                       <option value="deep-tissue">Deep Tissue Massage</option>
@@ -828,7 +681,7 @@
                       <option value="infant">Infant Massage</option>
                     </select>
 
-                    <select id="duration-select" class="input flex-1 min-w-[240px]" disabled>
+                    <select id="duration-select" class="input w-full" disabled>
                       <option value="">Select a treatment first…</option>
                     </select>
                   </div>
@@ -837,55 +690,53 @@
                 <hr class="divider my-6">
 
                 <div class="flex items-center justify-between gap-3">
-                  <button id="prev-month-btn" class="btn-outline">
+                  <button id="prev-month-btn" class="btn-outline px-4 py-2">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                    <span>Prev</span>
                   </button>
-                  <div class="text-xl font-bold text-[var(--brand-gold)] tracking-wide" id="calendar-month-label">—</div>
-                  <button id="next-month-btn" class="btn-outline">
-                    <span>Next</span>
+                  <div class="text-xl font-bold text-brand-gold tracking-wide font-serif" id="calendar-month-label">—</div>
+                  <button id="next-month-btn" class="btn-outline px-4 py-2">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                   </button>
                 </div>
 
-                <div class="mt-4 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.25em] muted">
+                <div class="mt-4 grid grid-cols-7 gap-2 text-center text-[10px] uppercase tracking-[0.2em] text-brand-dim">
                   <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
 
                 <div id="calendar-days" class="mt-3 grid grid-cols-7 gap-2"></div>
 
-                <div class="mt-5 card-fancy p-4">
+                <div class="mt-5 card-fancy p-4 border-brand-gold/20 bg-brand-gold/5">
                   <div class="flex items-start gap-3">
-                    <i data-lucide="info" class="w-5 h-5 text-[var(--brand-gold)] mt-0.5"></i>
+                    <i data-lucide="info" class="w-5 h-5 text-brand-gold mt-0.5"></i>
                     <div class="flex-1">
-                      <div class="font-bold text-[var(--brand-light)]" id="availability-status-title">Availability</div>
-                      <div class="muted mt-1" id="availability-status-body">Select your treatment and duration to load live availability.</div>
-                      <div class="muted mt-3 text-sm" id="availability-meta"></div>
+                      <div class="font-bold text-brand-light text-sm" id="availability-status-title">Availability</div>
+                      <div class="muted mt-1 text-sm font-light" id="availability-status-body">Select your treatment and duration to load live availability.</div>
+                      <div class="text-brand-gold/60 mt-2 text-xs uppercase tracking-wider" id="availability-meta"></div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Selected Date -->
-                <div id="selected-date-info" class="mt-6 hidden">
-                  <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 2</div>
-                  <h3 class="text-2xl font-bold mt-1">Select a Time</h3>
-                  <div class="mt-2 pill">
-                    <i data-lucide="calendar" class="w-4 h-4 text-[var(--brand-gold)]"></i>
-                    <span id="selected-date-display">—</span>
+                <div id="selected-date-info" class="mt-8 hidden animate-fade-in-up">
+                  <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 2</div>
+                  <h3 class="text-2xl font-serif mt-1">Select a Time</h3>
+                  <div class="mt-3 pill border-brand-gold text-brand-gold bg-brand-gold/10">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span id="selected-date-display" class="font-bold">—</span>
                   </div>
                 </div>
 
                 <!-- Time slots -->
-                <div id="time-slots-container" class="mt-4 hidden">
+                <div id="time-slots-container" class="mt-4 hidden animate-fade-in-up" style="animation-delay:0.1s">
                   <div id="time-slots-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                 </div>
 
-                <div id="no-slots" class="mt-4 hidden card-fancy p-4">
+                <div id="no-slots" class="mt-4 hidden card-fancy p-4 border-red-500/20">
                   <div class="flex items-start gap-3">
-                    <i data-lucide="calendar-x" class="w-5 h-5 text-red-300 mt-0.5"></i>
+                    <i data-lucide="calendar-x" class="w-5 h-5 text-red-400 mt-0.5"></i>
                     <div>
-                      <div class="font-bold text-[var(--brand-light)]">No slots available</div>
-                      <div class="muted mt-1">Please choose a different day.</div>
+                      <div class="font-bold text-brand-light">No slots available</div>
+                      <div class="muted mt-1 text-sm">Please choose a different day.</div>
                     </div>
                   </div>
                 </div>
@@ -893,47 +744,47 @@
 
               <!-- Summary + confirm -->
               <div class="glass-panel p-6">
-                <div class="text-[0.75rem] tracking-[0.35em] uppercase muted">Step 3</div>
-                <h3 class="text-2xl font-bold mt-1">Confirm</h3>
-                <p class="muted mt-2">We will confirm your booking and send your confirmation automatically.</p>
+                <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 3</div>
+                <h3 class="text-2xl font-serif mt-1">Confirm</h3>
+                <p class="muted mt-2 text-sm font-light">We will confirm your booking and send your confirmation automatically.</p>
 
                 <hr class="divider my-5">
 
                 <div class="space-y-3">
-                  <div class="card-fancy p-4">
-                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Client</div>
-                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-client">—</div>
-                    <div class="muted mt-1" id="summary-email">—</div>
+                  <div class="card-fancy p-4 border-l-2 border-l-brand-gold">
+                    <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60 mb-1">Client</div>
+                    <div class="font-bold text-brand-light font-serif text-lg" id="summary-client">—</div>
+                    <div class="muted mt-0 text-xs" id="summary-email">—</div>
                   </div>
 
                   <div class="card-fancy p-4">
-                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Booking</div>
-                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-treatment">Select a treatment</div>
-                    <div class="muted mt-1" id="summary-datetime">Select a date and time</div>
+                    <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60 mb-1">Booking</div>
+                    <div class="font-bold text-brand-light font-serif text-lg" id="summary-treatment">Select a treatment</div>
+                    <div class="muted mt-0 text-xs" id="summary-datetime">Select a date and time</div>
                   </div>
 
                   <div class="card-fancy p-4">
-                    <div class="text-[0.75rem] tracking-[0.3em] uppercase muted">Travel</div>
-                    <div class="mt-2 font-bold text-[var(--brand-light)]" id="summary-travel-fee">$0.00</div>
-                    <div class="muted mt-1" id="summary-drive-time">—</div>
+                    <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60 mb-1">Travel Fee</div>
+                    <div class="font-bold text-brand-gold font-serif text-lg" id="summary-travel-fee">$0.00</div>
+                    <div class="muted mt-0 text-xs" id="summary-drive-time">—</div>
                   </div>
                 </div>
 
-                <button id="confirm-booking-btn" class="btn-filled w-full mt-6 btn-disabled" disabled>
+                <button id="confirm-booking-btn" class="btn-filled w-full mt-8 btn-disabled py-4" disabled>
                   <i data-lucide="check-circle" class="w-5 h-5"></i>
                   <span id="confirm-btn-text">Confirm Booking</span>
                 </button>
 
-                <div class="muted mt-4 text-sm">
-                  If you need to change your address, please contact us. Profile editing is <span class="pill">Coming Soon</span>.
+                <div class="muted mt-4 text-xs text-center opacity-60">
+                  If you need to change your address, please contact us. Profile editing is <span class="pill text-[10px] py-0 px-1">Coming Soon</span>.
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Membership -->
-          <div id="tab-membership" class="tab-content hidden">
-            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Membership</h2>
+          <div id="tab-membership" class="tab-content hidden animate-fade-in-up">
+            <h2 class="text-3xl font-serif text-brand-light mb-6">Membership</h2>
             <div class="card-fancy p-6">
               <div class="pill">Coming Soon</div>
               <p class="muted mt-4">Membership management will be available here.</p>
@@ -941,8 +792,8 @@
           </div>
 
           <!-- History -->
-          <div id="tab-history" class="tab-content hidden">
-            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Session History</h2>
+          <div id="tab-history" class="tab-content hidden animate-fade-in-up">
+            <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
             <div class="card-fancy p-6">
               <div class="pill">Coming Soon</div>
               <p class="muted mt-4">Your session history will appear here.</p>
@@ -950,8 +801,8 @@
           </div>
 
           <!-- Profile -->
-          <div id="tab-profile" class="tab-content hidden">
-            <h2 class="text-3xl font-bold text-[var(--brand-light)] mb-6">Profile</h2>
+          <div id="tab-profile" class="tab-content hidden animate-fade-in-up">
+            <h2 class="text-3xl font-serif text-brand-light mb-6">Profile</h2>
             <div class="card-fancy p-6">
               <div class="pill">Coming Soon</div>
               <p class="muted mt-4">Profile updates will be available here.</p>
@@ -963,12 +814,12 @@
   </main>
 
   <!-- Toast -->
-  <div id="toast" class="toast">
-    <div class="bg-black/20 p-1.5" style="border-radius:var(--radius)"><i data-lucide="check" class="w-4 h-4 text-[var(--brand-gold)]"></i></div>
-    <span id="toast-message">Success</span>
+  <div id="toast" class="toast fixed left-1/2 bottom-6 -translate-x-1/2 flex items-center gap-3 py-3 px-5 rounded opacity-0 pointer-events-none transition-all z-50">
+    <div class="bg-brand-gold/20 p-1.5 rounded-full"><i data-lucide="check" class="w-4 h-4 text-brand-gold"></i></div>
+    <span id="toast-message" class="text-sm font-bold tracking-wide">Success</span>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script>
     // =========================================================
     // STATE
     // =========================================================
@@ -1010,10 +861,18 @@
       const msgEl = document.getElementById("toast-message");
       msgEl.textContent = message || title || "—";
       toast.classList.add("show");
+      // Specific styling for toast show state handled in CSS via opacity
+      toast.style.opacity = "1";
+      toast.style.transform = "translateX(-50%) translateY(-10px)";
+      
       const iconWrap = toast.querySelector("i");
       if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
-      setTimeout(() => toast.classList.remove("show"), 3200);
+      setTimeout(() => {
+          toast.style.opacity = "0";
+          toast.style.transform = "translateX(-50%) translateY(0)";
+          toast.classList.remove("show");
+      }, 3200);
     }
 
     function showAuthError(msg) {
@@ -1026,6 +885,29 @@
     function hideAuthError() {
       const el = document.getElementById('auth0-error');
       if (el) el.classList.add('hidden');
+    }
+
+    // DEV BYPASS FUNCTION
+    function handleDevLogin() {
+      const u = document.getElementById('dev-user').value;
+      const p = document.getElementById('dev-pass').value;
+      if (u === 'dev.test' && p === 'dev.test') {
+        portalProfile = {
+          firstName: "Dev",
+          lastName: "Tester",
+          email: "dev@test.com",
+          phone: "555-555-5555",
+          address: "123 Dev St",
+          city: "Port Colborne",
+          postal_code: "L3K 5V7"
+        };
+        hideLoginOverlay();
+        hydrateProfileUI();
+        renderCalendar();
+        showToast("Dev Mode", "Bypassed authentication.");
+      } else {
+        showToast("Error", "Invalid dev credentials", true);
+      }
     }
 
     function toDateStr(date) {
@@ -1694,7 +1576,7 @@
         const reason = slot.available ? "" : (slot.blockedReason || "Booked");
 
         btn.innerHTML = slot.available
-          ? `<i data-lucide="clock" class="w-4 h-4 text-[var(--brand-gold)]"></i><span>${label}</span>`
+          ? `<i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i><span>${label}</span>`
           : `<i data-lucide="x" class="w-4 h-4 text-red-300"></i><span>${label}</span>`;
 
         if (!slot.available) {
@@ -1852,7 +1734,7 @@
         const tab = btn.dataset.tab;
         if (!tab) return;
         if (btn.disabled) {
-          btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
+          // btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
           return;
         }
         btn.addEventListener("click", () => switchTab(tab));
@@ -1904,4 +1786,12 @@
       // Initial tab
       switchTab("dashboard");
 
-      // Check for existing authentication - this will either show login or load the port
+      // Check for existing authentication - this will either show login or load the portal
+      await checkExistingAuth();
+    }
+
+    // Run on DOM ready
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
