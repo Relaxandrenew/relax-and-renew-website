@@ -7,11 +7,17 @@
 
 # Clean routes for static HTML files
 [[redirects]]
-  from = "/sign-in"
-  to = "/sign-in.html"
+  from = "/portal"
+  to = "/portal.html"
   status = 200
+
+# Legacy redirects - redirect old URLs to new portal
+[[redirects]]
+  from = "/sign-in"
+  to = "/portal"
+  status = 301
 
 [[redirects]]
   from = "/client-portal"
-  to = "/client-portal.html"
-  status = 200
+  to = "/portal"
+  status = 301
