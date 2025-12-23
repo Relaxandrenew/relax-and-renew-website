@@ -1,7 +1,49 @@
 [build]
-  # If you don't have a build, this can be empty or a simple command
   command = ""
   publish = "."
 
 [functions]
   directory = "netlify/functions"
+
+# ---------------------------------
+# Canonical host: apex -> www
+# (prevents localStorage token split between relaxandrenew.ca and www.relaxandrenew.ca)
+# ---------------------------------
+[[redirects]]
+  from = "https://relaxandrenew.ca/*"
+  to = "https://www.relaxandrenew.ca/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://relaxandrenew.ca/*"
+  to = "https://www.relaxandrenew.ca/:splat"
+  status = 301
+  force = true
+
+# ---------------------------------
+# Clean routes for static HTML files
+# (serve the HTML while keeping the pretty URL)
+# ---------------------------------
+[[redirects]]
+  from = "/sign-in"
+  to = "/sign-in.html"
+  status = 200
+
+[[redirects]]
+  from = "/client-portal"
+  to = "/client-portal.html"
+  status = 200
+
+# Optional: redirect the raw .html to the clean route
+[[redirects]]
+  from = "/sign-in.html"
+  to = "/sign-in"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/client-portal.html"
+  to = "/client-portal"
+  status = 301
+  force = true
