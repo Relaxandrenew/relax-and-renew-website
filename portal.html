@@ -1052,21 +1052,43 @@
       return now >= exp;
     }
 
+    function isEmailLike(str) {
+      const s = String(str || "").trim();
+      return !!s && s.includes("@") && s.includes(".");
+    }
+
     function buildProfileFromJwtPayload(payload) {
       if (!payload) return null;
 
       const email = payload.email || "";
-      const firstName = payload.given_name || (payload.name ? String(payload.name).split(" ")[0] : "") || "";
-      const lastName  = payload.family_name || (payload.name ? String(payload.name).split(" ").slice(1).join(" ") : "") || "";
-      const phone = payload.phone_number || payload[CLAIM_PHONE] || "";
 
+      // Prefer your custom profile object if present
       const claimObj = payload[CLAIM_PROFILE_OBJ] || null;
+
+      // Name sources (priority order)
+      const given = (claimObj && (claimObj.firstName || claimObj.given_name)) || payload.given_name || "";
+      const family = (claimObj && (claimObj.lastName || claimObj.family_name)) || payload.family_name || "";
+
+      // Fallback to payload.name ONLY if it looks like a real name (not an email)
+      const rawName = payload.name ? String(payload.name).trim() : "";
+      const canUseNameFallback = rawName && !isEmailLike(rawName) && rawName.includes(" ");
+
+      const nameFirst = canUseNameFallback ? rawName.split(" ")[0] : "";
+      const nameLast  = canUseNameFallback ? rawName.split(" ").slice(1).join(" ") : "";
+
+      const firstName = String(given || nameFirst || "").trim();
+      const lastName  = String(family || nameLast || "").trim();
+
+      const phone = payload.phone_number || payload[CLAIM_PHONE] || (claimObj && claimObj.phone) || "";
+
       const address = (claimObj && claimObj.address) || payload[CLAIM_ADDRESS] || "";
       const city    = (claimObj && claimObj.city) || payload[CLAIM_CITY] || "";
       const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || payload[CLAIM_POSTAL] || "";
 
       const addrObj = payload.address || null;
-      const addr2 = addrObj && (addrObj.street_address || addrObj.formatted) ? (addrObj.street_address || addrObj.formatted) : "";
+      const addr2 = addrObj && (addrObj.street_address || addrObj.formatted)
+        ? (addrObj.street_address || addrObj.formatted)
+        : "";
       const city2 = addrObj && addrObj.locality ? addrObj.locality : "";
       const postal2 = addrObj && addrObj.postal_code ? addrObj.postal_code : "";
 
