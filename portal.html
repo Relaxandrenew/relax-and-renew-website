@@ -475,16 +475,6 @@
 
       <div id="auth0-error" class="hidden mt-4 text-sm border border-red-500/30 bg-red-500/10 p-3 text-red-300"></div>
 
-      <!-- DEV ACCESS BYPASS -->
-      <div class="mt-6 pt-4 border-t border-brand-gold/20">
-        <p class="text-[10px] text-brand-dim/50 uppercase tracking-widest text-center mb-3">Developer Access</p>
-        <div class="flex gap-2">
-          <input type="text" id="dev-user" placeholder="User" class="input h-8 text-xs bg-black/50 border-brand-gold/20 min-h-[32px]">
-          <input type="password" id="dev-pass" placeholder="Pass" class="input h-8 text-xs bg-black/50 border-brand-gold/20 min-h-[32px]">
-          <button onclick="handleDevLogin()" class="btn-outline h-8 px-3 text-xs border-brand-gold/30 hover:border-brand-gold">Login</button>
-        </div>
-      </div>
-
       <p class="text-xs text-brand-dim mt-6 text-center opacity-70">
         Note: This portal is for returning clients only. New to Relax &amp; Renew?
         <a href="index.html" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
@@ -885,29 +875,6 @@
     function hideAuthError() {
       const el = document.getElementById('auth0-error');
       if (el) el.classList.add('hidden');
-    }
-
-    // DEV BYPASS FUNCTION
-    function handleDevLogin() {
-      const u = document.getElementById('dev-user').value;
-      const p = document.getElementById('dev-pass').value;
-      if (u === 'dev.test' && p === 'dev.test') {
-        portalProfile = {
-          firstName: "Dev",
-          lastName: "Tester",
-          email: "dev@test.com",
-          phone: "555-555-5555",
-          address: "123 Dev St",
-          city: "Port Colborne",
-          postal_code: "L3K 5V7"
-        };
-        hideLoginOverlay();
-        hydrateProfileUI();
-        renderCalendar();
-        showToast("Dev Mode", "Bypassed authentication.");
-      } else {
-        showToast("Error", "Invalid dev credentials", true);
-      }
     }
 
     function toDateStr(date) {
