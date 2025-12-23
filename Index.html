@@ -105,11 +105,44 @@
     <script async src="https://js.stripe.com/v3/buy-button.js"></script>
 
     <style>
+        :root {
+            --brand-black: #050505;
+            --brand-gold: #E0C584;
+            --brand-gold-hover: #F0D594;
+            --brand-light: #F0E2C0;
+            --brand-dim: rgba(240, 226, 192, 0.6);
+            --radius: 0.25rem;
+        }
+
         body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
         html { scroll-behavior: smooth; }
         
-        /* Navigation */
-        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); display: flex; align-items: center; }
+        /* Navigation (Matched exactly to Portal) */
+        .fixed-nav { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 80px; 
+            z-index: 50; 
+            transition: all 0.4s ease; 
+            background: rgba(5, 5, 5, 0.95); 
+            backdrop-filter: blur(15px); 
+            border-bottom: 1px solid rgba(224, 197, 132, 0.2); 
+            display: flex; align-items: center; 
+        }
+        
+        .nav-link { 
+            color: #F0E2C0; 
+            text-transform: uppercase; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            letter-spacing: 0.15em; 
+            text-decoration: none; 
+            position: relative; 
+            padding-bottom: 5px; 
+        }
+        .nav-link::after { 
+            content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; 
+            background: #E0C584; transition: width 0.3s ease; 
+        }
+        .nav-link:hover::after { width: 100%; }
         
         /* Mobile Menu */
         .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #050505; z-index: 49; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -129,11 +162,6 @@
         
         .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
         .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
-        
-        /* Links */
-        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
-        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
-        .nav-link:hover::after { width: 100%; }
         
         /* Utilities */
         .pill { background: rgba(224, 197, 132, 0.08); border: 1px solid rgba(224, 197, 132, 0.2); color: #F0E2C0; display: inline-block; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin: 0 0.3rem 0.5rem 0; letter-spacing: 0.05em; }
@@ -165,15 +193,18 @@
 </head>
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
+    <!-- NAV (Matched exactly to Portal) -->
     <nav id="navbar" class="fixed-nav">
-        <div class="container mx-auto px-6 flex justify-between items-center h-full">
+        <div class="container mx-auto px-6 flex justify-between items-center h-20">
             <a href="#" class="flex items-center gap-3 no-underline group">
                 <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
-                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
-                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                    <span class="text-[var(--brand-gold)] font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-[var(--brand-light)] text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
                 </div>
             </a>
+
+            <!-- Desktop Menu -->
             <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
                 <a href="#services" class="nav-link">Services</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
@@ -181,10 +212,16 @@
                 <a href="#area" class="nav-link">Service Area</a>
                 <a href="#faq" class="nav-link">FAQ</a>
                 <a href="therapists.html" class="nav-link">Our Therapists</a>
-                <a href="membership.html" class="nav-link text-brand-gold font-bold">Membership</a>
+                <a href="membership.html" class="nav-link">Membership</a>
+                <a href="portal.html" class="nav-link text-[var(--brand-gold)] font-bold">
+                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                    Client Portal
+                </a>
             </div>
-            <button id="menu-btn" class="lg:hidden text-brand-gold p-2 focus:outline-none hover:text-brand-light transition-colors">
-                <i data-lucide="menu" class="w-8 h-8"></i>
+
+            <!-- Mobile Menu Button -->
+            <button id="menu-btn" class="lg:hidden text-[var(--brand-gold)] p-2 hover:bg-[rgba(224,197,132,.10)] transition-colors" style="border-radius:var(--radius)">
+                <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
         </div>
     </nav>
@@ -202,6 +239,7 @@
             <a href="#faq" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">FAQ</a>
             <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
             <a href="membership.html" class="text-3xl text-brand-gold font-medium transition-colors toggle-menu-link">Membership</a>
+            <a href="portal.html" class="text-3xl text-brand-gold font-bold transition-colors toggle-menu-link">Client Portal</a>
             <button onclick="openBookingModal()" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Book Online</button>
         </nav>
         <div class="absolute bottom-10 flex gap-6 text-brand-gold/60">
