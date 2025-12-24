@@ -272,6 +272,13 @@
             background-color: #000000;
             color: #ffffff;
         }
+        
+        /* Signature Button Active State */
+        .hold-active {
+            background-color: #f87171 !important; /* Red background when holding */
+            color: black !important;
+            border-color: #f87171 !important;
+        }
     </style>
 </head>
 <body class="p-2 md:p-8">
@@ -349,8 +356,8 @@
                             <input type="date" name="date_of_birth" required class="w-full p-3 rounded">
                         </div>
                         <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Gender</label>
-                            <select name="gender" class="w-full p-3 rounded">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Gender <span class="text-red-400">*</span></label>
+                            <select name="gender" required class="w-full p-3 rounded">
                                 <option value="" class="bg-black">Select...</option>
                                 <option value="female" class="bg-black">Female</option>
                                 <option value="male" class="bg-black">Male</option>
@@ -364,17 +371,6 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
-                        <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Email Address <span class="text-red-400">*</span></label>
-                            <input type="email" name="email" required class="w-full p-3 rounded">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Mobile Phone <span class="text-red-400">*</span></label>
-                            <input type="tel" name="phone" required class="w-full p-3 rounded">
-                        </div>
-                    </div>
-
                      <div class="space-y-2 mt-4 md:mt-6">
                         <label class="block text-sm uppercase tracking-wide opacity-90">Source of Referral</label>
                         <select name="referral_source" class="w-full p-3 rounded">
@@ -397,16 +393,16 @@
                     <h3 class="text-lg font-semibold text-[#E0C584]/80 mb-4">Primary Care Physician</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                         <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Name</label>
-                            <input type="text" name="doctor_name" class="w-full p-3 rounded">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Name <span class="text-red-400">*</span></label>
+                            <input type="text" name="doctor_name" required class="w-full p-3 rounded">
                         </div>
                         <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Phone</label>
-                            <input type="tel" name="doctor_phone" class="w-full p-3 rounded">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Phone <span class="text-red-400">*</span></label>
+                            <input type="tel" name="doctor_phone" required class="w-full p-3 rounded phone-input" placeholder="(xxx) xxx xxxx">
                         </div>
                         <div class="md:col-span-2 space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Address</label>
-                            <input type="text" name="doctor_address" class="w-full p-3 rounded">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Doctor's Address <span class="text-red-400">*</span></label>
+                            <input type="text" name="doctor_address" required class="w-full p-3 rounded">
                         </div>
                     </div>
 
@@ -418,7 +414,7 @@
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Phone <span class="text-red-400">*</span></label>
-                            <input type="tel" name="emergency_phone" required class="w-full p-3 rounded">
+                            <input type="tel" name="emergency_phone" required class="w-full p-3 rounded phone-input" placeholder="(xxx) xxx xxxx">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Relationship <span class="text-red-400">*</span></label>
@@ -495,8 +491,8 @@
                     </h2>
                     
                     <div class="space-y-2 mb-6">
-                        <label class="block text-lg font-semibold">What are your Primary Goals or Areas of Concern? <span class="text-red-400">*</span></label>
-                        <textarea name="primary_goals" required placeholder="e.g. Back of Neck pain, Lower back tension..." class="w-full p-3 rounded min-h-[100px]"></textarea>
+                        <label class="block text-lg font-semibold">What are your Primary Goals or Areas of Concern?</label>
+                        <textarea name="primary_goals" placeholder="e.g. Back of Neck pain, Lower back tension..." class="w-full p-3 rounded min-h-[100px]"></textarea>
                     </div>
 
                     <div class="space-y-4 mb-6">
@@ -537,7 +533,7 @@
                     
                     <div class="space-y-4 mb-8">
                         <label class="flex items-start cursor-pointer choice-option p-4 rounded border border-[#E0C584]/30 bg-[#E0C584]/5 hover:bg-[#E0C584]/10 transition-colors">
-                            <input type="radio" name="billing_option" value="direct_billing" class="mt-1.5" onclick="toggleInsurance(true)">
+                            <input type="radio" name="billing_option" value="direct_billing" class="mt-1.5" onclick="toggleInsurance(true)" required>
                             <div class="ml-3">
                                 <span class="block text-lg font-bold text-[#E0C584]">Option 1: Direct Billing</span>
                                 <span class="text-sm opacity-80 block mt-1">We submit your claim directly to your insurance provider. You will receive a secure payment link for any remaining balance (co-pay), or you may pay via E-Transfer or Cash.</span>
@@ -545,7 +541,7 @@
                         </label>
                         
                         <label class="flex items-start cursor-pointer choice-option p-4 rounded border border-[#E0C584]/30 bg-[#E0C584]/5 hover:bg-[#E0C584]/10 transition-colors">
-                            <input type="radio" name="billing_option" value="full_payment_electronic" class="mt-1.5" onclick="toggleInsurance(false)">
+                            <input type="radio" name="billing_option" value="full_payment_electronic" class="mt-1.5" onclick="toggleInsurance(false)" required>
                             <div class="ml-3">
                                 <span class="block text-lg font-bold text-[#E0C584]">Option 2: Full Payment - Credit Card Link / E-Transfer</span>
                                 <span class="text-sm opacity-80 block mt-1">You will receive a secure payment link after your treatment, or you may pay via E-Transfer. You are responsible for submitting your own insurance claim.</span>
@@ -553,7 +549,7 @@
                         </label>
 
                         <label class="flex items-start cursor-pointer choice-option p-4 rounded border border-[#E0C584]/30 bg-[#E0C584]/5 hover:bg-[#E0C584]/10 transition-colors">
-                            <input type="radio" name="billing_option" value="cash" class="mt-1.5" onclick="toggleInsurance(false)">
+                            <input type="radio" name="billing_option" value="cash" class="mt-1.5" onclick="toggleInsurance(false)" required>
                             <div class="ml-3">
                                 <span class="block text-lg font-bold text-[#E0C584]">Option 3: Full Payment - Cash</span>
                                 <span class="text-sm opacity-80 block mt-1">You are responsible for submitting your claim to your insurance provider for reimbursement.</span>
@@ -566,16 +562,16 @@
                         <h3 class="text-xl font-bold text-[#E0C584]">Insurance Information</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <div class="space-y-2">
-                                <label class="block text-sm uppercase tracking-wide opacity-90">Insurer Name</label>
-                                <input type="text" name="insurer_name" placeholder="e.g. SunLife, Manulife" class="w-full p-3 rounded">
+                                <label class="block text-sm uppercase tracking-wide opacity-90">Insurer Name <span class="text-red-400 hidden insurance-req">*</span></label>
+                                <input type="text" name="insurer_name" id="input_insurer_name" placeholder="e.g. SunLife, Manulife" class="w-full p-3 rounded">
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-sm uppercase tracking-wide opacity-90">Policy/Plan Number</label>
-                                <input type="text" name="policy_number" class="w-full p-3 rounded">
+                                <label class="block text-sm uppercase tracking-wide opacity-90">Policy/Plan Number <span class="text-red-400 hidden insurance-req">*</span></label>
+                                <input type="text" name="policy_number" id="input_policy_number" class="w-full p-3 rounded">
                             </div>
                             <div class="space-y-2">
-                                <label class="block text-sm uppercase tracking-wide opacity-90">Member/Certificate ID</label>
-                                <input type="text" name="member_id" class="w-full p-3 rounded">
+                                <label class="block text-sm uppercase tracking-wide opacity-90">Member/Certificate ID <span class="text-red-400 hidden insurance-req">*</span></label>
+                                <input type="text" name="member_id" id="input_member_id" class="w-full p-3 rounded">
                             </div>
                             <!-- NEW OTHER FIELD -->
                             <div class="space-y-2">
@@ -701,8 +697,8 @@
                                 <div class="relative w-full border border-[#E0C584]/40 rounded bg-white/5 overflow-hidden">
                                     <canvas id="signaturePad" class="w-full h-40 md:h-52 block cursor-crosshair touch-none"></canvas>
                                     
-                                    <button type="button" id="clearSigBtn" class="absolute top-2 right-2 text-xs font-bold text-black bg-[#E0C584] hover:bg-white px-3 py-1.5 rounded transition-colors z-10 shadow-lg">
-                                        Clear Signature
+                                    <button type="button" id="clearSigBtn" class="absolute top-2 right-2 text-xs font-bold text-black bg-[#E0C584] hover:bg-white px-3 py-1.5 rounded transition-colors z-10 shadow-lg select-none">
+                                        Hold 2s to Clear
                                     </button>
                                 </div>
                                 
@@ -732,10 +728,26 @@
         // Defined here so onclick="" attributes in HTML can find them immediately.
         function toggleInsurance(show) {
             const section = document.getElementById('insuranceSection');
+            // Toggle Requirements for Insurance fields
+            const reqInputs = ['input_insurer_name', 'input_policy_number', 'input_member_id'];
+            const reqLabels = document.querySelectorAll('.insurance-req');
+
             if(show) {
                 section.classList.remove('hidden');
+                // Make required
+                reqInputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.required = true;
+                });
+                reqLabels.forEach(el => el.classList.remove('hidden'));
             } else {
                 section.classList.add('hidden');
+                // Remove required
+                reqInputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.required = false;
+                });
+                reqLabels.forEach(el => el.classList.add('hidden'));
             }
         }
 
@@ -766,6 +778,14 @@
                 viewBtn.style.backgroundColor = '';
                 viewBtn.style.color = '';
                 viewBtn.style.borderColor = '';
+            }
+        });
+
+        // Phone Formatting Logic
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('phone-input')) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? ' ' + x[3] : '');
             }
         });
 
@@ -810,14 +830,7 @@
                         const el = document.querySelector('input[name="last_name"]');
                         if(el) el.value = data.lastName;
                     }
-                    if (data.email) {
-                        const el = document.querySelector('input[name="email"]');
-                        if(el) el.value = data.email;
-                    }
-                    if (data.phone) {
-                        const el = document.querySelector('input[name="phone"]');
-                        if(el) el.value = data.phone;
-                    }
+                    // Email and Phone fields removed from DOM, so no need to autofill them
                 }
             } catch (err) {
                 console.error('Token validation error:', err);
@@ -825,39 +838,58 @@
             }
         })();
 
-        // 3. ROBUST SIGNATURE PAD LOGIC (Runs after load to ensure Canvas is ready)
-        // Wrapped in an IIFE to keep variables clean, but accessible via event listeners
+        // 3. ROBUST SIGNATURE PAD LOGIC
+        // - "Hard Save": Stores strokes in an array and repaints them on resize/scroll events.
+        // - "Hold to Clear": Requires 2 second press.
         (function initSignaturePad() {
             const canvas = document.getElementById('signaturePad');
             const ctx = canvas.getContext('2d');
             const clearBtn = document.getElementById('clearSigBtn');
             const signatureInput = document.getElementById('signatureImage');
             
+            // State
             let isDrawing = false;
-            let points = [];
+            let currentStroke = [];
+            let allStrokes = []; // Array of strokes, where a stroke is an array of {x,y} points
+            
+            // --- Helper: Redraw all saved strokes ---
+            function redraw() {
+                // Determine style based on current mode
+                const isEasyView = document.body.classList.contains('easy-view');
+                ctx.strokeStyle = isEasyView ? '#000000' : '#E0C584'; 
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
 
-            // Correctly resize canvas resolution to match display size
+                // Redraw all stored strokes
+                allStrokes.forEach(stroke => {
+                    if(stroke.length < 1) return;
+                    ctx.beginPath();
+                    ctx.moveTo(stroke[0].x, stroke[0].y);
+                    for (let i = 1; i < stroke.length; i++) {
+                        ctx.lineTo(stroke[i].x, stroke[i].y);
+                    }
+                    ctx.stroke();
+                });
+            }
+
+            // --- Resize Logic ---
             function resizeCanvas() {
                 const rect = canvas.getBoundingClientRect();
-                // Only resize if dimensions have changed to avoid flickering
+                // Only resize if dimensions have actually changed
                 if (canvas.width !== rect.width || canvas.height !== rect.height) {
                     canvas.width = rect.width;
                     canvas.height = rect.height;
-                    
-                    // Set styles after resize
-                    ctx.strokeStyle = '#E0C584'; // Default Gold
-                    ctx.lineWidth = 2.5;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
+                    redraw(); // Restore the signature after resize clears context
                 }
             }
 
-            // Initial resize
+            // Initial resize and listen
             window.addEventListener('load', resizeCanvas);
             window.addEventListener('resize', resizeCanvas);
-            // Also call immediately
             resizeCanvas();
 
+            // --- Coordinate Helper ---
             function getPointerPos(e) {
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -868,29 +900,31 @@
                 };
             }
 
+            // --- Drawing Events ---
             function startDrawing(e) {
-                e.preventDefault(); // Prevent scrolling on touch
+                e.preventDefault(); 
                 isDrawing = true;
+                currentStroke = [];
                 const pos = getPointerPos(e);
-                points.push(pos);
+                currentStroke.push(pos);
                 
-                // Re-apply styles (check for easy view mode dynamically)
                 const isEasyView = document.body.classList.contains('easy-view');
                 ctx.strokeStyle = isEasyView ? '#000000' : '#E0C584'; 
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
                 
                 ctx.beginPath();
                 ctx.moveTo(pos.x, pos.y);
-                ctx.lineTo(pos.x, pos.y);
+                ctx.lineTo(pos.x, pos.y); // Dot
                 ctx.stroke();
             }
 
             function draw(e) {
                 if (!isDrawing) return;
-                e.preventDefault(); // Prevent scrolling
-                
+                e.preventDefault();
                 const pos = getPointerPos(e);
-                points.push(pos);
-
+                currentStroke.push(pos);
                 ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
             }
@@ -898,29 +932,85 @@
             function stopDrawing(e) {
                 if (!isDrawing) return;
                 isDrawing = false;
-                // Save data URL to hidden input
-                if(points.length > 0) {
+                
+                if (currentStroke.length > 0) {
+                    allStrokes.push(currentStroke); // HARD SAVE
+                }
+                
+                // Update hidden input
+                if(allStrokes.length > 0) {
                     signatureInput.value = canvas.toDataURL('image/png');
                 }
-                points = [];
             }
 
-            // Event Listeners
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseout', stopDrawing);
-
             canvas.addEventListener('touchstart', startDrawing, { passive: false });
             canvas.addEventListener('touchmove', draw, { passive: false });
             canvas.addEventListener('touchend', stopDrawing);
 
-            clearBtn.addEventListener('click', (e) => {
+            // --- Hold to Clear Logic ---
+            let clearTimer = null;
+            let countdownInterval = null;
+            const HOLD_DURATION = 2000; // 2 seconds
+
+            function startClearTimer(e) {
                 e.preventDefault();
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                signatureInput.value = '';
-                points = [];
-            });
+                let timeLeft = 2;
+                
+                clearBtn.classList.add('hold-active');
+                clearBtn.innerText = `Holding... ${timeLeft}s`;
+
+                // Update text every second
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    if(timeLeft > 0) {
+                        clearBtn.innerText = `Holding... ${timeLeft}s`;
+                    }
+                }, 1000);
+
+                // Action trigger
+                clearTimer = setTimeout(() => {
+                    // CLEAR ACTION
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    allStrokes = []; // Clear memory
+                    signatureInput.value = '';
+                    
+                    resetClearButton("Cleared!");
+                }, HOLD_DURATION);
+            }
+
+            function cancelClearTimer(e) {
+                if(e) e.preventDefault();
+                resetClearButton("Hold 2s to Clear");
+            }
+
+            function resetClearButton(text) {
+                clearTimeout(clearTimer);
+                clearInterval(countdownInterval);
+                clearTimer = null;
+                countdownInterval = null;
+                
+                clearBtn.classList.remove('hold-active');
+                clearBtn.innerText = text;
+                
+                // If it was "Cleared!", revert to normal text after a delay
+                if(text === "Cleared!") {
+                    setTimeout(() => {
+                        clearBtn.innerText = "Hold 2s to Clear";
+                    }, 2000);
+                }
+            }
+
+            // Button Listeners
+            clearBtn.addEventListener('mousedown', startClearTimer);
+            clearBtn.addEventListener('touchstart', startClearTimer, { passive: false });
+            clearBtn.addEventListener('mouseup', cancelClearTimer);
+            clearBtn.addEventListener('mouseleave', cancelClearTimer);
+            clearBtn.addEventListener('touchend', cancelClearTimer);
+
         })();
 
         // 4. FORM SUBMISSION LOGIC
@@ -950,7 +1040,9 @@
             const data = {
                 patientId: patientId,
                 appointmentId: appointmentId,
-                submittedAt: new Date().toISOString()
+                submittedAt: new Date().toISOString(),
+                // ADDED THIS:
+                formHtml: document.documentElement.outerHTML
             };
             
             for (let [key, value] of formData.entries()) {
@@ -978,6 +1070,7 @@
                 loadingOverlay.classList.add('hidden');
                 successMessage.classList.remove('hidden');
                 this.reset();
+                // Clear canvas via logic
                 const canvas = document.getElementById('signaturePad');
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height); 
