@@ -426,8 +426,15 @@
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
-    const EXTENDED_ZONE_TRAVEL_FEE = 20;
-    const EXTENDED_ZONE_CITIES = new Set(["hamilton", "grimsby"]);
+    const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
+    
+    // Travel fee tiers based on drive time
+    const TRAVEL_FEE_TIERS = [
+      { minMinutes: 120, fee: 200 },
+      { minMinutes: 60, fee: 100 },
+      { minMinutes: 45, fee: 40 },
+      { minMinutes: 36, fee: 20 },
+    ];
 
     // Auth0 Config
     const AUTH0_DOMAIN = "auth.relaxandrenew.ca";
@@ -638,7 +645,7 @@
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="mailto:info@relaxandrenew.ca">
+                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#caa3a4aca58ab8afa6abb2aba4aeb8afa4afbde4a9ab">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -809,7 +816,7 @@
     <span id="toast-message" class="text-sm font-bold tracking-wide">Success</span>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -910,12 +917,16 @@
       return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
     }
 
-    function safeLower(s){ return String(s||"").trim().toLowerCase(); }
-
-    function calcTravelFee(profile) {
-      const city = safeLower(profile?.city);
-      if (EXTENDED_ZONE_CITIES.has(city)) return EXTENDED_ZONE_TRAVEL_FEE;
-      return 0;
+    function calcTravelFee(driveTimeMinutes) {
+      const driveTime = Number(driveTimeMinutes) || 0;
+      
+      // Check each tier from highest to lowest
+      for (const tier of TRAVEL_FEE_TIERS) {
+        if (driveTime >= tier.minMinutes) {
+          return tier.fee;
+        }
+      }
+      return 0; // No fee for drives under 36 min
     }
 
     function setConfirmEnabled(enabled) {
@@ -943,10 +954,30 @@
         document.getElementById("summary-datetime").textContent = "Select a date and time";
       }
 
-      const travelFee = calcTravelFee(portalProfile);
-      const drive = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      // Get drive time from selected slot, or fall back to max drive time from availability
+      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      const travelFee = calcTravelFee(driveTime);
+      
       document.getElementById("summary-travel-fee").textContent = `$${Number(travelFee || 0).toFixed(2)}`;
-      document.getElementById("summary-drive-time").textContent = drive ? `${drive} min drive time (approx.)` : "—";
+      
+      // Show drive time info with fee tier context
+      if (driveTime > 0) {
+        let feeNote;
+        if (driveTime >= 120) {
+          feeNote = " — $200 travel fee (2+ hours)";
+        } else if (driveTime >= 60) {
+          feeNote = " — $100 travel fee (60+ min)";
+        } else if (driveTime >= 45) {
+          feeNote = " — $40 travel fee (45+ min)";
+        } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
+          feeNote = " — $20 travel fee (36+ min)";
+        } else {
+          feeNote = " — no travel fee";
+        }
+        document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
+      } else {
+        document.getElementById("summary-drive-time").textContent = "—";
+      }
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
     }
@@ -1618,8 +1649,8 @@
       }
 
       const treat = TREATMENT_RULES[selectedServiceKey];
-      const travelFee = calcTravelFee(portalProfile);
       const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      const travelFee = calcTravelFee(driveTime);
 
       const bookingPayload = {
         firstName: portalProfile.firstName || "",
@@ -1776,12 +1807,4 @@
       // Initial tab
       switchTab("dashboard");
 
-      // Check for existing authentication - this will either show login or load the portal
-      await checkExistingAuth();
-    }
-
-    // Run on DOM ready
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
-</body>
-</html>
+      // Check for existing authentication - this will either show login or load the port
