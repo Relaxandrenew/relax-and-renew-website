@@ -310,7 +310,7 @@
             <p class="text-[#E0C584]/80 text-sm md:text-lg uppercase tracking-widest relative z-10">Relax & Renew RMT</p>
             <div class="mt-4 text-xs md:text-sm opacity-70 relative z-10">
                 <p>Port Colborne, Ontario</p>
-                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fe97909891be8c9b929f869f909a8c9b909b89d09d9f">[email&#160;protected]</a> | 1-226-337-9064</p>
+                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="60090e060f2012050c0118010e0412050e05174e0301">[email&#160;protected]</a> | 1-226-337-9064</p>
             </div>
         </div>
 
@@ -346,6 +346,14 @@
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Last Name <span class="text-red-400">*</span></label>
                             <input type="text" name="last_name" required class="w-full p-3 rounded">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Email <span class="text-red-400">*</span></label>
+                            <input type="email" name="email" required class="w-full p-3 rounded">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm uppercase tracking-wide opacity-90">Phone <span class="text-red-400">*</span></label>
+                            <input type="tel" name="phone" required class="w-full p-3 rounded phone-input" placeholder="(xxx) xxx xxxx">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Pronouns</label>
@@ -721,8 +729,10 @@
     </div>
 
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        // Initialize Lucide Icons
-        lucide.createIcons();
+        // Initialize Lucide Icons (with safety check)
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
 
         // 1. GLOBAL SCOPE FUNCTIONS (Dropdowns fix)
         // Defined here so onclick="" attributes in HTML can find them immediately.
@@ -830,7 +840,14 @@
                         const el = document.querySelector('input[name="last_name"]');
                         if(el) el.value = data.lastName;
                     }
-                    // Email and Phone fields removed from DOM, so no need to autofill them
+                    if (data.email) {
+                        const el = document.querySelector('input[name="email"]');
+                        if(el) el.value = data.email;
+                    }
+                    if (data.phone) {
+                        const el = document.querySelector('input[name="phone"]');
+                        if(el) el.value = data.phone;
+                    }
                 }
             } catch (err) {
                 console.error('Token validation error:', err);
