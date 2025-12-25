@@ -83,7 +83,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Auth0 Lock (Embedded Email + Password Window) -->
-  <link rel="stylesheet" href="https://cdn.auth0.com/js/lock/14.2.0/lock.min.css" />
   <script src="https://cdn.auth0.com/js/lock/14.2.0/lock.min.js"></script>
 
   <style>
@@ -1181,24 +1180,32 @@
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
           // Valid token exists - user is authenticated
-          portalProfile = buildProfileFromJwtPayload(payload) || null;
+          try {
+            portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-          // Merge with localStorage profile if exists
-          const local = loadProfileFromLocalStorage();
-          if (local) portalProfile = { ...(portalProfile || {}), ...local };
+            // Merge with localStorage profile if exists
+            const local = loadProfileFromLocalStorage();
+            if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-          // Try to enrich from userinfo
-          portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
+            // Try to enrich from userinfo (don't let this block login)
+            try {
+              portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
+            } catch (e) {
+              console.warn("Could not enrich profile from userinfo:", e);
+            }
 
-          // Hide login overlay and show portal
+            // Track login
+            try {
+              if (typeof gtag === "function") gtag("event", "client_portal_session_restored");
+            } catch (e) {}
+          } catch (e) {
+            console.error("Error building profile:", e);
+          }
+          
+          // ALWAYS hide login overlay if we have a valid token
           hideLoginOverlay();
           hydrateProfileUI();
           renderCalendar();
-          
-          // Track login
-          try {
-            if (typeof gtag === "function") gtag("event", "client_portal_session_restored");
-          } catch (e) {}
           
           return true;
         } else {
@@ -1807,4 +1814,12 @@
       // Initial tab
       switchTab("dashboard");
 
-      // Check for existing authentication - this will either show login or load the port
+      // Check for existing authentication - this will either show login or load the portal
+      await checkExistingAuth();
+    }
+
+    // Run on DOM ready
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
