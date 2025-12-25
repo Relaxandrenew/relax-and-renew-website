@@ -638,7 +638,7 @@
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#026b6c646d4270676e637a636c6670676c67752c6163">
+                      <a class="btn-outline text-xs py-2" href="mailto:info@relaxandrenew.ca">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -809,7 +809,7 @@
     <span id="toast-message" class="text-sm font-bold tracking-wide">Success</span>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script>
     // =========================================================
     // STATE
     // =========================================================
@@ -1189,6 +1189,7 @@
     function initAuth0Lock() {
       lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
         container: 'auth0-lock-container',
+        allowSignUp: false,
         theme: {
           logo: 'https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png',
           primaryColor: '#E0C584'
@@ -1205,7 +1206,6 @@
           params: { scope: 'openid profile email' }
         },
         allowedConnections: [AUTH0_DB_CONNECTION],
-        allowSignUp: false,
         usernameStyle: "email",
         rememberLastLogin: true,
         autofocus: true,
@@ -1776,4 +1776,12 @@
       // Initial tab
       switchTab("dashboard");
 
-      // Check for existing authentication - this will either show login or load the por
+      // Check for existing authentication - this will either show login or load the portal
+      await checkExistingAuth();
+    }
+
+    // Run on DOM ready
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
