@@ -1003,86 +1003,128 @@
         })();
 
         // 4. FORM SUBMISSION LOGIC
-        document.getElementById('healthIntakeForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const signatureInput = document.getElementById('signatureImage');
-            
-            if(!signatureInput.value) {
-                alert("Please sign the form before submitting.");
-                return;
-            }
+document.getElementById('healthIntakeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const signatureInput = document.getElementById('signatureImage');
+    
+    if(!signatureInput.value) {
+        alert("Please sign the form before submitting.");
+        return;
+    }
 
-            const submitBtn = document.getElementById('submitBtn');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const successMessage = document.getElementById('successMessage');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            successMessage.classList.add('hidden');
-            errorMessage.classList.add('hidden');
-            
-            // CAPTURE HTML SNAPSHOT FIRST - BEFORE showing the loading overlay
-            const formHtmlSnapshot = document.documentElement.outerHTML;
-            
-            // NOW disable button and show loading overlay
-            submitBtn.disabled = true;
-            loadingOverlay.classList.remove('hidden');
-            
-            const formData = new FormData(this);
-            const formDataObj = {
-                patientId: patientId,
-                appointmentId: appointmentId,
-                submittedAt: new Date().toISOString()
-            };
-            
-            for (let [key, value] of formData.entries()) {
-                if (key === 'conditions') {
-                    if (!formDataObj[key]) formDataObj[key] = [];
-                    formDataObj[key].push(value);
-                } else {
-                    formDataObj[key] = value;
-                }
-            }
-            
-            // Use the pre-captured HTML snapshot
-            const data = {
-                formHtml: formHtmlSnapshot,
-                formData: formDataObj
-            };
-            
-            try {
-                const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/health-intake-submit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Submission failed');
-                }
-                
-                loadingOverlay.classList.add('hidden');
-                successMessage.classList.remove('hidden');
-                this.reset();
-                
-                const canvas = document.getElementById('signaturePad');
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height); 
-                signatureInput.value = '';
-                
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                
-            } catch (error) {
-                console.error('Error:', error);
-                loadingOverlay.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                submitBtn.disabled = false;
-                
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    successMessage.classList.add('hidden');
+    errorMessage.classList.add('hidden');
+    
+    // SYNC ALL FORM VALUES TO HTML ATTRIBUTES BEFORE CAPTURING
+    // This ensures the snapshot includes the filled-in data
+    
+    // Handle text inputs, emails, tel, date, etc.
+    document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="hidden"]').forEach(input => {
+        input.setAttribute('value', input.value);
+    });
+    
+    // Handle textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.textContent = textarea.value;
+    });
+    
+    // Handle select elements
+    document.querySelectorAll('select').forEach(select => {
+        select.querySelectorAll('option').forEach(option => {
+            if(option.value === select.value) {
+                option.setAttribute('selected', 'selected');
+            } else {
+                option.removeAttribute('selected');
             }
         });
+    });
+    
+    // Handle checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        if(checkbox.checked) {
+            checkbox.setAttribute('checked', 'checked');
+        } else {
+            checkbox.removeAttribute('checked');
+        }
+    });
+    
+    // Handle radio buttons
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        if(radio.checked) {
+            radio.setAttribute('checked', 'checked');
+        } else {
+            radio.removeAttribute('checked');
+        }
+    });
+    
+    // CAPTURE HTML SNAPSHOT AFTER syncing values
+    const formHtmlSnapshot = document.documentElement.outerHTML;
+    
+    // NOW disable button and show loading overlay
+    submitBtn.disabled = true;
+    loadingOverlay.classList.remove('hidden');
+    
+    const formData = new FormData(this);
+    const formDataObj = {
+        patientId: patientId,
+        appointmentId: appointmentId,
+        submittedAt: new Date().toISOString()
+    };
+    
+    for (let [key, value] of formData.entries()) {
+        if (key === 'conditions') {
+            if (!formDataObj[key]) formDataObj[key] = [];
+            formDataObj[key].push(value);
+        } else {
+            formDataObj[key] = value;
+        }
+    }
+    
+    // Use the pre-captured HTML snapshot
+    const data = {
+        formHtml: formHtmlSnapshot,
+        formData: formDataObj
+    };
+    
+    try {
+        const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/health-intake-submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Submission failed');
+        }
+        
+        loadingOverlay.classList.add('hidden');
+        successMessage.classList.remove('hidden');
+        this.reset();
+        
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        signatureInput.value = '';
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        loadingOverlay.classList.add('hidden');
+        errorMessage.classList.remove('hidden');
+        submitBtn.disabled = false;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
     </script>
 
     <!-- Google tag (gtag.js) -->
