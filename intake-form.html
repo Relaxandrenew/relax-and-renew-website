@@ -284,7 +284,7 @@
 <body class="p-2 md:p-8">
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-sm flex items-center justify-center">
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
         <div class="text-center">
             <div class="spinner mx-auto mb-4"></div>
             <p class="text-[#E0C584] text-lg tracking-widest uppercase">Submitting...</p>
@@ -310,7 +310,7 @@
             <p class="text-[#E0C584]/80 text-sm md:text-lg uppercase tracking-widest relative z-10">Relax & Renew RMT</p>
             <div class="mt-4 text-xs md:text-sm opacity-70 relative z-10">
                 <p>Port Colborne, Ontario</p>
-                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="60090e060f2012050c0118010e0412050e05174e0301">[email&#160;protected]</a> | 1-226-337-9064</p>
+                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bed7d0d8d1fecddbd2df86dfd0dadcdbd0dbc990dddf">[email&#160;protected]</a> | 1-226-337-9064</p>
             </div>
         </div>
 
@@ -346,14 +346,6 @@
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Last Name <span class="text-red-400">*</span></label>
                             <input type="text" name="last_name" required class="w-full p-3 rounded">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Email <span class="text-red-400">*</span></label>
-                            <input type="email" name="email" required class="w-full p-3 rounded">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-sm uppercase tracking-wide opacity-90">Phone <span class="text-red-400">*</span></label>
-                            <input type="tel" name="phone" required class="w-full p-3 rounded phone-input" placeholder="(xxx) xxx xxxx">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm uppercase tracking-wide opacity-90">Pronouns</label>
@@ -535,8 +527,9 @@
 
                 <!-- Billing & Payment -->
                 <div class="section">
+                    <!-- ADDED RED ASTERISK HERE -->
                     <h2 class="text-xl md:text-2xl font-bold mb-6 text-[#E0C584] section-divider pb-2 flex items-center gap-3">
-                        <i data-lucide="credit-card" class="w-5 h-5 md:w-6 md:h-6"></i> Billing & Payment Options
+                        <i data-lucide="credit-card" class="w-5 h-5 md:w-6 md:h-6"></i> Billing & Payment Options <span class="text-red-400 ml-1">*</span>
                     </h2>
                     
                     <div class="space-y-4 mb-8">
@@ -729,15 +722,12 @@
     </div>
 
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        // Initialize Lucide Icons (with safety check)
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-
         // 1. GLOBAL SCOPE FUNCTIONS (Dropdowns fix)
         // Defined here so onclick="" attributes in HTML can find them immediately.
         function toggleInsurance(show) {
             const section = document.getElementById('insuranceSection');
+            if (!section) return; // Safety check
+
             // Toggle Requirements for Insurance fields
             const reqInputs = ['input_insurer_name', 'input_policy_number', 'input_member_id'];
             const reqLabels = document.querySelectorAll('.insurance-req');
@@ -768,6 +758,11 @@
             } else {
                 details.classList.add('hidden');
             }
+        }
+
+        // Initialize Lucide Icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
 
         // Easy View Toggle Logic
@@ -840,14 +835,7 @@
                         const el = document.querySelector('input[name="last_name"]');
                         if(el) el.value = data.lastName;
                     }
-                    if (data.email) {
-                        const el = document.querySelector('input[name="email"]');
-                        if(el) el.value = data.email;
-                    }
-                    if (data.phone) {
-                        const el = document.querySelector('input[name="phone"]');
-                        if(el) el.value = data.phone;
-                    }
+                    // Email and Phone fields removed from DOM, so no need to autofill them
                 }
             } catch (err) {
                 console.error('Token validation error:', err);
@@ -1102,9 +1090,10 @@
             } catch (error) {
                 console.error('Error:', error);
                 loadingOverlay.classList.add('hidden');
-                            errorMessage.classList.remove('hidden');
-            } finally {
+                errorMessage.classList.remove('hidden');
                 submitBtn.disabled = false;
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     </script>
