@@ -2320,11 +2320,20 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                         body: JSON.stringify(bookingData)
                     });
 
-                    if (response.ok) {
-                        const result = await response.json();
-                        
-                        // Show branded confirmation modal
-                        showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
+                    const result = await response.json();
+
+if (result.error === 'slot_taken') {
+    errorEl.classList.remove('hidden');
+    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Sorry, this time slot was just booked by someone else. Please refresh and select another time.';
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+}
+
+if (result.success) {
+    // Show branded confirmation modal
+    showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
                         
                         closeClientDetailsModal();
                         
