@@ -1347,51 +1347,39 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         formData: formDataObj
     };
     
-    // OPTIMISTIC UI: Show success immediately, send data in background
-    // The n8n webhook responds immediately, but we show success without waiting
-    
-    const form = this;
-    
-    // Show success immediately (optimistic UI)
-    loadingOverlay.classList.add('hidden');
-    successMessage.classList.remove('hidden');
-    form.reset();
-    
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    signatureInput.value = '';
-    
-    __rnrSignatureStrokes = null;
-    __rnrClearDraft();
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Send data in background - use sendBeacon for reliability (survives page close)
-    // Falls back to fetch if sendBeacon fails or isn't available
-    const jsonData = JSON.stringify(data);
-    const webhookUrl = 'https://primary-production-efcf.up.railway.app/webhook/health-intake-submit';
-    
-    let sent = false;
-    
-    // Try sendBeacon first (most reliable for "fire and forget")
-    if (navigator.sendBeacon) {
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        sent = navigator.sendBeacon(webhookUrl, blob);
-    }
-    
-    // Fallback to fetch with keepalive if sendBeacon failed or unavailable
-    if (!sent) {
-        fetch(webhookUrl, {
+    try {
+        const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/health-intake-submit', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: jsonData,
-            keepalive: true  // Allows request to outlive the page
-        }).catch(err => {
-            // Log error but don't show to user - form data was captured in HTML snapshot
-            console.warn('Background submission note:', err);
+            body: JSON.stringify(data)
         });
+        
+        if (!response.ok) {
+            throw new Error('Submission failed');
+        }
+        
+        loadingOverlay.classList.add('hidden');
+        successMessage.classList.remove('hidden');
+        this.reset();
+        
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+        signatureInput.value = '';
+        
+        __rnrSignatureStrokes = null;
+        __rnrClearDraft();
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        loadingOverlay.classList.add('hidden');
+        errorMessage.classList.remove('hidden');
+        submitBtn.disabled = false;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
     </script>
