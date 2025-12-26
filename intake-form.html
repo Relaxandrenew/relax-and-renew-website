@@ -304,7 +304,7 @@
             <p class="text-[#E0C584]/80 text-sm md:text-lg uppercase tracking-widest relative z-10">Relax &amp; Renew RMT</p>
             <div class="mt-4 text-xs md:text-sm opacity-70 relative z-10">
                 <p>Port Colborne, Ontario</p>
-                <p>accounts@relaxandrenew.ca | 1-226-337-9064</p>
+                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="711012121e041f05023103141d1009101f1503141f14065f1210">[email&#160;protected]</a> | 1-226-337-9064</p>
             </div>
         </div>
 
@@ -723,7 +723,7 @@
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // 1. GLOBAL SCOPE FUNCTIONS (Dropdowns fix)
         function toggleInsurance(show) {
             const section = document.getElementById('insuranceSection');
@@ -1347,50 +1347,54 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         formData: formDataObj
     };
     
-    try {
-        const response = await fetch('https://primary-production-efcf.up.railway.app/webhook/health-intake-submit', {
+    // OPTIMISTIC UI: Show success immediately, send data in background
+    // The n8n webhook responds immediately, but we show success without waiting
+    
+    const form = this;
+    
+    // Show success immediately (optimistic UI)
+    loadingOverlay.classList.add('hidden');
+    successMessage.classList.remove('hidden');
+    form.reset();
+    
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    signatureInput.value = '';
+    
+    __rnrSignatureStrokes = null;
+    __rnrClearDraft();
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Send data in background - use sendBeacon for reliability (survives page close)
+    // Falls back to fetch if sendBeacon fails or isn't available
+    const jsonData = JSON.stringify(data);
+    const webhookUrl = 'https://primary-production-efcf.up.railway.app/webhook/health-intake-submit';
+    
+    let sent = false;
+    
+    // Try sendBeacon first (most reliable for "fire and forget")
+    if (navigator.sendBeacon) {
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        sent = navigator.sendBeacon(webhookUrl, blob);
+    }
+    
+    // Fallback to fetch with keepalive if sendBeacon failed or unavailable
+    if (!sent) {
+        fetch(webhookUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            body: jsonData,
+            keepalive: true  // Allows request to outlive the page
+        }).catch(err => {
+            // Log error but don't show to user - form data was captured in HTML snapshot
+            console.warn('Background submission note:', err);
         });
-        
-        if (!response.ok) {
-            throw new Error('Submission failed');
-        }
-        
-        loadingOverlay.classList.add('hidden');
-        successMessage.classList.remove('hidden');
-        this.reset();
-        
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        signatureInput.value = '';
-        
-        __rnrSignatureStrokes = null;
-        __rnrClearDraft();
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-    } catch (error) {
-        console.error('Error:', error);
-        loadingOverlay.classList.add('hidden');
-        errorMessage.classList.remove('hidden');
-        submitBtn.disabled = false;
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
     </script>
 
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'AW-17575022013');
-    </script>
-</body>
-</html>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17575022013"><
