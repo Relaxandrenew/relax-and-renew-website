@@ -798,10 +798,187 @@
         let patientId = urlParams.get('patientId');
         let appointmentId = urlParams.get('appointmentId');
 
+
+        // --- DRAFT PERSISTENCE (Token Pages) ---
+        // Saves in-progress form entries locally so refresh/close does not lose work.
+        const __RNR_DRAFT_BASE_KEY = 'rnr:healthIntakeDraft:v1';
+        const __RNR_DRAFT_KEY = (() => {
+            if (token) return `${__RNR_DRAFT_BASE_KEY}:token:${token}`;
+            if (patientId || appointmentId) return `${__RNR_DRAFT_BASE_KEY}:pa:${patientId || ''}:${appointmentId || ''}`;
+            return `${__RNR_DRAFT_BASE_KEY}:path:${window.location.pathname}`;
+        })();
+
+        let __rnrDraftRestoreInProgress = false;
+        let __rnrDraftSaveTimer = null;
+        let __rnrSignatureStrokes = null;
+
+        function __rnrSafeLocalStorageGet(key) {
+            try { return window.localStorage.getItem(key); } catch (_) { return null; }
+        }
+        function __rnrSafeLocalStorageSet(key, value) {
+            try { window.localStorage.setItem(key, value); return true; } catch (_) { return false; }
+        }
+        function __rnrSafeLocalStorageRemove(key) {
+            try { window.localStorage.removeItem(key); } catch (_) {}
+        }
+
+        function __rnrReadDraft() {
+            const raw = __rnrSafeLocalStorageGet(__RNR_DRAFT_KEY);
+            if (!raw) return null;
+            try { return JSON.parse(raw); } catch (_) { return null; }
+        }
+
+        function __rnrWriteDraft(draft) {
+            if (!draft || typeof draft !== 'object') return;
+            __rnrSafeLocalStorageSet(__RNR_DRAFT_KEY, JSON.stringify(draft));
+        }
+
+        function __rnrCollectDraft() {
+            const form = document.getElementById('healthIntakeForm');
+            if (!form) return null;
+
+            const elements = Array.from(form.elements).filter(el => el && el.name && !el.disabled);
+            const nameCounts = {};
+            elements.forEach(el => { nameCounts[el.name] = (nameCounts[el.name] || 0) + 1; });
+
+            const data = {};
+
+            elements.forEach(el => {
+                const name = el.name;
+                const tag = (el.tagName || '').toLowerCase();
+
+                // Avoid storing large base64 values; signature is persisted as strokes instead.
+                if (name === 'signature_image') return;
+
+                if (el.type === 'checkbox') {
+                    const isGroup = (nameCounts[name] || 0) > 1;
+                    if (isGroup) {
+                        if (!Array.isArray(data[name])) data[name] = [];
+                        if (el.checked) data[name].push(el.value);
+                    } else {
+                        data[name] = !!el.checked;
+                    }
+                    return;
+                }
+
+                if (el.type === 'radio') {
+                    if (el.checked) data[name] = el.value;
+                    return;
+                }
+
+                if (tag === 'select' || tag === 'textarea' || el.type === 'text' || el.type === 'email' || el.type === 'tel' || el.type === 'date' || el.type === 'hidden') {
+                    data[name] = el.value;
+                    return;
+                }
+
+                // Default fallback
+                data[name] = el.value;
+            });
+
+            return {
+                v: 1,
+                updatedAt: new Date().toISOString(),
+                token: token || null,
+                patientId: patientId || null,
+                appointmentId: appointmentId || null,
+                data,
+                signatureStrokes: Array.isArray(__rnrSignatureStrokes) ? __rnrSignatureStrokes : null
+            };
+        }
+
+        function __rnrApplyDraft(draft) {
+            if (!draft || typeof draft !== 'object' || !draft.data) return;
+            const form = document.getElementById('healthIntakeForm');
+            if (!form) return;
+
+            __rnrDraftRestoreInProgress = true;
+
+            const elements = Array.from(form.elements).filter(el => el && el.name && !el.disabled);
+            const nameCounts = {};
+            elements.forEach(el => { nameCounts[el.name] = (nameCounts[el.name] || 0) + 1; });
+
+            elements.forEach(el => {
+                const name = el.name;
+                const saved = draft.data[name];
+                if (saved === undefined) return;
+
+                if (name === 'signature_image') return;
+
+                if (el.type === 'checkbox') {
+                    const isGroup = (nameCounts[name] || 0) > 1;
+                    if (isGroup) {
+                        el.checked = Array.isArray(saved) && saved.includes(el.value);
+                    } else {
+                        el.checked = !!saved;
+                    }
+                    return;
+                }
+
+                if (el.type === 'radio') {
+                    el.checked = (el.value === saved);
+                    return;
+                }
+
+                el.value = saved;
+            });
+
+            if (Array.isArray(draft.signatureStrokes)) {
+                __rnrSignatureStrokes = draft.signatureStrokes;
+            }
+
+            // Ensure dependent sections reflect restored radios
+            if (draft.data.billing_option) {
+                toggleInsurance(draft.data.billing_option === 'direct_billing');
+            }
+            if (draft.data.policy_holder_type) {
+                togglePolicyHolder(draft.data.policy_holder_type === 'other');
+            }
+
+            __rnrDraftRestoreInProgress = false;
+        }
+
+        function __rnrSaveDraftDebounced() {
+            if (__rnrDraftRestoreInProgress) return;
+            if (!token) return; // only persist on token pages (as requested)
+
+            clearTimeout(__rnrDraftSaveTimer);
+            __rnrDraftSaveTimer = setTimeout(() => {
+                const draft = __rnrCollectDraft();
+                if (draft) __rnrWriteDraft(draft);
+            }, 250);
+        }
+
+        function __rnrClearDraft() {
+            __rnrSafeLocalStorageRemove(__RNR_DRAFT_KEY);
+        }
+
+        (function __rnrInitDraftPersistence() {
+            if (!token) return; // only on token pages
+            const draft = __rnrReadDraft();
+            if (draft) __rnrApplyDraft(draft);
+
+            const form = document.getElementById('healthIntakeForm');
+            if (!form) return;
+
+            form.addEventListener('input', __rnrSaveDraftDebounced);
+            form.addEventListener('change', __rnrSaveDraftDebounced);
+        })();
+
+        // PDF snapshot tuning (brightness) - affects the captured HTML only, not on-page visuals.
+        function __rnrTunePdfSnapshot(html) {
+            if (typeof html !== 'string') return html;
+
+            // Slightly reduce the header glow overlay in the captured snapshot only.
+            return html.replace(
+                'bg-[#E0C584] opacity-5 blur-3xl rounded-full pointer-events-none"></div>',
+                'bg-[#E0C584] opacity-5 blur-3xl rounded-full pointer-events-none" style="opacity:0.03;"></div>'
+            );
+        }
+
         // Set today's date for signature date
         const dateInput = document.querySelector('input[name="signature_date"]');
         if(dateInput) {
-            dateInput.valueAsDate = new Date();
+            if (!dateInput.value) dateInput.valueAsDate = new Date();
         }
 
         // 2. TOKEN LOGIC
@@ -825,19 +1002,19 @@
                     
                     if (data.firstName) {
                         const el = document.querySelector('input[name="first_name"]');
-                        if(el) el.value = data.firstName;
+                        if(el && !el.value) el.value = data.firstName;
                     }
                     if (data.lastName) {
                         const el = document.querySelector('input[name="last_name"]');
-                        if(el) el.value = data.lastName;
+                        if(el && !el.value) el.value = data.lastName;
                     }
                     if (data.email) {
                         const el = document.querySelector('input[name="email"]');
-                        if(el) el.value = data.email;
+                        if(el && !el.value) el.value = data.email;
                     }
                     if (data.phone) {
                         const el = document.querySelector('input[name="phone"]');
-                        if(el) el.value = data.phone;
+                        if(el && !el.value) el.value = data.phone;
                     }
                 }
             } catch (err) {
@@ -855,6 +1032,17 @@
             let isDrawing = false;
             let currentStroke = [];
             let allStrokes = [];
+            
+            // Restore saved signature (draft persistence) so refresh/close does not lose it.
+            let __rnrRestoredStrokes = null;
+            try {
+                const __draft = __rnrReadDraft();
+                if (__draft && Array.isArray(__draft.signatureStrokes)) {
+                    __rnrRestoredStrokes = __draft.signatureStrokes;
+                } else if (Array.isArray(__rnrSignatureStrokes)) {
+                    __rnrRestoredStrokes = __rnrSignatureStrokes;
+                }
+            } catch (_) {}
             
             function redraw() {
                 const isEasyView = document.body.classList.contains('easy-view');
@@ -886,6 +1074,19 @@
             window.addEventListener('load', resizeCanvas);
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
+            
+            if (Array.isArray(__rnrRestoredStrokes)) {
+                allStrokes = __rnrRestoredStrokes;
+                __rnrSignatureStrokes = allStrokes;
+                if (allStrokes.length > 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    redraw();
+                    signatureInput.value = canvas.toDataURL('image/png');
+                } else {
+                    signatureInput.value = '';
+                }
+            }
+
 
             function getPointerPos(e) {
                 const rect = canvas.getBoundingClientRect();
@@ -935,6 +1136,9 @@
                 
                 if(allStrokes.length > 0) {
                     signatureInput.value = canvas.toDataURL('image/png');
+                    
+                    __rnrSignatureStrokes = allStrokes;
+                    __rnrSaveDraftDebounced();
                 }
             }
 
@@ -968,6 +1172,9 @@
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     allStrokes = [];
                     signatureInput.value = '';
+                    
+                    __rnrSignatureStrokes = allStrokes;
+                    __rnrSaveDraftDebounced();
                     
                     resetClearButton("Cleared!");
                 }, HOLD_DURATION);
@@ -1022,7 +1229,6 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
     errorMessage.classList.add('hidden');
     
     // SYNC ALL FORM VALUES TO HTML ATTRIBUTES BEFORE CAPTURING
-    // This ensures the snapshot includes the filled-in data
     
     // Handle text inputs, emails, tel, date, etc.
     document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="hidden"]').forEach(input => {
@@ -1063,8 +1269,57 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         }
     });
     
-    // CAPTURE HTML SNAPSHOT AFTER syncing values
-    const formHtmlSnapshot = document.documentElement.outerHTML;
+    // CONVERT SIGNATURE CANVAS TO AN IMAGE FOR THE SNAPSHOT
+    const canvas = document.getElementById('signaturePad');
+    const signatureDataUrl = canvas.toDataURL('image/png');
+    
+    // Create an image element to replace the canvas temporarily
+    const signatureImg = document.createElement('img');
+    signatureImg.src = signatureDataUrl;
+    signatureImg.id = 'signaturePadImage';
+    signatureImg.className = canvas.className;
+    signatureImg.style.cssText = `
+        width: 100%;
+        height: ${canvas.offsetHeight}px;
+        display: block;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(224, 197, 132, 0.4);
+        border-radius: 0.25rem;
+    `;
+    
+    // Store reference to canvas parent and sibling
+    const canvasParent = canvas.parentElement;
+    const clearBtn = document.getElementById('clearSigBtn');
+    
+    // Temporarily hide the clear button and replace canvas with image
+    clearBtn.style.display = 'none';
+    canvas.style.display = 'none';
+    canvasParent.insertBefore(signatureImg, canvas);
+    
+    // Ensure insurance section visibility is captured
+    const insuranceSection = document.getElementById('insuranceSection');
+    if(insuranceSection && !insuranceSection.classList.contains('hidden')) {
+        insuranceSection.setAttribute('style', 'display: block !important;');
+    }
+    
+    // Ensure policy holder details visibility is captured
+    const policyHolderDetails = document.getElementById('policyHolderDetails');
+    if(policyHolderDetails && !policyHolderDetails.classList.contains('hidden')) {
+        policyHolderDetails.setAttribute('style', 'display: grid !important;');
+    }
+    
+    // CAPTURE HTML SNAPSHOT
+    let formHtmlSnapshot = document.documentElement.outerHTML;
+    formHtmlSnapshot = __rnrTunePdfSnapshot(formHtmlSnapshot);
+    
+    // RESTORE the canvas and button immediately after capturing
+    signatureImg.remove();
+    canvas.style.display = 'block';
+    clearBtn.style.display = '';
+    
+    // Remove inline styles we added
+    if(insuranceSection) insuranceSection.removeAttribute('style');
+    if(policyHolderDetails) policyHolderDetails.removeAttribute('style');
     
     // NOW disable button and show loading overlay
     submitBtn.disabled = true;
@@ -1109,10 +1364,12 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         successMessage.classList.remove('hidden');
         this.reset();
         
-        const canvas = document.getElementById('signaturePad');
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
         signatureInput.value = '';
+        
+        __rnrSignatureStrokes = null;
+        __rnrClearDraft();
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         

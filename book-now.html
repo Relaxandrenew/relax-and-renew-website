@@ -79,6 +79,7 @@
                         'slide-up': 'slideUp 0.4s ease-out',
                         'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
                         'shimmer': 'shimmer 1.5s infinite',
+                        'loading-bar': 'loadingBar 1.5s ease-in-out infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -96,6 +97,10 @@
                         shimmer: {
                             '0%': { backgroundPosition: '200% 0' },
                             '100%': { backgroundPosition: '-200% 0' }
+                        },
+                        loadingBar: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(300%)' }
                         }
                     }
                 }
@@ -449,6 +454,17 @@
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                         <span>Change Selection</span>
                     </button>
+                </div>
+
+                <!-- NEW PROGRESS BAR LOADER -->
+                <div id="availability-loading" class="hidden mb-8">
+                    <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
+                        <span>Checking Availability...</span>
+                        <span class="animate-pulse">Please Wait</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-brand-gold/10 rounded-full overflow-hidden relative">
+                        <div class="absolute top-0 left-0 h-full bg-brand-gold w-1/3 animate-loading-bar rounded-full"></div>
+                    </div>
                 </div>
 
                 <!-- Skeleton Loader -->
@@ -1414,9 +1430,9 @@
                 // Sort slots by time
                 group.slots.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-                // Create grid for time slots - RESPONSIVE
+                // Create grid for time slots - RESPONSIVE 4x4 layout on mobile
                 const slotsGrid = document.createElement('div');
-                slotsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2';
+                slotsGrid.className = 'grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2';
 
                 group.slots.forEach(slot => {
                     const isAvail = slot && slot.available !== false;
@@ -1426,14 +1442,17 @@
                     slotBtn.disabled = !isAvail;
 
                     // IMPORTANT: keep label from API (it includes " (Booked)" when unavailable)
-                    const timeLabel = formatTimeLabel(slot);
+                    let timeLabel = formatTimeLabel(slot);
+                    
+                    // Remove "EST" and AM/PM if needed to fit 4 cols (Compact Mode)
+                    // We remove "EST" completely.
+                    // We keep time short.
+                    // If booked, we strike it out.
 
                     if (isAvail) {
-                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center gap-2 transition-all min-w-[120px]';
+                        slotBtn.className = 'px-1 py-2 rounded-lg border border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center transition-all w-full';
                         slotBtn.innerHTML = `
-                            <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
-                            <span class="font-bold text-base">${timeLabel}</span>
-                            <span class="text-xs text-brand-dim/60">EST</span>
+                            <span class="font-bold text-sm whitespace-nowrap">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
                         slotBtn.addEventListener('click', () => {
                             selectedSlot = slot;
@@ -1441,12 +1460,10 @@
                             updateStickyBar();
                         });
                     } else {
-                        // Greyed out + disabled
-                        slotBtn.className = 'px-4 py-1.5 rounded-lg border-2 border-white/10 text-white/35 bg-white/5 flex items-center justify-center gap-2 min-w-[120px] cursor-not-allowed opacity-75';
+                        // Greyed out + disabled + strikethrough
+                        slotBtn.className = 'px-1 py-2 rounded-lg border border-white/5 text-white/30 bg-white/5 flex items-center justify-center w-full cursor-not-allowed';
                         slotBtn.innerHTML = `
-                            <i data-lucide="lock" class="w-3.5 h-3.5 text-white/30 flex-shrink-0"></i>
-                            <span class="font-bold text-base">${timeLabel}</span>
-                            <span class="text-xs text-white/25">EST</span>
+                            <span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
                     }
 
@@ -1666,8 +1683,9 @@
             }
 
             try {
-                // Show skeleton
-                document.getElementById('calendar-skeleton').classList.remove('hidden');
+                // SHOW PROGRESS BAR + HIDE CALENDAR
+                document.getElementById('availability-loading').classList.remove('hidden'); // Show bar
+                document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton (replaced by bar)
                 document.getElementById('calendar-content').classList.add('hidden');
                 
                 updateAvailabilityStatus("Checking live availability for this address...", false);
@@ -1712,8 +1730,8 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Hide skeleton
-                document.getElementById('calendar-skeleton').classList.add('hidden');
+                // HIDE PROGRESS BAR + SHOW CALENDAR
+                document.getElementById('availability-loading').classList.add('hidden');
                 document.getElementById('calendar-content').classList.remove('hidden');
 
                 if (!res.ok) {
@@ -1773,8 +1791,8 @@
 
                 renderCalendar();
             } catch (e) {
-                // Hide skeleton on error
-                document.getElementById('calendar-skeleton').classList.add('hidden');
+                // Hide loader on error
+                document.getElementById('availability-loading').classList.add('hidden');
                 document.getElementById('calendar-content').classList.remove('hidden');
                 
                 console.error('❌ Availability exception', e);
