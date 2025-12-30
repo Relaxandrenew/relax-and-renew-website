@@ -206,7 +206,7 @@
       width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(224, 197, 132, 0.3);
       color: var(--brand-light); padding: 0.6rem 1rem; border-radius: 0.25rem; outline: none; font-size: 1rem;
       min-height: 48px;
-      max-width: 100%;
+      max-width: 100%; /* Prevent overflow */
     }
     /* Fixed Dropdowns: Custom arrow, dark background for options */
     select.input {
@@ -277,98 +277,97 @@
     /* =========================================
        FIXED: Login Overlay CSS - MOBILE OPTIMIZED
        ========================================= */
+    body.portal-scroll-locked {
+      overflow: hidden !important;
+      height: 100% !important;
+      position: fixed !important;
+      width: 100% !important;
+      left: 0 !important;
+      right: 0 !important;
+    }
+
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      width: 100vw;
+      height: 100dvh;
+      height: 100vh; 
+      background: #050505; 
+      display: flex;
+      align-items: flex-start; /* Align top for mobile scrolling */
+      justify-content: center;
+      overflow: hidden; /* Overlay itself doesn't scroll */
+      padding: 80px 0 0 0; /* Space for nav */
+      transition: opacity 0.3s ease, visibility 0.3s ease; /* UX Polish */
+    }
+
+    #login-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    
+    .login-card {
+      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
+      border: 1px solid rgba(224, 197, 132, 0.25);
+      backdrop-filter: blur(10px);
+      
+      /* Mobile Layout */
+      width: 95%;
+      max-width: 400px;
+      padding: 1.5rem 0; /* Zero horizontal padding for max width */
+      margin: 0 auto;
+      
+      /* Internal scrolling for the card content */
+      max-height: calc(100vh - 100px); 
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+    .login-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, #E0C584, transparent);
+    }
+
+    /* Add internal padding to content BUT NOT the auth container */
+    .login-card > .text-center, 
+    .login-card > .text-xs,
+    .login-card > .text-[11px] {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Desktop Adjustments for Login Card */
+    @media (min-width: 640px) {
+        #login-overlay {
+            align-items: center; /* Center vertically on desktop */
+            padding: 0;
+        }
+        .login-card {
+            padding: 2.5rem 2rem;
+            max-width: 420px;
+            width: 100%;
+            max-height: none;
+            overflow: visible;
+        }
+        /* Reset content padding on desktop since card has padding */
+        .login-card > .text-center, 
+        .login-card > .text-xs,
+        .login-card > .text-[11px] {
+          padding-left: 0;
+          padding-right: 0;
+        }
+    }
+
     /* =========================================
-   LOGIN OVERLAY (Android-safe): lock background + prevent scroll chaining
-   ========================================= */
-
-/* When overlay is open, hard-lock the page behind it */
-body.portal-scroll-locked {
-  overflow: hidden !important;
-  height: 100% !important;
-  position: fixed !important;
-  width: 100% !important;
-  left: 0 !important;
-  right: 0 !important;
-}
-
-/* Overlay must NEVER scroll. Only the card scrolls. */
-#login-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  width: 100vw;
-  height: 100dvh;         /* Android address-bar safe */
-  height: 100vh;          /* fallback */
-  background: #050505;    /* fully blocks underlay (no page showing through) */
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-
-  /* critical: stop scroll chaining / bounce showing background */
-  overflow: hidden;
-  overscroll-behavior: none;
-  touch-action: none;
-
-  padding: 96px 12px 18px; /* top clears fixed nav; card scroll handles the rest */
-}
-
-#login-overlay.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.login-card {
-  background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
-  border: 1px solid rgba(224, 197, 132, 0.25);
-  backdrop-filter: blur(10px);
-
-  width: 96%;
-  max-width: 420px;
-
-  /* card scrolls, not the overlay */
-  max-height: calc(100dvh - 120px);
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-
-  padding: 1.25rem 0.5rem;
-  position: relative;
-}
-
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 2px;
-  background: linear-gradient(90deg, transparent, #E0C584, transparent);
-}
-
-/* Desktop spacing stays the same */
-@media (min-width: 640px) {
-  #login-overlay {
-    align-items: center;
-    padding: 1rem;
-    touch-action: auto;
-  }
-  .login-card {
-    padding: 2.5rem 2rem;
-    max-height: none;
-    overflow: visible;
-  }
-}
-
-
-    /* =========================================
-       FIXED: Auth0 Lock Styles (Robust Overrides)
+       FIXED: Auth0 Lock Styles
        ========================================= */
     #auth0-lock-container { 
         width: 100% !important; 
         max-width: 100% !important;
     }
     
-    /* Ensure Lock Widget is Fluid on Mobile */
     #auth0-lock-container .auth0-lock {
         width: 100% !important;
         box-sizing: border-box !important;
@@ -388,14 +387,12 @@ body.portal-scroll-locked {
       box-shadow: none !important;
     }
     
-    /* Specific Widget Overrides */
+    /* Widget styling */
     #auth0-lock-container .auth0-lock .auth0-lock-widget {
       background: #050505 !important;
       border: 1px solid rgba(224,197,132,0.45) !important;
       overflow: hidden !important;
       width: 100% !important;
-      max-width: 100% !important;
-      min-width: 0 !important; /* Allow shrinking */
       margin: 0 auto !important;
       box-sizing: border-box !important;
     }
@@ -408,42 +405,27 @@ body.portal-scroll-locked {
       display: none !important;
     }
 
-    /* Internal Content Wrapper */
-    #auth0-lock-container .auth0-lock-widget-container,
-    #auth0-lock-container .auth0-lock-cred-pane {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-
-    #auth0-lock-container .auth0-lock,
+    /* Content styling */
     #auth0-lock-container .auth0-lock .auth0-lock-content,
-    #auth0-lock-container .auth0-lock .auth0-lock-pane,
-    #auth0-lock-container .auth0-lock .auth0-lock-cred-pane,
-    #auth0-lock-container .auth0-lock .auth0-lock-center,
     #auth0-lock-container .auth0-lock .auth0-lock-form,
-    #auth0-lock-container .auth0-lock .auth0-lock-body-content,
-    #auth0-lock-container .auth0-lock .auth0-lock-signup,
-    #auth0-lock-container .auth0-lock .auth0-lock-terms,
-    #auth0-lock-container .auth0-lock .auth0-lock-message,
-    #auth0-lock-container .auth0-lock .auth0-lock-warning,
-    #auth0-lock-container .auth0-lock .auth0-lock-error,
-    #auth0-lock-container .auth0-lock .auth0-lock-error-msg {
+    #auth0-lock-container .auth0-lock .auth0-lock-cred-pane {
       background: #050505 !important;
-      width: 100% !important; /* Force width */
+      width: 100% !important;
       box-sizing: border-box !important;
     }
+
+    /* Colors */
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock label,
-    #auth0-lock-container .auth0-lock p,
-    #auth0-lock-container .auth0-lock .auth0-lock-alternative,
-    #auth0-lock-container .auth0-lock .auth0-lock-terms {
+    #auth0-lock-container .auth0-lock p {
       color: rgba(240,226,192,0.92) !important;
     }
     #auth0-lock-container .auth0-lock label {
       color: #E0C584 !important;
       font-weight: 700 !important;
-      letter-spacing: 0.04em !important;
     }
+    
+    /* Tabs */
     #auth0-lock-container .auth0-lock .auth0-lock-tabs,
     #auth0-lock-container .auth0-lock .auth0-lock-tabs-container {
       background: #050505 !important;
@@ -457,160 +439,59 @@ body.portal-scroll-locked {
       letter-spacing: 0.14em !important;
       font-weight: 700 !important;
       font-size: 0.72rem !important;
-      padding: 18px 16px !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current a,
     #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
       color: #E0C584 !important;
     }
 
-    /* INPUT FIELD FIXES - THE NUCLEAR OPTION */
-    #auth0-lock-container .auth0-lock-input-block {
-        margin-bottom: 10px !important;
-        width: 100% !important;
-    }
-
-    /* Force wrapper to be flex to handle icon + input side-by-side without overflow */
-    #auth0-lock-container .auth0-lock-input-wrap {
+    /* Inputs - Standard Auth0 layout, just styled */
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap {
       background: #050505 !important;
       border: 1px solid rgba(224,197,132,0.55) !important;
-      border-radius: 0 !important;
       padding: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-      height: 44px !important; 
-      display: flex !important;
-      align-items: center !important;
-      position: relative !important;
-    }
-
-    /* Absolute position the icon within the flex container's relative context */
-    #auth0-lock-container .auth0-lock-input-wrap .auth0-lock-input-icon {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        bottom: 0 !important;
-        width: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        color: rgba(224,197,132,0.90) !important;
-        z-index: 10 !important;
     }
     
-    /* Input takes full width but has padding-left to clear the icon */
-    #auth0-lock-container .auth0-lock-input-wrap input,
-    #auth0-lock-container .auth0-lock-input-wrap textarea {
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input {
       background: #050505 !important;
       color: rgba(240,226,192,0.95) !important;
       font-size: 1.05rem !important;
-      width: 100% !important;
-      height: 100% !important;
-      padding-left: 45px !important; /* Space for icon */
-      padding-right: 10px !important; /* Prevent right edge collision */
-      border: none !important;
-      margin: 0 !important;
-      box-sizing: border-box !important;
     }
     
-    #auth0-lock-container .auth0-lock-input-wrap input::placeholder,
-    #auth0-lock-container .auth0-lock-input-wrap textarea::placeholder {
-      color: rgba(240,226,192,0.45) !important;
-    }
-    #auth0-lock-container .auth0-lock-input-wrap:focus-within {
-      border-color: #F0D594 !important;
-      box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
+    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
+        color: rgba(224,197,132,0.90) !important;
     }
     
-    #auth0-lock-container .auth0-lock button.auth0-lock-submit,
-    #auth0-lock-container .auth0-lock .auth0-lock-submit button {
+    /* Submit Button */
+    #auth0-lock-container .auth0-lock button.auth0-lock-submit {
       background: #E0C584 !important;
       border: 1px solid #E0C584 !important;
       color: #000 !important;
       text-transform: uppercase !important;
-      letter-spacing: 0.12em !important;
       font-weight: 800 !important;
-      padding: 14px 16px !important;
-      width: 100% !important; /* Force full width */
-      box-sizing: border-box !important;
     }
-    #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
-    #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
+    #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover {
       background: #F0D594 !important;
-      border-color: #F0D594 !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-separator span {
-      background: #050505 !important;
-      color: rgba(240,226,192,0.85) !important;
-    }
-    #auth0-lock-container .auth0-lock .auth0-lock-separator:before,
-    #auth0-lock-container .auth0-lock .auth0-lock-separator:after {
-      background: rgba(224,197,132,0.25) !important;
-    }
+
+    /* Link Colors */
     #auth0-lock-container .auth0-lock a {
       color: #E0C584 !important;
     }
-    #auth0-lock-container .auth0-lock a:hover {
-      color: #F0D594 !important;
+
+    /* ----------------------------------------------------
+       MOBILE SCALING FIX
+       If screen is very narrow (< 380px), slightly shrink 
+       the entire auth widget to ensure it fits.
+       ---------------------------------------------------- */
+    @media (max-width: 380px) {
+        #auth0-lock-container {
+            transform: scale(0.9);
+            transform-origin: top center;
+            width: 111% !important; /* Compensate for scale down */
+            margin-left: -5.5%; /* Center after scaling */
+        }
     }
-
-    /* =========================================
-   MOBILE FIX (AGGRESSIVE): Kill Lock reserved space + let card size naturally
-   ========================================= */
-
-/* =========================================
-   Auth0 Lock: ANDROID HEIGHT FIX (kills reserved blank space)
-   ========================================= */
-@media (max-width: 640px) {
-
-  /* Force Lock to size to content (Auth0 often sets min-heights internally) */
-  #auth0-lock-container,
-  #auth0-lock-container .auth0-lock,
-  #auth0-lock-container .auth0-lock-widget,
-  #auth0-lock-container .auth0-lock-widget-container,
-  #auth0-lock-container .auth0-lock-content,
-  #auth0-lock-container .auth0-lock-pane,
-  #auth0-lock-container .auth0-lock-cred-pane,
-  #auth0-lock-container .auth0-lock-center,
-  #auth0-lock-container .auth0-lock-body,
-  #auth0-lock-container .auth0-lock-body-content,
-  #auth0-lock-container .auth0-lock-form {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-  }
-
-  /* The big culprit: widget often gets a min-height; hard reset it */
-  #auth0-lock-container .auth0-lock-widget {
-    min-height: unset !important;
-    height: fit-content !important;
-    display: block !important;
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* Remove internal padding/margins that create a fake “empty panel” */
-  #auth0-lock-container .auth0-lock-content,
-  #auth0-lock-container .auth0-lock-body-content,
-  #auth0-lock-container .auth0-lock-widget-container,
-  #auth0-lock-container .auth0-lock-cred-pane {
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* Submit must remain in normal flow */
-  #auth0-lock-container .auth0-lock-submit {
-    position: static !important;
-    margin-top: 10px !important;
-    padding: 0 !important;
-  }
-
-  /* Tighten input spacing slightly (reduces vertical bloat without changing look) */
-  #auth0-lock-container .auth0-lock-input-block {
-    margin-bottom: 8px !important;
-  }
-}
-
   </style>
 
   <script>
@@ -1092,30 +973,46 @@ body.portal-scroll-locked {
     }
     
     let __portalScrollY = 0;
+    let __portalLocked = false;
 
-function lockPortalBackground() {
-  __portalScrollY = window.scrollY || 0;
-  document.body.classList.add("portal-scroll-locked");
-  document.body.style.top = `-${__portalScrollY}px`;
-}
+    function lockPortalBackground() {
+      if (__portalLocked) return;
+      // Capture scroll position
+      __portalScrollY = window.scrollY;
+      
+      // Add class for fixed positioning
+      document.body.classList.add("portal-scroll-locked");
+      
+      // Set top offset to maintain visual position
+      document.body.style.top = `-${__portalScrollY}px`;
+      
+      __portalLocked = true;
+    }
 
-function unlockPortalBackground() {
-  document.body.classList.remove("portal-scroll-locked");
-  document.body.style.top = "";
-  window.scrollTo(0, __portalScrollY);
-}
+    function unlockPortalBackground() {
+      if (!__portalLocked) return;
+      
+      // Remove class and style
+      document.body.classList.remove("portal-scroll-locked");
+      document.body.style.top = "";
+      
+      // Restore scroll position immediately
+      window.scrollTo(0, __portalScrollY);
+      
+      __portalLocked = false;
+    }
 
-function showLoginOverlay() {
-  const overlay = document.getElementById("login-overlay");
-  if (overlay) overlay.classList.remove("hidden");
-  lockPortalBackground();
-}
+    function showLoginOverlay() {
+      const overlay = document.getElementById("login-overlay");
+      if (overlay) overlay.classList.remove("hidden");
+      lockPortalBackground();
+    }
 
-function hideLoginOverlay() {
-  const overlay = document.getElementById("login-overlay");
-  if (overlay) overlay.classList.add("hidden");
-  unlockPortalBackground();
-}
+    function hideLoginOverlay() {
+      const overlay = document.getElementById("login-overlay");
+      if (overlay) overlay.classList.add("hidden");
+      unlockPortalBackground();
+    }
 
 
     // =========================================================
@@ -1394,151 +1291,138 @@ function hideLoginOverlay() {
     }
 
     // =========================================================
-    // UI HYDRATION
-    // =========================================================
-    function hydrateProfileUI() {
-      const nm = portalProfile?.fullName || portalProfile?.email || "Client";
-      const email = portalProfile?.email || "—";
-      const addr = portalProfile?.address ? `${portalProfile.address}${portalProfile.city ? ", " + portalProfile.city : ""}${portalProfile.postal ? " " + portalProfile.postal : ""}` : "—";
-      const phone = portalProfile?.phone || "—";
-
-      const navUser = document.getElementById("nav-user-name");
-      const welcome = document.getElementById("welcome-pill");
-      const sumClient = document.getElementById("summary-client");
-      const sumEmail = document.getElementById("summary-email");
-      const pillAddr = document.getElementById("pill-address");
-      const pillPhone = document.getElementById("pill-phone");
-
-      if (navUser) navUser.textContent = nm;
-      if (welcome) welcome.textContent = nm;
-      if (sumClient) sumClient.textContent = nm;
-      if (sumEmail) sumEmail.textContent = email;
-      if (pillAddr) pillAddr.textContent = `Address: ${addr}`;
-      if (pillPhone) pillPhone.textContent = `Phone: ${phone}`;
-
-      // Show missing profile warning if address/city/postal missing
-      const missing = document.getElementById("profile-missing");
-      const hasAddress = !!(portalProfile?.address && portalProfile?.city && portalProfile?.postal);
-      if (missing) {
-        if (!hasAddress) missing.classList.remove("hidden");
-        else missing.classList.add("hidden");
-      }
-    }
-
-    // =========================================================
     // TREATMENT / DURATION
     // =========================================================
-    function onTreatmentChange() {
-      selectedServiceKey = treatmentSelect.value || null;
-      selectedStandardDuration = null;
-      selectedDateStr = null;
-      selectedSlot = null;
-      availabilityByDate = {};
-      availabilityCache.clear();
-
-      updateSummary();
-      hideSlots();
-
+    function rebuildDurationOptions() {
+      if (!durationSelect) {
+        console.error("durationSelect not found");
+        return;
+      }
       durationSelect.innerHTML = "";
-      durationSelect.disabled = true;
 
-      if (!selectedServiceKey) {
-        durationSelect.innerHTML = `<option value="">Select a treatment first…</option>`;
-        setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
-        renderCalendar();
+      const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+      if (!rule) {
+        durationSelect.disabled = true;
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Select a treatment first…";
+        durationSelect.appendChild(opt);
+        selectedStandardDuration = null;
+        updateSummary();
         return;
       }
 
-      const rule = TREATMENT_RULES[selectedServiceKey];
-      const opts = rule?.durations || [];
-      durationSelect.innerHTML = `<option value="">Select duration…</option>` + opts.map(m => `<option value="${m}">${m} min</option>`).join("");
-      durationSelect.disabled = false;
+      const firstOpt = document.createElement("option");
+      firstOpt.value = "";
+      firstOpt.textContent = "Select…";
+      durationSelect.appendChild(firstOpt);
 
-      setAvailabilityStatus("Availability", "Select a duration to load availability.", "");
-      renderCalendar();
+      rule.durations.forEach(min => {
+        const opt = document.createElement("option");
+        opt.value = String(min);
+        opt.textContent = `${min} min`;
+        durationSelect.appendChild(opt);
+      });
+
+      durationSelect.disabled = false;
+      selectedStandardDuration = null;
+      updateSummary();
     }
 
-    async function onDurationChange() {
-      const v = durationSelect.value;
-      selectedStandardDuration = v ? Number(v) : null;
+    // =========================================================
+    // AVAILABILITY
+    // =========================================================
+    function clearSelectionUI() {
       selectedDateStr = null;
       selectedSlot = null;
-      availabilityByDate = {};
-      availabilityCache.clear();
 
+      document.getElementById("selected-date-info").classList.add("hidden");
+      document.getElementById("time-slots-container").classList.add("hidden");
+      document.getElementById("no-slots").classList.add("hidden");
+      document.getElementById("confirm-booking-btn").classList.add("btn-disabled");
+      setConfirmEnabled(false);
       updateSummary();
-      hideSlots();
+    }
 
-      if (!selectedServiceKey || !selectedStandardDuration) {
-        setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
+    function buildAvailabilityPayload() {
+      const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
+      if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
+      if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
+
+      const { from, to } = computeMonthRange(calendarCurrent);
+      const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
+
+      return {
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
+        from,
+        to,
+        standardDurationMinutes: Number(selectedStandardDuration),
+        blockDurationMinutes: Number(blockMinutes),
+        slotIntervalMinutes: 15,
+        practitionerId: DEFAULT_PRACTITIONER_ID,
+        travel_time_buffer_minutes: 0
+      };
+    }
+
+    function getRequestCacheKey(payload) {
+      return [
+        payload.from, payload.to,
+        payload.standardDurationMinutes, payload.blockDurationMinutes,
+        payload.practitionerId,
+        payload.address, payload.city, payload.postal_code
+      ].join("|");
+    }
+
+    function parseAvailabilityResponse(data) {
+      availabilityByDate = {};
+      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+
+      if (!data) return;
+
+      availabilityMeta.maxDriveTimeMinutes = Number(data.maxDriveTimeMinutes || 0);
+      availabilityMeta.effective_travel_buffer_minutes = Number(data.effective_travel_buffer_minutes || 0);
+
+      if (data.dates && Array.isArray(data.dates)) {
+        data.dates.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        data.forEach(day => {
+          if (!day || !day.date || !Array.isArray(day.slots)) return;
+          availabilityByDate[day.date] = day.slots;
+        });
+      }
+    }
+
+    async function maybeLoadAvailabilityForCurrentMonth() {
+      const payload = buildAvailabilityPayload();
+      if (payload.error) {
+        updateAvailabilityStatus(payload.error, false);
+        availabilityByDate = {};
         renderCalendar();
+        clearSelectionUI();
         return;
       }
 
-      await loadAvailabilityForMonth(calendarCurrent);
-      renderCalendar();
-    }
-
-    // =========================================================
-    // AVAILABILITY LOADING
-    // =========================================================
-    function showAvailabilityLoading(show) {
-      const el = document.getElementById("availability-loading");
-      if (!el) return;
-      if (show) el.classList.remove("hidden");
-      else el.classList.add("hidden");
-    }
-
-    function setAvailabilityStatus(title, body, meta) {
-      const t = document.getElementById("availability-status-title");
-      const b = document.getElementById("availability-status-body");
-      const m = document.getElementById("availability-meta");
-      if (t) t.textContent = title || "Availability";
-      if (b) b.textContent = body || "";
-      if (m) m.textContent = meta || "";
-    }
-
-    function monthKey(dateObj) {
-      const y = dateObj.getFullYear();
-      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-      return `${y}-${m}`;
-    }
-
-    async function loadAvailabilityForMonth(dateObj) {
-      const hasAddress = !!(portalProfile?.address && portalProfile?.city && portalProfile?.postal);
-      if (!hasAddress) {
-        setAvailabilityStatus("Availability", "We need your address (street, city, postal code) to load availability.", "");
-        return;
-      }
-
-      const key = `${monthKey(dateObj)}::${selectedServiceKey}::${selectedStandardDuration}`;
-      if (availabilityCache.has(key)) {
-        const cached = availabilityCache.get(key);
-        availabilityByDate = cached?.availabilityByDate || {};
-        availabilityMeta = cached?.availabilityMeta || availabilityMeta;
-        setAvailabilityStatus("Availability", "Availability loaded.", cached?.metaText || "");
-        return;
-      }
-
-      showAvailabilityLoading(true);
-      setAvailabilityStatus("Availability", "Checking availability…", "");
+      const cacheKey = getRequestCacheKey(payload);
+      clearSelectionUI();
+      setCalendarLoading(true);
+      updateAvailabilityStatus("Checking live availability for this month…", false);
 
       try {
-        const start = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
-        const end = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
-
-        const payload = {
-          email: portalProfile?.email || "",
-          address: portalProfile?.address || "",
-          city: portalProfile?.city || "",
-          postal_code: portalProfile?.postal || "",
-          phone: portalProfile?.phone || "",
-          treatment_key: selectedServiceKey,
-          duration_minutes: selectedStandardDuration,
-          month_start: start.toISOString().slice(0,10),
-          month_end: end.toISOString().slice(0,10),
-          practitioner_id: DEFAULT_PRACTITIONER_ID
-        };
+        if (availabilityCache.has(cacheKey)) {
+          const cached = availabilityCache.get(cacheKey);
+          parseAvailabilityResponse(cached);
+          renderCalendar();
+          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
+          return;
+        }
 
         const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
           method: "POST",
@@ -1546,393 +1430,347 @@ function hideLoginOverlay() {
           body: JSON.stringify(payload)
         });
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || "Availability request failed");
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Availability error (${res.status}): ${text || res.statusText}`);
+        }
 
-        availabilityByDate = data?.availabilityByDate || {};
-        availabilityMeta = data?.meta || availabilityMeta;
+        const data = await res.json();
+        availabilityCache.set(cacheKey, data);
+        parseAvailabilityResponse(data);
 
-        const maxDrive = Number(availabilityMeta?.maxDriveTimeMinutes || 0);
-        const effBuff = Number(availabilityMeta?.effective_travel_buffer_minutes || 0);
-        const metaText = `Max drive time: ${maxDrive} min • Travel buffer: ${effBuff} min`;
-
-        availabilityCache.set(key, { availabilityByDate, availabilityMeta, metaText });
-
-        setAvailabilityStatus("Availability", "Availability loaded.", metaText);
+        renderCalendar();
+        updateAvailabilityStatus("Live availability loaded for this month.", true);
 
       } catch (e) {
         console.error(e);
-        setAvailabilityStatus("Availability", "Could not load availability. Please try again.", "");
-        showToast("Error", "Unable to load availability.", true);
+        availabilityByDate = {};
+        renderCalendar();
+        updateAvailabilityStatus("Could not load availability. Please try again or contact support.", false);
+        showToast("Availability error", "Unable to load availability.", true);
       } finally {
-        showAvailabilityLoading(false);
+        setCalendarLoading(false);
       }
     }
 
     // =========================================================
     // CALENDAR RENDERING
     // =========================================================
-    function setCalendarLabel(dateObj) {
-      const el = document.getElementById("calendar-month-label");
-      if (!el) return;
-      const fmt = dateObj.toLocaleString("en-CA", { month: "long", year: "numeric" });
-      el.textContent = fmt;
-    }
-
     function renderCalendar() {
-      setCalendarLabel(calendarCurrent);
-
+      const monthLabelEl = document.getElementById("calendar-month-label");
       const daysContainer = document.getElementById("calendar-days");
-      if (!daysContainer) return;
-      daysContainer.innerHTML = "";
+
+      const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+      monthLabelEl.textContent = monthName;
 
       const year = calendarCurrent.getFullYear();
       const month = calendarCurrent.getMonth();
 
       const firstDay = new Date(year, month, 1);
-      const startWeekday = firstDay.getDay(); // 0 Sun
+      const startDayOfWeek = firstDay.getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      // Fill leading blanks
-      for (let i = 0; i < startWeekday; i++) {
-        const d = document.createElement("div");
-        d.className = "calendar-day calendar-day-disabled opacity-0";
-        d.innerHTML = "&nbsp;";
-        daysContainer.appendChild(d);
+      daysContainer.innerHTML = "";
+
+      for (let i = 0; i < startDayOfWeek; i++) {
+        const blank = document.createElement("div");
+        blank.className = "opacity-0";
+        blank.textContent = ".";
+        daysContainer.appendChild(blank);
       }
 
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const todayStr = toDateStr(new Date());
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const d = document.createElement("div");
-        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+        const dayDate = new Date(year, month, day);
+        const dateStr = toDateStr(dayDate);
 
-        let cls = "calendar-day";
-        const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const hasAvail = !!(availabilityByDate?.[dateStr]?.slots?.length);
+        const slots = availabilityByDate[dateStr] || [];
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(s => !!s.available);
 
-        if (!selectedServiceKey || !selectedStandardDuration) {
-          cls += " calendar-day-disabled";
-        } else if (isPast) {
-          cls += " calendar-day-disabled";
-        } else if (hasAvail) {
-          cls += " calendar-day-available";
+        const isPast = dateStr < todayStr;
+        const isSelected = selectedDateStr === dateStr;
+        const isToday = dateStr === todayStr;
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "calendar-day";
+
+        if (isPast || !hasAnyAvailable || !selectedServiceKey || !selectedStandardDuration) {
+          cell.classList.add("calendar-day-disabled");
+          cell.disabled = true;
         } else {
-          cls += " calendar-day-disabled";
+          cell.classList.add("calendar-day-available");
+          if (isToday) cell.classList.add("calendar-day-today");
+          if (isSelected) cell.classList.add("calendar-day-selected");
+          cell.addEventListener("click", () => selectDate(dateStr));
         }
 
-        if (dateStr === todayStr) cls += " calendar-day-today";
-        if (selectedDateStr && dateStr === selectedDateStr) cls += " calendar-day-selected";
-
-        d.className = cls;
-        d.textContent = String(day);
-
-        if (cls.includes("calendar-day-available")) {
-          d.addEventListener("click", () => onSelectDate(dateStr));
-        }
-
-        daysContainer.appendChild(d);
+        cell.textContent = String(day);
+        daysContainer.appendChild(cell);
       }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
-    // =========================================================
-    // SLOT SELECTION
-    // =========================================================
-    function showSlots() {
-      const selInfo = document.getElementById("selected-date-info");
-      const slots = document.getElementById("time-slots-container");
-      if (selInfo) selInfo.classList.remove("hidden");
-      if (slots) slots.classList.remove("hidden");
-    }
-
-    function hideSlots() {
-      const selInfo = document.getElementById("selected-date-info");
-      const slots = document.getElementById("time-slots-container");
-      const noSlots = document.getElementById("no-slots");
-      if (selInfo) selInfo.classList.add("hidden");
-      if (slots) slots.classList.add("hidden");
-      if (noSlots) noSlots.classList.add("hidden");
-
-      const grid = document.getElementById("time-slots-grid");
-      if (grid) grid.innerHTML = "";
-    }
-
-    function onSelectDate(dateStr) {
+    function selectDate(dateStr) {
       selectedDateStr = dateStr;
       selectedSlot = null;
+      renderCalendar();
+      updateSummary();
 
-      const display = document.getElementById("selected-date-display");
-      if (display) {
-        const dt = new Date(dateStr + "T00:00:00");
-        display.textContent = dt.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
-      }
+      document.getElementById("selected-date-info").classList.remove("hidden");
+      document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
 
-      const dayObj = availabilityByDate?.[dateStr] || {};
-      const slots = dayObj?.slots || [];
+      loadTimeSlots(dateStr);
+    }
 
+    function loadTimeSlots(dateStr) {
+      const container = document.getElementById("time-slots-container");
       const grid = document.getElementById("time-slots-grid");
       const noSlots = document.getElementById("no-slots");
-      if (!grid) return;
 
+      container.classList.remove("hidden");
       grid.innerHTML = "";
 
-      if (!slots.length) {
-        if (noSlots) noSlots.classList.remove("hidden");
-        showSlots();
-        updateSummary();
-        renderCalendar();
+      const slots = availabilityByDate[dateStr] || [];
+      const usable = Array.isArray(slots) ? slots : [];
+
+      if (!usable.length) {
+        noSlots.classList.remove("hidden");
+        container.classList.add("hidden");
         return;
       }
 
-      if (noSlots) noSlots.classList.add("hidden");
-      showSlots();
+      usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
-      slots.forEach((s) => {
+      let anyAvailable = false;
+
+      usable.forEach(slot => {
         const btn = document.createElement("button");
-        btn.className = "time-slot-btn";
         btn.type = "button";
-        btn.innerHTML = `<i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i><span>${formatSlotTime(s?.starts_at)}</span>`;
-        btn.addEventListener("click", () => onSelectSlot(s, btn));
+        // Base class: we add 'time-slot-btn' and specific styles for available/booked below
+        btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
+        
+        // Clean label: strip EST, (Booked)
+        const labelRaw = formatTimeLabel(slot); 
+        // formatTimeLabel returns lower case.
+        const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+
+        if (slot.available) {
+          btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
+          btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
+          anyAvailable = true;
+          btn.addEventListener("click", () => selectTimeSlot(slot, btn));
+        } else {
+          btn.classList.add("border-white/5", "bg-white/5", "text-white/30", "cursor-not-allowed", "opacity-50");
+          btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${labelClean}</span>`;
+          btn.disabled = true;
+        }
+
         grid.appendChild(btn);
       });
 
+      noSlots.classList.toggle("hidden", anyAvailable);
+      container.classList.toggle("hidden", !anyAvailable);
+
       if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function selectTimeSlot(slot, btnElement) {
+      selectedSlot = slot;
+
+      document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
+      btnElement.classList.add("time-slot-selected");
+
       updateSummary();
+    }
+
+    function prevMonth() {
+      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
+      maybeLoadAvailabilityForCurrentMonth();
     }
 
-    function formatSlotTime(iso) {
-      try {
-        const dt = new Date(iso);
-        return dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }).toLowerCase();
-      } catch (e) {
-        return "—";
-      }
-    }
-
-    function onSelectSlot(slotObj, btnEl) {
-      selectedSlot = slotObj || null;
-
-      // Unselect others
-      const grid = document.getElementById("time-slots-grid");
-      if (grid) {
-        [...grid.querySelectorAll("button")].forEach(b => b.classList.remove("time-slot-selected"));
-      }
-      if (btnEl) btnEl.classList.add("time-slot-selected");
-
-      updateSummary();
+    function nextMonth() {
+      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+      renderCalendar();
+      maybeLoadAvailabilityForCurrentMonth();
     }
 
     // =========================================================
-    // TRAVEL FEE
+    // BOOKING CONFIRMATION
     // =========================================================
-    function computeTravelFee(driveMinutes) {
-      const mins = Number(driveMinutes || 0);
-      if (mins < TRAVEL_FEE_THRESHOLD_MINUTES) return 0;
-      for (const tier of TRAVEL_FEE_TIERS) {
-        if (mins >= tier.minMinutes) return tier.fee;
-      }
-      return 0;
-    }
-
-    // =========================================================
-    // SUMMARY + CONFIRM
-    // =========================================================
-    function updateSummary() {
-      const treatEl = document.getElementById("summary-treatment");
-      const dtEl = document.getElementById("summary-datetime");
-      const feeEl = document.getElementById("summary-travel-fee");
-      const driveEl = document.getElementById("summary-drive-time");
-
-      const confirmBtn = document.getElementById("confirm-booking-btn");
-      const confirmText = document.getElementById("confirm-btn-text");
-
-      const treatLabel = selectedServiceKey ? (TREATMENT_RULES[selectedServiceKey]?.label || "Treatment") : "Select a treatment";
-      const durLabel = selectedStandardDuration ? `${selectedStandardDuration} min` : "";
-      if (treatEl) treatEl.textContent = selectedServiceKey ? `${treatLabel} • ${durLabel}` : treatLabel;
-
-      let dtLabel = "Select a date and time";
-      if (selectedDateStr) {
-        const dt = new Date(selectedDateStr + "T00:00:00");
-        dtLabel = dt.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
-        if (selectedSlot?.starts_at) {
-          dtLabel += ` • ${formatSlotTime(selectedSlot.starts_at)}`;
-        } else {
-          dtLabel += " • Select a time";
-        }
-      }
-      if (dtEl) dtEl.textContent = dtLabel;
-
-      const driveMinutes = selectedSlot?.drive_minutes ?? selectedSlot?.drive_time_minutes ?? 0;
-      const travelFee = computeTravelFee(driveMinutes);
-
-      if (feeEl) feeEl.textContent = `$${Number(travelFee).toFixed(2)}`;
-      if (driveEl) {
-        driveEl.textContent = driveMinutes ? `Drive time: ${Number(driveMinutes)} min` : "—";
-      }
-
-      const ready = !!(portalProfile?.email && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot?.starts_at);
-      if (confirmBtn) {
-        if (ready) {
-          confirmBtn.disabled = false;
-          confirmBtn.classList.remove("btn-disabled");
-          if (confirmText) confirmText.textContent = "Confirm Booking";
-        } else {
-          confirmBtn.disabled = true;
-          confirmBtn.classList.add("btn-disabled");
-          if (confirmText) confirmText.textContent = "Confirm Booking";
-        }
-      }
-    }
-
     async function confirmBooking() {
-      const confirmBtn = document.getElementById("confirm-booking-btn");
-      const confirmText = document.getElementById("confirm-btn-text");
-      if (confirmBtn) confirmBtn.disabled = true;
-      if (confirmText) confirmText.textContent = "Confirming…";
+      if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
+        showToast("Missing info", "Please select a treatment, duration, date, and time.", true);
+        return;
+      }
+
+      const treat = TREATMENT_RULES[selectedServiceKey];
+      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      const travelFee = calcTravelFee(driveTime);
+
+      const bookingPayload = {
+        firstName: portalProfile.firstName || "",
+        lastName:  portalProfile.lastName || "",
+        email:     portalProfile.email || "",
+        phone:     portalProfile.phone || "",
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
+        treatment_key: selectedServiceKey,
+        treatment_label: treat ? treat.label : "",
+        duration: Number(selectedStandardDuration),
+        standardDurationMinutes: Number(selectedStandardDuration),
+        participants: 1,
+        participant_count: 1,
+        slot_start: selectedSlot.start,
+        slot_end: selectedSlot.end,
+        date: selectedDateStr,
+        times_already_utc: true,
+        travel_charge: Number(travelFee || 0),
+        drive_time_minutes: Number(driveTime || 0),
+        travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
+        notes: "Booked via Client Portal."
+      };
+
+      try { localStorage.setItem("rnr_portal_last_booking_payload", JSON.stringify(bookingPayload)); } catch(e) {}
+
+      const btn = document.getElementById("confirm-booking-btn");
+      const btnText = document.getElementById("confirm-btn-text");
+      const originalText = btnText.textContent;
+
+      btn.disabled = true;
+      btn.classList.add("btn-disabled");
+      btnText.textContent = "Booking…";
+      showToast("Booking", "Creating your appointment…", false);
 
       try {
-        const driveMinutes = selectedSlot?.drive_minutes ?? selectedSlot?.drive_time_minutes ?? 0;
-        const travelFee = computeTravelFee(driveMinutes);
-
-        const payload = {
-          email: portalProfile?.email || "",
-          full_name: portalProfile?.fullName || "",
-          phone: portalProfile?.phone || "",
-          address: portalProfile?.address || "",
-          city: portalProfile?.city || "",
-          postal_code: portalProfile?.postal || "",
-          treatment_key: selectedServiceKey,
-          duration_minutes: selectedStandardDuration,
-          practitioner_id: DEFAULT_PRACTITIONER_ID,
-          slot: selectedSlot,
-          date: selectedDateStr,
-          travel_fee: travelFee
-        };
-
         const res = await fetch(BOOKING_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(bookingPayload)
         });
 
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || "Booking failed");
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`Booking error (${res.status}): ${text || res.statusText}`);
+        }
 
-        try {
-          if (typeof gtag === "function") gtag("event", "client_portal_booking_confirmed");
-          if (typeof fbq === "function") fbq("trackCustom", "ClientPortalBookingConfirmed");
-        } catch (e) {}
+        const result = await res.json().catch(() => ({}));
 
-        showToast("Booked!", "Your booking has been confirmed.");
-        // Reset selection after booking
-        selectedDateStr = null;
-        selectedSlot = null;
-        hideSlots();
-        updateSummary();
-        renderCalendar();
+        showToast("Booked", "Your appointment has been confirmed.");
+        updateAvailabilityStatus("Booking confirmed. Reloading availability…", true);
+
+        availabilityCache.clear();
+        await maybeLoadAvailabilityForCurrentMonth();
+
+        clearSelectionUI();
+
+        console.log("Booking confirmed:", result);
 
       } catch (e) {
         console.error(e);
-        showToast("Error", "Could not confirm booking.", true);
+        showToast("Booking failed", "We could not confirm your booking. Please try again or contact support.", true);
       } finally {
-        if (confirmBtn) confirmBtn.disabled = false;
-        if (confirmText) confirmText.textContent = "Confirm Booking";
+        btnText.textContent = originalText;
         updateSummary();
       }
     }
 
     // =========================================================
-    // NAV / TABS / MOBILE MENU
+    // TAB SWITCHING
     // =========================================================
-    function setupSidebarTabs() {
-      const btns = document.querySelectorAll(".sidebar-btn[data-tab]");
-      btns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (btn.hasAttribute("disabled")) return;
-          btns.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      const active = document.getElementById("tab-" + tabId);
+      if (active) active.classList.remove("hidden");
 
-          const tab = btn.getAttribute("data-tab");
-          document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-          const panel = document.getElementById(`tab-${tab}`);
-          if (panel) panel.classList.remove("hidden");
-        });
+      document.querySelectorAll(".sidebar-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tabId);
       });
-    }
 
-    function setupMobileMenu() {
-      const menu = document.getElementById("mobile-menu");
-      const openBtn = document.getElementById("mobile-menu-btn");
-      const closeBtn = document.getElementById("mobile-menu-close");
-      if (!menu || !openBtn || !closeBtn) return;
-
-      openBtn.addEventListener("click", () => menu.classList.add("open"));
-      closeBtn.addEventListener("click", () => menu.classList.remove("open"));
-
-      // Close when clicking outside
-      menu.addEventListener("click", (e) => {
-        if (e.target === menu) menu.classList.remove("open");
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     // =========================================================
     // INIT
     // =========================================================
     async function init() {
-      // Icons
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Elements
+      // Mobile menu
+      const mm = document.getElementById("mobile-menu");
+      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
+      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+
+      // Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
 
-      // Sidebar tabs
-      setupSidebarTabs();
+      // Tabs
+      document.querySelectorAll(".sidebar-btn").forEach(btn => {
+        const tab = btn.dataset.tab;
+        if (!tab) return;
+        if (btn.disabled) {
+          // btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
+          return;
+        }
+        btn.addEventListener("click", () => switchTab(tab));
+      });
 
-      // Mobile menu
-      setupMobileMenu();
+      // Calendar nav
+      document.getElementById("prev-month-btn").addEventListener("click", prevMonth);
+      document.getElementById("next-month-btn").addEventListener("click", nextMonth);
 
-      // Controls
-      if (treatmentSelect) treatmentSelect.addEventListener("change", onTreatmentChange);
-      if (durationSelect) durationSelect.addEventListener("change", onDurationChange);
+      // Treatment selection
+      treatmentSelect.addEventListener("change", () => {
+        selectedServiceKey = treatmentSelect.value || null;
+        rebuildDurationOptions();
 
-      const prevBtn = document.getElementById("prev-month-btn");
-      const nextBtn = document.getElementById("next-month-btn");
-      if (prevBtn) prevBtn.addEventListener("click", async () => {
-        calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
-        if (selectedServiceKey && selectedStandardDuration) await loadAvailabilityForMonth(calendarCurrent);
+        availabilityByDate = {};
+        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        clearSelectionUI();
         renderCalendar();
+
+        if (!selectedServiceKey) {
+          updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        } else {
+          updateAvailabilityStatus("Now choose a duration to load live availability.", false);
+        }
       });
-      if (nextBtn) nextBtn.addEventListener("click", async () => {
-        calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
-        if (selectedServiceKey && selectedStandardDuration) await loadAvailabilityForMonth(calendarCurrent);
+
+      // Duration selection
+      durationSelect.addEventListener("change", () => {
+        selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
+
+        availabilityByDate = {};
+        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        clearSelectionUI();
         renderCalendar();
+
+        if (selectedStandardDuration) {
+          maybeLoadAvailabilityForCurrentMonth();
+        }
+        updateSummary();
       });
 
-      const confirmBtn = document.getElementById("confirm-booking-btn");
-      if (confirmBtn) confirmBtn.addEventListener("click", confirmBooking);
+      // Confirm booking
+      document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
 
-      const logoutBtn = document.getElementById("logout-btn");
-      const logoutBtnMobile = document.getElementById("logout-btn-mobile");
-      if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
-      if (logoutBtnMobile) logoutBtnMobile.addEventListener("click", () => {
-        // close mobile menu then logout
-        const menu = document.getElementById("mobile-menu");
-        if (menu) menu.classList.remove("open");
-        handleLogout();
-      });
+      // Logout
+      document.getElementById("logout-btn").addEventListener("click", handleLogout);
+      document.getElementById("logout-btn-mobile").addEventListener("click", handleLogout);
 
-      // Preload initial UI
-      setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
-      renderCalendar();
-      updateSummary();
+      // Initial tab
+      switchTab("dashboard");
 
-      // Auth check on load - this will either show login or load the portal
+      // Check for existing authentication - this will either show login or load the portal
       await checkExistingAuth();
     }
 
+    // Run on DOM ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
