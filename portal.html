@@ -1561,6 +1561,60 @@ function computeMonthRange(date) {
       });
     }
 
+    async function maybeLoadAvailabilityForCurrentMonth() {
+      const payload = buildAvailabilityPayload();
+      if (payload.error) {
+        updateAvailabilityStatus(payload.error, false);
+        availabilityByDate = {};
+        renderCalendar();
+        clearSelectionUI();
+        return;
+      }
+
+      const cacheKey = getRequestCacheKey(payload);
+      clearSelectionUI();
+      setCalendarLoading(true);
+      updateAvailabilityStatus("Checking live availability for this month…", false);
+
+      try {
+        if (availabilityCache.has(cacheKey)) {
+          const cached = availabilityCache.get(cacheKey);
+          parseAvailabilityResponse(cached);
+          renderCalendar();
+          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
+          return;
+        }
+
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error("Availability error (" + res.status + "): " + (text || res.statusText));
+        }
+
+        const data = await res.json();
+        availabilityCache.set(cacheKey, data);
+        parseAvailabilityResponse(data);
+
+        renderCalendar();
+        updateAvailabilityStatus("Live availability loaded for this month.", true);
+
+      } catch (e) {
+        console.error(e);
+        availabilityByDate = {};
+        renderCalendar();
+        updateAvailabilityStatus("Could not load availability. Please try again or contact support.", false);
+        showToast("Availability error", "Unable to load availability.", true);
+      } finally {
+        setCalendarLoading(false);
+      }
+    }
+
+
     function renderCalendar() {
       const monthLabelEl = document.getElementById("calendar-month-label");
       const daysContainer = document.getElementById("calendar-days");
