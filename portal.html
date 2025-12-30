@@ -277,54 +277,88 @@
     /* =========================================
        FIXED: Login Overlay CSS - MOBILE OPTIMIZED
        ========================================= */
-    #login-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 200; /* Higher than nav */
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-      overflow-y: auto; /* Allow scrolling if height is small */
-      padding: 1rem;
-    }
-    #login-overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    
-    .login-card {
-      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
-      border: 1px solid rgba(224, 197, 132, 0.25);
-      backdrop-filter: blur(10px);
-      /* Mobile First Padding - Reduced */
-      padding: 1.5rem 0.5rem; /* Drastically reduced horizontal padding for mobile */
-      width: 95%; /* Make it fluid on small screens */
-      max-width: 380px; /* Standard lock width */
-      position: relative;
-      margin: auto;
-      overflow: visible;
+    /* =========================================
+   LOGIN OVERLAY (Android-safe): lock background + prevent scroll chaining
+   ========================================= */
 
-    }
-    .login-card::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-      background: linear-gradient(90deg, transparent, #E0C584, transparent);
-    }
+/* When overlay is open, hard-lock the page behind it */
+body.portal-scroll-locked {
+  overflow: hidden !important;
+  height: 100% !important;
+  position: fixed !important;
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+}
 
-    /* Desktop Adjustments for Login Card */
-    @media (min-width: 640px) {
-        .login-card {
-            padding: 2.5rem 2rem;
-            max-width: 420px;
-            width: 100%;
-        }
-    }
+/* Overlay must NEVER scroll. Only the card scrolls. */
+#login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  width: 100vw;
+  height: 100dvh;         /* Android address-bar safe */
+  height: 100vh;          /* fallback */
+  background: #050505;    /* fully blocks underlay (no page showing through) */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  /* critical: stop scroll chaining / bounce showing background */
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+
+  padding: 96px 12px 18px; /* top clears fixed nav; card scroll handles the rest */
+}
+
+#login-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.login-card {
+  background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
+  border: 1px solid rgba(224, 197, 132, 0.25);
+  backdrop-filter: blur(10px);
+
+  width: 96%;
+  max-width: 420px;
+
+  /* card scrolls, not the overlay */
+  max-height: calc(100dvh - 120px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+
+  padding: 1.25rem 0.5rem;
+  position: relative;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, #E0C584, transparent);
+}
+
+/* Desktop spacing stays the same */
+@media (min-width: 640px) {
+  #login-overlay {
+    align-items: center;
+    padding: 1rem;
+    touch-action: auto;
+  }
+  .login-card {
+    padding: 2.5rem 2rem;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 
     /* =========================================
        FIXED: Auth0 Lock Styles (Robust Overrides)
@@ -523,24 +557,13 @@
     /* =========================================
    MOBILE FIX (AGGRESSIVE): Kill Lock reserved space + let card size naturally
    ========================================= */
+
+/* =========================================
+   Auth0 Lock: ANDROID HEIGHT FIX (kills reserved blank space)
+   ========================================= */
 @media (max-width: 640px) {
 
-  /* On small screens, start content higher and allow scroll if needed */
-  #login-overlay{
-    align-items: flex-start !important;
-    padding-top: 96px !important; /* clears your fixed nav */
-    padding-bottom: 18px !important;
-  }
-
-  .login-card{
-    width: 96% !important;
-    max-width: 420px !important;
-    padding: 1.25rem 0.5rem !important;
-    max-height: calc(100vh - 120px) !important;
-    overflow-y: auto !important;
-  }
-
-  /* Force Lock + all its wrappers to collapse to content height */
+  /* Force Lock to size to content (Auth0 often sets min-heights internally) */
   #auth0-lock-container,
   #auth0-lock-container .auth0-lock,
   #auth0-lock-container .auth0-lock-widget,
@@ -557,33 +580,36 @@
     max-height: none !important;
   }
 
-  /* Remove bottom reserved space */
-  #auth0-lock-container .auth0-lock-body-content{
+  /* The big culprit: widget often gets a min-height; hard reset it */
+  #auth0-lock-container .auth0-lock-widget {
+    min-height: unset !important;
+    height: fit-content !important;
+    display: block !important;
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
   }
 
-  /* Submit area: force normal flow */
-  #auth0-lock-container .auth0-lock-submit{
+  /* Remove internal padding/margins that create a fake “empty panel” */
+  #auth0-lock-container .auth0-lock-content,
+  #auth0-lock-container .auth0-lock-body-content,
+  #auth0-lock-container .auth0-lock-widget-container,
+  #auth0-lock-container .auth0-lock-cred-pane {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Submit must remain in normal flow */
+  #auth0-lock-container .auth0-lock-submit {
     position: static !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
-    margin-top: 12px !important;
+    margin-top: 10px !important;
     padding: 0 !important;
   }
 
-  /* Kill any extra spacing blocks */
-  #auth0-lock-container .auth0-lock-footer,
-  #auth0-lock-container .auth0-lock-footer-action,
-  #auth0-lock-container .auth0-lock-alternative,
-  #auth0-lock-container .auth0-lock-help,
-  #auth0-lock-container .auth0-lock-terms {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+  /* Tighten input spacing slightly (reduces vertical bloat without changing look) */
+  #auth0-lock-container .auth0-lock-input-block {
+    margin-bottom: 8px !important;
   }
 }
-
 
   </style>
 
@@ -1064,16 +1090,33 @@
       const el = document.getElementById('auth0-error');
       if (el) el.classList.add('hidden');
     }
+    
+    let __portalScrollY = 0;
 
-    function showLoginOverlay() {
-      const overlay = document.getElementById("login-overlay");
-      if (overlay) overlay.classList.remove("hidden");
-    }
+function lockPortalBackground() {
+  __portalScrollY = window.scrollY || 0;
+  document.body.classList.add("portal-scroll-locked");
+  document.body.style.top = `-${__portalScrollY}px`;
+}
 
-    function hideLoginOverlay() {
-      const overlay = document.getElementById("login-overlay");
-      if (overlay) overlay.classList.add("hidden");
-    }
+function unlockPortalBackground() {
+  document.body.classList.remove("portal-scroll-locked");
+  document.body.style.top = "";
+  window.scrollTo(0, __portalScrollY);
+}
+
+function showLoginOverlay() {
+  const overlay = document.getElementById("login-overlay");
+  if (overlay) overlay.classList.remove("hidden");
+  lockPortalBackground();
+}
+
+function hideLoginOverlay() {
+  const overlay = document.getElementById("login-overlay");
+  if (overlay) overlay.classList.add("hidden");
+  unlockPortalBackground();
+}
+
 
     // =========================================================
     // TOKEN / PROFILE HELPERS
