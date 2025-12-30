@@ -520,35 +520,69 @@
     }
 
     /* =========================================
-       MOBILE FIX: Auth0 Lock "empty space" + button pinned to bottom
-       ========================================= */
-    @media (max-width: 640px) {
+   MOBILE FIX (AGGRESSIVE): Kill Lock reserved space + let card size naturally
+   ========================================= */
+@media (max-width: 640px) {
 
-      /* Remove Lock's min-height / fixed-height behavior that creates the big blank area */
-      #auth0-lock-container .auth0-lock .auth0-lock-widget,
-      #auth0-lock-container .auth0-lock .auth0-lock-widget-container,
-      #auth0-lock-container .auth0-lock .auth0-lock-content,
-      #auth0-lock-container .auth0-lock .auth0-lock-pane,
-      #auth0-lock-container .auth0-lock .auth0-lock-cred-pane,
-      #auth0-lock-container .auth0-lock .auth0-lock-center,
-      #auth0-lock-container .auth0-lock .auth0-lock-form,
-      #auth0-lock-container .auth0-lock .auth0-lock-body-content {
-        height: auto !important;
-        min-height: 0 !important;
-      }
+  /* On small screens, start content higher and allow scroll if needed */
+  #login-overlay{
+    align-items: flex-start !important;
+    padding-top: 96px !important; /* clears your fixed nav */
+    padding-bottom: 18px !important;
+  }
 
-      /* Lock often pins the submit wrapper; force normal flow */
-      #auth0-lock-container .auth0-lock .auth0-lock-submit {
-        position: static !important;
-        margin-top: 12px !important;
-        padding: 0 !important;
-      }
+  .login-card{
+    width: 96% !important;
+    max-width: 420px !important;
+    padding: 1.25rem 0.5rem !important;
+    max-height: calc(100vh - 120px) !important;
+    overflow-y: auto !important;
+  }
 
-      /* Remove any extra reserved space under the form */
-      #auth0-lock-container .auth0-lock .auth0-lock-body-content {
-        padding-bottom: 0 !important;
-      }
-    }
+  /* Force Lock + all its wrappers to collapse to content height */
+  #auth0-lock-container,
+  #auth0-lock-container .auth0-lock,
+  #auth0-lock-container .auth0-lock-widget,
+  #auth0-lock-container .auth0-lock-widget-container,
+  #auth0-lock-container .auth0-lock-content,
+  #auth0-lock-container .auth0-lock-pane,
+  #auth0-lock-container .auth0-lock-cred-pane,
+  #auth0-lock-container .auth0-lock-center,
+  #auth0-lock-container .auth0-lock-body,
+  #auth0-lock-container .auth0-lock-body-content,
+  #auth0-lock-container .auth0-lock-form {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  /* Remove bottom reserved space */
+  #auth0-lock-container .auth0-lock-body-content{
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Submit area: force normal flow */
+  #auth0-lock-container .auth0-lock-submit{
+    position: static !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    margin-top: 12px !important;
+    padding: 0 !important;
+  }
+
+  /* Kill any extra spacing blocks */
+  #auth0-lock-container .auth0-lock-footer,
+  #auth0-lock-container .auth0-lock-footer-action,
+  #auth0-lock-container .auth0-lock-alternative,
+  #auth0-lock-container .auth0-lock-help,
+  #auth0-lock-container .auth0-lock-terms {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+}
+
 
   </style>
 
