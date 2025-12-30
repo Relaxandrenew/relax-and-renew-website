@@ -206,7 +206,7 @@
       width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(224, 197, 132, 0.3);
       color: var(--brand-light); padding: 0.6rem 1rem; border-radius: 0.25rem; outline: none; font-size: 1rem;
       min-height: 48px;
-      max-width: 100%; /* Prevent overflow */
+      max-width: 100%;
     }
     /* Fixed Dropdowns: Custom arrow, dark background for options */
     select.input {
@@ -518,6 +518,38 @@
     #auth0-lock-container .auth0-lock a:hover {
       color: #F0D594 !important;
     }
+
+    /* =========================================
+       MOBILE FIX: Auth0 Lock "empty space" + button pinned to bottom
+       ========================================= */
+    @media (max-width: 640px) {
+
+      /* Remove Lock's min-height / fixed-height behavior that creates the big blank area */
+      #auth0-lock-container .auth0-lock .auth0-lock-widget,
+      #auth0-lock-container .auth0-lock .auth0-lock-widget-container,
+      #auth0-lock-container .auth0-lock .auth0-lock-content,
+      #auth0-lock-container .auth0-lock .auth0-lock-pane,
+      #auth0-lock-container .auth0-lock .auth0-lock-cred-pane,
+      #auth0-lock-container .auth0-lock .auth0-lock-center,
+      #auth0-lock-container .auth0-lock .auth0-lock-form,
+      #auth0-lock-container .auth0-lock .auth0-lock-body-content {
+        height: auto !important;
+        min-height: 0 !important;
+      }
+
+      /* Lock often pins the submit wrapper; force normal flow */
+      #auth0-lock-container .auth0-lock .auth0-lock-submit {
+        position: static !important;
+        margin-top: 12px !important;
+        padding: 0 !important;
+      }
+
+      /* Remove any extra reserved space under the form */
+      #auth0-lock-container .auth0-lock .auth0-lock-body-content {
+        padding-bottom: 0 !important;
+      }
+    }
+
   </style>
 
   <script>
@@ -973,7 +1005,6 @@
       const msgEl = document.getElementById("toast-message");
       msgEl.textContent = message || title || "—";
       toast.classList.add("show");
-      // Specific styling for toast show state handled in CSS via opacity
       toast.style.opacity = "1";
       toast.style.transform = "translateX(-50%) translateY(-10px)";
       
@@ -999,295 +1030,113 @@
       if (el) el.classList.add('hidden');
     }
 
-    function toDateStr(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function computeMonthRange(date) {
-      const first = new Date(date.getFullYear(), date.getMonth(), 1);
-      const last  = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      return { from: toDateStr(first), to: toDateStr(last) };
-    }
-
-    function normalizeAmPmLabel(label) {
-      return String(label || "").toLowerCase().replace(/\s+/g, "").replace(/\./g, "");
-    }
-
-    function formatTimeLabel(slot) {
-      if (slot && slot.label) return normalizeAmPmLabel(slot.label);
-      if (slot && slot.start) {
-        const d = new Date(slot.start);
-        const raw = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
-        return normalizeAmPmLabel(raw);
-      }
-      return "—";
-    }
-
-    function formatDatePretty(dateStr) {
-      const [y,m,d] = dateStr.split("-").map(Number);
-      const dt = new Date(y, m-1, d);
-      return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
-    }
-
-    function calcTravelFee(driveTimeMinutes) {
-      const driveTime = Number(driveTimeMinutes) || 0;
-      
-      // Check each tier from highest to lowest
-      for (const tier of TRAVEL_FEE_TIERS) {
-        if (driveTime >= tier.minMinutes) {
-          return tier.fee;
-        }
-      }
-      return 0; // No fee for drives under 36 min
-    }
-
-    function setConfirmEnabled(enabled) {
-      const btn = document.getElementById("confirm-booking-btn");
-      btn.disabled = !enabled;
-      btn.classList.toggle("btn-disabled", !enabled);
-    }
-
-    function updateSummary() {
-      document.getElementById("summary-client").textContent = portalProfile
-        ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() || "—"
-        : "—";
-      document.getElementById("summary-email").textContent = portalProfile?.email || "—";
-
-      const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-      if (treat && selectedStandardDuration) {
-        document.getElementById("summary-treatment").textContent = `${treat.label} — ${selectedStandardDuration} min`;
-      } else {
-        document.getElementById("summary-treatment").textContent = "Select a treatment";
-      }
-
-      if (selectedDateStr && selectedSlot) {
-        document.getElementById("summary-datetime").textContent = `${formatDatePretty(selectedDateStr)} at ${formatTimeLabel(selectedSlot)}`;
-      } else {
-        document.getElementById("summary-datetime").textContent = "Select a date and time";
-      }
-
-      // Get drive time from selected slot, or fall back to max drive time from availability
-      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
-      const travelFee = calcTravelFee(driveTime);
-      
-      document.getElementById("summary-travel-fee").textContent = `$${Number(travelFee || 0).toFixed(2)}`;
-      
-      // Show drive time info with fee tier context
-      if (driveTime > 0) {
-        let feeNote;
-        if (driveTime >= 120) {
-          feeNote = " — $200 travel fee (2+ hours)";
-        } else if (driveTime >= 60) {
-          feeNote = " — $100 travel fee (60+ min)";
-        } else if (driveTime >= 45) {
-          feeNote = " — $40 travel fee (45+ min)";
-        } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
-          feeNote = " — $20 travel fee (36+ min)";
-        } else {
-          feeNote = " — no travel fee";
-        }
-        document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
-      } else {
-        document.getElementById("summary-drive-time").textContent = "—";
-      }
-
-      setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
-    }
-
-    function updateAvailabilityStatus(body, loaded) {
-      document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
-      document.getElementById("availability-status-body").textContent = body || "";
-      const metaEl = document.getElementById("availability-meta");
-      const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
-      const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
-      metaEl.textContent = (loaded && (buffer || maxDrive))
-        ? `Travel buffer applied: ${buffer} min • Max drive time used: ${maxDrive} min`
-        : "";
-    }
-
-    function setCalendarLoading(isLoading) {
-      // Toggle progress bar
-      const loader = document.getElementById("availability-loading");
-      if (isLoading) {
-        loader.classList.remove("hidden");
-        document.getElementById("calendar-days").classList.add("opacity-50");
-      } else {
-        loader.classList.add("hidden");
-        document.getElementById("calendar-days").classList.remove("opacity-50");
-      }
-    }
-
-    // =========================================================
-    // LOGIN OVERLAY CONTROL
-    // =========================================================
     function showLoginOverlay() {
-      document.getElementById("login-overlay").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
+      const overlay = document.getElementById("login-overlay");
+      if (overlay) overlay.classList.remove("hidden");
     }
 
     function hideLoginOverlay() {
-      document.getElementById("login-overlay").classList.add("hidden");
-      document.body.style.overflow = "";
+      const overlay = document.getElementById("login-overlay");
+      if (overlay) overlay.classList.add("hidden");
     }
 
     // =========================================================
-    // PROFILE
+    // TOKEN / PROFILE HELPERS
     // =========================================================
-    function hydrateProfileUI() {
-      document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
-      document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
+    function getStoredLockTokens() {
+      return {
+        idToken: localStorage.getItem("rnr_id_token"),
+        accessToken: localStorage.getItem("rnr_auth_token"),
+      };
+    }
 
-      const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
-      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
-      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
-
-      const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
-      document.getElementById("profile-missing").classList.toggle("hidden", !missing);
-
-      if (missing) {
-        updateAvailabilityStatus("Missing address/city/postal code in portal profile.", false);
-        availabilityByDate = {};
-        renderCalendar();
-        clearSelectionUI();
-        setConfirmEnabled(false);
+    function decodeJwtPayload(idToken) {
+      try {
+        const parts = String(idToken || "").split(".");
+        if (parts.length < 2) return null;
+        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const json = decodeURIComponent(atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+        return JSON.parse(json);
+      } catch (e) {
+        return null;
       }
-      updateSummary();
+    }
+
+    function isJwtExpired(payload) {
+      try {
+        const exp = Number(payload?.exp || 0);
+        if (!exp) return true;
+        const now = Math.floor(Date.now() / 1000);
+        return exp <= now;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function buildProfileFromJwtPayload(payload) {
+      if (!payload) return null;
+
+      const pObj = payload[CLAIM_PROFILE_OBJ] || {};
+      const address = payload[CLAIM_ADDRESS] || pObj.address || "";
+      const city = payload[CLAIM_CITY] || pObj.city || "";
+      const postal = payload[CLAIM_POSTAL] || pObj.postal_code || "";
+      const phone = payload[CLAIM_PHONE] || pObj.phone || "";
+
+      const fullName = payload.name || "";
+      const email = payload.email || "";
+      const given = payload.given_name || "";
+      const family = payload.family_name || "";
+
+      return {
+        email,
+        fullName: fullName || [given, family].filter(Boolean).join(" "),
+        firstName: given || "",
+        lastName: family || "",
+        address,
+        city,
+        postal,
+        phone,
+      };
     }
 
     function loadProfileFromLocalStorage() {
       try {
         const raw = localStorage.getItem("rnr_portal_profile");
         if (!raw) return null;
-        const p = JSON.parse(raw);
-        if (!p) return null;
-        return {
-          firstName: p.firstName || p.given_name || "",
-          lastName:  p.lastName || p.family_name || "",
-          email:     p.email || "",
-          phone:     p.phone || p.phone_number || "",
-          address:   p.address || "",
-          city:      p.city || "",
-          postal_code: p.postal_code || p.postal || ""
-        };
+        return JSON.parse(raw);
       } catch (e) {
         return null;
       }
     }
 
-    // =========================================================
-    // TOKEN / JWT HELPERS
-    // =========================================================
-    function base64UrlDecode(str) {
+    function saveProfileToLocalStorage(profile) {
       try {
-        const pad = str.length % 4;
-        const base64 = (str + (pad ? "=".repeat(4 - pad) : "")).replace(/-/g, "+").replace(/_/g, "/");
-        const decoded = atob(base64);
-        try { return decodeURIComponent(decoded.split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")); }
-        catch { return decoded; }
-      } catch (e) { return null; }
-    }
-
-    function decodeJwtPayload(token) {
-      if (!token || typeof token !== "string" || token.split(".").length < 2) return null;
-      const payloadB64 = token.split(".")[1];
-      const json = base64UrlDecode(payloadB64);
-      if (!json) return null;
-      try { return JSON.parse(json); } catch { return null; }
-    }
-
-    function isJwtExpired(payload) {
-      const exp = payload && payload.exp ? Number(payload.exp) : 0;
-      if (!exp) return false;
-      const now = Math.floor(Date.now() / 1000);
-      return now >= exp;
-    }
-
-    function isEmailLike(str) {
-      const s = String(str || "").trim();
-      return !!s && s.includes("@") && s.includes(".");
-    }
-
-    function buildProfileFromJwtPayload(payload) {
-      if (!payload) return null;
-
-      const email = payload.email || "";
-
-      // Prefer your custom profile object if present
-      const claimObj = payload[CLAIM_PROFILE_OBJ] || null;
-
-      // Name sources (priority order)
-      const given = (claimObj && (claimObj.firstName || claimObj.given_name)) || payload.given_name || "";
-      const family = (claimObj && (claimObj.lastName || claimObj.family_name)) || payload.family_name || "";
-
-      // Fallback to payload.name ONLY if it looks like a real name (not an email)
-      const rawName = payload.name ? String(payload.name).trim() : "";
-      const canUseNameFallback = rawName && !isEmailLike(rawName) && rawName.includes(" ");
-
-      const nameFirst = canUseNameFallback ? rawName.split(" ")[0] : "";
-      const nameLast  = canUseNameFallback ? rawName.split(" ").slice(1).join(" ") : "";
-
-      const firstName = String(given || nameFirst || "").trim();
-      const lastName  = String(family || nameLast || "").trim();
-
-      const phone = payload.phone_number || payload[CLAIM_PHONE] || (claimObj && claimObj.phone) || "";
-
-      const address = (claimObj && claimObj.address) || payload[CLAIM_ADDRESS] || "";
-      const city    = (claimObj && claimObj.city) || payload[CLAIM_CITY] || "";
-      const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || payload[CLAIM_POSTAL] || "";
-
-      const addrObj = payload.address || null;
-      const addr2 = addrObj && (addrObj.street_address || addrObj.formatted)
-        ? (addrObj.street_address || addrObj.formatted)
-        : "";
-      const city2 = addrObj && addrObj.locality ? addrObj.locality : "";
-      const postal2 = addrObj && addrObj.postal_code ? addrObj.postal_code : "";
-
-      return {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address: address || addr2 || "",
-        city: city || city2 || "",
-        postal_code: postal || postal2 || ""
-      };
-    }
-
-    function getStoredLockTokens() {
-      try {
-        const idToken = localStorage.getItem("rnr_id_token") || "";
-        const accessToken = localStorage.getItem("rnr_auth_token") || "";
-        return { idToken, accessToken };
-      } catch (e) {
-        return { idToken: "", accessToken: "" };
-      }
+        if (!profile) return;
+        localStorage.setItem("rnr_portal_profile", JSON.stringify(profile));
+      } catch (e) {}
     }
 
     async function tryEnrichProfileFromUserInfo(accessToken, currentProfile) {
-      if (!accessToken) return currentProfile;
       try {
+        if (!accessToken) return currentProfile;
         const res = await fetch(`https://${AUTH0_DOMAIN}/userinfo`, {
-          headers: { "Authorization": "Bearer " + accessToken }
+          headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (!res.ok) return currentProfile;
-        const u = await res.json();
-        
-        const claimObj = u[CLAIM_PROFILE_OBJ] || u.profile || u.user_metadata || null;
-        const addressObj = u.address || null;
-
-        const firstName = u.given_name || (u.name ? String(u.name).split(" ")[0] : "") || "";
-        const lastName  = u.family_name || (u.name ? String(u.name).split(" ").slice(1).join(" ") : "") || "";
-
-        const address = (claimObj && claimObj.address) || u[CLAIM_ADDRESS] || (addressObj && (addressObj.street_address || addressObj.formatted)) || "";
-        const city    = (claimObj && claimObj.city) || u[CLAIM_CITY] || (addressObj && addressObj.locality) || "";
-        const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || u[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
-        const phone   = (claimObj && claimObj.phone) || u[CLAIM_PHONE] || u.phone_number || "";
-
-        const p2 = { firstName, lastName, email: u.email || "", phone, address, city, postal_code: postal };
-        return { ...(currentProfile || {}), ...p2 };
+        const p2 = await res.json();
+        const merged = {
+          ...(currentProfile || {}),
+          email: currentProfile?.email || p2.email || "",
+          fullName: currentProfile?.fullName || p2.name || "",
+          firstName: currentProfile?.firstName || p2.given_name || "",
+          lastName: currentProfile?.lastName || p2.family_name || "",
+          address: currentProfile?.address || p2[CLAIM_ADDRESS] || p2?.[CLAIM_PROFILE_OBJ]?.address || "",
+          city: currentProfile?.city || p2[CLAIM_CITY] || p2?.[CLAIM_PROFILE_OBJ]?.city || "",
+          postal: currentProfile?.postal || p2[CLAIM_POSTAL] || p2?.[CLAIM_PROFILE_OBJ]?.postal_code || "",
+          phone: currentProfile?.phone || p2[CLAIM_PHONE] || p2?.[CLAIM_PROFILE_OBJ]?.phone || "",
+        };
+        saveProfileToLocalStorage(merged);
+        return merged;
       } catch (e) {
         return currentProfile;
       }
@@ -1442,159 +1291,176 @@
         localStorage.removeItem("rnr_portal_profile");
         localStorage.removeItem("rnr_id_token");
         localStorage.removeItem("rnr_auth_token");
-      } catch(e) {}
+      } catch (e) {}
 
-      // Reset state
       portalProfile = null;
-      
-      // Show login overlay and reinitialize Lock
+      selectedDateStr = null;
+      selectedSlot = null;
+      availabilityByDate = {};
+      availabilityCache.clear();
+
+      // Track logout
+      try {
+        if (typeof gtag === "function") gtag("event", "client_portal_logout");
+      } catch (e) {}
+
+      // Show overlay again
       showLoginOverlay();
-      
-      // Destroy existing Lock instance and create new one
-      if (lock) {
-        try { lock.hide(); } catch(e) {}
-      }
-      
-      // Clear the container and reinitialize
-      document.getElementById("auth0-lock-container").innerHTML = "";
+
+      // Reset / re-init lock
+      try {
+        if (lock) lock.hide();
+      } catch (e) {}
+
       initAuth0Lock();
-      
-      showToast("Signed out", "You have been signed out successfully.");
+    }
+
+    // =========================================================
+    // UI HYDRATION
+    // =========================================================
+    function hydrateProfileUI() {
+      const nm = portalProfile?.fullName || portalProfile?.email || "Client";
+      const email = portalProfile?.email || "—";
+      const addr = portalProfile?.address ? `${portalProfile.address}${portalProfile.city ? ", " + portalProfile.city : ""}${portalProfile.postal ? " " + portalProfile.postal : ""}` : "—";
+      const phone = portalProfile?.phone || "—";
+
+      const navUser = document.getElementById("nav-user-name");
+      const welcome = document.getElementById("welcome-pill");
+      const sumClient = document.getElementById("summary-client");
+      const sumEmail = document.getElementById("summary-email");
+      const pillAddr = document.getElementById("pill-address");
+      const pillPhone = document.getElementById("pill-phone");
+
+      if (navUser) navUser.textContent = nm;
+      if (welcome) welcome.textContent = nm;
+      if (sumClient) sumClient.textContent = nm;
+      if (sumEmail) sumEmail.textContent = email;
+      if (pillAddr) pillAddr.textContent = `Address: ${addr}`;
+      if (pillPhone) pillPhone.textContent = `Phone: ${phone}`;
+
+      // Show missing profile warning if address/city/postal missing
+      const missing = document.getElementById("profile-missing");
+      const hasAddress = !!(portalProfile?.address && portalProfile?.city && portalProfile?.postal);
+      if (missing) {
+        if (!hasAddress) missing.classList.remove("hidden");
+        else missing.classList.add("hidden");
+      }
     }
 
     // =========================================================
     // TREATMENT / DURATION
     // =========================================================
-    function rebuildDurationOptions() {
-      if (!durationSelect) {
-        console.error("durationSelect not found");
-        return;
-      }
-      durationSelect.innerHTML = "";
-
-      const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-      if (!rule) {
-        durationSelect.disabled = true;
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "Select a treatment first…";
-        durationSelect.appendChild(opt);
-        selectedStandardDuration = null;
-        updateSummary();
-        return;
-      }
-
-      const firstOpt = document.createElement("option");
-      firstOpt.value = "";
-      firstOpt.textContent = "Select…";
-      durationSelect.appendChild(firstOpt);
-
-      rule.durations.forEach(min => {
-        const opt = document.createElement("option");
-        opt.value = String(min);
-        opt.textContent = `${min} min`;
-        durationSelect.appendChild(opt);
-      });
-
-      durationSelect.disabled = false;
+    function onTreatmentChange() {
+      selectedServiceKey = treatmentSelect.value || null;
       selectedStandardDuration = null;
-      updateSummary();
-    }
-
-    // =========================================================
-    // AVAILABILITY
-    // =========================================================
-    function clearSelectionUI() {
       selectedDateStr = null;
       selectedSlot = null;
-
-      document.getElementById("selected-date-info").classList.add("hidden");
-      document.getElementById("time-slots-container").classList.add("hidden");
-      document.getElementById("no-slots").classList.add("hidden");
-      document.getElementById("confirm-booking-btn").classList.add("btn-disabled");
-      setConfirmEnabled(false);
-      updateSummary();
-    }
-
-    function buildAvailabilityPayload() {
-      const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
-      if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
-      if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
-
-      const { from, to } = computeMonthRange(calendarCurrent);
-      const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
-
-      return {
-        address: portalProfile.address,
-        city: portalProfile.city,
-        postal_code: portalProfile.postal_code,
-        from,
-        to,
-        standardDurationMinutes: Number(selectedStandardDuration),
-        blockDurationMinutes: Number(blockMinutes),
-        slotIntervalMinutes: 15,
-        practitionerId: DEFAULT_PRACTITIONER_ID,
-        travel_time_buffer_minutes: 0
-      };
-    }
-
-    function getRequestCacheKey(payload) {
-      return [
-        payload.from, payload.to,
-        payload.standardDurationMinutes, payload.blockDurationMinutes,
-        payload.practitionerId,
-        payload.address, payload.city, payload.postal_code
-      ].join("|");
-    }
-
-    function parseAvailabilityResponse(data) {
       availabilityByDate = {};
-      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+      availabilityCache.clear();
 
-      if (!data) return;
+      updateSummary();
+      hideSlots();
 
-      availabilityMeta.maxDriveTimeMinutes = Number(data.maxDriveTimeMinutes || 0);
-      availabilityMeta.effective_travel_buffer_minutes = Number(data.effective_travel_buffer_minutes || 0);
+      durationSelect.innerHTML = "";
+      durationSelect.disabled = true;
 
-      if (data.dates && Array.isArray(data.dates)) {
-        data.dates.forEach(day => {
-          if (!day || !day.date || !Array.isArray(day.slots)) return;
-          availabilityByDate[day.date] = day.slots;
-        });
+      if (!selectedServiceKey) {
+        durationSelect.innerHTML = `<option value="">Select a treatment first…</option>`;
+        setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
+        renderCalendar();
         return;
       }
 
-      if (Array.isArray(data)) {
-        data.forEach(day => {
-          if (!day || !day.date || !Array.isArray(day.slots)) return;
-          availabilityByDate[day.date] = day.slots;
-        });
-      }
+      const rule = TREATMENT_RULES[selectedServiceKey];
+      const opts = rule?.durations || [];
+      durationSelect.innerHTML = `<option value="">Select duration…</option>` + opts.map(m => `<option value="${m}">${m} min</option>`).join("");
+      durationSelect.disabled = false;
+
+      setAvailabilityStatus("Availability", "Select a duration to load availability.", "");
+      renderCalendar();
     }
 
-    async function maybeLoadAvailabilityForCurrentMonth() {
-      const payload = buildAvailabilityPayload();
-      if (payload.error) {
-        updateAvailabilityStatus(payload.error, false);
-        availabilityByDate = {};
+    async function onDurationChange() {
+      const v = durationSelect.value;
+      selectedStandardDuration = v ? Number(v) : null;
+      selectedDateStr = null;
+      selectedSlot = null;
+      availabilityByDate = {};
+      availabilityCache.clear();
+
+      updateSummary();
+      hideSlots();
+
+      if (!selectedServiceKey || !selectedStandardDuration) {
+        setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
         renderCalendar();
-        clearSelectionUI();
         return;
       }
 
-      const cacheKey = getRequestCacheKey(payload);
-      clearSelectionUI();
-      setCalendarLoading(true);
-      updateAvailabilityStatus("Checking live availability for this month…", false);
+      await loadAvailabilityForMonth(calendarCurrent);
+      renderCalendar();
+    }
+
+    // =========================================================
+    // AVAILABILITY LOADING
+    // =========================================================
+    function showAvailabilityLoading(show) {
+      const el = document.getElementById("availability-loading");
+      if (!el) return;
+      if (show) el.classList.remove("hidden");
+      else el.classList.add("hidden");
+    }
+
+    function setAvailabilityStatus(title, body, meta) {
+      const t = document.getElementById("availability-status-title");
+      const b = document.getElementById("availability-status-body");
+      const m = document.getElementById("availability-meta");
+      if (t) t.textContent = title || "Availability";
+      if (b) b.textContent = body || "";
+      if (m) m.textContent = meta || "";
+    }
+
+    function monthKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    async function loadAvailabilityForMonth(dateObj) {
+      const hasAddress = !!(portalProfile?.address && portalProfile?.city && portalProfile?.postal);
+      if (!hasAddress) {
+        setAvailabilityStatus("Availability", "We need your address (street, city, postal code) to load availability.", "");
+        return;
+      }
+
+      const key = `${monthKey(dateObj)}::${selectedServiceKey}::${selectedStandardDuration}`;
+      if (availabilityCache.has(key)) {
+        const cached = availabilityCache.get(key);
+        availabilityByDate = cached?.availabilityByDate || {};
+        availabilityMeta = cached?.availabilityMeta || availabilityMeta;
+        setAvailabilityStatus("Availability", "Availability loaded.", cached?.metaText || "");
+        return;
+      }
+
+      showAvailabilityLoading(true);
+      setAvailabilityStatus("Availability", "Checking availability…", "");
 
       try {
-        if (availabilityCache.has(cacheKey)) {
-          const cached = availabilityCache.get(cacheKey);
-          parseAvailabilityResponse(cached);
-          renderCalendar();
-          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
-          return;
-        }
+        const start = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+        const end = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
+
+        const payload = {
+          email: portalProfile?.email || "",
+          address: portalProfile?.address || "",
+          city: portalProfile?.city || "",
+          postal_code: portalProfile?.postal || "",
+          phone: portalProfile?.phone || "",
+          treatment_key: selectedServiceKey,
+          duration_minutes: selectedStandardDuration,
+          month_start: start.toISOString().slice(0,10),
+          month_end: end.toISOString().slice(0,10),
+          practitioner_id: DEFAULT_PRACTITIONER_ID
+        };
 
         const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
           method: "POST",
@@ -1602,347 +1468,393 @@
           body: JSON.stringify(payload)
         });
 
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`Availability error (${res.status}): ${text || res.statusText}`);
-        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Availability request failed");
 
-        const data = await res.json();
-        availabilityCache.set(cacheKey, data);
-        parseAvailabilityResponse(data);
+        availabilityByDate = data?.availabilityByDate || {};
+        availabilityMeta = data?.meta || availabilityMeta;
 
-        renderCalendar();
-        updateAvailabilityStatus("Live availability loaded for this month.", true);
+        const maxDrive = Number(availabilityMeta?.maxDriveTimeMinutes || 0);
+        const effBuff = Number(availabilityMeta?.effective_travel_buffer_minutes || 0);
+        const metaText = `Max drive time: ${maxDrive} min • Travel buffer: ${effBuff} min`;
+
+        availabilityCache.set(key, { availabilityByDate, availabilityMeta, metaText });
+
+        setAvailabilityStatus("Availability", "Availability loaded.", metaText);
 
       } catch (e) {
         console.error(e);
-        availabilityByDate = {};
-        renderCalendar();
-        updateAvailabilityStatus("Could not load availability. Please try again or contact support.", false);
-        showToast("Availability error", "Unable to load availability.", true);
+        setAvailabilityStatus("Availability", "Could not load availability. Please try again.", "");
+        showToast("Error", "Unable to load availability.", true);
       } finally {
-        setCalendarLoading(false);
+        showAvailabilityLoading(false);
       }
     }
 
     // =========================================================
     // CALENDAR RENDERING
     // =========================================================
-    function renderCalendar() {
-      const monthLabelEl = document.getElementById("calendar-month-label");
-      const daysContainer = document.getElementById("calendar-days");
+    function setCalendarLabel(dateObj) {
+      const el = document.getElementById("calendar-month-label");
+      if (!el) return;
+      const fmt = dateObj.toLocaleString("en-CA", { month: "long", year: "numeric" });
+      el.textContent = fmt;
+    }
 
-      const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
-      monthLabelEl.textContent = monthName;
+    function renderCalendar() {
+      setCalendarLabel(calendarCurrent);
+
+      const daysContainer = document.getElementById("calendar-days");
+      if (!daysContainer) return;
+      daysContainer.innerHTML = "";
 
       const year = calendarCurrent.getFullYear();
       const month = calendarCurrent.getMonth();
 
       const firstDay = new Date(year, month, 1);
-      const startDayOfWeek = firstDay.getDay();
+      const startWeekday = firstDay.getDay(); // 0 Sun
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      daysContainer.innerHTML = "";
-
-      for (let i = 0; i < startDayOfWeek; i++) {
-        const blank = document.createElement("div");
-        blank.className = "opacity-0";
-        blank.textContent = ".";
-        daysContainer.appendChild(blank);
+      // Fill leading blanks
+      for (let i = 0; i < startWeekday; i++) {
+        const d = document.createElement("div");
+        d.className = "calendar-day calendar-day-disabled opacity-0";
+        d.innerHTML = "&nbsp;";
+        daysContainer.appendChild(d);
       }
 
-      const todayStr = toDateStr(new Date());
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const dayDate = new Date(year, month, day);
-        const dateStr = toDateStr(dayDate);
+        const d = document.createElement("div");
+        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
 
-        const slots = availabilityByDate[dateStr] || [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(s => !!s.available);
+        let cls = "calendar-day";
+        const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const hasAvail = !!(availabilityByDate?.[dateStr]?.slots?.length);
 
-        const isPast = dateStr < todayStr;
-        const isSelected = selectedDateStr === dateStr;
-        const isToday = dateStr === todayStr;
-
-        const cell = document.createElement("button");
-        cell.type = "button";
-        cell.className = "calendar-day";
-
-        if (isPast || !hasAnyAvailable || !selectedServiceKey || !selectedStandardDuration) {
-          cell.classList.add("calendar-day-disabled");
-          cell.disabled = true;
+        if (!selectedServiceKey || !selectedStandardDuration) {
+          cls += " calendar-day-disabled";
+        } else if (isPast) {
+          cls += " calendar-day-disabled";
+        } else if (hasAvail) {
+          cls += " calendar-day-available";
         } else {
-          cell.classList.add("calendar-day-available");
-          if (isToday) cell.classList.add("calendar-day-today");
-          if (isSelected) cell.classList.add("calendar-day-selected");
-          cell.addEventListener("click", () => selectDate(dateStr));
+          cls += " calendar-day-disabled";
         }
 
-        cell.textContent = String(day);
-        daysContainer.appendChild(cell);
-      }
+        if (dateStr === todayStr) cls += " calendar-day-today";
+        if (selectedDateStr && dateStr === selectedDateStr) cls += " calendar-day-selected";
 
-      if (typeof lucide !== "undefined") lucide.createIcons();
+        d.className = cls;
+        d.textContent = String(day);
+
+        if (cls.includes("calendar-day-available")) {
+          d.addEventListener("click", () => onSelectDate(dateStr));
+        }
+
+        daysContainer.appendChild(d);
+      }
     }
 
-    function selectDate(dateStr) {
+    // =========================================================
+    // SLOT SELECTION
+    // =========================================================
+    function showSlots() {
+      const selInfo = document.getElementById("selected-date-info");
+      const slots = document.getElementById("time-slots-container");
+      if (selInfo) selInfo.classList.remove("hidden");
+      if (slots) slots.classList.remove("hidden");
+    }
+
+    function hideSlots() {
+      const selInfo = document.getElementById("selected-date-info");
+      const slots = document.getElementById("time-slots-container");
+      const noSlots = document.getElementById("no-slots");
+      if (selInfo) selInfo.classList.add("hidden");
+      if (slots) slots.classList.add("hidden");
+      if (noSlots) noSlots.classList.add("hidden");
+
+      const grid = document.getElementById("time-slots-grid");
+      if (grid) grid.innerHTML = "";
+    }
+
+    function onSelectDate(dateStr) {
       selectedDateStr = dateStr;
       selectedSlot = null;
-      renderCalendar();
-      updateSummary();
 
-      document.getElementById("selected-date-info").classList.remove("hidden");
-      document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
+      const display = document.getElementById("selected-date-display");
+      if (display) {
+        const dt = new Date(dateStr + "T00:00:00");
+        display.textContent = dt.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
+      }
 
-      loadTimeSlots(dateStr);
-    }
+      const dayObj = availabilityByDate?.[dateStr] || {};
+      const slots = dayObj?.slots || [];
 
-    function loadTimeSlots(dateStr) {
-      const container = document.getElementById("time-slots-container");
       const grid = document.getElementById("time-slots-grid");
       const noSlots = document.getElementById("no-slots");
+      if (!grid) return;
 
-      container.classList.remove("hidden");
       grid.innerHTML = "";
 
-      const slots = availabilityByDate[dateStr] || [];
-      const usable = Array.isArray(slots) ? slots : [];
-
-      if (!usable.length) {
-        noSlots.classList.remove("hidden");
-        container.classList.add("hidden");
+      if (!slots.length) {
+        if (noSlots) noSlots.classList.remove("hidden");
+        showSlots();
+        updateSummary();
+        renderCalendar();
         return;
       }
 
-      usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      if (noSlots) noSlots.classList.add("hidden");
+      showSlots();
 
-      let anyAvailable = false;
-
-      usable.forEach(slot => {
+      slots.forEach((s) => {
         const btn = document.createElement("button");
+        btn.className = "time-slot-btn";
         btn.type = "button";
-        // Base class: we add 'time-slot-btn' and specific styles for available/booked below
-        btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
-        
-        // Clean label: strip EST, (Booked)
-        const labelRaw = formatTimeLabel(slot); 
-        // formatTimeLabel returns lower case.
-        const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
-
-        if (slot.available) {
-          btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
-          btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
-          anyAvailable = true;
-          btn.addEventListener("click", () => selectTimeSlot(slot, btn));
-        } else {
-          btn.classList.add("border-white/5", "bg-white/5", "text-white/30", "cursor-not-allowed", "opacity-50");
-          btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${labelClean}</span>`;
-          btn.disabled = true;
-        }
-
+        btn.innerHTML = `<i data-lucide="clock" class="w-4 h-4 text-brand-gold"></i><span>${formatSlotTime(s?.starts_at)}</span>`;
+        btn.addEventListener("click", () => onSelectSlot(s, btn));
         grid.appendChild(btn);
       });
 
-      noSlots.classList.toggle("hidden", anyAvailable);
-      container.classList.toggle("hidden", !anyAvailable);
-
       if (typeof lucide !== "undefined") lucide.createIcons();
+      updateSummary();
+      renderCalendar();
     }
 
-    function selectTimeSlot(slot, btnElement) {
-      selectedSlot = slot;
+    function formatSlotTime(iso) {
+      try {
+        const dt = new Date(iso);
+        return dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" }).toLowerCase();
+      } catch (e) {
+        return "—";
+      }
+    }
 
-      document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
-      btnElement.classList.add("time-slot-selected");
+    function onSelectSlot(slotObj, btnEl) {
+      selectedSlot = slotObj || null;
+
+      // Unselect others
+      const grid = document.getElementById("time-slots-grid");
+      if (grid) {
+        [...grid.querySelectorAll("button")].forEach(b => b.classList.remove("time-slot-selected"));
+      }
+      if (btnEl) btnEl.classList.add("time-slot-selected");
 
       updateSummary();
     }
 
-    function prevMonth() {
-      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
-      renderCalendar();
-      maybeLoadAvailabilityForCurrentMonth();
-    }
-
-    function nextMonth() {
-      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
-      renderCalendar();
-      maybeLoadAvailabilityForCurrentMonth();
+    // =========================================================
+    // TRAVEL FEE
+    // =========================================================
+    function computeTravelFee(driveMinutes) {
+      const mins = Number(driveMinutes || 0);
+      if (mins < TRAVEL_FEE_THRESHOLD_MINUTES) return 0;
+      for (const tier of TRAVEL_FEE_TIERS) {
+        if (mins >= tier.minMinutes) return tier.fee;
+      }
+      return 0;
     }
 
     // =========================================================
-    // BOOKING CONFIRMATION
+    // SUMMARY + CONFIRM
     // =========================================================
-    async function confirmBooking() {
-      if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
-        showToast("Missing info", "Please select a treatment, duration, date, and time.", true);
-        return;
+    function updateSummary() {
+      const treatEl = document.getElementById("summary-treatment");
+      const dtEl = document.getElementById("summary-datetime");
+      const feeEl = document.getElementById("summary-travel-fee");
+      const driveEl = document.getElementById("summary-drive-time");
+
+      const confirmBtn = document.getElementById("confirm-booking-btn");
+      const confirmText = document.getElementById("confirm-btn-text");
+
+      const treatLabel = selectedServiceKey ? (TREATMENT_RULES[selectedServiceKey]?.label || "Treatment") : "Select a treatment";
+      const durLabel = selectedStandardDuration ? `${selectedStandardDuration} min` : "";
+      if (treatEl) treatEl.textContent = selectedServiceKey ? `${treatLabel} • ${durLabel}` : treatLabel;
+
+      let dtLabel = "Select a date and time";
+      if (selectedDateStr) {
+        const dt = new Date(selectedDateStr + "T00:00:00");
+        dtLabel = dt.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
+        if (selectedSlot?.starts_at) {
+          dtLabel += ` • ${formatSlotTime(selectedSlot.starts_at)}`;
+        } else {
+          dtLabel += " • Select a time";
+        }
+      }
+      if (dtEl) dtEl.textContent = dtLabel;
+
+      const driveMinutes = selectedSlot?.drive_minutes ?? selectedSlot?.drive_time_minutes ?? 0;
+      const travelFee = computeTravelFee(driveMinutes);
+
+      if (feeEl) feeEl.textContent = `$${Number(travelFee).toFixed(2)}`;
+      if (driveEl) {
+        driveEl.textContent = driveMinutes ? `Drive time: ${Number(driveMinutes)} min` : "—";
       }
 
-      const treat = TREATMENT_RULES[selectedServiceKey];
-      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
-      const travelFee = calcTravelFee(driveTime);
+      const ready = !!(portalProfile?.email && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot?.starts_at);
+      if (confirmBtn) {
+        if (ready) {
+          confirmBtn.disabled = false;
+          confirmBtn.classList.remove("btn-disabled");
+          if (confirmText) confirmText.textContent = "Confirm Booking";
+        } else {
+          confirmBtn.disabled = true;
+          confirmBtn.classList.add("btn-disabled");
+          if (confirmText) confirmText.textContent = "Confirm Booking";
+        }
+      }
+    }
 
-      const bookingPayload = {
-        firstName: portalProfile.firstName || "",
-        lastName:  portalProfile.lastName || "",
-        email:     portalProfile.email || "",
-        phone:     portalProfile.phone || "",
-        address: portalProfile.address,
-        city: portalProfile.city,
-        postal_code: portalProfile.postal_code,
-        treatment_key: selectedServiceKey,
-        treatment_label: treat ? treat.label : "",
-        duration: Number(selectedStandardDuration),
-        standardDurationMinutes: Number(selectedStandardDuration),
-        participants: 1,
-        participant_count: 1,
-        slot_start: selectedSlot.start,
-        slot_end: selectedSlot.end,
-        date: selectedDateStr,
-        times_already_utc: true,
-        travel_charge: Number(travelFee || 0),
-        drive_time_minutes: Number(driveTime || 0),
-        travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
-        notes: "Booked via Client Portal."
-      };
-
-      try { localStorage.setItem("rnr_portal_last_booking_payload", JSON.stringify(bookingPayload)); } catch(e) {}
-
-      const btn = document.getElementById("confirm-booking-btn");
-      const btnText = document.getElementById("confirm-btn-text");
-      const originalText = btnText.textContent;
-
-      btn.disabled = true;
-      btn.classList.add("btn-disabled");
-      btnText.textContent = "Booking…";
-      showToast("Booking", "Creating your appointment…", false);
+    async function confirmBooking() {
+      const confirmBtn = document.getElementById("confirm-booking-btn");
+      const confirmText = document.getElementById("confirm-btn-text");
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (confirmText) confirmText.textContent = "Confirming…";
 
       try {
+        const driveMinutes = selectedSlot?.drive_minutes ?? selectedSlot?.drive_time_minutes ?? 0;
+        const travelFee = computeTravelFee(driveMinutes);
+
+        const payload = {
+          email: portalProfile?.email || "",
+          full_name: portalProfile?.fullName || "",
+          phone: portalProfile?.phone || "",
+          address: portalProfile?.address || "",
+          city: portalProfile?.city || "",
+          postal_code: portalProfile?.postal || "",
+          treatment_key: selectedServiceKey,
+          duration_minutes: selectedStandardDuration,
+          practitioner_id: DEFAULT_PRACTITIONER_ID,
+          slot: selectedSlot,
+          date: selectedDateStr,
+          travel_fee: travelFee
+        };
+
         const res = await fetch(BOOKING_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bookingPayload)
+          body: JSON.stringify(payload)
         });
 
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`Booking error (${res.status}): ${text || res.statusText}`);
-        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Booking failed");
 
-        const result = await res.json().catch(() => ({}));
+        try {
+          if (typeof gtag === "function") gtag("event", "client_portal_booking_confirmed");
+          if (typeof fbq === "function") fbq("trackCustom", "ClientPortalBookingConfirmed");
+        } catch (e) {}
 
-        showToast("Booked", "Your appointment has been confirmed.");
-        updateAvailabilityStatus("Booking confirmed. Reloading availability…", true);
-
-        availabilityCache.clear();
-        await maybeLoadAvailabilityForCurrentMonth();
-
-        clearSelectionUI();
-
-        console.log("Booking confirmed:", result);
+        showToast("Booked!", "Your booking has been confirmed.");
+        // Reset selection after booking
+        selectedDateStr = null;
+        selectedSlot = null;
+        hideSlots();
+        updateSummary();
+        renderCalendar();
 
       } catch (e) {
         console.error(e);
-        showToast("Booking failed", "We could not confirm your booking. Please try again or contact support.", true);
+        showToast("Error", "Could not confirm booking.", true);
       } finally {
-        btnText.textContent = originalText;
+        if (confirmBtn) confirmBtn.disabled = false;
+        if (confirmText) confirmText.textContent = "Confirm Booking";
         updateSummary();
       }
     }
 
     // =========================================================
-    // TAB SWITCHING
+    // NAV / TABS / MOBILE MENU
     // =========================================================
-    function switchTab(tabId) {
-      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-      const active = document.getElementById("tab-" + tabId);
-      if (active) active.classList.remove("hidden");
+    function setupSidebarTabs() {
+      const btns = document.querySelectorAll(".sidebar-btn[data-tab]");
+      btns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.hasAttribute("disabled")) return;
+          btns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
 
-      document.querySelectorAll(".sidebar-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.tab === tabId);
+          const tab = btn.getAttribute("data-tab");
+          document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+          const panel = document.getElementById(`tab-${tab}`);
+          if (panel) panel.classList.remove("hidden");
+        });
       });
+    }
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    function setupMobileMenu() {
+      const menu = document.getElementById("mobile-menu");
+      const openBtn = document.getElementById("mobile-menu-btn");
+      const closeBtn = document.getElementById("mobile-menu-close");
+      if (!menu || !openBtn || !closeBtn) return;
+
+      openBtn.addEventListener("click", () => menu.classList.add("open"));
+      closeBtn.addEventListener("click", () => menu.classList.remove("open"));
+
+      // Close when clicking outside
+      menu.addEventListener("click", (e) => {
+        if (e.target === menu) menu.classList.remove("open");
+      });
     }
 
     // =========================================================
     // INIT
     // =========================================================
     async function init() {
+      // Icons
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Mobile menu
-      const mm = document.getElementById("mobile-menu");
-      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
-      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
-
-      // Get form elements
+      // Elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
 
-      // Tabs
-      document.querySelectorAll(".sidebar-btn").forEach(btn => {
-        const tab = btn.dataset.tab;
-        if (!tab) return;
-        if (btn.disabled) {
-          // btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
-          return;
-        }
-        btn.addEventListener("click", () => switchTab(tab));
-      });
+      // Sidebar tabs
+      setupSidebarTabs();
 
-      // Calendar nav
-      document.getElementById("prev-month-btn").addEventListener("click", prevMonth);
-      document.getElementById("next-month-btn").addEventListener("click", nextMonth);
+      // Mobile menu
+      setupMobileMenu();
 
-      // Treatment selection
-      treatmentSelect.addEventListener("change", () => {
-        selectedServiceKey = treatmentSelect.value || null;
-        rebuildDurationOptions();
+      // Controls
+      if (treatmentSelect) treatmentSelect.addEventListener("change", onTreatmentChange);
+      if (durationSelect) durationSelect.addEventListener("change", onDurationChange);
 
-        availabilityByDate = {};
-        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
-        clearSelectionUI();
+      const prevBtn = document.getElementById("prev-month-btn");
+      const nextBtn = document.getElementById("next-month-btn");
+      if (prevBtn) prevBtn.addEventListener("click", async () => {
+        calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
+        if (selectedServiceKey && selectedStandardDuration) await loadAvailabilityForMonth(calendarCurrent);
         renderCalendar();
-
-        if (!selectedServiceKey) {
-          updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-        } else {
-          updateAvailabilityStatus("Now choose a duration to load live availability.", false);
-        }
       });
-
-      // Duration selection
-      durationSelect.addEventListener("change", () => {
-        selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
-
-        availabilityByDate = {};
-        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
-        clearSelectionUI();
+      if (nextBtn) nextBtn.addEventListener("click", async () => {
+        calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+        if (selectedServiceKey && selectedStandardDuration) await loadAvailabilityForMonth(calendarCurrent);
         renderCalendar();
-
-        if (selectedStandardDuration) {
-          maybeLoadAvailabilityForCurrentMonth();
-        }
-        updateSummary();
       });
 
-      // Confirm booking
-      document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
+      const confirmBtn = document.getElementById("confirm-booking-btn");
+      if (confirmBtn) confirmBtn.addEventListener("click", confirmBooking);
 
-      // Logout
-      document.getElementById("logout-btn").addEventListener("click", handleLogout);
-      document.getElementById("logout-btn-mobile").addEventListener("click", handleLogout);
+      const logoutBtn = document.getElementById("logout-btn");
+      const logoutBtnMobile = document.getElementById("logout-btn-mobile");
+      if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
+      if (logoutBtnMobile) logoutBtnMobile.addEventListener("click", () => {
+        // close mobile menu then logout
+        const menu = document.getElementById("mobile-menu");
+        if (menu) menu.classList.remove("open");
+        handleLogout();
+      });
 
-      // Initial tab
-      switchTab("dashboard");
+      // Preload initial UI
+      setAvailabilityStatus("Availability", "Select your treatment and duration to load live availability.", "");
+      renderCalendar();
+      updateSummary();
 
-      // Check for existing authentication - this will either show login or load the portal
+      // Auth check on load - this will either show login or load the portal
       await checkExistingAuth();
     }
 
-    // Run on DOM ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
