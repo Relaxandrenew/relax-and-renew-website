@@ -289,17 +289,31 @@
     #login-overlay {
       position: fixed;
       inset: 0;
-      z-index: 200;
-      width: 100vw;
-      height: 100dvh;
-      height: 100vh; 
+      z-index: 9999;
       background: #050505; 
+      
+      /* Flex layout for centering, but allows content to grow */
       display: flex;
-      align-items: flex-start; /* Align top for mobile scrolling */
+      flex-direction: column;
+      
+      /* Default to center */
+      align-items: center;
       justify-content: center;
-      overflow: hidden; /* Overlay itself doesn't scroll */
-      padding: 80px 0 0 0; /* Space for nav */
-      transition: opacity 0.3s ease, visibility 0.3s ease; /* UX Polish */
+      
+      /* ALLOW SCROLLING on the overlay container */
+      overflow-y: auto; 
+      -webkit-overflow-scrolling: touch;
+      
+      padding: 1rem;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    /* If screen is short, align top so we can scroll up */
+    @media (max-height: 700px) {
+        #login-overlay {
+            justify-content: flex-start;
+            padding-top: 2rem;
+        }
     }
 
     #login-overlay.hidden {
@@ -313,50 +327,65 @@
       border: 1px solid rgba(224, 197, 132, 0.25);
       backdrop-filter: blur(10px);
       
-      /* Mobile Layout */
-      width: 95%;
+      width: 100%;
       max-width: 400px;
-      padding: 1.5rem 0; /* Zero horizontal padding for max width */
-      margin: 0 auto;
       
-      /* Internal scrolling for the card content */
-      max-height: calc(100vh - 100px); 
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      /* FIX: Let card grow naturally. No internal scrollbar. */
+      max-height: none;
+      overflow: visible;
+      
+      /* Center in the scrollable flex container */
+      margin: auto; 
+      
+      /* Mobile Padding: Reduced vertical padding */
+      padding: 1rem 0; 
       position: relative;
     }
+    
+    /* Ensure content inside card has breathing room since card padding is 0 horizontal */
+    .login-card > .text-center, 
+    .login-card > .text-xs,
+    .login-card > .text-[11px] {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+    
+    /* On tiny screens, reduce the logo/header spacing */
+    .login-card .text-center img {
+        height: 3rem; /* Smaller logo */
+        width: auto;
+    }
+    .login-card .text-center h2 {
+        margin-top: 0.5rem; /* Less gap */
+        font-size: 1.5rem; /* Smaller title */
+    }
+
     .login-card::before {
       content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
-    /* Add internal padding to content BUT NOT the auth container */
-    .login-card > .text-center, 
-    .login-card > .text-xs,
-    .login-card > .text-[11px] {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    /* Desktop Adjustments for Login Card */
+    /* Desktop Adjustments */
     @media (min-width: 640px) {
         #login-overlay {
-            align-items: center; /* Center vertically on desktop */
             padding: 0;
         }
         .login-card {
             padding: 2.5rem 2rem;
             max-width: 420px;
-            width: 100%;
-            max-height: none;
-            overflow: visible;
         }
-        /* Reset content padding on desktop since card has padding */
         .login-card > .text-center, 
         .login-card > .text-xs,
         .login-card > .text-[11px] {
           padding-left: 0;
           padding-right: 0;
+        }
+        .login-card .text-center img {
+            height: 4rem;
+        }
+        .login-card .text-center h2 {
+            margin-top: 1.25rem;
+            font-size: 1.875rem; 
         }
     }
 
@@ -491,6 +520,26 @@
             width: 111% !important; /* Compensate for scale down */
             margin-left: -5.5%; /* Center after scaling */
         }
+    }
+
+    /* =========================================
+       CRITICAL FIX: Collapse Auth0 Lock's Internal Spacing
+       ========================================= */
+    #auth0-lock-container .auth0-lock .auth0-lock-cred-pane-internal-wrapper,
+    #auth0-lock-container .auth0-lock .auth0-lock-content-wrapper,
+    #auth0-lock-container .auth0-lock .auth0-lock-body-content {
+      min-height: 0 !important;
+      height: auto !important;
+    }
+    
+    #auth0-lock-container .auth0-lock-center {
+      min-height: 0 !important;
+      height: auto !important;
+      padding-bottom: 0 !important;
+    }
+
+    #auth0-lock-container .auth0-lock .auth0-lock-submit {
+      margin-top: 1rem !important; 
     }
   </style>
 
