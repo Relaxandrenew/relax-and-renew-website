@@ -275,7 +275,7 @@
     }
 
     /* =========================================
-       FIXED: Login Overlay CSS
+       FIXED: Login Overlay CSS - MOBILE OPTIMIZED
        ========================================= */
     #login-overlay {
       position: fixed;
@@ -290,41 +290,81 @@
       align-items: center;
       justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
+      overflow-y: auto; /* Allow scrolling if height is small */
+      padding: 1rem;
     }
     #login-overlay.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
     }
+    
     .login-card {
       background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
       border: 1px solid rgba(224, 197, 132, 0.25);
       backdrop-filter: blur(10px);
-      padding: 2.5rem 2rem;
-      max-width: 420px;
-      width: 90%;
+      /* Mobile First Padding - Reduced */
+      padding: 1.5rem 0.5rem; /* Drastically reduced horizontal padding for mobile */
+      width: 95%; /* Make it fluid on small screens */
+      max-width: 380px; /* Standard lock width */
       position: relative;
+      margin: auto;
+      overflow: hidden; /* Safety clip */
     }
     .login-card::before {
       content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
+    /* Desktop Adjustments for Login Card */
+    @media (min-width: 640px) {
+        .login-card {
+            padding: 2.5rem 2rem;
+            max-width: 420px;
+            width: 100%;
+        }
+    }
+
     /* =========================================
        FIXED: Auth0 Lock Styles (Robust Overrides)
        ========================================= */
-    #auth0-lock-container { width: 100% !important; }
+    #auth0-lock-container { 
+        width: 100% !important; 
+        max-width: 100% !important;
+    }
+    
+    /* Ensure Lock Widget is Fluid on Mobile */
+    #auth0-lock-container .auth0-lock {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    #auth0-lock-container .auth0-lock.auth0-lock-opened {
+        width: 100% !important;
+        height: auto !important;
+        position: static !important;
+        display: block !important;
+    }
+
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock * {
       font-family: 'Cormorant Garamond', serif !important;
       border-radius: 0px !important;
       box-shadow: none !important;
     }
+    
+    /* Specific Widget Overrides */
     #auth0-lock-container .auth0-lock .auth0-lock-widget {
       background: #050505 !important;
       border: 1px solid rgba(224,197,132,0.45) !important;
       overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important; /* Allow shrinking */
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
     }
+    
     #auth0-lock-container .auth0-lock .auth0-lock-header,
     #auth0-lock-container .auth0-lock .auth0-lock-header-bg,
     #auth0-lock-container .auth0-lock .auth0-lock-footer,
@@ -332,6 +372,14 @@
     #auth0-lock-container .auth0-lock .auth0-lock-badge {
       display: none !important;
     }
+
+    /* Internal Content Wrapper */
+    #auth0-lock-container .auth0-lock-widget-container,
+    #auth0-lock-container .auth0-lock-cred-pane {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock .auth0-lock-content,
     #auth0-lock-container .auth0-lock .auth0-lock-pane,
@@ -346,6 +394,8 @@
     #auth0-lock-container .auth0-lock .auth0-lock-error,
     #auth0-lock-container .auth0-lock .auth0-lock-error-msg {
       background: #050505 !important;
+      width: 100% !important; /* Force width */
+      box-sizing: border-box !important;
     }
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock label,
@@ -378,28 +428,65 @@
     #auth0-lock-container .auth0-lock .auth0-lock-tabs li.auth0-lock-tabs-current span {
       color: #E0C584 !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap {
+
+    /* INPUT FIELD FIXES - THE NUCLEAR OPTION */
+    #auth0-lock-container .auth0-lock-input-block {
+        margin-bottom: 10px !important;
+        width: 100% !important;
+    }
+
+    /* Force wrapper to be flex to handle icon + input side-by-side without overflow */
+    #auth0-lock-container .auth0-lock-input-wrap {
       background: #050505 !important;
       border: 1px solid rgba(224,197,132,0.55) !important;
+      border-radius: 0 !important;
       padding: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      height: 44px !important; 
+      display: flex !important;
+      align-items: center !important;
+      position: relative !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input,
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea {
+
+    /* Absolute position the icon within the flex container's relative context */
+    #auth0-lock-container .auth0-lock-input-wrap .auth0-lock-input-icon {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        width: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: rgba(224,197,132,0.90) !important;
+        z-index: 10 !important;
+    }
+    
+    /* Input takes full width but has padding-left to clear the icon */
+    #auth0-lock-container .auth0-lock-input-wrap input,
+    #auth0-lock-container .auth0-lock-input-wrap textarea {
       background: #050505 !important;
       color: rgba(240,226,192,0.95) !important;
       font-size: 1.05rem !important;
+      width: 100% !important;
+      height: 100% !important;
+      padding-left: 45px !important; /* Space for icon */
+      padding-right: 10px !important; /* Prevent right edge collision */
+      border: none !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap input::placeholder,
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap textarea::placeholder {
+    
+    #auth0-lock-container .auth0-lock-input-wrap input::placeholder,
+    #auth0-lock-container .auth0-lock-input-wrap textarea::placeholder {
       color: rgba(240,226,192,0.45) !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap:focus-within {
+    #auth0-lock-container .auth0-lock-input-wrap:focus-within {
       border-color: #F0D594 !important;
       box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
     }
-    #auth0-lock-container .auth0-lock .auth0-lock-input-wrap .auth0-lock-input-icon {
-      color: rgba(224,197,132,0.90) !important;
-    }
+    
     #auth0-lock-container .auth0-lock button.auth0-lock-submit,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button {
       background: #E0C584 !important;
@@ -409,6 +496,8 @@
       letter-spacing: 0.12em !important;
       font-weight: 800 !important;
       padding: 14px 16px !important;
+      width: 100% !important; /* Force full width */
+      box-sizing: border-box !important;
     }
     #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
