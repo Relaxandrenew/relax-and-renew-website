@@ -289,10 +289,7 @@
     #login-overlay {
       position: fixed;
       inset: 0;
-      z-index: 200;
-      width: 100vw;
-      height: 100dvh;
-      height: 100vh; 
+      z-index: 9999;
       background: #050505; 
       
       /* Flex layout for centering, but allows content to grow */
@@ -1568,8 +1565,43 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Availability request failed");
 
-        availabilityByDate = data?.availabilityByDate || {};
-        availabilityMeta = data?.meta || availabilityMeta;
+        // ROBUST PARSER HERE: Handle multiple backend formats
+        availabilityByDate = {};
+        availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+
+        // 1. Meta
+        availabilityMeta.maxDriveTimeMinutes = Number(
+          data.maxDriveTimeMinutes ?? data.meta?.maxDriveTimeMinutes ?? 0
+        );
+        availabilityMeta.effective_travel_buffer_minutes = Number(
+          data.effective_travel_buffer_minutes ?? data.meta?.effective_travel_buffer_minutes ?? 0
+        );
+
+        // 2. Slots (Object form: { availabilityByDate: { "YYYY-MM-DD": [...] } })
+        if (data.availabilityByDate && typeof data.availabilityByDate === "object") {
+            for (const [dStr, val] of Object.entries(data.availabilityByDate)) {
+                if (!dStr) continue;
+                // val might be { slots: [...] } or just [...]
+                const slotArr = Array.isArray(val) ? val : (Array.isArray(val?.slots) ? val.slots : null);
+                if (slotArr) availabilityByDate[dStr] = { slots: slotArr };
+            }
+        } 
+        // 3. Slots (Array form: data.dates = [{ date: "...", slots: [] }])
+        else if (Array.isArray(data.dates)) {
+            data.dates.forEach(d => {
+                if (d.date && Array.isArray(d.slots)) {
+                    availabilityByDate[d.date] = { slots: d.slots };
+                }
+            });
+        }
+        // 4. Slots (Direct Array form: [{ date: "...", slots: [] }])
+        else if (Array.isArray(data)) {
+             data.forEach(d => {
+                if (d.date && Array.isArray(d.slots)) {
+                    availabilityByDate[d.date] = { slots: d.slots };
+                }
+            });
+        }
 
         const maxDrive = Number(availabilityMeta?.maxDriveTimeMinutes || 0);
         const effBuff = Number(availabilityMeta?.effective_travel_buffer_minutes || 0);
@@ -1629,7 +1661,10 @@
 
         let cls = "calendar-day";
         const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const hasAvail = !!(availabilityByDate?.[dateStr]?.slots?.length);
+        
+        // Fix: Use the normalized structure (availabilityByDate[dateStr].slots)
+        const dayData = availabilityByDate?.[dateStr];
+        const hasAvail = dayData && Array.isArray(dayData.slots) && dayData.slots.length > 0;
 
         if (!selectedServiceKey || !selectedStandardDuration) {
           cls += " calendar-day-disabled";
@@ -1687,8 +1722,9 @@
         display.textContent = dt.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
       }
 
-      const dayObj = availabilityByDate?.[dateStr] || {};
-      const slots = dayObj?.slots || [];
+      // Fix: Read from .slots property
+      const dayData = availabilityByDate?.[dateStr];
+      const slots = (dayData && Array.isArray(dayData.slots)) ? dayData.slots : [];
 
       const grid = document.getElementById("time-slots-grid");
       const noSlots = document.getElementById("no-slots");
