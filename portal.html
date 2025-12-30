@@ -296,9 +296,9 @@
       display: flex;
       flex-direction: column;
       
-      /* Default to center */
+      /* KEY FIX: Align flex-start to prevent squishing when content is tall */
+      justify-content: flex-start;
       align-items: center;
-      justify-content: center;
       
       /* ALLOW SCROLLING on the overlay container */
       overflow-y: auto; 
@@ -306,14 +306,6 @@
       
       padding: 1rem;
       transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    /* If screen is short, align top so we can scroll up */
-    @media (max-height: 700px) {
-        #login-overlay {
-            justify-content: flex-start;
-            padding-top: 2rem;
-        }
     }
 
     #login-overlay.hidden {
@@ -330,12 +322,15 @@
       width: 100%;
       max-width: 400px;
       
-      /* FIX: Let card grow naturally. No internal scrollbar. */
+      /* KEY FIX: Natural height */
       max-height: none;
       overflow: visible;
       
-      /* Center in the scrollable flex container */
+      /* KEY FIX: margin: auto centers it within the flex container safely */
       margin: auto; 
+      
+      /* KEY FIX: Do not shrink */
+      flex-shrink: 0;
       
       /* Mobile Padding: Reduced vertical padding */
       padding: 1rem 0; 
@@ -369,6 +364,8 @@
     @media (min-width: 640px) {
         #login-overlay {
             padding: 0;
+            /* On larger screens, standard centering is fine as height is sufficient */
+            justify-content: center; 
         }
         .login-card {
             padding: 2.5rem 2rem;
@@ -506,20 +503,6 @@
     /* Link Colors */
     #auth0-lock-container .auth0-lock a {
       color: #E0C584 !important;
-    }
-
-    /* ----------------------------------------------------
-       MOBILE SCALING FIX
-       If screen is very narrow (< 380px), slightly shrink 
-       the entire auth widget to ensure it fits.
-       ---------------------------------------------------- */
-    @media (max-width: 380px) {
-        #auth0-lock-container {
-            transform: scale(0.9);
-            transform-origin: top center;
-            width: 111% !important; /* Compensate for scale down */
-            margin-left: -5.5%; /* Center after scaling */
-        }
     }
 
     /* =========================================
@@ -1249,6 +1232,17 @@
 
       // Show the Lock widget
       lock.show();
+
+      // NEW: Force layout reflow after lock renders to fix mobile "squish"
+      setTimeout(() => {
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) {
+          const originalDisplay = overlay.style.display;
+          overlay.style.display = 'none';
+          void overlay.offsetHeight; // trigger reflow
+          overlay.style.display = originalDisplay || 'flex';
+        }
+      }, 150);
 
       // Handle successful authentication
       lock.on('authenticated', async function(authResult) {
