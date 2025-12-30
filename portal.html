@@ -944,7 +944,42 @@
       return `${y}-${m}-${d}`;
     }
 
-    function computeMonthRange(date) {
+    
+    // MOBILE FIX: Normalize date to YYYY-MM-DD format
+    function normalizeDateKey(dateInput) {
+      if (!dateInput) return null;
+      var str = String(dateInput).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      var isoMatch = str.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (isoMatch) return isoMatch[1];
+      try {
+        if (str.indexOf('T') >= 0 || str.indexOf('Z') >= 0) {
+          var parts = str.split('T')[0];
+          if (/^\d{4}-\d{2}-\d{2}$/.test(parts)) return parts;
+        }
+        var d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    // MOBILE FIX: Robust slot availability check
+    function isSlotAvailable(slot) {
+      if (!slot) return false;
+      if (typeof slot.available === 'boolean') return slot.available;
+      if (typeof slot.available === 'string') return ['true','1','yes'].indexOf(slot.available.toLowerCase().trim()) >= 0;
+      if (typeof slot.available === 'number') return slot.available === 1;
+      if (typeof slot.isAvailable === 'boolean') return slot.isAvailable;
+      if (typeof slot.is_available === 'boolean') return slot.is_available;
+      if (typeof slot.booked === 'boolean') return !slot.booked;
+      if (slot.label && slot.label.toLowerCase().indexOf('(booked)') >= 0) return false;
+      if (slot.start) return true;
+      return false;
+    }
+
+function computeMonthRange(date) {
       const first = new Date(date.getFullYear(), date.getMonth(), 1);
       const last  = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       return { from: toDateStr(first), to: toDateStr(last) };
@@ -1485,87 +1520,47 @@
       ].join("|");
     }
 
-    function parseAvailabilityResponse(data) {
+        function parseAvailabilityResponse(data) {
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
 
       if (!data) return;
 
-      availabilityMeta.maxDriveTimeMinutes = Number(data.maxDriveTimeMinutes || 0);
-      availabilityMeta.effective_travel_buffer_minutes = Number(data.effective_travel_buffer_minutes || 0);
+      // MOBILE FIX: Check multiple possible field names for metadata
+      availabilityMeta.maxDriveTimeMinutes = Number(
+        data.maxDriveTimeMinutes || data.max_drive_time_minutes ||
+        data.driveTimeMinutes || data.drive_time_minutes || 0
+      );
+      availabilityMeta.effective_travel_buffer_minutes = Number(
+        data.effective_travel_buffer_minutes || data.effectiveTravelBufferMinutes ||
+        data.travel_buffer_minutes || data.travelBufferMinutes || 0
+      );
 
-      if (data.dates && Array.isArray(data.dates)) {
-        data.dates.forEach(day => {
-          if (!day || !day.date || !Array.isArray(day.slots)) return;
-          availabilityByDate[day.date] = day.slots;
-        });
-        return;
-      }
+      // Find dates array in response
+      var datesArray = null;
+      if (data.dates && Array.isArray(data.dates)) datesArray = data.dates;
+      else if (Array.isArray(data)) datesArray = data;
+      else if (data.availability && Array.isArray(data.availability)) datesArray = data.availability;
+      else if (data.days && Array.isArray(data.days)) datesArray = data.days;
 
-      if (Array.isArray(data)) {
-        data.forEach(day => {
-          if (!day || !day.date || !Array.isArray(day.slots)) return;
-          availabilityByDate[day.date] = day.slots;
-        });
-      }
+      if (!datesArray) return;
+
+      datesArray.forEach(function(day) {
+        if (!day) return;
+        var rawDate = day.date || day.day || day.dateStr || day.date_str;
+        if (!rawDate) return;
+
+        // MOBILE FIX: Normalize date key
+        var normalizedDate = normalizeDateKey(rawDate);
+        if (!normalizedDate) return;
+
+        var slots = day.slots || day.timeSlots || day.times || [];
+        if (!Array.isArray(slots)) return;
+
+        availabilityByDate[normalizedDate] = slots;
+      });
     }
 
-    async function maybeLoadAvailabilityForCurrentMonth() {
-      const payload = buildAvailabilityPayload();
-      if (payload.error) {
-        updateAvailabilityStatus(payload.error, false);
-        availabilityByDate = {};
-        renderCalendar();
-        clearSelectionUI();
-        return;
-      }
-
-      const cacheKey = getRequestCacheKey(payload);
-      clearSelectionUI();
-      setCalendarLoading(true);
-      updateAvailabilityStatus("Checking live availability for this month…", false);
-
-      try {
-        if (availabilityCache.has(cacheKey)) {
-          const cached = availabilityCache.get(cacheKey);
-          parseAvailabilityResponse(cached);
-          renderCalendar();
-          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
-          return;
-        }
-
-        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(`Availability error (${res.status}): ${text || res.statusText}`);
-        }
-
-        const data = await res.json();
-        availabilityCache.set(cacheKey, data);
-        parseAvailabilityResponse(data);
-
-        renderCalendar();
-        updateAvailabilityStatus("Live availability loaded for this month.", true);
-
-      } catch (e) {
-        console.error(e);
-        availabilityByDate = {};
-        renderCalendar();
-        updateAvailabilityStatus("Could not load availability. Please try again or contact support.", false);
-        showToast("Availability error", "Unable to load availability.", true);
-      } finally {
-        setCalendarLoading(false);
-      }
-    }
-
-    // =========================================================
-    // CALENDAR RENDERING
-    // =========================================================
     function renderCalendar() {
       const monthLabelEl = document.getElementById("calendar-month-label");
       const daysContainer = document.getElementById("calendar-days");
@@ -1596,7 +1591,7 @@
         const dateStr = toDateStr(dayDate);
 
         const slots = availabilityByDate[dateStr] || [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(s => !!s.available);
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
 
         const isPast = dateStr < todayStr;
         const isSelected = selectedDateStr === dateStr;
@@ -1667,7 +1662,7 @@
         // formatTimeLabel returns lower case.
         const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
 
-        if (slot.available) {
+        if (isSlotAvailable(slot)) {
           btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
           anyAvailable = true;
