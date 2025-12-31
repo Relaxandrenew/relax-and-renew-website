@@ -1271,30 +1271,39 @@ function computeMonthRange(date) {
         document.getElementById("summary-datetime").textContent = "Select a date and time";
       }
 
-      // Get drive time from selected slot, or fall back to max drive time from availability
-      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
-      const travelFee = calcTravelFee(driveTime);
-      
-      document.getElementById("summary-travel-fee").textContent = `$${Number(travelFee || 0).toFixed(2)}`;
-      
-      // Show drive time info with fee tier context
-      if (driveTime > 0) {
-        let feeNote;
-        if (driveTime >= 120) {
-          feeNote = " — $200 travel fee (2+ hours)";
-        } else if (driveTime >= 60) {
-          feeNote = " — $100 travel fee (60+ min)";
-        } else if (driveTime >= 45) {
-          feeNote = " — $40 travel fee (45+ min)";
-        } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
-          feeNote = " — $20 travel fee (36+ min)";
-        } else {
-          feeNote = " — no travel fee";
-        }
-        document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
-      } else {
-        document.getElementById("summary-drive-time").textContent = "—";
-      }
+     // Only show drive time and travel fee AFTER a slot is selected
+let driveTime = 0;
+let travelFee = 0;
+
+if (selectedSlot) {
+  driveTime = selectedSlot.driveTimeMinutes || 0;
+  travelFee = calcTravelFee(driveTime);
+}
+
+document.getElementById("summary-travel-fee").textContent = selectedSlot 
+  ? `$${Number(travelFee || 0).toFixed(2)}`
+  : "—";
+
+// Show drive time info only when slot is selected
+if (selectedSlot && driveTime > 0) {
+  let feeNote;
+  if (driveTime >= 120) {
+    feeNote = " — $200 travel fee (2+ hours)";
+  } else if (driveTime >= 60) {
+    feeNote = " — $100 travel fee (60+ min)";
+  } else if (driveTime >= 45) {
+    feeNote = " — $40 travel fee (45+ min)";
+  } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
+    feeNote = " — $20 travel fee (36+ min)";
+  } else {
+    feeNote = " — no travel fee";
+  }
+  document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
+} else if (selectedSlot && driveTime === 0) {
+  document.getElementById("summary-drive-time").textContent = "No travel fee";
+} else {
+  document.getElementById("summary-drive-time").textContent = "Select a time to see travel fee";
+}
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
     }
@@ -1996,7 +2005,7 @@ function computeMonthRange(date) {
       }
 
       const treat = TREATMENT_RULES[selectedServiceKey];
-      const driveTime = selectedSlot?.driveTimeMinutes || availabilityMeta.maxDriveTimeMinutes || 0;
+      const driveTime = selectedSlot?.driveTimeMinutes || 0;
       const travelFee = calcTravelFee(driveTime);
 
       const bookingPayload = {
