@@ -1337,7 +1337,6 @@ function fillAddressFromPlace(place) {
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
       const membershipBtn = document.getElementById("booking-modal-membership-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
 
       // Reset to initial state
       spinner.classList.remove("hidden");
@@ -1384,7 +1383,6 @@ function fillAddressFromPlace(place) {
       const overlay = document.getElementById("booking-modal-overlay");
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
       const membershipBtn = document.getElementById("booking-modal-membership-btn");
 
       // Hide spinner, show appropriate icon
@@ -1946,13 +1944,13 @@ function fillAddressFromPlace(place) {
                 const street = document.getElementById('manual-street').value.trim();
                 const city = document.getElementById('manual-city').value.trim();
                 const postalRaw = document.getElementById('manual-postal').value.trim();
-                if (!street || !city || !postalRaw) return null;
+                if (!street || !postalRaw) return null;
                 if (!isCanadianPostal(postalRaw)) {
                     alert('Please enter a valid Canadian postal code (e.g., L2A 1B2). We do not serve the USA.');
                     return null;
                 }
                 const postal = normalizeCanadianPostal(postalRaw);
-                const full = `${street}, ${city} ${postal}`;
+                const full = city ? `${street}, ${city} ${postal}` : `${street} ${postal}`;
                 const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
                 return addrObj;
