@@ -553,6 +553,37 @@
   animation: booking-success-pop 0.4s ease;
 }
 
+
+    /* =========================================
+       MOBILE HARDENING: Auth0 overlay + keyboard
+       - Prevent underlay scroll/bleed
+       - Keep Lock visible above mobile keyboard
+       ========================================= */
+    html.overlay-open, body.overlay-open {
+      height: 100%;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
+    /* Allow overlay itself to scroll on short viewports */
+    #login-overlay {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+    }
+
+    /* On short screens, start from top so Lock isn't trapped */
+    @media (max-height: 700px) {
+      #login-overlay { align-items: flex-start; justify-content: flex-start; }
+      .login-card { margin-top: 8px; }
+    }
+
+    /* Use visualViewport-driven height when available */
+    #login-overlay .login-card {
+      max-height: calc(var(--vvh, 100vh) - 32px);
+    }
+
 </style>
 
   <script>
@@ -1035,6 +1066,9 @@
       const iconWrap = toast.querySelector("i");
       if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
+
+      // Attempt to restore previously selected time slot (after refresh)
+      maybeAutoSelectRestoredSlot(dateStr);
       setTimeout(() => {
           toast.style.opacity = "0";
           toast.style.transform = "translateX(-50%) translateY(0)";
@@ -1149,9 +1183,11 @@
 
       // Reset availability status message
       updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        savePortalState();
 
       // Update summary to reflect reset state
       updateSummary();
+      savePortalState();
     }
 
     function showAuthError(msg) {
@@ -1336,13 +1372,125 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function showLoginOverlay() {
       document.getElementById("login-overlay").classList.remove("hidden");
+      document.documentElement.classList.add("overlay-open");
+      document.body.classList.add("overlay-open");
       document.body.style.overflow = "hidden";
     }
 
     function hideLoginOverlay() {
       document.getElementById("login-overlay").classList.add("hidden");
+      document.documentElement.classList.remove("overlay-open");
+      document.body.classList.remove("overlay-open");
       document.body.style.overflow = "";
     }
+
+    // =========================================================
+    // MOBILE HARDENING: keep Auth0 Lock visible above keyboard
+    // =========================================================
+    (function initVisualViewportFix() {
+      if (!window.visualViewport) return;
+      const apply = () => {
+        // Use visual viewport height (accounts for mobile keyboard)
+        document.documentElement.style.setProperty("--vvh", `${window.visualViewport.height}px`);
+      };
+      apply();
+      window.visualViewport.addEventListener("resize", apply);
+      window.visualViewport.addEventListener("scroll", apply);
+    })();
+
+    // =========================================================
+    // STATE PERSISTENCE (survive refresh / accidental close)
+    // =========================================================
+    const PORTAL_STATE_KEY = "rnr_portal_state_v1";
+
+    function savePortalState() {
+      try {
+        const state = {
+          selectedServiceKey,
+          selectedStandardDuration,
+          selectedDateStr,
+          // Prefer a stable identifier for the selected slot
+          selectedSlotStart: selectedSlot?.start || selectedSlot?.label || null,
+          // Preserve the month user is browsing
+          calendarMonth: `${calendarCurrent.getFullYear()}-${String(calendarCurrent.getMonth()+1).padStart(2,"0")}`
+        };
+        localStorage.setItem(PORTAL_STATE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function loadPortalState() {
+      try {
+        const raw = localStorage.getItem(PORTAL_STATE_KEY);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        return s && typeof s === "object" ? s : null;
+      } catch (e) { return null; }
+    }
+
+    function clearPortalState() {
+      try { localStorage.removeItem(PORTAL_STATE_KEY); } catch (e) {}
+    }
+
+    async function restorePortalStateIfPossible() {
+      const s = loadPortalState();
+      if (!s) return;
+
+      // Restore calendar month first (pure UI)
+      if (s.calendarMonth && /^\d{4}-\d{2}$/.test(String(s.calendarMonth))) {
+        const parts = String(s.calendarMonth).split("-");
+        const y = Number(parts[0]);
+        const m = Number(parts[1]) - 1;
+        if (!isNaN(y) && !isNaN(m)) calendarCurrent = new Date(y, m, 1);
+      }
+
+      // Restore treatment + duration selections
+      if (s.selectedServiceKey && TREATMENT_RULES[s.selectedServiceKey]) {
+        selectedServiceKey = s.selectedServiceKey;
+        if (treatmentSelect) treatmentSelect.value = selectedServiceKey;
+        rebuildDurationOptions();
+      }
+
+      if (s.selectedStandardDuration && !isNaN(Number(s.selectedStandardDuration))) {
+        selectedStandardDuration = Number(s.selectedStandardDuration);
+        if (durationSelect) durationSelect.value = String(selectedStandardDuration);
+      }
+
+      // If we have enough to fetch availability, load it
+      if (portalProfile && selectedServiceKey && selectedStandardDuration) {
+        await maybeLoadAvailabilityForCurrentMonth();
+      }
+
+      // After availability exists, restore date selection if that date has any data
+      if (s.selectedDateStr && availabilityByDate && availabilityByDate[s.selectedDateStr]) {
+        selectDate(s.selectedDateStr);
+        // Slot restoration happens inside loadTimeSlots via maybeAutoSelectRestoredSlot()
+      }
+    }
+
+    function maybeAutoSelectRestoredSlot(dateStr) {
+      const s = loadPortalState();
+      if (!s || !s.selectedSlotStart || !dateStr) return;
+      const target = String(s.selectedSlotStart);
+
+      // Find the button corresponding to the stored slot id
+      const grid = document.getElementById("time-slots-grid");
+      if (!grid) return;
+
+      const btns = Array.from(grid.querySelectorAll("button.time-slot-btn"));
+      for (const btn of btns) {
+        const slotId = btn.getAttribute("data-slot-id");
+        if (slotId && slotId === target) {
+          // Rebuild a slot object from dataset when possible
+          const raw = btn.getAttribute("data-slot-raw");
+          try {
+            const slot = raw ? JSON.parse(raw) : null;
+            if (slot) selectTimeSlot(slot, btn);
+          } catch (e) {}
+          break;
+        }
+      }
+    }
+
 
     // =========================================================
     // PROFILE
@@ -1648,6 +1796,7 @@ if (selectedSlot && driveTime > 0) {
     // LOGOUT
     // =========================================================
     async function handleLogout() {
+      clearPortalState();
       // Clear tokens
       try {
         localStorage.removeItem("rnr_portal_profile");
@@ -1820,6 +1969,10 @@ if (selectedSlot && driveTime > 0) {
           parseAvailabilityResponse(cached);
           renderCalendar();
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
+          savePortalState();
+          // Restore date selection (if any) after availability is loaded
+          const s = loadPortalState();
+          if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr);
           return;
         }
 
@@ -1915,6 +2068,7 @@ if (selectedSlot && driveTime > 0) {
       selectedSlot = null;
       renderCalendar();
       updateSummary();
+      savePortalState();
 
       document.getElementById("selected-date-info").classList.remove("hidden");
       document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
@@ -1945,6 +2099,11 @@ if (selectedSlot && driveTime > 0) {
 
       usable.forEach(slot => {
         const btn = document.createElement("button");
+        // Persistable slot identifiers for refresh recovery
+        try {
+          btn.setAttribute("data-slot-id", String(slot.start || slot.label || ""));
+          btn.setAttribute("data-slot-raw", JSON.stringify(slot));
+        } catch (e) {}
         btn.type = "button";
         // Base class: we add 'time-slot-btn' and specific styles for available/booked below
         btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
@@ -2143,6 +2302,7 @@ if (selectedSlot && driveTime > 0) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
         } else {
           updateAvailabilityStatus("Now choose a duration to load live availability.", false);
+        savePortalState();
         }
       });
 
@@ -2159,6 +2319,7 @@ if (selectedSlot && driveTime > 0) {
           maybeLoadAvailabilityForCurrentMonth();
         }
         updateSummary();
+        savePortalState();
       });
 
       // Confirm booking
@@ -2173,6 +2334,9 @@ if (selectedSlot && driveTime > 0) {
 
       // Check for existing authentication - this will either show login or load the portal
       await checkExistingAuth();
+
+      // After auth/profile init, restore prior in-progress booking selections (if any)
+      try { await restorePortalStateIfPossible(); } catch (e) {}
     }
 
     // Run on DOM ready
