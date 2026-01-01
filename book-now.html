@@ -250,7 +250,117 @@
             .therapist-badge { padding: 0.5rem 0.75rem; }
             .therapist-avatar { width: 40px; height: 40px; }
         }
-    </style>
+    
+
+        /* Booking Confirmation Modal (from Portal) */
+#booking-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 300;
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#booking-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.booking-modal-card {
+  background: linear-gradient(145deg, rgba(20,20,20,0.98), rgba(10,10,10,0.99));
+  border: 1px solid rgba(224, 197, 132, 0.3);
+  padding: 3rem 2.5rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+}
+.booking-modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E0C584, transparent);
+}
+.booking-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(224, 197, 132, 0.2);
+  border-top-color: #E0C584;
+  border-radius: 50%;
+  animation: booking-spin 1s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+@keyframes booking-spin {
+  to { transform: rotate(360deg); }
+}
+.booking-status-text {
+  color: #E0C584;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  min-height: 2rem;
+  transition: opacity 0.2s ease;
+}
+.booking-substatus {
+  color: rgba(240, 226, 192, 0.6);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.booking-success-icon {
+  width: 70px;
+  height: 70px;
+  border: 3px solid #4ade80;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: booking-success-pop 0.4s ease;
+}
+@keyframes booking-success-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.booking-error-icon {
+  width: 70px;
+  height: 70px;
+  border: 3px solid #f87171;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: booking-success-pop 0.4s ease;
+}
+
+        /* End Booking Confirmation Modal */
+
+        /* Calendar: fully booked day number styling */
+        .calendar-day-fully-booked {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+            color: rgba(240, 226, 192, 0.35) !important;
+        }
+        .calendar-day-fully-booked:hover {
+            transform: none !important;
+            background: rgba(0,0,0,0.35) !important;
+            border-color: rgba(224,197,132,0.2) !important;
+        }
+</style>
 
     <!-- Address autocomplete bootstrap -->
     <script>
@@ -1072,7 +1182,31 @@ function fillAddressFromPlace(place) {
         </div>
     </div>
 
-    <!-- SCRIPT: AVAILABILITY -->
+    
+    <!-- Booking Confirmation Modal (Portal style) -->
+    <div id="booking-modal-overlay">
+        <div class="booking-modal-card">
+            <div id="booking-modal-spinner" class="booking-spinner"></div>
+
+            <div id="booking-modal-success" class="booking-success-icon hidden" aria-hidden="true">
+                <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+
+            <div id="booking-modal-error" class="booking-error-icon hidden" aria-hidden="true">
+                <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+
+            <div id="booking-modal-status" class="booking-status-text">Preparing your booking...</div>
+            <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
+        </div>
+    </div>
+
+<!-- SCRIPT: AVAILABILITY -->
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // ============================================================================
         // WORKFLOW INTEGRATION DEBUGGING GUIDE
@@ -1147,6 +1281,86 @@ function fillAddressFromPlace(place) {
         
         let selectedParticipantCount = null;
 // ---------------- HELPERS ----------------
+
+
+        // ---------------- BOOKING CONFIRMATION MODAL (Portal style) ----------------
+    const bookingMessages = [
+      { text: "Preparing your booking...", sub: "Please wait" },
+      { text: "Checking availability...", sub: "Making sure your slot is still open" },
+      { text: "Reserving your time...", sub: "Almost there" },
+      { text: "Confirming with therapist...", sub: "Just a moment" },
+      { text: "Finalizing booking...", sub: "Nearly done" }
+    ];
+
+    let bookingMessageInterval = null;
+
+    function showBookingModal() {
+      const overlay = document.getElementById("booking-modal-overlay");
+      const spinner = document.getElementById("booking-modal-spinner");
+      const successIcon = document.getElementById("booking-modal-success");
+      const errorIcon = document.getElementById("booking-modal-error");
+      const statusText = document.getElementById("booking-modal-status");
+      const substatusText = document.getElementById("booking-modal-substatus");
+
+      // Reset to initial state
+      spinner.classList.remove("hidden");
+      successIcon.classList.add("hidden");
+      errorIcon.classList.add("hidden");
+      statusText.textContent = bookingMessages[0].text;
+      substatusText.textContent = bookingMessages[0].sub;
+
+      // Show modal
+      overlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+
+      // Cycle through messages every 2 seconds
+      let messageIndex = 0;
+      bookingMessageInterval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % bookingMessages.length;
+        statusText.style.opacity = "0";
+        setTimeout(() => {
+          statusText.textContent = bookingMessages[messageIndex].text;
+          substatusText.textContent = bookingMessages[messageIndex].sub;
+          statusText.style.opacity = "1";
+        }, 200);
+      }, 2000);
+    }
+
+    function hideBookingModal(success = true, errorMessage = null) {
+      // Stop message cycling
+      if (bookingMessageInterval) {
+        clearInterval(bookingMessageInterval);
+        bookingMessageInterval = null;
+      }
+
+      const spinner = document.getElementById("booking-modal-spinner");
+      const successIcon = document.getElementById("booking-modal-success");
+      const errorIcon = document.getElementById("booking-modal-error");
+      const statusText = document.getElementById("booking-modal-status");
+      const substatusText = document.getElementById("booking-modal-substatus");
+      const overlay = document.getElementById("booking-modal-overlay");
+
+      // Hide spinner, show appropriate icon
+      spinner.classList.add("hidden");
+
+      if (success) {
+        successIcon.classList.remove("hidden");
+        statusText.textContent = "Booking Confirmed!";
+        substatusText.textContent = "Your appointment has been scheduled";
+      } else {
+        errorIcon.classList.remove("hidden");
+        statusText.textContent = "Booking Failed";
+        substatusText.textContent = errorMessage || "Please try again or contact support";
+      }
+
+      // Hide modal after showing result
+      setTimeout(() => {
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+      }, success ? 2000 : 3000);
+    }
+        // ---------------- END BOOKING CONFIRMATION MODAL ----------------
+
         function toDateStr(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1364,6 +1578,10 @@ function fillAddressFromPlace(place) {
                 if (hasAnyAvailableSlot(dateStr)) {
                     dayEl.classList.add('calendar-day-available');
                     dayEl.classList.remove('border-brand-gold/20');
+                } else {
+                    // Truly fully booked / unavailable: grey out day number and prevent clicks
+                    dayEl.classList.add('calendar-day-fully-booked', 'border-brand-gold/10', 'bg-black/30');
+                    dayEl.setAttribute('aria-disabled', 'true');
                 }
                 
                 if (selectedDateStr === dateStr) {
@@ -1371,7 +1589,7 @@ function fillAddressFromPlace(place) {
                 }
 
                 dayEl.addEventListener('click', () => {
-                    if (!hasSlots(dateStr)) return;
+                    if (!hasAnyAvailableSlot(dateStr)) return;
                     selectedDateStr = dateStr;
                     selectedSlot = null;
                     renderCalendar();
@@ -2281,6 +2499,10 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
             // Handle client details form submission
             document.getElementById('client-details-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
+
+                // Portal-style booking overlay (visual only)
+                try { showBookingModal(); } catch (_) {}
+
                 
                 const submitBtn = document.getElementById('submit-booking-btn');
                 const originalBtnText = submitBtn.innerHTML;
@@ -2361,6 +2583,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                         console.log('💳 Payment method created:', paymentMethodId);
                         
                     } catch (error) {
+                    try { hideBookingModal(false, (error && error.message) ? error.message : 'Please try again.'); } catch (_) {}
                         console.error('Payment error:', error);
                         errorEl.classList.remove('hidden');
                         errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Payment error: ${error.message}`;
@@ -2434,6 +2657,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     const result = await response.json();
 
 if (result.error === 'slot_taken') {
+    try { hideBookingModal(false, 'That time was just booked by someone else. Please pick another time.'); } catch (_) {}
     errorEl.classList.remove('hidden');
     errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Sorry, this time slot was just booked by someone else. Please refresh and select another time.';
     submitBtn.disabled = false;
@@ -2443,6 +2667,7 @@ if (result.error === 'slot_taken') {
 }
 
 if (result.success) {
+    try { hideBookingModal(true); } catch (_) {}
     // Show branded confirmation modal
     showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
                         

@@ -559,31 +559,11 @@
        - Prevent underlay scroll/bleed
        - Keep Lock visible above mobile keyboard
        ========================================= */
-    html.overlay-open, body.overlay-open {
-      height: 100%;
-      overflow: hidden !important;
-      overscroll-behavior: none;
-      touch-action: none;
-    }
-
-    /* Allow overlay itself to scroll on short viewports */
-    #login-overlay {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
-    }
-
-    /* On short screens, start from top so Lock isn't trapped */
+/* On short screens, start from top so Lock isn't trapped */
     @media (max-height: 700px) {
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
-
-    /* Use visualViewport-driven height when available */
-    #login-overlay .login-card {
-      max-height: calc(var(--vvh, 100vh) - 32px);
-    }
-
 </style>
 
   <script>
@@ -1372,32 +1352,13 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function showLoginOverlay() {
       document.getElementById("login-overlay").classList.remove("hidden");
-      document.documentElement.classList.add("overlay-open");
-      document.body.classList.add("overlay-open");
       document.body.style.overflow = "hidden";
     }
 
     function hideLoginOverlay() {
       document.getElementById("login-overlay").classList.add("hidden");
-      document.documentElement.classList.remove("overlay-open");
-      document.body.classList.remove("overlay-open");
       document.body.style.overflow = "";
     }
-
-    // =========================================================
-    // MOBILE HARDENING: keep Auth0 Lock visible above keyboard
-    // =========================================================
-    (function initVisualViewportFix() {
-      if (!window.visualViewport) return;
-      const apply = () => {
-        // Use visual viewport height (accounts for mobile keyboard)
-        document.documentElement.style.setProperty("--vvh", `${window.visualViewport.height}px`);
-      };
-      apply();
-      window.visualViewport.addEventListener("resize", apply);
-      window.visualViewport.addEventListener("scroll", apply);
-    })();
-
     // =========================================================
     // STATE PERSISTENCE (survive refresh / accidental close)
     // =========================================================
