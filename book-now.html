@@ -1338,6 +1338,12 @@ function fillAddressFromPlace(place) {
       const homeBtn = document.getElementById("booking-modal-home-btn");
       const membershipBtn = document.getElementById("booking-modal-membership-btn");
 
+      // Ensure no stale message cycling is running
+      if (bookingMessageInterval) {
+        clearInterval(bookingMessageInterval);
+        bookingMessageInterval = null;
+      }
+
       // Reset to initial state
       spinner.classList.remove("hidden");
       successIcon.classList.add("hidden");
@@ -1390,8 +1396,8 @@ function fillAddressFromPlace(place) {
 
       if (success) {
         successIcon.classList.remove("hidden");
-        statusText.textContent = "Booking Confirmed!";
-        substatusText.textContent = "Your appointment has been scheduled";
+        statusText.textContent = "Success";
+        substatusText.textContent = "Your booking has been completed.";
       } else {
         errorIcon.classList.remove("hidden");
         statusText.textContent = "Booking Failed";
@@ -1731,24 +1737,24 @@ function fillAddressFromPlace(place) {
                 const groupBtn = document.createElement('button');
                 groupBtn.type = 'button';
 
-                // If the group has slots, always allow expanding (even if all booked)
-                groupBtn.disabled = !hasAny;
+                // Disable expanding when there are NO available slots in that period
+                groupBtn.disabled = !hasAvail;
 
                 if (!hasAny) {
-                    groupBtn.className = 'px-4 py-3 rounded-lg border-2 border-brand-gold/10 bg-black/30 text-brand-dim/30 font-bold text-base opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
+                    groupBtn.className = 'px-4 py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/60 font-bold text-sm md:text-lg opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
                     groupBtn.innerHTML = `
                         <span>${group.label}</span>
                         <span class="text-xs font-normal opacity-70">(None)</span>
                     `;
                 } else if (!hasAvail) {
-                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-4 rounded-lg border-2 border-brand-gold/25 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg transition-all';
+                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg opacity-60 cursor-not-allowed flex flex-col items-center gap-1 transition-all';
                     groupBtn.innerHTML = `
                         <span>${group.label}</span>
                         <span class="text-xs font-normal opacity-80">(Fully Booked)</span>
                     `;
-                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                    // Intentionally NO click handler when fully booked
                 } else {
-                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-4 rounded-lg border-2 border-brand-gold/40 bg-black/50 hover:bg-brand-gold/10 text-brand-light font-bold text-sm md:text-lg transition-all';
+                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/30 bg-black/60 hover:bg-brand-gold/10 text-brand-light font-bold text-sm md:text-lg transition-all';
                     groupBtn.textContent = group.label;
                     groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
                 }
@@ -1757,7 +1763,7 @@ function fillAddressFromPlace(place) {
                 groupRow.appendChild(groupBtn);
             });
 
-            container.appendChild(groupRow);
+container.appendChild(groupRow);
 
             // Create expand indicator row - HIDDEN ON MOBILE
             const expandRow = document.createElement('div');
