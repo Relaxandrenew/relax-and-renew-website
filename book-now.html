@@ -318,6 +318,34 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.booking-actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.booking-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(224, 197, 132, 0.55);
+  color: #E0C584;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.booking-home-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.12);
+  background: rgba(224, 197, 132, 0.08);
+}
 .booking-success-icon {
   width: 70px;
   height: 70px;
@@ -1203,6 +1231,11 @@ function fillAddressFromPlace(place) {
 
             <div id="booking-modal-status" class="booking-status-text">Preparing your booking...</div>
             <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
+
+            <div id="booking-modal-actions" class="booking-actions hidden">
+                <button id="booking-modal-home-btn" type="button" class="booking-home-btn">Return to Home</button>
+                <button id="booking-modal-membership-btn" type="button" class="booking-home-btn">See Memberships</button>
+            </div>
         </div>
     </div>
 
@@ -1301,6 +1334,10 @@ function fillAddressFromPlace(place) {
       const errorIcon = document.getElementById("booking-modal-error");
       const statusText = document.getElementById("booking-modal-status");
       const substatusText = document.getElementById("booking-modal-substatus");
+      const actions = document.getElementById("booking-modal-actions");
+      const homeBtn = document.getElementById("booking-modal-home-btn");
+      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const membershipBtn = document.getElementById("booking-modal-membership-btn");
 
       // Reset to initial state
       spinner.classList.remove("hidden");
@@ -1308,6 +1345,12 @@ function fillAddressFromPlace(place) {
       errorIcon.classList.add("hidden");
       statusText.textContent = bookingMessages[0].text;
       substatusText.textContent = bookingMessages[0].sub;
+
+      // Reset actions
+      if (actions) actions.classList.add("hidden");
+      if (homeBtn) homeBtn.onclick = null;
+      if (membershipBtn) membershipBtn.onclick = null;
+      window.__bookingCompleted = false;
 
       // Show modal
       overlay.classList.add("active");
@@ -1339,6 +1382,10 @@ function fillAddressFromPlace(place) {
       const statusText = document.getElementById("booking-modal-status");
       const substatusText = document.getElementById("booking-modal-substatus");
       const overlay = document.getElementById("booking-modal-overlay");
+      const actions = document.getElementById("booking-modal-actions");
+      const homeBtn = document.getElementById("booking-modal-home-btn");
+      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const membershipBtn = document.getElementById("booking-modal-membership-btn");
 
       // Hide spinner, show appropriate icon
       spinner.classList.add("hidden");
@@ -1353,11 +1400,31 @@ function fillAddressFromPlace(place) {
         substatusText.textContent = errorMessage || "Please try again or contact support";
       }
 
-      // Hide modal after showing result
+      // On success, keep the overlay open to prevent accidental double-submits.
+      // Provide a simple "Return to Home" action. If the overlay is somehow dismissed,
+      // we intentionally DO NOT refresh availability automatically (only a full page refresh will).
+      if (success) {
+        window.__bookingCompleted = true;
+        if (actions) actions.classList.remove("hidden");
+        if (homeBtn) {
+          homeBtn.onclick = () => {
+            try { window.location.assign("https://www.relaxandrenew.ca"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca"; }
+          };
+        }
+        if (membershipBtn) {
+          membershipBtn.onclick = () => {
+            try { window.location.assign("https://www.relaxandrenew.ca/membership"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca/membership"; }
+          };
+        }
+        // Keep overlay open (no auto-close)
+        return;
+      }
+
+      // On error, auto-close after a short delay
       setTimeout(() => {
         overlay.classList.remove("active");
         document.body.style.overflow = "";
-      }, success ? 2000 : 3000);
+      }, 3000);
     }
         // ---------------- END BOOKING CONFIRMATION MODAL ----------------
 
@@ -2488,12 +2555,10 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 try { updateStickyBar(); } catch (_) {}
                 try { renderCalendar(); } catch (_) {}
 
-                // 3) Re-pull live availability for the month from Cliniko
-                try {
-                    await loadAvailabilityForCurrentMonth();
-                } catch (e) {
-                    console.warn('Availability refresh failed:', e);
-                }
+                // 3) IMPORTANT: Do NOT auto-refresh availability here.
+                // This prevents accidental double-booking attempts due to UI reloading.
+                // Users must manually refresh the page to fetch live availability.
+
             };
 
             // Handle client details form submission
@@ -2668,9 +2733,7 @@ if (result.error === 'slot_taken') {
 
 if (result.success) {
     try { hideBookingModal(true); } catch (_) {}
-    // Show branded confirmation modal
-    showConfirmationModal(firstName, lastName, phone, email, selectedDateStr, selectedSlot, travelCharge);
-                        
+    // Booking modal already shows confirmation (kept on-screen to prevent double bookings)
                         closeClientDetailsModal();
                         
                         // Reset form
@@ -2686,6 +2749,14 @@ if (result.success) {
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>There was an error submitting your booking. Please try again or contact us directly.`;
                 } finally {
+                    // If booking is confirmed, keep controls locked to prevent double bookings.
+                    if (window.__bookingCompleted) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i><span>Booked</span>';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        return;
+                    }
+
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                     if (typeof lucide !== 'undefined') lucide.createIcons();
