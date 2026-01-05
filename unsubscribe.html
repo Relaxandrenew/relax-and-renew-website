@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unsubscribe | Relax & Renew RMT</title>
+  <meta name="description" content="Unsubscribe confirmation for Relax & Renew RMT updates." />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#E0C584',
+              goldHover: '#F0D594',
+              light: '#F0E2C0',
+              dim: 'rgba(240, 226, 192, 0.65)',
+              black: '#050505',
+              panel: 'rgba(20, 20, 20, 0.72)',
+            }
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+          },
+          backgroundImage: {
+            'hero-pattern':
+              "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.94)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+          }
+        }
+      }
+    };
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    body {
+      background-color: #050505;
+      color: #F0E2C0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.125rem;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    .fixed-nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 80px;
+      z-index: 50;
+      background: rgba(5, 5, 5, 0.95);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid rgba(224, 197, 132, 0.2);
+      display: flex;
+      align-items: center;
+    }
+    .btn-filled {
+      background: #E0C584;
+      color: #000;
+      border: 1px solid #E0C584;
+      padding: 0.75rem 2.2rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      transition: 0.25s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+    .btn-filled:hover {
+      background: #F0D594;
+      border-color: #F0D594;
+      transform: translateY(-1px);
+      box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3);
+    }
+    .btn-filled:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(224, 197, 132, 0.25);
+      color: #F0E2C0;
+      padding: 0.75rem 2.2rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      transition: 0.25s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(224, 197, 132, 0.55);
+      box-shadow: 0 5px 15px rgba(224, 197, 132, 0.18);
+      transform: translateY(-1px);
+    }
+    .field {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(224, 197, 132, 0.25);
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+      color: #F0E2C0;
+      outline: none;
+      transition: 0.2s;
+    }
+    .field:focus {
+      border-color: rgba(224, 197, 132, 0.6);
+      box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.12);
+    }
+    .muted {
+      color: rgba(240, 226, 192, 0.68);
+    }
+  </style>
+</head>
+
+<body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
+
+  <!-- ====== CONFIG ======
+       Replace these URLs if you are hosting elsewhere.
+       - HOME_URL: your main website
+       - BOOK_URL: your portal/booking link
+       - N8N_UNSUB_ENDPOINT: your n8n webhook that validates token & writes to Data Table
+       - EXTRA_WEBHOOK_URL: your Railway webhook (required by you)
+  -->
+  <script>
+    const HOME_URL = "https://relaxandrenew.ca";
+    const BOOK_URL = "https://relaxandrenew.noterro.com"; // or your portal URL
+    const N8N_UNSUB_ENDPOINT = "/webhook/rnr-unsubscribe"; // relative works when hosted on n8n
+    const EXTRA_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/unsub";
+  </script>
+
+  <!-- NAV -->
+  <nav class="fixed-nav">
+    <div class="container mx-auto px-6 flex justify-between items-center h-full">
+      <a id="homeLink" href="#" class="flex items-center gap-3 no-underline group">
+        <img
+          src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+          alt="Relax & Renew Logo"
+          class="h-10 w-auto transition-transform group-hover:scale-105"
+        />
+        <div class="hidden md:flex flex-col">
+          <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+          <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+        </div>
+      </a>
+
+      <a id="bookLink" href="#" class="btn-filled text-sm px-6 py-3">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        Book Online
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="pt-32 pb-10 bg-brand-black relative">
+    <div class="absolute inset-0 bg-hero-pattern bg-cover bg-center opacity-25 pointer-events-none"></div>
+
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="max-w-2xl mx-auto text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 border border-brand-gold/20 mb-6">
+          <i data-lucide="mail-x" class="w-7 h-7 text-brand-gold"></i>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl text-brand-light font-serif mb-4">Sorry to see you go</h1>
+        <div class="w-16 h-px bg-brand-gold mx-auto mb-6"></div>
+        <p class="muted text-base md:text-lg">
+          If you confirm below, we’ll stop sending non-essential email updates to this address.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <section class="pb-24 bg-brand-black">
+    <div class="container mx-auto px-6">
+      <div class="max-w-2xl mx-auto">
+
+        <!-- ERROR / SUCCESS BANNER -->
+        <div id="banner" class="hidden mb-6 rounded-xl border p-4 backdrop-blur-sm"></div>
+
+        <div class="bg-white/5 border border-brand-gold/20 rounded-xl p-8 md:p-10 backdrop-blur-sm">
+          <h2 class="text-2xl text-brand-gold font-serif mb-2">Confirm unsubscribe</h2>
+          <p class="muted mb-6">
+            Help us improve by telling us why you’re unsubscribing (optional).
+          </p>
+
+          <form id="unsubForm" class="space-y-5">
+            <!-- Hidden fields populated from query params -->
+            <input type="hidden" id="email" name="email" />
+            <input type="hidden" id="token" name="token" />
+
+            <div class="space-y-1">
+              <label class="text-brand-light font-semibold">Email address</label>
+              <div class="field" id="emailDisplay" aria-live="polite"></div>
+              <p class="text-xs muted mt-2">This page only works from the unsubscribe link you received by email.</p>
+            </div>
+
+            <div class="space-y-1">
+              <label for="reason" class="text-brand-light font-semibold">Reason (optional)</label>
+              <select id="reason" name="reason" class="field">
+                <option value="" selected>— Select a reason —</option>
+                <option value="not_interested">I’m not interested</option>
+                <option value="too_many_emails">Too many emails</option>
+                <option value="signed_up_by_mistake">I didn’t sign up for this</option>
+                <option value="prefer_text">I prefer text/phone updates</option>
+                <option value="other">Other (add a comment)</option>
+              </select>
+            </div>
+
+            <div id="otherWrap" class="space-y-1 hidden">
+              <label for="comment" class="text-brand-light font-semibold">Comment (optional)</label>
+              <textarea
+                id="comment"
+                name="comment"
+                rows="4"
+                class="field"
+                placeholder="Tell us what we could do better..."
+              ></textarea>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row gap-4 justify-center">
+              <button id="confirmBtn" type="submit" class="btn-filled w-full sm:w-auto">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                Confirm Unsubscribe
+              </button>
+
+              <a id="cancelLink" href="#" class="btn-ghost w-full sm:w-auto">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Nevermind
+              </a>
+            </div>
+
+            <div class="mt-6 text-center text-xs muted">
+              <p>
+                Note: You may still receive essential communications related to booked appointments or receipts when applicable.
+              </p>
+              <p class="mt-1">
+                If you unsubscribed by mistake, contact us at
+                <a href="mailto:info@relaxandrenew.ca" class="text-brand-gold hover:underline">info@relaxandrenew.ca</a>.
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <div class="text-center mt-10 text-xs text-brand-dim/40">
+          <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // ---------- Helpers ----------
+    function qs(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function showBanner(type, title, message) {
+      const el = document.getElementById('banner');
+      el.classList.remove('hidden');
+
+      // type: 'success' | 'error' | 'info'
+      const styles = {
+        success: "border-green-400/30 bg-green-400/10 text-brand-light",
+        error: "border-red-400/30 bg-red-400/10 text-brand-light",
+        info: "border-brand-gold/25 bg-white/5 text-brand-light"
+      };
+
+      el.className = `mb-6 rounded-xl border p-4 backdrop-blur-sm ${styles[type] || styles.info}`;
+      el.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5">
+            <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info'}" class="w-5 h-5 text-brand-gold"></i>
+          </div>
+          <div>
+            <div class="font-semibold">${title}</div>
+            <div class="muted text-sm">${message}</div>
+          </div>
+        </div>
+      `;
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function disableForm(disabled) {
+      document.getElementById('confirmBtn').disabled = disabled;
+      document.getElementById('reason').disabled = disabled;
+      document.getElementById('comment').disabled = disabled;
+    }
+
+    // Best-effort fire-and-forget POST to a webhook, even without CORS.
+    async function fireAndForgetWebhook(url, payload) {
+      try {
+        // Try sendBeacon first (works even when page navigates).
+        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        if (navigator.sendBeacon) {
+          const ok = navigator.sendBeacon(url, blob);
+          if (ok) return true;
+        }
+      } catch (e) {}
+
+      try {
+        // Fallback: fetch with no-cors so it won't be blocked client-side.
+        await fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // ---------- Init ----------
+    (function init() {
+      // nav links
+      document.getElementById('homeLink').href = HOME_URL;
+      document.getElementById('bookLink').href = BOOK_URL;
+      document.getElementById('cancelLink').href = HOME_URL;
+
+      // query params
+      const email = (qs('e') || '').trim().toLowerCase();
+      const token = (qs('t') || '').trim();
+
+      // populate fields
+      document.getElementById('email').value = email;
+      document.getElementById('token').value = token;
+      document.getElementById('emailDisplay').textContent = email || "Missing email";
+
+      // toggle other comment
+      const reasonEl = document.getElementById('reason');
+      reasonEl.addEventListener('change', () => {
+        const other = reasonEl.value === 'other';
+        document.getElementById('otherWrap').classList.toggle('hidden', !other);
+      });
+
+      // basic guard
+      if (!email || !token) {
+        disableForm(true);
+        showBanner(
+          'error',
+          'Unable to process',
+          'This unsubscribe link is missing required information. Please use the link from your email, or contact us for help.'
+        );
+      }
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    })();
+
+    // ---------- Submit ----------
+    document.getElementById('unsubForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const token = document.getElementById('token').value.trim();
+      const reason = document.getElementById('reason').value || '';
+      const comment = (document.getElementById('comment').value || '').trim();
+
+      if (!email || !token) {
+        showBanner('error', 'Unable to process', 'Missing email or token. Please use the link from your email.');
+        return;
+      }
+
+      disableForm(true);
+      showBanner('info', 'Processing…', 'One moment while we confirm your unsubscribe request.');
+
+      // 1) Confirm unsubscribe with your n8n webhook (this should validate the token and upsert your Data Table).
+      // Expect JSON response: { ok: true } OR { ok: false, message: '...' }
+      let n8nOk = false;
+      let n8nMessage = '';
+
+      try {
+        const resp = await fetch(N8N_UNSUB_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            e: email,
+            t: token,
+            reason,
+            comment,
+            confirmed: true
+          })
+        });
+
+        const text = await resp.text();
+        // allow either JSON or plain text responses
+        try {
+          const json = JSON.parse(text);
+          n8nOk = !!json.ok;
+          n8nMessage = json.message || '';
+        } catch {
+          // If your webhook responds with HTML, treat 200 as success.
+          n8nOk = resp.ok;
+          n8nMessage = resp.ok ? '' : text.slice(0, 200);
+        }
+
+      } catch (err) {
+        n8nOk = false;
+        n8nMessage = 'Unable to reach the unsubscribe service. Please try again or contact us.';
+      }
+
+      if (!n8nOk) {
+        disableForm(false);
+        showBanner('error', 'Unable to process', n8nMessage || 'Please try again or contact us for help.');
+        return;
+      }
+
+      // 2) Fire your extra webhook (Railway) once confirmed.
+      // This is best-effort; it will not block showing success to the user.
+      const payload = {
+        email,
+        reason: reason || null,
+        comment: comment || null,
+        source: 'unsubscribe_page',
+        confirmed: true,
+        unsubscribed_at: new Date().toISOString()
+      };
+      await fireAndForgetWebhook(EXTRA_WEBHOOK_URL, payload);
+
+      // 3) Success UI state
+      showBanner(
+        'success',
+        'You’re unsubscribed',
+        'Your email has been removed from future non-essential update emails. If this was a mistake, contact us and we can help.'
+      );
+
+      // Lock the form and swap the primary action to "Return Home"
+      const btn = document.getElementById('confirmBtn');
+      btn.innerHTML = '<i data-lucide="home" class="w-4 h-4"></i> Return Home';
+      btn.disabled = false;
+      btn.type = 'button';
+      btn.onclick = () => window.location.href = HOME_URL;
+
+      // Disable inputs to prevent resubmission
+      document.getElementById('reason').disabled = true;
+      document.getElementById('comment').disabled = true;
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+  </script>
+
+</body>
+</html>

@@ -1197,6 +1197,29 @@ function fillAddressFromPlace(place) {
                     </p>
                 </div>
 
+                <div class="p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+                    <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-2">Marketing Emails</div>
+                    <p class="text-xs text-brand-dim/80 leading-relaxed mb-3">
+                        I want to receive marketing emails (Promotions, events, discounts, etc).
+                    </p>
+
+                    <div class="flex items-center gap-8">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="email_marketing_consent" value="true" required class="w-4 h-4">
+                            <span class="text-sm text-brand-light font-semibold">Yes</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="email_marketing_consent" value="false" required class="w-4 h-4">
+                            <span class="text-sm text-brand-light font-semibold">No</span>
+                        </label>
+                    </div>
+
+                    <p class="text-xs text-brand-dim/60 mt-2 leading-relaxed">
+                        You can unsubscribe at any time.
+                    </p>
+                </div>
+
                 <button type="submit" id="submit-booking-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
                     <i data-lucide="check-circle" class="w-5 h-5"></i>
                     <span>Confirm Booking</span>
@@ -2581,12 +2604,22 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const phone = document.getElementById('client-phone').value.trim();
                 const email = document.getElementById('client-email').value.trim();
                 const notes = document.getElementById('client-notes').value.trim();
+                
+                const marketingConsentEl = document.querySelector('input[name="email_marketing_consent"]:checked');
+                const emailMarketingConsent = marketingConsentEl ? (marketingConsentEl.value === 'true') : null;
                 const errorEl = document.getElementById('client-error');
 
                 // Validation
                 if (!firstName || !lastName || !phone || !email) {
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please fill in all required fields.';
+                    return;
+                }
+
+                if (emailMarketingConsent === null) {
+                    errorEl.classList.remove('hidden');
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please select your marketing email preference (Yes or No).';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
 
@@ -2673,6 +2706,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     phone,
                     email,
                     notes,
+                    email_marketing_consent: emailMarketingConsent,
                     
                     // Appointment details
                     address: window.__selectedAddress?.address,
