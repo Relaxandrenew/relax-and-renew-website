@@ -16,11 +16,11 @@
     t.src=v;s=b.getElementsByTagName(e)[0];
     s.parentNode.insertBefore(t,s)}(window, document,'script',
     'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '701194265870298');
+    fbq('init', '849351311277512');
     fbq('track', 'PageView');
     </script>
     <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=701194265870298&ev=PageView&noscript=1"
+    src="https://www.facebook.com/tr?id=849351311277512&ev=PageView&noscript=1"
     /></noscript>
 
     <!-- Google Tag / Ads -->
@@ -249,6 +249,133 @@
             /* Mobile compacting (no desktop changes) */
             .therapist-badge { padding: 0.5rem 0.75rem; }
             .therapist-avatar { width: 40px; height: 40px; }
+
+            /* Mobile modal improvements - First modal (address/treatment) */
+            #address-modal > div {
+                padding: 1.25rem;
+                max-height: 92vh;
+            }
+            
+            #address-modal h3 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            #address-modal .mb-8,
+            #address-modal .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+            
+            #address-modal .mt-8 {
+                margin-top: 1rem;
+            }
+            
+            #address-modal .mt-6 {
+                margin-top: 0.75rem;
+            }
+            
+            #address-modal .p-3,
+            #address-modal .p-4 {
+                padding: 0.6rem;
+            }
+            
+            #address-modal input,
+            #address-modal select {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            #address-modal .btn-filled,
+            #address-modal a.border-2 {
+                padding-top: 0.6rem;
+                padding-bottom: 0.6rem;
+                font-size: 0.8rem;
+            }
+            
+            #address-modal .payment-badge {
+                padding: 0.5rem;
+            }
+            
+            #address-modal .payment-badge .text-xs {
+                font-size: 0.65rem;
+                line-height: 1.35;
+            }
+            
+            #address-modal .space-y-4 > * + * {
+                margin-top: 0.6rem;
+            }
+
+            /* Mobile modal improvements - Client details modal */
+            #client-details-modal > div {
+                padding: 1rem;
+                max-height: 95vh;
+                margin: 0.25rem;
+                border: 1px solid rgba(224, 197, 132, 0.3);
+                border-radius: 8px;
+            }
+            
+            #client-details-modal h3 {
+                font-size: 1.35rem;
+            }
+            
+            #client-details-modal .mb-8 {
+                margin-bottom: 0.75rem;
+            }
+            
+            #client-details-modal .mb-6 {
+                margin-bottom: 0.5rem;
+            }
+            
+            #client-details-modal .p-4 {
+                padding: 0.6rem;
+            }
+            
+            #client-details-modal .space-y-4 > * + * {
+                margin-top: 0.5rem;
+            }
+            
+            #client-details-modal .space-y-3 > * + * {
+                margin-top: 0.4rem;
+            }
+            
+            #client-details-modal .grid-cols-2 {
+                gap: 0.4rem;
+            }
+            
+            #client-details-modal input,
+            #client-details-modal textarea {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            #client-details-modal label {
+                font-size: 0.6rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            #client-details-modal .text-xs {
+                font-size: 0.65rem;
+            }
+            
+            #client-details-modal .py-4 {
+                padding-top: 0.6rem;
+                padding-bottom: 0.6rem;
+            }
+            
+            #client-details-modal .mt-6 {
+                margin-top: 0.75rem;
+            }
+            
+            #client-details-modal .inline-block.p-3 {
+                padding: 0.5rem;
+            }
+
+            /* Booking confirmation modal mobile fix */
+            .booking-modal-card {
+                padding: 2rem 1.5rem;
+                width: 92%;
+                border-radius: 8px;
+            }
         }
     
 
@@ -2409,6 +2536,25 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
                 closeAddressModal();
                 updateProgress(2);
+
+                // ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
+                try {
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'booking_intent', {
+                            'event_category': 'Booking',
+                            'event_label': treat.label,
+                            'value': price.base,
+                            'treatment': treat.label,
+                            'duration': selectedStandardDuration,
+                            'city': addr.city || 'Unknown'
+                        });
+                        console.log('📊 GA Event: booking_intent sent');
+                    }
+                } catch (e) {
+                    console.warn('GA booking_intent event failed:', e);
+                }
+                // ========== END BOOKING INTENT EVENT ==========
+
                 await loadAvailabilityForCurrentMonth();
             });
 
@@ -2771,6 +2917,67 @@ if (result.error === 'slot_taken') {
 
 if (result.success) {
     try { hideBookingModal(true); } catch (_) {}
+
+    // ========== GOOGLE ANALYTICS: BOOKING CONFIRMED EVENT ==========
+    try {
+        if (typeof gtag === 'function') {
+            const treat = TREATMENT_RULES[selectedServiceKey];
+            gtag('event', 'booking_confirmed', {
+                'event_category': 'Booking',
+                'event_label': treat ? treat.label : selectedServiceKey,
+                'value': pricing.total,
+                'currency': 'CAD',
+                'treatment': treat ? treat.label : selectedServiceKey,
+                'duration': selectedStandardDuration,
+                'city': window.__selectedAddress?.city || 'Unknown',
+                'travel_charge': travelCharge
+            });
+            console.log('📊 GA Event: booking_confirmed sent');
+            
+            // Also send as a conversion event for Google Ads
+            gtag('event', 'conversion', {
+                'send_to': 'AW-17575022013/booking_confirmed',
+                'value': pricing.total,
+                'currency': 'CAD'
+            });
+            console.log('📊 GA Ads Conversion: booking_confirmed sent');
+        }
+    } catch (e) {
+        console.warn('GA booking_confirmed event failed:', e);
+    }
+    // ========== END BOOKING CONFIRMED EVENT ==========
+
+    // ========== META PIXEL: BOOKING CONFIRMED EVENT ==========
+    try {
+        if (typeof fbq === 'function') {
+            const treat = TREATMENT_RULES[selectedServiceKey];
+            // Using 'Schedule' standard event for appointment bookings
+            fbq('track', 'Schedule', {
+                content_name: treat ? treat.label : selectedServiceKey,
+                content_category: 'Massage Booking',
+                value: pricing.total,
+                currency: 'CAD',
+                content_ids: [selectedServiceKey],
+                num_items: 1
+            });
+            console.log('📊 Meta Pixel Event: Schedule sent');
+            
+            // Also fire a custom event for more specific tracking
+            fbq('trackCustom', 'BookingConfirmed', {
+                treatment: treat ? treat.label : selectedServiceKey,
+                duration: selectedStandardDuration,
+                city: window.__selectedAddress?.city || 'Unknown',
+                value: pricing.total,
+                currency: 'CAD',
+                travel_charge: travelCharge
+            });
+            console.log('📊 Meta Pixel Custom Event: BookingConfirmed sent');
+        }
+    } catch (e) {
+        console.warn('Meta Pixel booking event failed:', e);
+    }
+    // ========== END META PIXEL EVENT ==========
+
     // Booking modal already shows confirmation (kept on-screen to prevent double bookings)
                         closeClientDetailsModal();
                         
