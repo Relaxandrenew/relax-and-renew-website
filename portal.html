@@ -153,7 +153,11 @@
     }
     .mobile-menu.open { transform: translateX(0); }
 
-    .header-hero { background: transparent; }
+    .header-hero {
+      background: linear-gradient(145deg, rgba(20,20,20,0.70), rgba(10,10,10,0.80));
+      border-bottom: 1px solid rgba(224, 197, 132, 0.20);
+      backdrop-filter: blur(10px);
+    }
 
     .card-fancy, .glass-panel {
       background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9));
@@ -802,10 +806,9 @@
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
-              <button class="sidebar-btn" data-tab="history" disabled>
-                <i data-lucide="history" class="w-5 h-5 text-brand-dim"></i>
+              <button class="sidebar-btn" data-tab="history">
+                <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
-                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <button class="sidebar-btn" data-tab="profile" disabled>
                 <i data-lucide="settings" class="w-5 h-5 text-brand-dim"></i>
@@ -1086,10 +1089,68 @@
 
           <!-- History -->
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
-            <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
-            <div class="card-fancy p-6">
-              <div class="pill">Coming Soon</div>
-              <p class="muted mt-4">Your session history will appear here.</p>
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 class="text-3xl font-serif text-brand-light">Session History</h2>
+                  <p class="muted mt-2 font-light">Completed and cancelled appointments.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- History Loading State -->
+            <div id="history-loading" class="space-y-4">
+              <div class="appointment-card">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div class="flex-1 space-y-3">
+                    <div class="skeleton h-6 w-48"></div>
+                    <div class="skeleton h-4 w-64"></div>
+                    <div class="skeleton h-4 w-32"></div>
+                  </div>
+                  <div class="skeleton h-8 w-24"></div>
+                </div>
+              </div>
+              <div class="appointment-card">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div class="flex-1 space-y-3">
+                    <div class="skeleton h-6 w-44"></div>
+                    <div class="skeleton h-4 w-56"></div>
+                    <div class="skeleton h-4 w-28"></div>
+                  </div>
+                  <div class="skeleton h-8 w-24"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- History List -->
+            <div id="history-list" class="space-y-4 hidden"></div>
+
+            <!-- History Empty State -->
+            <div id="history-empty" class="hidden">
+              <div class="glass-panel p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                  <i data-lucide="history" class="w-8 h-8 text-brand-gold/50"></i>
+                </div>
+                <h3 class="text-xl font-serif text-brand-light mb-2">No History Yet</h3>
+                <p class="muted text-sm">Completed or cancelled appointments will appear here.</p>
+              </div>
+            </div>
+
+            <!-- History Error State -->
+            <div id="history-error" class="hidden">
+              <div class="card-fancy p-6 border-red-500/30">
+                <div class="flex items-start gap-3">
+                  <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                  <div>
+                    <div class="font-bold text-brand-light">Unable to load history</div>
+                    <div class="muted mt-1 text-sm" id="history-error-message">Please try again or contact support.</div>
+                    <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-2 mt-3">
+                      <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1216,6 +1277,8 @@
     // Appointments state
     let upcomingAppointments = [];
     let cancelledAppointments = [];
+    let completedAppointments = [];
+    let historyAppointments = [];
     let appointmentToCancel = null;
 
     const TREATMENT_RULES = {
@@ -1250,9 +1313,17 @@
       }, 3200);
     }
 
-    // =========================================================
+    
+    function isAppointmentCancelled(appt) {
+      const s = String(appt?.status || "").toLowerCase().trim();
+      if (!s) return false;
+      return s === "cancelled" || s === "canceled" || s.includes("cancelled") || s.includes("canceled");
+    }
+
+// =========================================================
     // UPCOMING APPOINTMENTS FUNCTIONS
     // =========================================================
+    
     async function loadUpcomingAppointments() {
       if (!portalProfile || !portalProfile.email) {
         console.warn("No profile/email to load appointments");
@@ -1264,6 +1335,12 @@
       document.getElementById("appointments-empty").classList.add("hidden");
       document.getElementById("appointments-error").classList.add("hidden");
       document.getElementById("cancelled-section").classList.add("hidden");
+
+      // History tab states (if present)
+      document.getElementById("history-loading")?.classList.remove("hidden");
+      document.getElementById("history-list")?.classList.add("hidden");
+      document.getElementById("history-empty")?.classList.add("hidden");
+      document.getElementById("history-error")?.classList.add("hidden");
 
       try {
         const res = await fetch(APPOINTMENTS_WEBHOOK_URL, {
@@ -1281,31 +1358,61 @@
         }
 
         const data = await res.json();
-        
-        upcomingAppointments = (data.appointments || []).filter(a => 
-          a.status !== 'cancelled' && a.status !== 'Cancelled'
-        );
-        cancelledAppointments = (data.appointments || []).filter(a => 
-          a.status === 'cancelled' || a.status === 'Cancelled'
-        );
+        const all = Array.isArray(data.appointments) ? data.appointments : [];
+        const now = new Date();
+
+        cancelledAppointments = all.filter(isAppointmentCancelled);
+
+        completedAppointments = all.filter(a => {
+          if (isAppointmentCancelled(a)) return false;
+          const start = a?.starts_at ? new Date(a.starts_at) : null;
+          if (!start || isNaN(start.getTime())) return false;
+          return start <= now;
+        });
+
+        upcomingAppointments = all.filter(a => {
+          if (isAppointmentCancelled(a)) return false;
+          const start = a?.starts_at ? new Date(a.starts_at) : null;
+          if (!start || isNaN(start.getTime())) return false;
+          return start > now;
+        });
+
+        historyAppointments = [...cancelledAppointments, ...completedAppointments].sort((a, b) => {
+          const as = a?.starts_at ? new Date(a.starts_at).getTime() : 0;
+          const bs = b?.starts_at ? new Date(b.starts_at).getTime() : 0;
+          return bs - as;
+        });
 
         renderAppointments();
-        
+        renderHistory();
+
       } catch (e) {
         console.error("Failed to load appointments:", e);
+
+        // Upcoming error
         document.getElementById("appointments-loading").classList.add("hidden");
         document.getElementById("appointments-error").classList.remove("hidden");
         document.getElementById("appointments-error-message").textContent = e.message || "Please try again or contact support.";
+
+        // History error (if present)
+        document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-error")?.classList.remove("hidden");
+        const hem = document.getElementById("history-error-message");
+        if (hem) hem.textContent = e.message || "Please try again or contact support.";
       }
     }
 
+
+    
     function renderAppointments() {
       document.getElementById("appointments-loading").classList.add("hidden");
-      
+
       const listEl = document.getElementById("appointments-list");
       const emptyEl = document.getElementById("appointments-empty");
-      const cancelledSection = document.getElementById("cancelled-section");
       const badge = document.getElementById("appt-count-badge");
+
+      // Cancelled + Completed are moved to History tab now
+      document.getElementById("cancelled-section")?.classList.add("hidden");
 
       if (upcomingAppointments.length > 0) {
         badge.textContent = upcomingAppointments.length;
@@ -1323,17 +1430,35 @@
         listEl.innerHTML = upcomingAppointments.map(appt => renderAppointmentCard(appt, false)).join("");
       }
 
-      if (cancelledAppointments.length > 0) {
-        cancelledSection.classList.remove("hidden");
-        document.getElementById("cancelled-count-badge").textContent = cancelledAppointments.length;
-        document.getElementById("cancelled-list").innerHTML = cancelledAppointments.map(appt => renderAppointmentCard(appt, true)).join("");
-      } else {
-        cancelledSection.classList.add("hidden");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function renderHistory() {
+      const loadingEl = document.getElementById("history-loading");
+      const listEl = document.getElementById("history-list");
+      const emptyEl = document.getElementById("history-empty");
+      const errorEl = document.getElementById("history-error");
+
+      loadingEl?.classList.add("hidden");
+      errorEl?.classList.add("hidden");
+
+      if (!listEl || !emptyEl) return;
+
+      if (!historyAppointments || historyAppointments.length === 0) {
+        listEl.classList.add("hidden");
+        emptyEl.classList.remove("hidden");
+        return;
       }
 
+      emptyEl.classList.add("hidden");
+      listEl.classList.remove("hidden");
+      listEl.innerHTML = historyAppointments
+        .map(appt => renderAppointmentCard(appt, isAppointmentCancelled(appt)))
+        .join("");
+
       if (typeof lucide !== "undefined") lucide.createIcons();
-      setupCancelledToggle();
     }
+
 
     function renderAppointmentCard(appt, isCancelled) {
       const startDate = new Date(appt.starts_at);
