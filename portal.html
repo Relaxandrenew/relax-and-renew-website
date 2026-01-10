@@ -120,9 +120,6 @@
       overflow-x: hidden;
     }
 
-    /* =========================================
-       FIXED: Header Navigation (From Index.html)
-       ========================================= */
     .fixed-nav { 
         position: fixed; top: 0; left: 0; width: 100%; height: 80px; 
         z-index: 50; 
@@ -149,7 +146,6 @@
     }
     .nav-link:hover::after { width: 100%; }
 
-    /* Mobile Menu */
     .mobile-menu {
       background: #050505;
       transform: translateX(100%);
@@ -159,7 +155,6 @@
 
     .header-hero { background: transparent; }
 
-    /* Cards */
     .card-fancy, .glass-panel {
       background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9));
       border: 1px solid rgba(224, 197, 132, 0.1);
@@ -177,7 +172,6 @@
     .card-fancy:hover, .glass-panel:hover { border-color: rgba(224, 197, 132, 0.3); }
     .card-fancy:hover::before, .glass-panel:hover::before { transform: scaleX(1); }
 
-    /* Buttons */
     .btn-outline {
       border: 1px solid #E0C584; color: #E0C584; background: transparent;
       padding: 0.6rem 1.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;
@@ -201,21 +195,41 @@
       box-shadow: none !important; transform: none !important;
     }
 
-    /* Inputs */
+    .btn-cancel-thin {
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      color: #f87171;
+      background: transparent;
+      padding: 0.4rem 1rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .btn-cancel-thin:hover {
+      background: rgba(248, 113, 113, 0.1);
+      border-color: #f87171;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.15);
+    }
+
     .input {
       width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(224, 197, 132, 0.3);
       color: var(--brand-light); padding: 0.6rem 1rem; border-radius: 0.25rem; outline: none; font-size: 1rem;
       min-height: 48px;
-      max-width: 100%; /* Prevent overflow */
+      max-width: 100%;
     }
-    /* Fixed Dropdowns: Custom arrow, dark background for options */
     select.input {
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
       padding-right: 2.5rem;
       background-color: rgba(5,5,5,0.8);
-      /* Custom Gold Chevron */
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23E0C584' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
       background-position: right 0.5rem center;
       background-repeat: no-repeat;
@@ -223,14 +237,12 @@
     }
     .input:focus { border-color: #E0C584; background-color: rgba(255, 255, 255, 0.1); }
     
-    /* Ensure Dropdown Options are Black */
     select.input option {
       background-color: #050505;
       color: #F0E2C0;
       padding: 10px;
     }
 
-    /* Sidebar */
     .sidebar-btn {
       width: 100%; display: flex; gap: 0.7rem; align-items: center; padding: 0.75rem 1rem;
       border: 1px solid transparent; border-radius: var(--radius); color: rgba(240, 226, 192, 0.6);
@@ -239,7 +251,6 @@
     .sidebar-btn:hover { background: rgba(224, 197, 132, 0.05); color: #E0C584; }
     .sidebar-btn.active { background: rgba(224, 197, 132, 0.1); border: 1px solid rgba(224, 197, 132, 0.2); color: #E0C584; }
 
-    /* Calendar */
     .calendar-day {
       width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
       border: 1px solid rgba(224, 197, 132, 0.1); background: rgba(255,255,255,0.02);
@@ -251,7 +262,6 @@
     .calendar-day-selected { background: #E0C584 !important; color: #000 !important; border-color: #E0C584 !important; font-weight: bold; box-shadow: 0 0 10px rgba(224,197,132,0.3); }
     .calendar-day-today { border-color: #F0E2C0; }
 
-    /* Slots */
     .time-slot-btn {
       width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       padding: 0.6rem; border: 1px solid rgba(224, 197, 132, 0.2); background: rgba(255,255,255,0.03);
@@ -274,16 +284,13 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
     }
 
-    /* =========================================
-       FIXED: Login Overlay CSS
-       ========================================= */
     #login-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 200; /* Higher than nav */
+      z-index: 200;
       background: rgba(0,0,0,0.85);
       backdrop-filter: blur(12px);
       display: flex;
@@ -310,9 +317,6 @@
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
-    /* =========================================
-       FIXED: Auth0 Lock Styles (Robust Overrides)
-       ========================================= */
     #auth0-lock-container { width: 100% !important; }
     #auth0-lock-container .auth0-lock,
     #auth0-lock-container .auth0-lock * {
@@ -430,7 +434,6 @@
       color: #F0D594 !important;
     }
 
-    /* CRITICAL FIX: Collapse Auth0 Lock's excessive internal height */
     #auth0-lock-container .auth0-lock .auth0-lock-cred-pane-internal-wrapper {
       min-height: auto !important;
       height: auto !important;
@@ -447,20 +450,18 @@
     }
 
     #auth0-lock-container .auth0-lock .auth0-lock-submit {
-      margin-top: 1rem !important; /* Reduce gap above button */
+      margin-top: 1rem !important;
     }
 
-    /* Remove any fixed heights Auth0 might be setting */
     #auth0-lock-container .auth0-lock-center {
       min-height: auto !important;
       height: auto !important;
       padding-bottom: 0 !important;
     }
 
-/* =========================================
-   BOOKING CONFIRMATION MODAL
-   ========================================= */
-#booking-modal-overlay {
+#booking-modal-overlay,
+#cancel-modal-overlay,
+#contact-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -476,20 +477,25 @@
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-#booking-modal-overlay.active {
+#booking-modal-overlay.active,
+#cancel-modal-overlay.active,
+#contact-modal-overlay.active {
   opacity: 1;
   visibility: visible;
 }
-.booking-modal-card {
+.booking-modal-card,
+.cancel-modal-card,
+.contact-modal-card {
   background: linear-gradient(145deg, rgba(20,20,20,0.98), rgba(10,10,10,0.99));
   border: 1px solid rgba(224, 197, 132, 0.3);
-  padding: 3rem 2.5rem;
-  max-width: 400px;
+  padding: 2rem 2rem;
+  max-width: 420px;
   width: 90%;
   text-align: center;
   position: relative;
 }
-.booking-modal-card::before {
+.booking-modal-card::before,
+.contact-modal-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -497,6 +503,18 @@
   width: 100%;
   height: 2px;
   background: linear-gradient(90deg, transparent, #E0C584, transparent);
+}
+.cancel-modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f87171, transparent);
+}
+.cancel-modal-card {
+  border-color: rgba(248, 113, 113, 0.3);
 }
 .booking-spinner {
   width: 60px;
@@ -553,31 +571,70 @@
   animation: booking-success-pop 0.4s ease;
 }
 
+.appointment-card {
+  background: linear-gradient(145deg, rgba(20,20,20,0.85), rgba(10,10,10,0.95));
+  border: 1px solid rgba(224, 197, 132, 0.15);
+  border-left: 3px solid #E0C584;
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: var(--radius);
+}
+.appointment-card:hover {
+  border-color: rgba(224, 197, 132, 0.35);
+  background: linear-gradient(145deg, rgba(25,25,25,0.9), rgba(15,15,15,0.95));
+}
+.appointment-card-cancelled {
+  border-left-color: rgba(248, 113, 113, 0.5);
+  opacity: 0.7;
+}
 
-    /* =========================================
-       MOBILE HARDENING: Auth0 overlay + keyboard
-       - Prevent underlay scroll/bleed
-       - Keep Lock visible above mobile keyboard
-       ========================================= */
-/* On short screens, start from top so Lock isn't trapped */
+.skeleton {
+  background: linear-gradient(90deg, rgba(224, 197, 132, 0.05) 25%, rgba(224, 197, 132, 0.1) 50%, rgba(224, 197, 132, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.appt-count-badge {
+  background: rgba(224, 197, 132, 0.15);
+  border: 1px solid rgba(224, 197, 132, 0.3);
+  color: #E0C584;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  margin-left: 0.5rem;
+}
+
     @media (max-height: 700px) {
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
+
+    @media (max-width: 640px) {
+      .appointment-card {
+        padding: 1rem 1rem;
+      }
+    }
 </style>
 
   <script>
-    // =========================================================
-    // CONFIG
-    // =========================================================
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
+    const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
+    const CANCEL_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
-    const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
+    const TRAVEL_FEE_THRESHOLD_MINUTES = 36;
+    const CONTACT_PHONE = "226-337-9064";
+    const CONTACT_EMAIL = "info@relaxandrenew.ca";
     
-    // Travel fee tiers based on drive time
     const TRAVEL_FEE_TIERS = [
       { minMinutes: 120, fee: 200 },
       { minMinutes: 60, fee: 100 },
@@ -585,12 +642,10 @@
       { minMinutes: 36, fee: 20 },
     ];
 
-    // Auth0 Config
     const AUTH0_DOMAIN = "auth.relaxandrenew.ca";
     const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
     const AUTH0_DB_CONNECTION = "Username-Password-Authentication";
 
-    // Custom claim keys
     const CLAIM_PROFILE_OBJ  = "https://relaxandrenew.ca/profile";
     const CLAIM_ADDRESS      = "https://relaxandrenew.ca/address";
     const CLAIM_CITY         = "https://relaxandrenew.ca/city";
@@ -598,12 +653,9 @@
     const CLAIM_PHONE        = "https://relaxandrenew.ca/phone";
   </script>
 </head>
-
 <body class="bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900 text-brand-light">
   
-  <!-- =========================================================
-       LOGIN OVERLAY (shows on top of portal until authenticated)
-       ========================================================= -->
+  <!-- LOGIN OVERLAY -->
   <div id="login-overlay">
     <div class="login-card">
       <div class="text-center">
@@ -649,7 +701,6 @@
         </div>
       </a>
 
-      <!-- Desktop Menu -->
       <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
         <a href="index.html#services" class="nav-link">Services</a>
         <a href="index.html#pricing" class="nav-link">Pricing</a>
@@ -664,7 +715,6 @@
         </span>
       </div>
 
-      <!-- Mobile Menu Button -->
       <button id="mobile-menu-btn" class="lg:hidden text-brand-gold p-2 hover:text-brand-light transition-colors">
         <i data-lucide="menu" class="w-8 h-8"></i>
       </button>
@@ -699,7 +749,6 @@
     </div>
   </div>
 
-  <!-- Spacer -->
   <div aria-hidden="true" class="h-20"></div>
 
   <!-- HEADER HERO -->
@@ -739,8 +788,13 @@
             </div>
 
             <div class="space-y-2">
-              <button class="sidebar-btn active" data-tab="dashboard">
-                <i data-lucide="calendar-check" class="w-5 h-5 text-brand-gold"></i>
+              <button class="sidebar-btn active" data-tab="appointments">
+                <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
+                <span>Upcoming</span>
+                <span id="appt-count-badge" class="appt-count-badge hidden">0</span>
+              </button>
+              <button class="sidebar-btn" data-tab="dashboard">
+                <i data-lucide="calendar-plus" class="w-5 h-5 text-brand-gold"></i>
                 <span>Rebook</span>
               </button>
               <button class="sidebar-btn" data-tab="membership" disabled>
@@ -769,9 +823,96 @@
 
         <!-- CONTENT -->
         <section>
+          <!-- UPCOMING APPOINTMENTS TAB -->
+          <div id="tab-appointments" class="tab-content animate-fade-in-up">
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 class="text-3xl font-serif text-brand-light">Upcoming Appointments</h2>
+                  <p class="muted mt-2 font-light">View and manage your scheduled sessions.</p>
+                </div>
+                <button onclick="switchTab('dashboard')" class="btn-outline text-sm py-2 px-4">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  Book New
+                </button>
+              </div>
+            </div>
+
+            <!-- Appointments Loading State -->
+            <div id="appointments-loading" class="space-y-4">
+              <div class="appointment-card">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div class="flex-1 space-y-3">
+                    <div class="skeleton h-6 w-48"></div>
+                    <div class="skeleton h-4 w-64"></div>
+                    <div class="skeleton h-4 w-32"></div>
+                  </div>
+                  <div class="skeleton h-8 w-24"></div>
+                </div>
+              </div>
+              <div class="appointment-card">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div class="flex-1 space-y-3">
+                    <div class="skeleton h-6 w-44"></div>
+                    <div class="skeleton h-4 w-56"></div>
+                    <div class="skeleton h-4 w-28"></div>
+                  </div>
+                  <div class="skeleton h-8 w-24"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appointments List -->
+            <div id="appointments-list" class="space-y-4 hidden"></div>
+
+            <!-- No Appointments State -->
+            <div id="appointments-empty" class="hidden">
+              <div class="glass-panel p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                  <i data-lucide="calendar-x" class="w-8 h-8 text-brand-gold/50"></i>
+                </div>
+                <h3 class="text-xl font-serif text-brand-light mb-2">No Upcoming Appointments</h3>
+                <p class="muted text-sm mb-6">You don't have any scheduled sessions at the moment.</p>
+                <button onclick="switchTab('dashboard')" class="btn-filled">
+                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                  Book an Appointment
+                </button>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="appointments-error" class="hidden">
+              <div class="card-fancy p-6 border-red-500/30">
+                <div class="flex items-start gap-3">
+                  <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                  <div>
+                    <div class="font-bold text-brand-light">Unable to load appointments</div>
+                    <div class="muted mt-1 text-sm" id="appointments-error-message">Please try again or contact support.</div>
+                    <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-2 mt-3">
+                      <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cancelled Appointments Collapsible -->
+            <div id="cancelled-section" class="mt-8 hidden">
+              <button id="cancelled-toggle" class="w-full flex items-center justify-between p-4 glass-panel hover:border-brand-gold/30 transition-all">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="archive" class="w-4 h-4 text-brand-dim"></i>
+                  <span class="text-sm text-brand-dim uppercase tracking-wider font-semibold">Cancelled Appointments</span>
+                  <span id="cancelled-count-badge" class="text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded">0</span>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-brand-dim transition-transform" id="cancelled-chevron"></i>
+              </button>
+              <div id="cancelled-list" class="space-y-3 mt-3 hidden"></div>
+            </div>
+          </div>
+
           <!-- Dashboard / Rebook -->
-          <div id="tab-dashboard" class="tab-content animate-fade-in-up">
-            <!-- Profile summary -->
+          <div id="tab-dashboard" class="tab-content hidden animate-fade-in-up">
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
@@ -794,7 +935,7 @@
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#264f4840496654434a475e4748425443484351084547">
+                      <a class="btn-outline text-xs py-2" href="mailto:info@relaxandrenew.ca">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -805,7 +946,6 @@
 
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
-              <!-- Calendar + slots -->
               <div class="glass-panel p-6">
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
                   <div>
@@ -835,7 +975,6 @@
 
                 <hr class="divider my-6">
 
-                <!-- NEW PROGRESS BAR LOADER -->
                 <div id="availability-loading" class="hidden mb-6">
                     <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
                         <span>Checking Availability...</span>
@@ -873,7 +1012,6 @@
                   </div>
                 </div>
 
-                <!-- Selected Date -->
                 <div id="selected-date-info" class="mt-8 hidden animate-fade-in-up">
                   <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 2</div>
                   <h3 class="text-2xl font-serif mt-1">Select a Time</h3>
@@ -883,9 +1021,7 @@
                   </div>
                 </div>
 
-                <!-- Time slots -->
                 <div id="time-slots-container" class="mt-4 hidden animate-fade-in-up" style="animation-delay:0.1s">
-                  <!-- UPDATED GRID: 4 columns on mobile -->
                   <div id="time-slots-grid" class="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
                 </div>
 
@@ -900,7 +1036,6 @@
                 </div>
               </div>
 
-              <!-- Summary + confirm -->
               <div class="glass-panel p-6">
                 <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 3</div>
                 <h3 class="text-2xl font-serif mt-1">Confirm</h3>
@@ -997,7 +1132,66 @@
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <!-- Cancel Confirmation Modal -->
+  <div id="cancel-modal-overlay">
+    <div class="cancel-modal-card">
+      <div class="w-14 h-14 mx-auto mb-4 border-2 border-red-400/50 rounded-full flex items-center justify-center">
+        <i data-lucide="alert-triangle" class="w-7 h-7 text-red-400"></i>
+      </div>
+      <h3 class="text-xl font-serif text-brand-light mb-2">Cancel Appointment?</h3>
+      <p class="text-brand-dim text-sm mb-4">Are you sure you want to cancel this appointment?</p>
+      
+      <div id="cancel-modal-appointment-info" class="card-fancy p-3 mb-5 text-left">
+        <div class="text-brand-gold font-semibold text-sm" id="cancel-modal-treatment">—</div>
+        <div class="text-brand-dim text-xs mt-1" id="cancel-modal-datetime">—</div>
+      </div>
+      
+      <div class="flex gap-3">
+        <button id="cancel-modal-close" class="flex-1 btn-outline py-2 text-sm">
+          Keep Appointment
+        </button>
+        <button id="cancel-modal-confirm" class="flex-1 py-2 text-sm bg-red-500/20 border border-red-500/50 text-red-300 hover:bg-red-500/30 transition-all uppercase tracking-wider font-semibold">
+          Cancel It
+        </button>
+      </div>
+      
+      <div id="cancel-modal-processing" class="hidden mt-4">
+        <div class="flex items-center justify-center gap-2 text-brand-dim">
+          <div class="w-4 h-4 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin"></div>
+          <span class="text-sm">Processing cancellation...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Modal (for <12hr cancellations) -->
+  <div id="contact-modal-overlay">
+    <div class="contact-modal-card">
+      <div class="w-14 h-14 mx-auto mb-4 border-2 border-brand-gold/50 rounded-full flex items-center justify-center">
+        <i data-lucide="clock" class="w-7 h-7 text-brand-gold"></i>
+      </div>
+      <h3 class="text-xl font-serif text-brand-light mb-2">Less Than 12 Hours Notice</h3>
+      <p class="text-brand-dim text-sm mb-5">
+        This appointment is within 12 hours. To cancel or reschedule, please contact us directly.
+      </p>
+      
+      <div class="space-y-3">
+        <a href="tel:2263379064" class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-all rounded">
+          <i data-lucide="phone" class="w-5 h-5"></i>
+          <span class="font-semibold tracking-wide">226-337-9064</span>
+        </a>
+        <a href="mailto:info@relaxandrenew.ca?subject=Appointment%20Cancellation%20Request" class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-all rounded">
+          <i data-lucide="mail" class="w-5 h-5"></i>
+          <span class="font-semibold tracking-wide text-sm">info@relaxandrenew.ca</span>
+        </a>
+      </div>
+      
+      <button id="contact-modal-close" class="w-full mt-5 btn-outline py-2 text-sm">
+        Close
+      </button>
+    </div>
+  </div>
+  <script>
     // =========================================================
     // STATE
     // =========================================================
@@ -1019,6 +1213,11 @@
     let selectedServiceKey = null;
     let selectedStandardDuration = null;
 
+    // Appointments state
+    let upcomingAppointments = [];
+    let cancelledAppointments = [];
+    let appointmentToCancel = null;
+
     const TREATMENT_RULES = {
       "relaxation":  { label: "Relaxation Massage", durations: [60,75,90,120] },
       "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
@@ -1038,8 +1237,6 @@
       const toast = document.getElementById("toast");
       const msgEl = document.getElementById("toast-message");
       msgEl.textContent = message || title || "—";
-      toast.classList.add("show");
-      // Specific styling for toast show state handled in CSS via opacity
       toast.style.opacity = "1";
       toast.style.transform = "translateX(-50%) translateY(-10px)";
       
@@ -1047,18 +1244,271 @@
       if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Attempt to restore previously selected time slot (after refresh)
-      maybeAutoSelectRestoredSlot(dateStr);
       setTimeout(() => {
           toast.style.opacity = "0";
           toast.style.transform = "translateX(-50%) translateY(0)";
-          toast.classList.remove("show");
       }, 3200);
     }
 
+    // =========================================================
+    // UPCOMING APPOINTMENTS FUNCTIONS
+    // =========================================================
+    async function loadUpcomingAppointments() {
+      if (!portalProfile || !portalProfile.email) {
+        console.warn("No profile/email to load appointments");
+        return;
+      }
 
+      document.getElementById("appointments-loading").classList.remove("hidden");
+      document.getElementById("appointments-list").classList.add("hidden");
+      document.getElementById("appointments-empty").classList.add("hidden");
+      document.getElementById("appointments-error").classList.add("hidden");
+      document.getElementById("cancelled-section").classList.add("hidden");
 
-// =========================================================
+      try {
+        const res = await fetch(APPOINTMENTS_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: portalProfile.email,
+            firstName: portalProfile.firstName || "",
+            lastName: portalProfile.lastName || ""
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        
+        upcomingAppointments = (data.appointments || []).filter(a => 
+          a.status !== 'cancelled' && a.status !== 'Cancelled'
+        );
+        cancelledAppointments = (data.appointments || []).filter(a => 
+          a.status === 'cancelled' || a.status === 'Cancelled'
+        );
+
+        renderAppointments();
+        
+      } catch (e) {
+        console.error("Failed to load appointments:", e);
+        document.getElementById("appointments-loading").classList.add("hidden");
+        document.getElementById("appointments-error").classList.remove("hidden");
+        document.getElementById("appointments-error-message").textContent = e.message || "Please try again or contact support.";
+      }
+    }
+
+    function renderAppointments() {
+      document.getElementById("appointments-loading").classList.add("hidden");
+      
+      const listEl = document.getElementById("appointments-list");
+      const emptyEl = document.getElementById("appointments-empty");
+      const cancelledSection = document.getElementById("cancelled-section");
+      const badge = document.getElementById("appt-count-badge");
+
+      if (upcomingAppointments.length > 0) {
+        badge.textContent = upcomingAppointments.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (upcomingAppointments.length === 0) {
+        listEl.classList.add("hidden");
+        emptyEl.classList.remove("hidden");
+      } else {
+        emptyEl.classList.add("hidden");
+        listEl.classList.remove("hidden");
+        listEl.innerHTML = upcomingAppointments.map(appt => renderAppointmentCard(appt, false)).join("");
+      }
+
+      if (cancelledAppointments.length > 0) {
+        cancelledSection.classList.remove("hidden");
+        document.getElementById("cancelled-count-badge").textContent = cancelledAppointments.length;
+        document.getElementById("cancelled-list").innerHTML = cancelledAppointments.map(appt => renderAppointmentCard(appt, true)).join("");
+      } else {
+        cancelledSection.classList.add("hidden");
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+      setupCancelledToggle();
+    }
+
+    function renderAppointmentCard(appt, isCancelled) {
+      const startDate = new Date(appt.starts_at);
+      const endDate = new Date(appt.ends_at);
+      
+      const dateStr = startDate.toLocaleDateString("en-CA", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "America/Toronto"
+      });
+      
+      const timeStr = startDate.toLocaleTimeString("en-CA", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Toronto"
+      });
+      
+      const durationMin = Math.round((endDate - startDate) / 60000);
+      
+      const hoursUntil = (startDate - new Date()) / (1000 * 60 * 60);
+      const isWithin12Hours = hoursUntil < 12 && hoursUntil > 0;
+      const isPast = hoursUntil <= 0;
+      
+      const treatmentName = appt.appointment_type_name || appt.treatment_name || "Massage Therapy";
+      
+      const cardClass = isCancelled ? "appointment-card appointment-card-cancelled" : "appointment-card";
+      
+      let cancelButton = "";
+      if (!isCancelled && !isPast) {
+        if (isWithin12Hours) {
+          cancelButton = `
+            <button onclick="showContactModal()" class="btn-cancel-thin">
+              <i data-lucide="phone" class="w-3 h-3"></i>
+              Contact to Cancel
+            </button>
+          `;
+        } else {
+          cancelButton = `
+            <button onclick="showCancelModal('${appt.id}', '${treatmentName.replace(/'/g, "\\'")}', '${dateStr} at ${timeStr}')" class="btn-cancel-thin">
+              <i data-lucide="x" class="w-3 h-3"></i>
+              Cancel
+            </button>
+          `;
+        }
+      }
+      
+      const statusBadge = isCancelled 
+        ? `<span class="text-[10px] uppercase tracking-wider text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Cancelled</span>`
+        : (isPast 
+          ? `<span class="text-[10px] uppercase tracking-wider text-brand-dim bg-white/5 px-2 py-0.5 rounded">Completed</span>`
+          : (isWithin12Hours 
+            ? `<span class="text-[10px] uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">Within 12hrs</span>`
+            : `<span class="text-[10px] uppercase tracking-wider text-green-400 bg-green-500/10 px-2 py-0.5 rounded">Confirmed</span>`
+          )
+        );
+
+      return `
+        <div class="${cardClass}">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-lg font-serif text-brand-light">${treatmentName}</h4>
+                ${statusBadge}
+              </div>
+              <div class="flex items-center gap-2 mt-2 text-brand-dim text-sm">
+                <i data-lucide="calendar" class="w-4 h-4 text-brand-gold/60"></i>
+                <span>${dateStr}</span>
+              </div>
+              <div class="flex items-center gap-4 mt-1">
+                <div class="flex items-center gap-2 text-brand-dim text-sm">
+                  <i data-lucide="clock" class="w-4 h-4 text-brand-gold/60"></i>
+                  <span>${timeStr}</span>
+                </div>
+                <div class="flex items-center gap-2 text-brand-dim text-sm">
+                  <i data-lucide="timer" class="w-4 h-4 text-brand-gold/60"></i>
+                  <span>${durationMin} min</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex-shrink-0">
+              ${cancelButton}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setupCancelledToggle() {
+      const toggle = document.getElementById("cancelled-toggle");
+      const list = document.getElementById("cancelled-list");
+      const chevron = document.getElementById("cancelled-chevron");
+      
+      if (toggle) {
+        toggle.onclick = () => {
+          list.classList.toggle("hidden");
+          chevron.style.transform = list.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+        };
+      }
+    }
+
+    // =========================================================
+    // CANCEL MODAL FUNCTIONS
+    // =========================================================
+    function showCancelModal(appointmentId, treatmentName, dateTimeStr) {
+      appointmentToCancel = appointmentId;
+      
+      document.getElementById("cancel-modal-treatment").textContent = treatmentName;
+      document.getElementById("cancel-modal-datetime").textContent = dateTimeStr;
+      document.getElementById("cancel-modal-processing").classList.add("hidden");
+      document.getElementById("cancel-modal-confirm").disabled = false;
+      
+      document.getElementById("cancel-modal-overlay").classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function hideCancelModal() {
+      document.getElementById("cancel-modal-overlay").classList.remove("active");
+      document.body.style.overflow = "";
+      appointmentToCancel = null;
+    }
+
+    async function confirmCancellation() {
+      if (!appointmentToCancel) return;
+      
+      const confirmBtn = document.getElementById("cancel-modal-confirm");
+      const processingEl = document.getElementById("cancel-modal-processing");
+      
+      confirmBtn.disabled = true;
+      processingEl.classList.remove("hidden");
+
+      try {
+        const res = await fetch(CANCEL_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            appointmentId: appointmentToCancel,
+            email: portalProfile?.email || "",
+            reason: "Cancelled by client via portal"
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        hideCancelModal();
+        showToast("Appointment Cancelled", "Your appointment has been successfully cancelled.");
+        
+        await loadUpcomingAppointments();
+
+      } catch (e) {
+        console.error("Cancellation failed:", e);
+        processingEl.classList.add("hidden");
+        confirmBtn.disabled = false;
+        showToast("Cancellation Failed", "Please try again or contact support.", true);
+      }
+    }
+
+    // =========================================================
+    // CONTACT MODAL FUNCTIONS
+    // =========================================================
+    function showContactModal() {
+      document.getElementById("contact-modal-overlay").classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function hideContactModal() {
+      document.getElementById("contact-modal-overlay").classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    // =========================================================
     // BOOKING MODAL FUNCTIONS
     // =========================================================
     const bookingMessages = [
@@ -1079,18 +1529,15 @@
       const statusText = document.getElementById("booking-modal-status");
       const substatusText = document.getElementById("booking-modal-substatus");
 
-      // Reset to initial state
       spinner.classList.remove("hidden");
       successIcon.classList.add("hidden");
       errorIcon.classList.add("hidden");
       statusText.textContent = bookingMessages[0].text;
       substatusText.textContent = bookingMessages[0].sub;
 
-      // Show modal
       overlay.classList.add("active");
       document.body.style.overflow = "hidden";
 
-      // Cycle through messages every 2 seconds
       let messageIndex = 0;
       bookingMessageInterval = setInterval(() => {
         messageIndex = (messageIndex + 1) % bookingMessages.length;
@@ -1104,7 +1551,6 @@
     }
 
     function hideBookingModal(success = true, errorMessage = null) {
-      // Stop message cycling
       if (bookingMessageInterval) {
         clearInterval(bookingMessageInterval);
         bookingMessageInterval = null;
@@ -1117,7 +1563,6 @@
       const substatusText = document.getElementById("booking-modal-substatus");
       const overlay = document.getElementById("booking-modal-overlay");
 
-      // Hide spinner, show appropriate icon
       spinner.classList.add("hidden");
 
       if (success) {
@@ -1130,7 +1575,6 @@
         substatusText.textContent = errorMessage || "Please try again or contact support";
       }
 
-      // Hide modal after showing result
       setTimeout(() => {
         overlay.classList.remove("active");
         document.body.style.overflow = "";
@@ -1138,34 +1582,24 @@
     }
 
     function resetBookingForm() {
-      // Reset treatment dropdown to default
       if (treatmentSelect) {
         treatmentSelect.value = "";
         selectedServiceKey = null;
       }
 
-      // Reset duration dropdown to default disabled state
       if (durationSelect) {
         durationSelect.innerHTML = '<option value="">Select a treatment first…</option>';
         durationSelect.disabled = true;
         selectedStandardDuration = null;
       }
 
-      // Clear availability data (prevents auto-reload of calendar)
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
 
-      // Clear all selections
       clearSelectionUI();
-
-      // Re-render calendar (will show all days as disabled since no treatment selected)
       renderCalendar();
-
-      // Reset availability status message
       updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-        savePortalState();
-
-      // Update summary to reflect reset state
+      savePortalState();
       updateSummary();
       savePortalState();
     }
@@ -1189,8 +1623,6 @@
       return `${y}-${m}-${d}`;
     }
 
-    
-    // MOBILE FIX: Normalize date to YYYY-MM-DD format
     function normalizeDateKey(dateInput) {
       if (!dateInput) return null;
       var str = String(dateInput).trim();
@@ -1210,7 +1642,6 @@
       return null;
     }
 
-    // MOBILE FIX: Robust slot availability check
     function isSlotAvailable(slot) {
       if (!slot) return false;
       if (typeof slot.available === 'boolean') return slot.available;
@@ -1224,7 +1655,7 @@
       return false;
     }
 
-function computeMonthRange(date) {
+    function computeMonthRange(date) {
       const first = new Date(date.getFullYear(), date.getMonth(), 1);
       const last  = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       return { from: toDateStr(first), to: toDateStr(last) };
@@ -1250,16 +1681,16 @@ function computeMonthRange(date) {
       return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
     }
 
-    function calcTravelFee(driveTimeMinutes) {
+    function calcTravelFee(
+driveTimeMinutes) {
       const driveTime = Number(driveTimeMinutes) || 0;
       
-      // Check each tier from highest to lowest
       for (const tier of TRAVEL_FEE_TIERS) {
         if (driveTime >= tier.minMinutes) {
           return tier.fee;
         }
       }
-      return 0; // No fee for drives under 36 min
+      return 0;
     }
 
     function setConfirmEnabled(enabled) {
@@ -1287,39 +1718,37 @@ function computeMonthRange(date) {
         document.getElementById("summary-datetime").textContent = "Select a date and time";
       }
 
-     // Only show drive time and travel fee AFTER a slot is selected
-let driveTime = 0;
-let travelFee = 0;
+      let driveTime = 0;
+      let travelFee = 0;
 
-if (selectedSlot) {
-  driveTime = selectedSlot.driveTimeMinutes || 0;
-  travelFee = calcTravelFee(driveTime);
-}
+      if (selectedSlot) {
+        driveTime = selectedSlot.driveTimeMinutes || 0;
+        travelFee = calcTravelFee(driveTime);
+      }
 
-document.getElementById("summary-travel-fee").textContent = selectedSlot 
-  ? `$${Number(travelFee || 0).toFixed(2)}`
-  : "—";
+      document.getElementById("summary-travel-fee").textContent = selectedSlot 
+        ? `$${Number(travelFee || 0).toFixed(2)}`
+        : "—";
 
-// Show drive time info only when slot is selected
-if (selectedSlot && driveTime > 0) {
-  let feeNote;
-  if (driveTime >= 120) {
-    feeNote = " — $200 travel fee (2+ hours)";
-  } else if (driveTime >= 60) {
-    feeNote = " — $100 travel fee (60+ min)";
-  } else if (driveTime >= 45) {
-    feeNote = " — $40 travel fee (45+ min)";
-  } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
-    feeNote = " — $20 travel fee (36+ min)";
-  } else {
-    feeNote = " — no travel fee";
-  }
-  document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
-} else if (selectedSlot && driveTime === 0) {
-  document.getElementById("summary-drive-time").textContent = "No travel fee";
-} else {
-  document.getElementById("summary-drive-time").textContent = "Select a time to see travel fee";
-}
+      if (selectedSlot && driveTime > 0) {
+        let feeNote;
+        if (driveTime >= 120) {
+          feeNote = " — $200 travel fee (2+ hours)";
+        } else if (driveTime >= 60) {
+          feeNote = " — $100 travel fee (60+ min)";
+        } else if (driveTime >= 45) {
+          feeNote = " — $40 travel fee (45+ min)";
+        } else if (driveTime >= TRAVEL_FEE_THRESHOLD_MINUTES) {
+          feeNote = " — $20 travel fee (36+ min)";
+        } else {
+          feeNote = " — no travel fee";
+        }
+        document.getElementById("summary-drive-time").textContent = `${driveTime} min drive time${feeNote}`;
+      } else if (selectedSlot && driveTime === 0) {
+        document.getElementById("summary-drive-time").textContent = "No travel fee";
+      } else {
+        document.getElementById("summary-drive-time").textContent = "Select a time to see travel fee";
+      }
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
     }
@@ -1336,7 +1765,6 @@ if (selectedSlot && driveTime > 0) {
     }
 
     function setCalendarLoading(isLoading) {
-      // Toggle progress bar
       const loader = document.getElementById("availability-loading");
       if (isLoading) {
         loader.classList.remove("hidden");
@@ -1359,8 +1787,9 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("login-overlay").classList.add("hidden");
       document.body.style.overflow = "";
     }
+
     // =========================================================
-    // STATE PERSISTENCE (survive refresh / accidental close)
+    // STATE PERSISTENCE
     // =========================================================
     const PORTAL_STATE_KEY = "rnr_portal_state_v1";
 
@@ -1370,9 +1799,7 @@ if (selectedSlot && driveTime > 0) {
           selectedServiceKey,
           selectedStandardDuration,
           selectedDateStr,
-          // Prefer a stable identifier for the selected slot
           selectedSlotStart: selectedSlot?.start || selectedSlot?.label || null,
-          // Preserve the month user is browsing
           calendarMonth: `${calendarCurrent.getFullYear()}-${String(calendarCurrent.getMonth()+1).padStart(2,"0")}`
         };
         localStorage.setItem(PORTAL_STATE_KEY, JSON.stringify(state));
@@ -1396,7 +1823,6 @@ if (selectedSlot && driveTime > 0) {
       const s = loadPortalState();
       if (!s) return;
 
-      // Restore calendar month first (pure UI)
       if (s.calendarMonth && /^\d{4}-\d{2}$/.test(String(s.calendarMonth))) {
         const parts = String(s.calendarMonth).split("-");
         const y = Number(parts[0]);
@@ -1404,7 +1830,6 @@ if (selectedSlot && driveTime > 0) {
         if (!isNaN(y) && !isNaN(m)) calendarCurrent = new Date(y, m, 1);
       }
 
-      // Restore treatment + duration selections
       if (s.selectedServiceKey && TREATMENT_RULES[s.selectedServiceKey]) {
         selectedServiceKey = s.selectedServiceKey;
         if (treatmentSelect) treatmentSelect.value = selectedServiceKey;
@@ -1416,15 +1841,12 @@ if (selectedSlot && driveTime > 0) {
         if (durationSelect) durationSelect.value = String(selectedStandardDuration);
       }
 
-      // If we have enough to fetch availability, load it
       if (portalProfile && selectedServiceKey && selectedStandardDuration) {
         await maybeLoadAvailabilityForCurrentMonth();
       }
 
-      // After availability exists, restore date selection if that date has any data
       if (s.selectedDateStr && availabilityByDate && availabilityByDate[s.selectedDateStr]) {
         selectDate(s.selectedDateStr);
-        // Slot restoration happens inside loadTimeSlots via maybeAutoSelectRestoredSlot()
       }
     }
 
@@ -1433,7 +1855,6 @@ if (selectedSlot && driveTime > 0) {
       if (!s || !s.selectedSlotStart || !dateStr) return;
       const target = String(s.selectedSlotStart);
 
-      // Find the button corresponding to the stored slot id
       const grid = document.getElementById("time-slots-grid");
       if (!grid) return;
 
@@ -1441,7 +1862,6 @@ if (selectedSlot && driveTime > 0) {
       for (const btn of btns) {
         const slotId = btn.getAttribute("data-slot-id");
         if (slotId && slotId === target) {
-          // Rebuild a slot object from dataset when possible
           const raw = btn.getAttribute("data-slot-raw");
           try {
             const slot = raw ? JSON.parse(raw) : null;
@@ -1451,7 +1871,6 @@ if (selectedSlot && driveTime > 0) {
         }
       }
     }
-
 
     // =========================================================
     // PROFILE
@@ -1535,14 +1954,11 @@ if (selectedSlot && driveTime > 0) {
 
       const email = payload.email || "";
 
-      // Prefer your custom profile object if present
       const claimObj = payload[CLAIM_PROFILE_OBJ] || null;
 
-      // Name sources (priority order)
       const given = (claimObj && (claimObj.firstName || claimObj.given_name)) || payload.given_name || "";
       const family = (claimObj && (claimObj.lastName || claimObj.family_name)) || payload.family_name || "";
 
-      // Fallback to payload.name ONLY if it looks like a real name (not an email)
       const rawName = payload.name ? String(payload.name).trim() : "";
       const canUseNameFallback = rawName && !isEmailLike(rawName) && rawName.includes(" ");
 
@@ -1622,22 +2038,18 @@ if (selectedSlot && driveTime > 0) {
       if (idToken) {
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
-          // Valid token exists - user is authenticated
           try {
             portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-            // Merge with localStorage profile if exists
             const local = loadProfileFromLocalStorage();
             if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-            // Try to enrich from userinfo (don't let this block login)
             try {
               portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
             } catch (e) {
               console.warn("Could not enrich profile from userinfo:", e);
             }
 
-            // Track login
             try {
               if (typeof gtag === "function") gtag("event", "client_portal_session_restored");
             } catch (e) {}
@@ -1645,25 +2057,24 @@ if (selectedSlot && driveTime > 0) {
             console.error("Error building profile:", e);
           }
           
-          // ALWAYS hide login overlay if we have a valid token
           hideLoginOverlay();
           hydrateProfileUI();
           renderCalendar();
           
+          // Load appointments in background
+          loadUpcomingAppointments();
+          
           return true;
         } else {
-          // Token expired - clear it
           localStorage.removeItem("rnr_id_token");
           localStorage.removeItem("rnr_auth_token");
         }
       }
       
-      // No valid auth - show login overlay and initialize Lock
       showLoginOverlay();
       initAuth0Lock();
       return false;
     }
-
     // =========================================================
     // AUTH0 LOCK INITIALIZATION
     // =========================================================
@@ -1694,15 +2105,12 @@ if (selectedSlot && driveTime > 0) {
         closable: false
       });
 
-      // Show the Lock widget
       lock.show();
 
-      // Handle successful authentication
       lock.on('authenticated', async function(authResult) {
         hideAuthError();
         
         try {
-          // Store tokens
           if (authResult && authResult.accessToken) {
             localStorage.setItem('rnr_auth_token', authResult.accessToken);
           }
@@ -1710,28 +2118,24 @@ if (selectedSlot && driveTime > 0) {
             localStorage.setItem('rnr_id_token', authResult.idToken);
           }
 
-          // Build profile from ID token
           const payload = decodeJwtPayload(authResult.idToken);
           portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-          // Merge with localStorage profile
           const local = loadProfileFromLocalStorage();
           if (local) portalProfile = { ...(portalProfile || {}), ...local };
 
-          // Try to enrich from userinfo
           portalProfile = await tryEnrichProfileFromUserInfo(authResult.accessToken, portalProfile);
 
-          // Track login success
           try {
             if (typeof gtag === "function") gtag("event", "client_portal_login_success");
             if (typeof fbq === "function") fbq("trackCustom", "ClientPortalLoginSuccess");
           } catch (e) {}
 
-          // Hide login overlay with slight delay for smooth transition
           setTimeout(() => {
             hideLoginOverlay();
             hydrateProfileUI();
             renderCalendar();
+            loadUpcomingAppointments();
             showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`);
           }, 300);
 
@@ -1741,7 +2145,6 @@ if (selectedSlot && driveTime > 0) {
         }
       });
 
-      // Handle auth errors
       lock.on('authorization_error', function(err) {
         console.error('Auth0 authorization_error:', err);
         showAuthError("Sign in failed. Please check your email/password and try again.");
@@ -1758,25 +2161,22 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     async function handleLogout() {
       clearPortalState();
-      // Clear tokens
       try {
         localStorage.removeItem("rnr_portal_profile");
         localStorage.removeItem("rnr_id_token");
         localStorage.removeItem("rnr_auth_token");
       } catch(e) {}
 
-      // Reset state
       portalProfile = null;
+      upcomingAppointments = [];
+      cancelledAppointments = [];
       
-      // Show login overlay and reinitialize Lock
       showLoginOverlay();
       
-      // Destroy existing Lock instance and create new one
       if (lock) {
         try { lock.hide(); } catch(e) {}
       }
       
-      // Clear the container and reinitialize
       document.getElementById("auth0-lock-container").innerHTML = "";
       initAuth0Lock();
       
@@ -1868,13 +2268,12 @@ if (selectedSlot && driveTime > 0) {
       ].join("|");
     }
 
-        function parseAvailabilityResponse(data) {
+    function parseAvailabilityResponse(data) {
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
 
       if (!data) return;
 
-      // MOBILE FIX: Check multiple possible field names for metadata
       availabilityMeta.maxDriveTimeMinutes = Number(
         data.maxDriveTimeMinutes || data.max_drive_time_minutes ||
         data.driveTimeMinutes || data.drive_time_minutes || 0
@@ -1884,7 +2283,6 @@ if (selectedSlot && driveTime > 0) {
         data.travel_buffer_minutes || data.travelBufferMinutes || 0
       );
 
-      // Find dates array in response
       var datesArray = null;
       if (data.dates && Array.isArray(data.dates)) datesArray = data.dates;
       else if (Array.isArray(data)) datesArray = data;
@@ -1898,7 +2296,6 @@ if (selectedSlot && driveTime > 0) {
         var rawDate = day.date || day.day || day.dateStr || day.date_str;
         if (!rawDate) return;
 
-        // MOBILE FIX: Normalize date key
         var normalizedDate = normalizeDateKey(rawDate);
         if (!normalizedDate) return;
 
@@ -1931,7 +2328,6 @@ if (selectedSlot && driveTime > 0) {
           renderCalendar();
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           savePortalState();
-          // Restore date selection (if any) after availability is loaded
           const s = loadPortalState();
           if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr);
           return;
@@ -1965,7 +2361,6 @@ if (selectedSlot && driveTime > 0) {
         setCalendarLoading(false);
       }
     }
-
 
     function renderCalendar() {
       const monthLabelEl = document.getElementById("calendar-month-label");
@@ -2060,18 +2455,14 @@ if (selectedSlot && driveTime > 0) {
 
       usable.forEach(slot => {
         const btn = document.createElement("button");
-        // Persistable slot identifiers for refresh recovery
         try {
           btn.setAttribute("data-slot-id", String(slot.start || slot.label || ""));
           btn.setAttribute("data-slot-raw", JSON.stringify(slot));
         } catch (e) {}
         btn.type = "button";
-        // Base class: we add 'time-slot-btn' and specific styles for available/booked below
         btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
         
-        // Clean label: strip EST, (Booked)
         const labelRaw = formatTimeLabel(slot); 
-        // formatTimeLabel returns lower case.
         const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
 
         if (isSlotAvailable(slot)) {
@@ -2092,6 +2483,8 @@ if (selectedSlot && driveTime > 0) {
       container.classList.toggle("hidden", !anyAvailable);
 
       if (typeof lucide !== "undefined") lucide.createIcons();
+      
+      maybeAutoSelectRestoredSlot(dateStr);
     }
 
     function selectTimeSlot(slot, btnElement) {
@@ -2101,6 +2494,7 @@ if (selectedSlot && driveTime > 0) {
       btnElement.classList.add("time-slot-selected");
 
       updateSummary();
+      savePortalState();
     }
 
     function prevMonth() {
@@ -2158,7 +2552,6 @@ if (selectedSlot && driveTime > 0) {
       btn.disabled = true;
       btn.classList.add("btn-disabled");
 
-      // Show the booking modal with cycling messages
       showBookingModal();
 
       try {
@@ -2175,27 +2568,23 @@ if (selectedSlot && driveTime > 0) {
 
         const result = await res.json().catch(() => ({}));
 
-        // Show success in modal
         hideBookingModal(true);
 
         console.log("Booking confirmed:", result);
 
-        // Clear the cache so fresh data loads next time
         availabilityCache.clear();
 
-        // Wait for modal to close, then reset the form to default state
         setTimeout(() => {
           resetBookingForm();
+          loadUpcomingAppointments();
           showToast("Success", "Your appointment has been confirmed!");
         }, 2200);
 
       } catch (e) {
         console.error(e);
         
-        // Show error in modal
         hideBookingModal(false, "Unable to complete booking");
 
-        // Re-enable button after modal closes
         setTimeout(() => {
           btn.disabled = false;
           btn.classList.remove("btn-disabled");
@@ -2225,12 +2614,10 @@ if (selectedSlot && driveTime > 0) {
     async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Mobile menu
       const mm = document.getElementById("mobile-menu");
       document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
       document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
 
-      // Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
 
@@ -2239,7 +2626,6 @@ if (selectedSlot && driveTime > 0) {
         const tab = btn.dataset.tab;
         if (!tab) return;
         if (btn.disabled) {
-          // btn.addEventListener("click", () => showToast("Coming Soon", "That feature is not available yet."));
           return;
         }
         btn.addEventListener("click", () => switchTab(tab));
@@ -2263,7 +2649,7 @@ if (selectedSlot && driveTime > 0) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
         } else {
           updateAvailabilityStatus("Now choose a duration to load live availability.", false);
-        savePortalState();
+          savePortalState();
         }
       });
 
@@ -2290,17 +2676,23 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("logout-btn").addEventListener("click", handleLogout);
       document.getElementById("logout-btn-mobile").addEventListener("click", handleLogout);
 
-      // Initial tab
-      switchTab("dashboard");
+      // Cancel modal buttons
+      document.getElementById("cancel-modal-close").addEventListener("click", hideCancelModal);
+      document.getElementById("cancel-modal-confirm").addEventListener("click", confirmCancellation);
 
-      // Check for existing authentication - this will either show login or load the portal
+      // Contact modal button
+      document.getElementById("contact-modal-close").addEventListener("click", hideContactModal);
+
+      // Initial tab - appointments
+      switchTab("appointments");
+
+      // Check for existing authentication
       await checkExistingAuth();
 
-      // After auth/profile init, restore prior in-progress booking selections (if any)
+      // Restore prior in-progress booking selections
       try { await restorePortalStateIfPossible(); } catch (e) {}
     }
 
-    // Run on DOM ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
