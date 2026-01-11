@@ -2626,47 +2626,67 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
             }
             
     function getTravelCanonicalFromSlot(slot) {
-        const t =
-            (slot && (slot.travel || slot.travelInfo || slot.travel_canonical || slot.travelCanonical || slot.travel_canonical_v1)) ||
-            {};
+        // v7 FIX: trust server-side travel fields computed per-slot by the n8n workflow.
+        // We still return a few alias fields (driveMins/driveTimeMinutes/travelFeeCents) so the rest
+        // of this file remains backward-compatible.
 
-        // Minutes: prefer *base-to-client* fields first, then fall back to generic drive-time fields.
+        if (!slot) {
+            return {
+                minutes: 0,
+                feeCents: 0,
+                requiresCard: false,
+                travelFeeApplies: false,
+                // aliases
+                driveMins: 0,
+                driveTimeMinutes: 0,
+                travelFeeCents: 0,
+            };
+        }
+
+        // Prefer v7 fields directly on the slot; allow snake_case and nested travel objects defensively.
         const minutesRaw =
-            (t.baseToClientDriveTimeMinutes ?? t.base_to_client_drive_time_minutes ?? t.baseToClientDriveMinutes ?? t.base_to_client_drive_minutes ??
-             slot?.baseToClientDriveTimeMinutes ?? slot?.base_to_client_drive_time_minutes ??
-             t.minutes ?? t.driveTimeMinutes ?? t.drive_time_minutes ??
-             slot?.driveTimeMinutes ?? slot?.drive_time_minutes ??
-             slot?.maxDriveTimeMinutes ?? slot?.max_drive_time_minutes ?? 0);
+            (slot.driveTimeMinutes ?? slot.drive_time_minutes ??
+             slot.travel?.driveTimeMinutes ?? slot.travel?.drive_time_minutes ?? 0);
+
+        const feeCentsRaw =
+            (slot.travelFeeCents ?? slot.travel_fee_cents ??
+             slot.travel?.travelFeeCents ?? slot.travel?.travel_fee_cents ?? 0);
+
+        const requiresCard =
+            !!(slot.requiresCard ?? slot.requires_card ??
+               slot.travel?.requiresCard ?? slot.travel?.requires_card ?? false);
 
         const minutes = Math.max(0, Math.round(Number(minutesRaw) || 0));
+        const feeCents = Math.max(0, Math.round(Number(feeCentsRaw) || 0));
 
-        // Fee (cents): prefer explicit cents; otherwise allow dollars; otherwise derive from minutes.
-        const feeCentsRaw =
-            (t.feeCents ?? t.fee_cents ?? t.travelFeeCents ?? t.travel_fee_cents ??
-             slot?.travelFeeCents ?? slot?.travel_fee_cents ?? null);
+        const travelFeeApplies =
+            !!(slot.travelFeeApplies ?? slot.travel_fee_applies ??
+               slot.travel?.travelFeeApplies ?? slot.travel?.travel_fee_applies ??
+               (feeCents > 0));
 
-        let feeCents = Number(feeCentsRaw);
-
-        if (!Number.isFinite(feeCents)) {
-            const dollarsRaw =
-                (t.travelFee ?? t.travel_fee ?? t.feeDollars ?? t.fee_dollars ??
-                 slot?.travelFee ?? slot?.travel_fee ?? 0);
-
-            const dollars = Number(dollarsRaw) || 0;
-            feeCents = Math.round(dollars * 100);
+        // Debug logging (safe to leave in; helps trace _debug fields from workflow)
+        if (typeof console !== 'undefined' && slot && slot._debug) {
+            console.log('🚗 Travel info for slot:', {
+                start: slot.start,
+                minutes,
+                feeCents,
+                requiresCard,
+                travelFeeApplies,
+                _debug: slot._debug,
+            });
         }
 
-        if (!Number.isFinite(feeCents) || feeCents < 0) {
-            let dollars = 0;
-            if (minutes > 35 && minutes < 45) dollars = 20;
-            else if (minutes >= 45 && minutes < 60) dollars = 40;
-            else if (minutes >= 60 && minutes < 120) dollars = 100;
-            feeCents = Math.round(dollars * 100);
-        }
+        return {
+            minutes,
+            feeCents,
+            requiresCard,
+            travelFeeApplies,
 
-        const requiresCard = !!(t.requiresCard ?? t.requires_card ?? slot?.requiresCard ?? slot?.requires_card ?? false);
-
-        return { minutes, feeCents, requiresCard };
+            // aliases for older call-sites in this file
+            driveMins: minutes,
+            driveTimeMinutes: minutes,
+            travelFeeCents: feeCents,
+        };
     }
 
     function calculateAndShowTravelCharge() {
@@ -2846,7 +2866,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
 
                 // Travel (canonical from backend slot data; do not compute client-side)
                 const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
-                const driveTimeMinutes = travelInfo.driveMins ?? null;
+                const driveTimeMinutes = (travelInfo.minutes ?? travelInfo.driveMins ?? travelInfo.driveTimeMinutes ?? null);
                 const travelFeeCents = travelInfo.feeCents ?? 0;
                 const travelCharge = (travelFeeCents || 0) / 100;
                 const requiresPayment = !!travelInfo.requiresCard;
