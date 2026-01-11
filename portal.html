@@ -744,30 +744,35 @@
 
   
 
-  <!-- HEADER HERO -->
-  <header id="portal-banner" class="header-hero portal-banner pt-6 pb-5 border-b border-brand-gold/20">
+    <!-- HEADER HERO -->
+  <header class="header-hero pt-10 pb-10 border-b border-brand-gold/20">
     <div class="container mx-auto px-6 max-w-6xl">
-      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <!-- Return to site (small, top-left) -->
+      <a href="/" class="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-brand-gold/80 hover:text-brand-light transition-colors">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        Return to Site
+      </a>
+
+      <div class="mt-6 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div class="animate-fade-in-up">
-          <div class="text-[0.75rem] tracking-[0.45em] uppercase text-brand-dim">Relax & Renew RMT</div>
-          <h1 class="text-4xl md:text-5xl font-serif text-brand-gold mt-2">Client Portal</h1>
-          <p class="text-brand-dim mt-3 text-lg font-light">Rebook quickly using your saved profile.</p>
+          <div class="flex items-center gap-4">
+            <img
+              src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+              alt="Relax & Renew"
+              class="w-11 h-11 object-contain opacity-95"
+            />
+            <div>
+              <div class="text-[0.75rem] tracking-[0.45em] uppercase text-brand-dim">Relax & Renew RMT</div>
+              <h1 class="text-4xl md:text-5xl font-serif text-brand-gold mt-2">Client Portal</h1>
+              <p class="text-brand-dim mt-3 text-lg font-light">Rebook quickly using your saved profile.</p>
+            </div>
+          </div>
         </div>
-        <div class="flex items-center gap-3 animate-fade-in-up" style="animation-delay:0.1s">
-          <a href="/" class="btn-outline text-sm py-2 px-3 inline-flex items-center gap-2">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span>Return to Site</span>
-          </a>
-          <button id="mobile-menu-btn" type="button" class="lg:hidden btn-outline text-sm py-2 px-3 inline-flex items-center gap-2">
-            <i data-lucide="menu" class="w-5 h-5"></i>
-            <span>Menu</span>
-          </button>
-          <button id="profile-pill" type="button" class="pill inline-flex items-center gap-2">
-            <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
-            <span id="welcome-pill">—</span>
-            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold/70"></i>
-          </button>
-        </div>
+
+        <!-- Mobile menu button (kept for small screens) -->
+        <button id="mobile-menu-btn" class="lg:hidden self-start md:self-end text-brand-gold/90 border border-brand-gold/25 bg-brand-gold/5 px-3 py-2 hover:bg-brand-gold/10 hover:border-brand-gold/40 transition-all">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
       </div>
     </div>
   </header>
@@ -806,11 +811,6 @@
                 <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
               </button>
-              
-        <button class="sidebar-btn" data-tab="profile">
-          <i data-lucide="user-round" class="w-5 h-5"></i>
-          <span>Profile</span>
-        </button>
 <button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
