@@ -625,6 +625,25 @@
         padding: 1rem 1rem;
       }
     }
+
+    /* Pinned portal banner (replaces the removed top header) */
+    .portal-banner{
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 60;
+      background: linear-gradient(145deg, rgba(20,20,20,0.88), rgba(10,10,10,0.94));
+      border-bottom: 1px solid rgba(224,197,132,0.18);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .portal-banner::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(circle at top, rgba(224,197,132,0.08), transparent 55%);
+      pointer-events:none;
+    }
+    .portal-banner > *{ position: relative; }
+
 </style>
 
   <script>
@@ -695,36 +714,6 @@
   </div>
 
   <!-- NAV -->
-  <nav id="navbar" class="fixed-nav h-20 flex items-center">
-    <div class="container mx-auto px-6 flex justify-between items-center h-full">
-      <a href="index.html" class="flex items-center gap-3 no-underline group">
-        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
-        <div class="hidden md:flex flex-col">
-          <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
-          <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
-        </div>
-      </a>
-
-      <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
-        <a href="index.html#services" class="nav-link">Services</a>
-        <a href="index.html#pricing" class="nav-link">Pricing</a>
-        <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
-        <a href="index.html#area" class="nav-link">Service Area</a>
-        <a href="index.html#faq" class="nav-link">FAQ</a>
-        <a href="therapists.html" class="nav-link">Our Therapists</a>
-        <a href="membership.html" class="nav-link">Membership</a>
-        <span class="nav-link text-brand-gold font-bold border-b border-brand-gold">
-          <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
-          Client Portal
-        </span>
-      </div>
-
-      <button id="mobile-menu-btn" class="lg:hidden text-brand-gold p-2 hover:text-brand-light transition-colors">
-        <i data-lucide="menu" class="w-8 h-8"></i>
-      </button>
-    </div>
-  </nav>
-
   <!-- Mobile Menu Overlay -->
   <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
     <div class="p-6">
@@ -753,10 +742,10 @@
     </div>
   </div>
 
-  <div aria-hidden="true" class="h-20"></div>
+  <div aria-hidden="true" class="h-28"></div>
 
   <!-- HEADER HERO -->
-  <header class="header-hero pt-12 pb-10 border-b border-brand-gold/20">
+  <header id="portal-banner" class="header-hero portal-banner pt-6 pb-5 border-b border-brand-gold/20">
     <div class="container mx-auto px-6 max-w-6xl">
       <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div class="animate-fade-in-up">
@@ -765,10 +754,19 @@
           <p class="text-brand-dim mt-3 text-lg font-light">Rebook quickly using your saved profile.</p>
         </div>
         <div class="flex items-center gap-3 animate-fade-in-up" style="animation-delay:0.1s">
-          <div class="pill">
+          <a href="/" class="btn-outline text-sm py-2 px-3 inline-flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Return to Site</span>
+          </a>
+          <button id="mobile-menu-btn" type="button" class="lg:hidden btn-outline text-sm py-2 px-3 inline-flex items-center gap-2">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+            <span>Menu</span>
+          </button>
+          <button id="profile-pill" type="button" class="pill inline-flex items-center gap-2">
             <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
             <span id="welcome-pill">Loading profile…</span>
-          </div>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold/70"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -800,19 +798,13 @@
               <button class="sidebar-btn" data-tab="dashboard">
                 <i data-lucide="calendar-plus" class="w-5 h-5 text-brand-gold"></i>
                 <span>Rebook</span>
+              </button><button class="sidebar-btn" data-tab="history">
+                <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
+                <span>History</span>
               </button>
               <button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
-                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
-              </button>
-              <button class="sidebar-btn" data-tab="history">
-                <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
-                <span>History</span>
-              </button>
-              <button class="sidebar-btn" data-tab="profile" disabled>
-                <i data-lucide="settings" class="w-5 h-5 text-brand-dim"></i>
-                <span>Profile</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <hr class="divider my-3">
@@ -1252,6 +1244,49 @@
       </button>
     </div>
   </div>
+  
+  <!-- Profile Modal -->
+  <div id="profile-modal-overlay" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+    <div class="relative w-full max-w-lg glass-panel p-6 border border-gold/25">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <div class="text-xl font-semibold text-gold">Profile</div>
+          <div class="text-sm text-gold/70">Viewing only — editing coming soon</div>
+        </div>
+
+        <button id="profile-modal-close" type="button" class="btn-outline py-2 px-3 text-sm inline-flex items-center gap-2">
+          <i data-lucide="x" class="w-4 h-4"></i>
+          <span>Close</span>
+        </button>
+      </div>
+
+      <div class="mt-5 grid gap-3">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-gold/70 text-sm">First name</span>
+          <span id="profile-first-name" class="text-gold text-sm font-semibold"></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-gold/70 text-sm">Last name</span>
+          <span id="profile-last-name" class="text-gold text-sm font-semibold"></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-gold/70 text-sm">Email</span>
+          <span id="profile-email" class="text-gold text-sm font-semibold"></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-gold/70 text-sm">Location</span>
+          <span id="profile-location" class="text-gold text-sm font-semibold text-right"></span>
+        </div>
+      </div>
+
+      <button id="profile-modal-close-2" type="button" class="w-full mt-6 btn-outline py-2 text-sm">
+        Close
+      </button>
+    </div>
+  </div>
+
   <script>
     // =========================================================
     // STATE
@@ -1479,9 +1514,9 @@
         timeZone: "America/Toronto"
       });
       
-      const durationMin = Math.round((endDate - startDate) / 60000);
-      
-      const hoursUntil = (startDate - new Date()) / (1000 * 60 * 60);
+      const durationMinRaw = Math.round((endDate - startDate) / 60000);
+        const durationMin = Math.max(0, durationMinRaw - STATIC_SETUP_MINUTES);
+        const hoursUntil = (startDate - new Date()) / (1000 * 60 * 60);
       const isWithin12Hours = hoursUntil < 12 && hoursUntil > 0;
       const isPast = hoursUntil <= 0;
       
@@ -2740,8 +2775,25 @@ driveTimeMinutes) {
       if (typeof lucide !== "undefined") lucide.createIcons();
 
       const mm = document.getElementById("mobile-menu");
-      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
-      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+      const mmBtn = document.getElementById("mobile-menu-btn");
+      const mmClose = document.getElementById("mobile-menu-close");
+      if (mm && mmBtn) mmBtn.addEventListener("click", () => mm.classList.add("open"));
+      if (mm && mmClose) mmClose.addEventListener("click", () => mm.classList.remove("open"));
+
+      // Profile (view-only)
+      const profileOverlay = document.getElementById("profile-modal-overlay");
+      const profilePill = document.getElementById("profile-pill");
+      const profileClose = document.getElementById("profile-modal-close");
+      const profileClose2 = document.getElementById("profile-modal-close-2");
+      const closeProfile = () => profileOverlay?.classList.add("hidden");
+      const openProfile = () => profileOverlay?.classList.remove("hidden");
+
+      profilePill?.addEventListener("click", openProfile);
+      profileClose?.addEventListener("click", closeProfile);
+      profileClose2?.addEventListener("click", closeProfile);
+      profileOverlay?.addEventListener("click", (e) => {
+        if (e.target === profileOverlay || e.target === profileOverlay.firstElementChild) closeProfile();
+      });
 
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
