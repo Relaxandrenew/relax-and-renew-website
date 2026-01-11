@@ -515,6 +515,26 @@
             background: rgba(0,0,0,0.35) !important;
             border-color: rgba(224,197,132,0.2) !important;
         }
+        /* Custom Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(224, 197, 132, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(224, 197, 132, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(224, 197, 132, 0.5);
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(224, 197, 132, 0.3) rgba(224, 197, 132, 0.05);
+        }
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -1363,6 +1383,13 @@ function fillAddressFromPlace(place) {
     
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
+        <!-- Close button outside the card -->
+        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
         <div class="booking-modal-card">
             <div id="booking-modal-spinner" class="booking-spinner"></div>
 
@@ -1581,6 +1608,20 @@ function fillAddressFromPlace(place) {
       }, 3000);
     }
         // ---------------- END BOOKING CONFIRMATION MODAL ----------------
+
+        // Wire up the booking modal close button
+        (function() {
+            const closeBtn = document.getElementById("booking-modal-close-btn");
+            if (closeBtn) {
+                closeBtn.addEventListener("click", function() {
+                    const overlay = document.getElementById("booking-modal-overlay");
+                    if (overlay) {
+                        overlay.classList.remove("active");
+                        document.body.style.overflow = "";
+                    }
+                });
+            }
+        })();
 
         function toDateStr(date) {
             const y = date.getFullYear();
