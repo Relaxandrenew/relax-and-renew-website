@@ -628,14 +628,14 @@
 
     /* Pinned portal banner (replaces the removed top header) */
     .portal-banner{
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 60;
+      position: relative;
+    z-index: 60;
       background: linear-gradient(145deg, rgba(20,20,20,0.88), rgba(10,10,10,0.94));
       border-bottom: 1px solid rgba(224,197,132,0.18);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-    }
+    
+    margin-bottom: 1.25rem;}
     .portal-banner::before{
       content:"";
       position:absolute; inset:0;
@@ -742,7 +742,7 @@
     </div>
   </div>
 
-  <div aria-hidden="true" class="h-28"></div>
+  
 
   <!-- HEADER HERO -->
   <header id="portal-banner" class="header-hero portal-banner pt-6 pb-5 border-b border-brand-gold/20">
@@ -764,7 +764,7 @@
           </button>
           <button id="profile-pill" type="button" class="pill inline-flex items-center gap-2">
             <i data-lucide="user" class="w-4 h-4 text-brand-gold"></i>
-            <span id="welcome-pill">Loading profile…</span>
+            <span id="welcome-pill">—</span>
             <i data-lucide="chevron-down" class="w-4 h-4 text-brand-gold/70"></i>
           </button>
         </div>
@@ -786,6 +786,10 @@
               <div class="flex-1 min-w-0">
                 <div class="text-[0.65rem] text-brand-dim uppercase tracking-widest">Welcome back</div>
                 <div class="text-brand-light font-serif text-sm leading-tight truncate" id="nav-user-name">—</div>
+                <button type="button" class="mt-1 inline-flex items-center gap-2 text-[11px] font-medium tracking-[0.28em] uppercase text-brand-gold/70 hover:text-brand-gold focus:outline-none" onclick="switchTab('profile');">
+                  <i data-lucide="id-card" class="w-4 h-4"></i>
+                  View Profile
+                </button>
               </div>
             </div>
 
@@ -802,7 +806,12 @@
                 <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
               </button>
-              <button class="sidebar-btn" data-tab="membership" disabled>
+              
+        <button class="sidebar-btn" data-tab="profile">
+          <i data-lucide="user-round" class="w-5 h-5"></i>
+          <span>Profile</span>
+        </button>
+<button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
@@ -2037,9 +2046,31 @@ driveTimeMinutes) {
     // =========================================================
     function hydrateProfileUI() {
       document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
-      document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
+      document.getElementById("welcome-pill").textContent = (portalProfile?.firstName || portalProfile?.first_name || portalProfile?.email || "—");
 
-      const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
+      
+      // Profile tab (read-only)
+      const elFirst = document.getElementById("profile-first");
+      const elLast = document.getElementById("profile-last");
+      const elEmail = document.getElementById("profile-email");
+      const elLoc = document.getElementById("profile-location");
+
+      const pfFirst = portalProfile?.firstName || portalProfile?.first_name || "—";
+      const pfLast = portalProfile?.lastName || portalProfile?.last_name || "—";
+      const pfEmail = portalProfile?.email || "—";
+      const pfLoc =
+        portalProfile?.location ||
+        portalProfile?.address ||
+        portalProfile?.home_address ||
+        portalProfile?.suburb ||
+        portalProfile?.city ||
+        "—";
+
+      if (elFirst) elFirst.textContent = pfFirst;
+      if (elLast) elLast.textContent = pfLast;
+      if (elEmail) elEmail.textContent = pfEmail;
+      if (elLoc) elLoc.textContent = pfLoc;
+const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
       document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
       document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
