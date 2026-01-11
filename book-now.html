@@ -2295,21 +2295,39 @@ container.appendChild(groupRow);
                     return;
                 }
 
-                const data = await res.json();
+                const raw = await res.json();
+                const data = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
                 console.log('📥 Response received:', data);
                 console.log('📊 Response structure check:');
-                console.log('  - Has dates property?', 'dates' in data);
-                console.log('  - Is array?', Array.isArray(data));
-                console.log('  - dates.length:', data.dates?.length || 0);
-                if (data.dates && data.dates.length > 0) {
+                console.log('  - Raw is array?', Array.isArray(raw));
+                console.log('  - Has dates property?', data && typeof data === 'object' && 'dates' in data);
+                console.log('  - dates.length:', data?.dates?.length || 0);
+                if (data?.dates && data.dates.length > 0) {
                     console.log('  - First date sample:', data.dates[0]);
                     console.log('  - First date has slots?', data.dates[0]?.slots?.length || 0);
                 }
-                
-                // Store max drive time for travel charge calculation
-                window.__maxDriveTimeMinutes = data.maxDriveTimeMinutes || 0;
-                console.log('🚗 Max drive time:', window.__maxDriveTimeMinutes, 'minutes');
-                
+
+                // Store max drive time (informational only; do NOT use this for charging)
+                const inferredMaxDrive = (() => {
+                    const explicit =
+                        Number(data?.maxDriveTimeMinutes) ||
+                        Number(data?.travel?.maxDriveTimeMinutes) ||
+                        0;
+
+                    if (explicit > 0) return explicit;
+
+                    const mins = (data?.dates || [])
+                        .flatMap(d => (d?.slots || []).map(s =>
+                            Number(s?.driveTimeMinutes ?? s?.drive_time_minutes ?? s?.travel?.driveTimeMinutes ?? s?.travel?.drive_time_minutes ?? 0)
+                        ))
+                        .filter(n => Number.isFinite(n) && n > 0);
+
+                    return mins.length ? Math.max(...mins) : 0;
+                })();
+
+                window.__maxDriveTimeMinutes = inferredMaxDrive;
+                console.log('🚗 Max drive time (informational):', window.__maxDriveTimeMinutes, 'minutes');
+
                 setAvailabilityFromResponse(data);
 
                 const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
@@ -2607,69 +2625,149 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
-            function calculateAndShowTravelCharge() {
-                const warningEl = document.getElementById('travel-charge-warning');
-                const textEl = document.getElementById('travel-charge-text');
-                const stripeSection = document.getElementById('stripe-payment-section');
-                
-                // DEBUG: Log selected slot details
-                console.log('🔍 Selected Slot Full Object:', selectedSlot);
-                console.log('🔍 Slot Drive Time:', selectedSlot?.driveTimeMinutes);
-                console.log('🔍 Window Max Drive Time:', window.__maxDriveTimeMinutes);
-                
-                // Get drive time from SELECTED SLOT (most accurate)
-                const driveTimeMinutes = selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0;
-                
-                console.log('💳 Calculating travel charge for drive time:', driveTimeMinutes, 'minutes');
-                console.log('   From slot:', selectedSlot?.driveTimeMinutes);
-                console.log('   From max:', window.__maxDriveTimeMinutes);
-                
-                let requiresPayment = false;
-                
-                // Apply travel charges based on actual drive time
-                if (driveTimeMinutes >= 120) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes / 2+ hours), a <strong class="text-amber-400">$200 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 60) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$100 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 45) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$40 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 36) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$20 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else {
-                    warningEl.classList.add('hidden');
-                }
-                
-                // Show/hide Stripe payment section
-                if (requiresPayment) {
-                    stripeSection.classList.remove('hidden');
-                    initializeStripe();
-                    // Pre-fill Canadian postal code (if available from Step 1)
-                    const postalEl = document.getElementById('stripe-postal-code');
-                    if (postalEl) {
-                        const p = window.__selectedAddress?.postal_code || '';
-                        postalEl.value = normalizeCanadianPostal(p);
-                    }
-                } else {
-                    stripeSection.classList.add('hidden');
-                }
+    function getTravelCanonicalFromSlot(slot) {
+        const pickNumber = (...vals) => {
+            for (const v of vals) {
+                const n = Number(v);
+                if (Number.isFinite(n)) return n;
             }
+            return null;
+        };
 
-            function closeClientDetailsModal() {
-                const modal = document.getElementById('client-details-modal');
-                if (modal) modal.classList.add('hidden');
+        const pickBoolean = (...vals) => {
+            for (const v of vals) {
+                if (typeof v === 'boolean') return v;
             }
+            return null;
+        };
 
-            document.getElementById('client-modal-close').addEventListener('click', closeClientDetailsModal);
+        if (!slot || typeof slot !== 'object') {
+            return { feeCents: 0, driveMins: null, requiresCard: false };
+        }
 
-            // Confirmation modal functions
+        // Prefer canonical, backend-supplied fields (cents), then fall back to dollars, then to drive-time tiers.
+        let feeCents = pickNumber(
+            slot.travel_fee_cents,
+            slot.travelFeeCents,
+            slot.travel_fee_total_cents,
+            slot.travelFeeTotalCents,
+            slot.travel_charge_cents,
+            slot.travelChargeCents,
+            slot.travel?.fee_cents,
+            slot.travel?.feeCents,
+            slot.travel?.fee_total_cents,
+            slot.travel?.feeTotalCents,
+            slot.travel?.charge_cents,
+            slot.travel?.chargeCents
+        );
+
+        const feeDollars = pickNumber(
+            slot.travel_charge,
+            slot.travelCharge,
+            slot.travel_fee,
+            slot.travelFee,
+            slot.travel?.fee,
+            slot.travel?.charge
+        );
+
+        if (feeCents == null && feeDollars != null) {
+            feeCents = Math.round(feeDollars * 100);
+        }
+
+        const driveMins = pickNumber(
+            slot.drive_time_minutes,
+            slot.driveTimeMinutes,
+            slot.travel?.drive_time_minutes,
+            slot.travel?.driveTimeMinutes
+        );
+
+        let requiresCard = pickBoolean(
+            slot.requires_card,
+            slot.requiresCard,
+            slot.travel?.requires_card,
+            slot.travel?.requiresCard
+        );
+
+        // Last-resort fallback: preserve existing tier logic from drive-time minutes.
+        if (feeCents == null && driveMins != null) {
+            let dollars = 0;
+            if (driveMins > 35 && driveMins < 45) dollars = 20;
+            else if (driveMins >= 45 && driveMins < 60) dollars = 40;
+            else if (driveMins >= 60 && driveMins < 120) dollars = 100;
+            else if (driveMins >= 120) dollars = 200;
+            feeCents = Math.round(dollars * 100);
+        }
+
+        if (requiresCard == null && driveMins != null) {
+            requiresCard = driveMins > 45;
+        }
+
+        return {
+            feeCents: Number.isFinite(feeCents) ? feeCents : 0,
+            driveMins: Number.isFinite(driveMins) ? driveMins : null,
+            requiresCard: !!requiresCard,
+        };
+    }
+
+    function calculateAndShowTravelCharge() {
+        const warningBox = document.getElementById("travel-charge-warning");
+        const warningText = document.getElementById("travel-charge-text");
+        const stripeSection = document.getElementById("stripe-payment-section");
+
+        // Compute travel requirements strictly from backend slot data, when a slot is selected.
+        // If no slot is selected yet, we treat any drive-time info as informational only (no required payment).
+        const hasSelectedSlot = !!selectedSlot;
+        const info = hasSelectedSlot
+            ? getTravelCanonicalFromSlot(selectedSlot)
+            : (() => {
+                const dm = Number(window.__maxDriveTimeMinutes) || 0;
+                let dollars = 0;
+                if (dm > 35 && dm < 45) dollars = 20;
+                else if (dm >= 45 && dm < 60) dollars = 40;
+                else if (dm >= 60 && dm < 120) dollars = 100;
+                else if (dm >= 120) dollars = 200;
+                return {
+                    feeCents: Math.round(dollars * 100),
+                    driveMins: dm || null,
+                    requiresCard: false, // informational only until a slot is chosen
+                };
+            })();
+
+        const travelCharge = (info.feeCents || 0) / 100;
+        const driveTimeMinutes = info.driveMins || 0;
+        const requiresPayment = hasSelectedSlot ? !!info.requiresCard : false;
+
+        // Show travel warning if any travel fee applies.
+        if (travelCharge > 0) {
+            warningBox.classList.remove("hidden");
+            if (requiresPayment) {
+                warningText.textContent =
+                    `Due to extended travel time, a travel fee of $${travelCharge.toFixed(2)} applies and we require a card on file to proceed.`;
+            } else if (!hasSelectedSlot && driveTimeMinutes > 0) {
+                warningText.textContent =
+                    `A travel fee may apply based on the selected time slot (estimated up to $${travelCharge.toFixed(2)}). Select a time to confirm.`;
+            } else {
+                warningText.textContent =
+                    `A travel fee of $${travelCharge.toFixed(2)} applies due to travel distance/time.`;
+            }
+        } else {
+            warningBox.classList.add("hidden");
+        }
+
+        // Only require/collect a card when backend indicates it is required for the selected slot.
+        stripeSection.classList.toggle("hidden", !requiresPayment);
+
+        if (requiresPayment) {
+            initializeStripe();
+        }
+
+        return {
+            travelFeeCents: info.feeCents || 0,
+            travelCharge,
+            driveTimeMinutes,
+            requiresPayment,
+        };
+    }
             function showConfirmationModal(firstName, lastName, phone, email, dateStr, slot, travelCharge) {
                 const modal = document.getElementById('confirmation-modal');
                 
@@ -2785,21 +2883,23 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     return;
                 }
 
-                // Calculate travel charge
-                const driveTimeMinutes = (selectedSlot?.driveTimeMinutes ?? window.__maxDriveTimeMinutes ?? 0);
-                let travelCharge = 0;
-                if (driveTimeMinutes >= 120) travelCharge = 200;
-                else if (driveTimeMinutes >= 60) travelCharge = 100;
-                else if (driveTimeMinutes >= 45) travelCharge = 40;
-                else if (driveTimeMinutes >= 36) travelCharge = 20;
-                
-                // If travel charge applies, process Stripe payment
+                // Travel (canonical from backend slot data; do not compute client-side)
+                const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
+                const driveTimeMinutes = travelInfo.driveMins ?? null;
+                const travelFeeCents = travelInfo.feeCents ?? 0;
+                const travelCharge = (travelFeeCents || 0) / 100;
+                const requiresPayment = !!travelInfo.requiresCard;
+
+                // If backend requires a card on file for the selected slot, process Stripe setup
                 let paymentMethodId = null;
-                if (travelCharge > 0 && stripeCardElement) {
+                if (requiresPayment) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Saving Card on File...</span>';
                     
                     try {
+                        if (!stripeCardElement) {
+                            throw new Error('Payment details are required for this time slot. Please re-open the summary and try again.');
+                        }
                         // Ensure we collect a Canadian postal code (Stripe card element default label is "ZIP")
                         const postalInputEl = document.getElementById('stripe-postal-code');
                         const postalCandidate = (postalInputEl?.value || '').trim() || (window.__selectedAddress?.postal_code || '').trim();
@@ -2883,8 +2983,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     
                     // Travel charge info - GET FROM SLOT DATA
                     travel_charge: travelCharge,
-                    travel_fee_cents: Math.round((Number(travelCharge) || 0) * 100),
-                    drive_time_minutes: selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0,
+                    travel_fee_cents: Number.isFinite(Number(travelFeeCents)) ? Number(travelFeeCents) : Math.round((Number(travelCharge) || 0) * 100),
+                    drive_time_minutes: (driveTimeMinutes ?? 0),
                     stripe_payment_method_id: paymentMethodId
                 };
 
