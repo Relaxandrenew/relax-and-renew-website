@@ -1384,7 +1384,7 @@ function fillAddressFromPlace(place) {
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
         <!-- Close button outside the card -->
-        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close">
+        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="if(window.closeBookingModalOverlay){window.closeBookingModalOverlay();}else{var ov=document.getElementById('booking-modal-overlay');if(ov){ov.classList.remove('active');}document.body.style.overflow='';}">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1613,13 +1613,7 @@ function fillAddressFromPlace(place) {
         (function() {
             const closeBtn = document.getElementById("booking-modal-close-btn");
             if (closeBtn) {
-                closeBtn.addEventListener("click", function() {
-                    const overlay = document.getElementById("booking-modal-overlay");
-                    if (overlay) {
-                        overlay.classList.remove("active");
-                        document.body.style.overflow = "";
-                    }
-                });
+                closeBtn.addEventListener("click", function() { window.closeBookingModalOverlay && window.closeBookingModalOverlay(); });
             }
         })();
 
