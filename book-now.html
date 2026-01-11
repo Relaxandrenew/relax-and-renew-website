@@ -501,7 +501,68 @@
   animation: booking-success-pop 0.4s ease;
 }
 
-        /* End Booking Confirmation Modal */
+        
+/* Booking modal close button pinned outside scroll (desktop + mobile) */
+#booking-modal-close-btn{
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  right: calc(env(safe-area-inset-right, 0px) + 16px);
+  z-index: 320;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(224, 197, 132, 0.35);
+  background: rgba(0,0,0,0.45);
+  color: #E0C584;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: opacity .2s ease, transform .2s ease, background .2s ease, border-color .2s ease;
+}
+#booking-modal-overlay:not(.active) #booking-modal-close-btn{
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+}
+#booking-modal-overlay.active #booking-modal-close-btn{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+#booking-modal-close-btn:hover{
+  background: rgba(224, 197, 132, 0.08);
+  border-color: rgba(224, 197, 132, 0.65);
+}
+#booking-modal-close-btn svg{
+  width: 22px;
+  height: 22px;
+}
+
+/* Make the modal content scroll independently (X stays pinned) */
+.booking-modal-card{
+  max-height: min(82vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 28px;
+}
+@media (max-width: 520px){
+  .booking-modal-card{
+    max-height: 86vh;
+    padding: 24px 18px 28px;
+  }
+  #booking-modal-close-btn{
+    width: 42px;
+    height: 42px;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: calc(env(safe-area-inset-right, 0px) + 12px);
+  }
+}
+
+/* End Booking Confirmation Modal */
 
         /* Calendar: fully booked day number styling */
         .calendar-day-fully-booked {
@@ -1384,7 +1445,7 @@ function fillAddressFromPlace(place) {
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
         <!-- Close button outside the card -->
-        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="if(window.closeBookingModalOverlay){window.closeBookingModalOverlay();}else{var ov=document.getElementById('booking-modal-overlay');if(ov){ov.classList.remove('active');}document.body.style.overflow='';}">
+        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1504,6 +1565,32 @@ function fillAddressFromPlace(place) {
 
     let bookingMessageInterval = null;
 
+    // Close handler (used by X button + Esc). Works for desktop + mobile.
+    function closeBookingModalOverlay() {
+      const overlay = document.getElementById("booking-modal-overlay");
+      if (!overlay) return;
+
+      // Stop message cycling if still running
+      if (bookingMessageInterval) {
+        clearInterval(bookingMessageInterval);
+        bookingMessageInterval = null;
+      }
+
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+    window.closeBookingModalOverlay = closeBookingModalOverlay;
+
+    (function initBookingModalCloseButton(){
+      const btn = document.getElementById("booking-modal-close-btn");
+      if (btn) btn.addEventListener("click", closeBookingModalOverlay);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeBookingModalOverlay();
+      });
+    })();
+
+
+
     function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
       const spinner = document.getElementById("booking-modal-spinner");
@@ -1609,13 +1696,9 @@ function fillAddressFromPlace(place) {
     }
         // ---------------- END BOOKING CONFIRMATION MODAL ----------------
 
-        // Wire up the booking modal close button
-        (function() {
-            const closeBtn = document.getElementById("booking-modal-close-btn");
-            if (closeBtn) {
-                closeBtn.addEventListener("click", function() { window.closeBookingModalOverlay && window.closeBookingModalOverlay(); });
-            }
-        })();
+                // Booking modal close wiring is handled inside the booking modal block.
+
+;
 
         function toDateStr(date) {
             const y = date.getFullYear();
