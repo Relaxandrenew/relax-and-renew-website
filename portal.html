@@ -799,19 +799,20 @@
             </div>
 
             <div class="space-y-2">
-              <button class="sidebar-btn active" data-tab="appointments">
-                <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
-                <span>Upcoming</span>
+              <button class="sidebar-btn active" data-tab="dashboard">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-gold"></i>
+                <span>Dashboard</span>
                 <span id="appt-count-badge" class="appt-count-badge hidden">0</span>
               </button>
-              <button class="sidebar-btn" data-tab="dashboard">
+              <button class="sidebar-btn" data-tab="rebook">
                 <i data-lucide="calendar-plus" class="w-5 h-5 text-brand-gold"></i>
                 <span>Rebook</span>
-              </button><button class="sidebar-btn" data-tab="history">
+              </button>
+              <button class="sidebar-btn" data-tab="history">
                 <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
               </button>
-<button class="sidebar-btn" data-tab="membership" disabled>
+              <button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
@@ -827,81 +828,148 @@
 
         <!-- CONTENT -->
         <section>
-          <!-- UPCOMING APPOINTMENTS TAB -->
-          <div id="tab-appointments" class="tab-content animate-fade-in-up">
+          <!-- DASHBOARD TAB -->
+          <div id="tab-dashboard" class="tab-content animate-fade-in-up">
+            <!-- Welcome Header -->
             <div class="glass-panel p-6 mb-6">
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Upcoming Appointments</h2>
-                  <p class="muted mt-2 font-light">View and manage your scheduled sessions.</p>
+                  <h2 class="text-3xl font-serif text-brand-light">Welcome Back</h2>
+                  <p class="muted mt-2 font-light">Here's an overview of your account.</p>
                 </div>
-                <button onclick="switchTab('dashboard')" class="btn-outline text-sm py-2 px-4">
-                  <i data-lucide="plus" class="w-4 h-4"></i>
-                  Book New
-                </button>
-              </div>
-            </div>
-
-            <!-- Appointments Loading State -->
-            <div id="appointments-loading" class="space-y-4">
-              <div class="appointment-card">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div class="flex-1 space-y-3">
-                    <div class="skeleton h-6 w-48"></div>
-                    <div class="skeleton h-4 w-64"></div>
-                    <div class="skeleton h-4 w-32"></div>
-                  </div>
-                  <div class="skeleton h-8 w-24"></div>
-                </div>
-              </div>
-              <div class="appointment-card">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div class="flex-1 space-y-3">
-                    <div class="skeleton h-6 w-44"></div>
-                    <div class="skeleton h-4 w-56"></div>
-                    <div class="skeleton h-4 w-28"></div>
-                  </div>
-                  <div class="skeleton h-8 w-24"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Appointments List -->
-            <div id="appointments-list" class="space-y-4 hidden"></div>
-
-            <!-- No Appointments State -->
-            <div id="appointments-empty" class="hidden">
-              <div class="glass-panel p-8 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
-                  <i data-lucide="calendar-x" class="w-8 h-8 text-brand-gold/50"></i>
-                </div>
-                <h3 class="text-xl font-serif text-brand-light mb-2">No Upcoming Appointments</h3>
-                <p class="muted text-sm mb-6">You don't have any scheduled sessions at the moment.</p>
-                <button onclick="switchTab('dashboard')" class="btn-filled">
+                <button onclick="switchTab('rebook')" class="btn-filled text-sm py-2 px-4">
                   <i data-lucide="calendar-plus" class="w-4 h-4"></i>
-                  Book an Appointment
+                  Book New Appointment
                 </button>
               </div>
             </div>
 
-            <!-- Error State -->
-            <div id="appointments-error" class="hidden">
-              <div class="card-fancy p-6 border-red-500/30">
-                <div class="flex items-start gap-3">
-                  <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mt-0.5"></i>
-                  <div>
-                    <div class="font-bold text-brand-light">Unable to load appointments</div>
-                    <div class="muted mt-1 text-sm" id="appointments-error-message">Please try again or contact support.</div>
-                    <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-2 mt-3">
-                      <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                      Try Again
-                    </button>
+            <!-- Dashboard Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <!-- Quick Stats Card 1 -->
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Upcoming</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-upcoming-count">0</div>
+                <div class="muted text-xs mt-1">Scheduled appointments</div>
+              </div>
+
+              <!-- Quick Stats Card 2 -->
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Completed</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-completed-count">0</div>
+                <div class="muted text-xs mt-1">Past sessions</div>
+              </div>
+
+              <!-- Quick Stats Card 3 -->
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Location</div>
+                </div>
+                <div class="text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
+                <div class="muted text-xs mt-1">Service address</div>
+              </div>
+            </div>
+
+            <!-- Upcoming Appointments Section -->
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
+                  <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
+                  Upcoming Appointments
+                </h3>
+              </div>
+
+              <!-- Appointments Loading State -->
+              <div id="appointments-loading" class="space-y-4">
+                <div class="appointment-card">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="flex-1 space-y-3">
+                      <div class="skeleton h-6 w-48"></div>
+                      <div class="skeleton h-4 w-64"></div>
+                      <div class="skeleton h-4 w-32"></div>
+                    </div>
+                    <div class="skeleton h-8 w-24"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Appointments List -->
+              <div id="appointments-list" class="space-y-4 hidden"></div>
+
+              <!-- No Appointments State -->
+              <div id="appointments-empty" class="hidden">
+                <div class="text-center py-8">
+                  <div class="w-14 h-14 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                    <i data-lucide="calendar-x" class="w-7 h-7 text-brand-gold/50"></i>
+                  </div>
+                  <h3 class="text-lg font-serif text-brand-light mb-2">No Upcoming Appointments</h3>
+                  <p class="muted text-sm mb-4">You don't have any scheduled sessions.</p>
+                  <button onclick="switchTab('rebook')" class="btn-outline text-sm py-2 px-4">
+                    <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                    Book Now
+                  </button>
+                </div>
+              </div>
+
+              <!-- Error State -->
+              <div id="appointments-error" class="hidden">
+                <div class="card-fancy p-4 border-red-500/30">
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                    <div>
+                      <div class="font-bold text-brand-light">Unable to load appointments</div>
+                      <div class="muted mt-1 text-sm" id="appointments-error-message">Please try again or contact support.</div>
+                      <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-2 mt-3">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        Try Again
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Cancelled Appointments Collapsible -->
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onclick="switchTab('rebook')" class="card-fancy p-5 text-left hover:border-brand-gold/40 transition-all group">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded group-hover:bg-brand-gold/10 transition-all">
+                    <i data-lucide="calendar-plus" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <div class="font-serif text-lg text-brand-light">Rebook</div>
+                    <div class="muted text-sm">Schedule your next session</div>
+                  </div>
+                </div>
+              </button>
+
+              <button onclick="switchTab('history')" class="card-fancy p-5 text-left hover:border-brand-gold/40 transition-all group">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded group-hover:bg-brand-gold/10 transition-all">
+                    <i data-lucide="history" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <div class="font-serif text-lg text-brand-light">View History</div>
+                    <div class="muted text-sm">See past appointments</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Cancelled Appointments Collapsible (hidden, for data compatibility) -->
             <div id="cancelled-section" class="mt-8 hidden">
               <button id="cancelled-toggle" class="w-full flex items-center justify-between p-4 glass-panel hover:border-brand-gold/30 transition-all">
                 <div class="flex items-center gap-3">
@@ -915,8 +983,8 @@
             </div>
           </div>
 
-          <!-- Dashboard / Rebook -->
-          <div id="tab-dashboard" class="tab-content hidden animate-fade-in-up">
+          <!-- REBOOK TAB (was Dashboard/Rebook) -->
+          <div id="tab-rebook" class="tab-content hidden animate-fade-in-up">
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
@@ -939,7 +1007,7 @@
                       Please contact us to update your profile.
                     </div>
                     <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="mailto:info@relaxandrenew.ca">
+                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#92fbfcf4fdd2e0f7fef3eaf3fcf6e0f7fcf7e5bcf1f3">
                         <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
                       </a>
                     </div>
@@ -1100,23 +1168,13 @@
             </div>
 
             <!-- History Loading State -->
-            <div id="history-loading" class="space-y-4">
+            <div id="history-loading" class="space-y-4 hidden">
               <div class="appointment-card">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div class="flex-1 space-y-3">
                     <div class="skeleton h-6 w-48"></div>
                     <div class="skeleton h-4 w-64"></div>
                     <div class="skeleton h-4 w-32"></div>
-                  </div>
-                  <div class="skeleton h-8 w-24"></div>
-                </div>
-              </div>
-              <div class="appointment-card">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div class="flex-1 space-y-3">
-                    <div class="skeleton h-6 w-44"></div>
-                    <div class="skeleton h-4 w-56"></div>
-                    <div class="skeleton h-4 w-28"></div>
                   </div>
                   <div class="skeleton h-8 w-24"></div>
                 </div>
@@ -1134,6 +1192,17 @@
                 </div>
                 <h3 class="text-xl font-serif text-brand-light mb-2">No History Yet</h3>
                 <p class="muted text-sm">Completed or cancelled appointments will appear here.</p>
+              </div>
+            </div>
+
+            <!-- History Initial State (shown before data loads) -->
+            <div id="history-initial" class="">
+              <div class="glass-panel p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                  <i data-lucide="loader-2" class="w-8 h-8 text-brand-gold/50 animate-spin"></i>
+                </div>
+                <h3 class="text-xl font-serif text-brand-light mb-2">Loading History</h3>
+                <p class="muted text-sm">Please wait while we fetch your appointment history...</p>
               </div>
             </div>
 
@@ -1242,9 +1311,9 @@
           <i data-lucide="phone" class="w-5 h-5"></i>
           <span class="font-semibold tracking-wide">226-337-9064</span>
         </a>
-        <a href="mailto:info@relaxandrenew.ca?subject=Appointment%20Cancellation%20Request" class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-all rounded">
+        <a href="/cdn-cgi/l/email-protection#51383f373e1123343d3029303f3523343f34267f32306e2224333b3432256c1021213e383f253c343f2574636112303f32343d3d3025383e3f74636103342024342225" class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-all rounded">
           <i data-lucide="mail" class="w-5 h-5"></i>
-          <span class="font-semibold tracking-wide text-sm">info@relaxandrenew.ca</span>
+          <span class="font-semibold tracking-wide text-sm"><span class="__cf_email__" data-cfemail="ddb4b3bbb29dafb8b1bca5bcb3b9afb8b3b8aaf3bebc">[email&#160;protected]</span></span>
         </a>
       </div>
       
@@ -1296,7 +1365,7 @@
     </div>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -1385,6 +1454,7 @@
       document.getElementById("history-list")?.classList.add("hidden");
       document.getElementById("history-empty")?.classList.add("hidden");
       document.getElementById("history-error")?.classList.add("hidden");
+      document.getElementById("history-initial")?.classList.add("hidden");
 
       try {
         const res = await fetch(APPOINTMENTS_WEBHOOK_URL, {
@@ -1427,6 +1497,19 @@
           return bs - as;
         });
 
+        // Store last booking info for pre-loading availability
+        if (completedAppointments.length > 0 || upcomingAppointments.length > 0) {
+          const lastAppt = upcomingAppointments[0] || completedAppointments[0];
+          if (lastAppt) {
+            try {
+              localStorage.setItem("rnr_portal_last_treatment", JSON.stringify({
+                treatment_type: lastAppt.treatment_type || lastAppt.appointment_type?.name || "",
+                duration: lastAppt.duration || 60
+              }));
+            } catch(e) {}
+          }
+        }
+
         renderAppointments();
         renderHistory();
 
@@ -1440,6 +1523,7 @@
 
         // History error (if present)
         document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-initial")?.classList.add("hidden");
         document.getElementById("history-error")?.classList.remove("hidden");
         const hem = document.getElementById("history-error-message");
         if (hem) hem.textContent = e.message || "Please try again or contact support.";
@@ -1457,6 +1541,12 @@
 
       // Cancelled + Completed are moved to History tab now
       document.getElementById("cancelled-section")?.classList.add("hidden");
+
+      // Update dashboard stats
+      const dashUpcoming = document.getElementById("dash-upcoming-count");
+      const dashCompleted = document.getElementById("dash-completed-count");
+      if (dashUpcoming) dashUpcoming.textContent = upcomingAppointments.length;
+      if (dashCompleted) dashCompleted.textContent = completedAppointments.length;
 
       if (upcomingAppointments.length > 0) {
         badge.textContent = upcomingAppointments.length;
@@ -1482,9 +1572,11 @@
       const listEl = document.getElementById("history-list");
       const emptyEl = document.getElementById("history-empty");
       const errorEl = document.getElementById("history-error");
+      const initialEl = document.getElementById("history-initial");
 
       loadingEl?.classList.add("hidden");
       errorEl?.classList.add("hidden");
+      initialEl?.classList.add("hidden");
 
       if (!listEl || !emptyEl) return;
 
@@ -1771,6 +1863,9 @@
       savePortalState();
       updateSummary();
       savePortalState();
+
+      // Re-preload availability for next booking
+      setTimeout(() => preloadAvailabilityInBackground(), 500);
     }
 
     function showAuthError(msg) {
@@ -2074,6 +2169,13 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
       document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
       document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
+      // Dashboard location
+      const dashLoc = document.getElementById("dash-location");
+      if (dashLoc) {
+        const shortLoc = portalProfile?.city || portalProfile?.address?.split(",")[0] || "—";
+        dashLoc.textContent = shortLoc;
+      }
+
       const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
       document.getElementById("profile-missing").classList.toggle("hidden", !missing);
 
@@ -2221,6 +2323,108 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
     }
 
     // =========================================================
+    // PRELOAD AVAILABILITY IN BACKGROUND
+    // =========================================================
+    async function preloadAvailabilityInBackground() {
+      // Only preload if we have address info
+      const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
+      if (!addrOk) {
+        console.log("Cannot preload availability: missing address info");
+        return;
+      }
+
+      // Determine treatment to preload based on last booking
+      let preloadTreatment = "relaxation";
+      let preloadDuration = 60;
+
+      try {
+        const lastTreatmentRaw = localStorage.getItem("rnr_portal_last_treatment");
+        if (lastTreatmentRaw) {
+          const lastTreatment = JSON.parse(lastTreatmentRaw);
+          // Try to match treatment type to our keys
+          const treatmentName = String(lastTreatment.treatment_type || "").toLowerCase();
+          if (treatmentName.includes("deep tissue") || treatmentName.includes("deep-tissue")) preloadTreatment = "deep-tissue";
+          else if (treatmentName.includes("sport")) preloadTreatment = "sports";
+          else if (treatmentName.includes("senior")) preloadTreatment = "senior";
+          else if (treatmentName.includes("hot stone") || treatmentName.includes("hot-stone")) preloadTreatment = "hot-stone";
+          else if (treatmentName.includes("cupping")) preloadTreatment = "cupping";
+          else if (treatmentName.includes("prenatal")) preloadTreatment = "prenatal";
+          else if (treatmentName.includes("pediatric")) preloadTreatment = "pediatric";
+          else if (treatmentName.includes("infant")) preloadTreatment = "infant";
+          else preloadTreatment = "relaxation";
+
+          // Use last duration if valid
+          const lastDur = Number(lastTreatment.duration);
+          if (lastDur && [30, 45, 60, 75, 90, 120].includes(lastDur)) {
+            preloadDuration = lastDur;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not read last treatment from localStorage:", e);
+      }
+
+      console.log(`Preloading availability for ${preloadTreatment} - ${preloadDuration}min`);
+
+      // Set the treatment and duration in the form (hidden)
+      const treatRule = TREATMENT_RULES[preloadTreatment];
+      if (!treatRule) return;
+
+      // Validate duration is valid for this treatment
+      if (!treatRule.durations.includes(preloadDuration)) {
+        preloadDuration = treatRule.durations[0] || 60;
+      }
+
+      // Set state variables
+      selectedServiceKey = preloadTreatment;
+      selectedStandardDuration = preloadDuration;
+
+      // Build the payload and fetch
+      const { from, to } = computeMonthRange(calendarCurrent);
+      const blockMinutes = preloadDuration + STATIC_SETUP_MINUTES;
+
+      const payload = {
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
+        from,
+        to,
+        standardDurationMinutes: preloadDuration,
+        blockDurationMinutes: blockMinutes,
+        slotIntervalMinutes: 15,
+        practitionerId: DEFAULT_PRACTITIONER_ID,
+        travel_time_buffer_minutes: 0
+      };
+
+      const cacheKey = getRequestCacheKey(payload);
+
+      try {
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          availabilityCache.set(cacheKey, data);
+          parseAvailabilityResponse(data);
+          console.log("Background availability preloaded successfully");
+
+          // Update the form to show the preloaded selection
+          if (treatmentSelect) treatmentSelect.value = preloadTreatment;
+          rebuildDurationOptions();
+          if (durationSelect) durationSelect.value = String(preloadDuration);
+
+          // Render calendar with preloaded data
+          renderCalendar();
+          updateAvailabilityStatus("Availability loaded. Select a date to continue.", true);
+        }
+      } catch (e) {
+        console.warn("Background availability preload failed:", e);
+      }
+    }
+
+    // =========================================================
     // AUTH CHECK ON LOAD
     // =========================================================
     async function checkExistingAuth() {
@@ -2254,6 +2458,9 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
           
           // Load appointments in background
           loadUpcomingAppointments();
+          
+          // Preload availability in background for faster rebook experience
+          preloadAvailabilityInBackground();
           
           return true;
         } else {
@@ -2891,16 +3098,14 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
       // Contact modal button
       document.getElementById("contact-modal-close").addEventListener("click", hideContactModal);
 
-      // Initial tab - appointments
-      switchTab("appointments");
+      // Initial tab - Dashboard is now default
+      switchTab('dashboard');
 
-      // Check for existing authentication
+      // Check for existing auth session
       await checkExistingAuth();
-
-      // Restore prior in-progress booking selections
-      try { await restorePortalStateIfPossible(); } catch (e) {}
     }
 
+    // Start the app when DOM is ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
