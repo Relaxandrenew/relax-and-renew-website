@@ -610,6 +610,31 @@
             scrollbar-width: thin;
             scrollbar-color: rgba(224, 197, 132, 0.3) rgba(224, 197, 132, 0.05);
         }
+
+            /* Client Details modal: keep X always visible, keep inner content scrollable */
+            #client-details-modal > .bg-brand-black { position: relative; }
+            #client-details-modal .client-modal-header{
+                position: sticky;
+                top: 0;
+                z-index: 5;
+                background: transparent;
+                padding: 0.25rem 0.25rem 0 0.25rem;
+            }
+            /* Move the X towards the true corner even when the card has padding */
+            #client-details-modal .client-modal-header .client-modal-close-btn{
+                margin-left: auto;
+            }
+            /* Ensure scroll area is constrained even if parent height is only max-height */
+            #client-details-modal .client-details-scroll--content{
+                max-height: calc(90vh - 3.25rem);
+                padding-top: 0.5rem;
+            }
+            @media (max-width: 640px){
+                #client-details-modal .client-details-scroll--content{
+                    max-height: calc(90vh - 3.0rem);
+                }
+            }
+
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -1197,11 +1222,14 @@ function fillAddressFromPlace(place) {
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
     <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
-            <button id="client-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
+            <div class="client-modal-header flex items-start justify-end flex-shrink-0">
+<button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <i data-lucide="x" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors"></i>
             </button>
             
-            <div class="client-details-scroll">
+            </div>
+<div class="client-details-scroll client-details-scroll--content">
+
 
             <div class="text-center mb-8">
                 <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
