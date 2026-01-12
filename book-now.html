@@ -312,8 +312,37 @@
                 margin: 0.25rem;
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
+                position: relative;
+                            }
+                        #client-details-modal{ overflow-x: hidden; }
+/* Client details modal: scrolling (no horizontal scroll) */
+            #client-details-modal .client-details-scroll{
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                padding-right: 0; /* scrollbar flush to the right edge */
             }
-            
+            /* keep content comfortably off the scrollbar without shifting it left */
+            #client-details-modal .client-details-scroll > *{
+                padding-right: 0.75rem;
+            }
+
+/* Client details modal: ensure the content area scrolls and keep scrollbar visible */
+            #client-details-modal .client-details-scroll--content{
+                overflow-y: auto !important;
+            }
+
+            /* Client details modal: floating close button outside the card */
+            #client-details-modal #client-modal-close:focus{
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(224,197,132,0.18), 0 10px 30px rgba(0,0,0,0.55);
+            }
+            #client-details-modal #client-modal-close i{
+                pointer-events: none;
+            }
+
             #client-details-modal h3 {
                 font-size: 1.35rem;
             }
@@ -501,7 +530,73 @@
   animation: booking-success-pop 0.4s ease;
 }
 
-        /* End Booking Confirmation Modal */
+        
+/* Booking modal close button pinned outside scroll (desktop + mobile) */
+#booking-modal-close-btn{
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 16px) !important;
+  right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
+  z-index: 9999 !important;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(224, 197, 132, 0.35);
+  background: rgba(0,0,0,0.55);
+  color: #E0C584;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: opacity .2s ease, transform .2s ease, background .2s ease, border-color .2s ease;
+}
+#booking-modal-overlay:not(.active) #booking-modal-close-btn{
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+}
+#booking-modal-overlay.active #booking-modal-close-btn{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+#booking-modal-close-btn:hover{
+  background: rgba(224, 197, 132, 0.10);
+  border-color: rgba(224, 197, 132, 0.75);
+}
+#booking-modal-close-btn svg{
+  width: 22px;
+  height: 22px;
+}
+
+/* Keep the overlay fixed and prevent background scroll; card scrolls independently */
+#booking-modal-overlay{
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.booking-modal-card{
+  max-height: min(82vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 28px;
+}
+@media (max-width: 520px){
+  .booking-modal-card{
+    max-height: 86vh;
+    padding: 24px 18px 28px;
+  }
+  #booking-modal-close-btn{
+    width: 42px;
+    height: 42px;
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+    right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
+  }
+}
+
+/* End Booking Confirmation Modal */
 
         /* Calendar: fully booked day number styling */
         .calendar-day-fully-booked {
@@ -515,6 +610,69 @@
             background: rgba(0,0,0,0.35) !important;
             border-color: rgba(224,197,132,0.2) !important;
         }
+        /* Custom Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(224, 197, 132, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(224, 197, 132, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(224, 197, 132, 0.5);
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(224, 197, 132, 0.3) rgba(224, 197, 132, 0.05);
+        }
+
+            /* Client Details modal: keep X always visible, keep inner content scrollable */
+            #client-details-modal > .bg-brand-black { position: relative; }
+            #client-details-modal .client-modal-header{
+                position: sticky;
+                top: 0;
+                z-index: 5;
+                background: transparent;
+                padding: 0.25rem 0.25rem 0 0.25rem;
+            }
+            /* Move the X towards the true corner even when the card has padding */
+            #client-details-modal .client-modal-header .client-modal-close-btn{
+                margin-left: auto;
+            }
+            /* Ensure scroll area is constrained even if parent height is only max-height */
+            #client-details-modal .client-details-scroll--content{
+                max-height: calc(90vh - 3.25rem);
+                padding-top: 0.5rem;
+            }
+            @media (max-width: 640px){
+                #client-details-modal .client-details-scroll--content{
+                    max-height: calc(90vh - 3.0rem);
+                }
+            }
+
+
+            /* Client details modal: force scrolling (keeps close button inside scroll area) */
+            #client-details-modal .client-details-scroll{
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto !important;
+                max-height: calc(90vh - 1rem);
+                -webkit-overflow-scrolling: touch;
+            }
+
+
+        /* v18: Final confirmation (Client Details) modal - ensure proper scrolling and close button behavior */
+        #client-details-modal { overflow-x: hidden !important; }
+        #client-details-modal .client-details-scroll { overflow-y: auto !important; overflow-x: hidden !important; padding: 0 !important; }
+        #client-details-modal .client-details-scroll-inner { width: 100%; }
+        #client-details-modal .client-modal-header { position: static !important; }
+        #client-details-modal button#client-modal-close { cursor: pointer; }
+
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -527,10 +685,17 @@
                 }
                 const addrInput = document.getElementById('address-input-initial');
                 if (addrInput) {
+                    const ontarioBounds = new google.maps.LatLngBounds(
+                        new google.maps.LatLng(41.676555, -95.156227),
+                        new google.maps.LatLng(56.860743, -74.320648)
+                    );
+
                     const ac = new google.maps.places.Autocomplete(addrInput, {
                         componentRestrictions: { country: "ca" },
                         fields: ["address_components", "formatted_address"],
                         types: ["geocode"],
+                        bounds: ontarioBounds,
+                        strictBounds: true,
                     });
                     ac.addListener("place_changed", () => {
                         const place = ac.getPlace();
@@ -633,6 +798,8 @@ function fillAddressFromPlace(place) {
                 let city = "";
                 let postal = "";
                 let countryCode = "";
+                let province = "";
+                let provinceShort = "";
                 let hasStreetNumber = false;
                 
                 if (place.address_components) {
@@ -642,13 +809,29 @@ function fillAddressFromPlace(place) {
                         if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
                         if (t === "postal_code") postal = c.long_name;
                         if (t === "country") countryCode = c.short_name || c.long_name || "";
+                        if (t === "administrative_area_level_1") { province = c.long_name || ""; provinceShort = c.short_name || ""; }
                     }
                 }
 
-                // Restrict service addresses to Canada only
+                // Restrict service addresses to Ontario, Canada only
                 if (countryCode && String(countryCode).toUpperCase() !== "CA") {
                     document.getElementById('address-input-initial').value = '';
-                    alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                    alert('We currently serve Ontario (Canada) addresses only. Please enter an Ontario address.');
+                    window.__selectedAddress = null;
+                    return;
+                }
+
+                // Restrict service addresses to Ontario only (validated from Places result)
+                const prov = String(provinceShort || province || '').toUpperCase().trim();
+                if (!prov) {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Ontario only. Please enter an Ontario address.');
+                    window.__selectedAddress = null;
+                    return;
+                }
+                if (prov !== "ON" && prov !== "ONTARIO") {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Ontario only. Please enter an Ontario address.');
                     window.__selectedAddress = null;
                     return;
                 }
@@ -724,7 +907,7 @@ function fillAddressFromPlace(place) {
             <div class="flex justify-between items-center mb-8">
                 <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
                 <button id="mobile-menu-close" class="text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                    <i data-lucide="x" class="w-6 h-6 pointer-events-none"></i>
                 </button>
             </div>
             <div class="flex flex-col space-y-6">
@@ -1100,68 +1283,66 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
-    <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
-            <button id="client-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-            
-            <div class="text-center mb-8">
-                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
-                    <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
-                </div>
-                <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
-                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+    <div class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden" id="client-details-modal">
+<div class="bg-brand-black border border-brand-gold/30 rounded-lg p-0 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
+<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-8 md:p-10">
+<div class="flex justify-end mb-2">
+<button aria-label="Close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors" id="client-modal-close" onclick="closeClientDetailsModal();">
+<i class="w-6 h-6" data-lucide="x"></i>
+</button>
+</div>
+<div class="text-center mb-8">
+<div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+<i class="w-8 h-8 text-brand-gold" data-lucide="user"></i>
+</div>
+<h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
+<p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
                     Please provide your details to complete the booking.
                 </p>
-            </div>
-
-            <!-- Booking Summary -->
-            <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
-                <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Treatment:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Date & Time:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Location:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
-                    </div>
-                    <div class="flex justify-between pt-2 border-t border-brand-gold/20">
-                        <span class="text-brand-gold font-bold">Total:</span>
-                        <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
-                    </div>
-                </div>
-                <!-- Payment Notice -->
-                <div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
-                    <i data-lucide="info" class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5"></i>
-                    <span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
-                </div>
-            </div>
-
-            <form id="client-details-form" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
-                        <input id="client-first-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
-                        <input id="client-last-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
-                    <input id="client-phone" type="tel" required placeholder="(555) 123-4567" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                </div>
-
-                <script>
+</div>
+<!-- Booking Summary -->
+<div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+<div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
+<div class="space-y-2 text-sm">
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Treatment:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
+</div>
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Date &amp; Time:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
+</div>
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Location:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
+</div>
+<div class="flex justify-between pt-2 border-t border-brand-gold/20">
+<span class="text-brand-gold font-bold">Total:</span>
+<span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
+</div>
+</div>
+<!-- Payment Notice -->
+<div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
+<i class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" data-lucide="info"></i>
+<span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
+</div>
+</div>
+<form class="space-y-4" id="client-details-form">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-first-name" required="" type="text"/>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-last-name" required="" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-phone" placeholder="(555) 123-4567" required="" type="tel"/>
+</div>
+<script>
                 // Phone number force-formatting (BACKSPACE/DELETE SAFE)
                 (function setupPhoneFormatting() {
                     const input = document.getElementById('client-phone');
@@ -1273,96 +1454,93 @@ function fillAddressFromPlace(place) {
                     });
                 })();
                 </script>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
-                    <input id="client-address-display" type="text" readonly class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75">
-                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
-                    <input id="client-email" type="email" required placeholder="your.email@example.com" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
-                    <textarea id="client-notes" rows="3" placeholder="Any special requests, health concerns, or preferences..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none"></textarea>
-                </div>
-
-                <!-- Travel Charge Warning (populated dynamically if needed) -->
-                <div id="travel-charge-warning" class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg">
-                    <div class="flex items-start gap-3">
-                        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse"></i>
-                        <div>
-                            <div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
-                            <div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
-                            <div id="travel-charge-text" class="text-xs text-brand-light leading-relaxed"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stripe Payment Element (shows when travel charges apply) -->
-                <div id="stripe-payment-section" class="hidden mt-6 bg-brand-gold/5 border-2 border-brand-gold/30 rounded-lg p-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="shield-check" class="w-5 h-5 text-brand-gold"></i>
-                        <h4 class="text-sm font-bold text-brand-gold uppercase tracking-wider">Card on File (No-Show Protection)</h4>
-                    </div>
-                    <div id="stripe-card-element" class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2">
-                        <!-- Stripe Elements will be inserted here -->
-                    </div>
-                    <div class="mt-3">
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
-                        <input id="stripe-postal-code" type="text" placeholder="A1A 1A1" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                        <p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
-                    </div>
-                    <div id="stripe-card-errors" class="text-xs text-red-400 mt-2 hidden"></div>
-                    <p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
-                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+<input class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75" id="client-address-display" readonly="" type="text"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-email" placeholder="your.email@example.com" required="" type="email"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
+<textarea class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none" id="client-notes" placeholder="Any special requests, health concerns, or preferences..." rows="3"></textarea>
+</div>
+<!-- Travel Charge Warning (populated dynamically if needed) -->
+<div class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg" id="travel-charge-warning">
+<div class="flex items-start gap-3">
+<i class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse" data-lucide="alert-triangle"></i>
+<div>
+<div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
+<div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
+<div class="text-xs text-brand-light leading-relaxed" id="travel-charge-text"></div>
+</div>
+</div>
+</div>
+<!-- Stripe Payment Element (shows when travel charges apply) -->
+<div class="hidden mt-6 bg-brand-gold/5 border-2 border-brand-gold/30 rounded-lg p-4" id="stripe-payment-section">
+<div class="flex items-center gap-2 mb-3">
+<i class="w-5 h-5 text-brand-gold" data-lucide="shield-check"></i>
+<h4 class="text-sm font-bold text-brand-gold uppercase tracking-wider">Card on File (No-Show Protection)</h4>
+</div>
+<div class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2" id="stripe-card-element">
+<!-- Stripe Elements will be inserted here -->
+</div>
+<div class="mt-3">
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="stripe-postal-code" placeholder="A1A 1A1" type="text"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
+</div>
+<div class="text-xs text-red-400 mt-2 hidden" id="stripe-card-errors"></div>
+<p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
+<i class="w-3 h-3 inline mr-1" data-lucide="info"></i>
                         Your card is <strong class="text-brand-light">saved for no-show protection only</strong>. Payment for treatment and travel charge is collected after your appointment. You may pay with cash, credit, or e-transfer.
                     </p>
-                </div>
-
-                <div class="p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
-                    <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-2">Marketing Emails</div>
-                    <p class="text-xs text-brand-dim/80 leading-relaxed mb-3">
+</div>
+<div class="p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+<div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-2">Marketing Emails</div>
+<p class="text-xs text-brand-dim/80 leading-relaxed mb-3">
                         I want to receive marketing emails (Promotions, events, discounts, etc).
                     </p>
-
-                    <div class="flex items-center gap-8">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" name="email_marketing_consent" value="true" required class="w-4 h-4">
-                            <span class="text-sm text-brand-light font-semibold">Yes</span>
-                        </label>
-
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" name="email_marketing_consent" value="false" required class="w-4 h-4">
-                            <span class="text-sm text-brand-light font-semibold">No</span>
-                        </label>
-                    </div>
-
-                    <p class="text-xs text-brand-dim/60 mt-2 leading-relaxed">
+<div class="flex items-center gap-8">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4" name="email_marketing_consent" required="" type="radio" value="true"/>
+<span class="text-sm text-brand-light font-semibold">Yes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4" name="email_marketing_consent" required="" type="radio" value="false"/>
+<span class="text-sm text-brand-light font-semibold">No</span>
+</label>
+</div>
+<p class="text-xs text-brand-dim/60 mt-2 leading-relaxed">
                         You can unsubscribe at any time.
                     </p>
-                </div>
-
-                <button type="submit" id="submit-booking-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i>
-                    <span>Confirm Booking</span>
-                </button>
-            </form>
-
-            <p id="client-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
-                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
+</div>
+<button class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base" id="submit-booking-btn" type="submit">
+<i class="w-5 h-5" data-lucide="check-circle"></i>
+<span>Confirm Booking</span>
+</button>
+</form>
+<p class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg" id="client-error">
+<i class="w-4 h-4 inline mr-1" data-lucide="alert-circle"></i>
                 Please fill in all required fields.
             </p>
-        </div>
-    </div>
+</div></div>
+</div>
+</div>
 
     
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
+        <!-- Close button outside the card -->
+        <button id="booking-modal-close-btn" type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
         <div class="booking-modal-card">
             <div id="booking-modal-spinner" class="booking-spinner"></div>
 
@@ -1383,8 +1561,8 @@ function fillAddressFromPlace(place) {
             <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
 
             <div id="booking-modal-actions" class="booking-actions hidden">
-                <button id="booking-modal-home-btn" type="button" class="booking-home-btn">Return to Home</button>
-                <button id="booking-modal-membership-btn" type="button" class="booking-home-btn">See Memberships</button>
+                <button id="booking-modal-portal-btn" type="button" class="booking-home-btn">To Client Portal</button>
+                <button id="booking-modal-home-btn" type="button" class="booking-home-btn">Go to Home</button>
             </div>
         </div>
     </div>
@@ -1477,7 +1655,90 @@ function fillAddressFromPlace(place) {
 
     let bookingMessageInterval = null;
 
-    function showBookingModal() {
+    // Close handler (used by X button + Esc). Works for desktop + mobile.
+    function closeBookingModalOverlay() {
+      const overlay = document.getElementById("booking-modal-overlay");
+      if (!overlay) return;
+
+      
+      // Booking progress overlay is never user-closable once opened.
+      if (overlay.dataset.locked === "1") return;
+
+      // (Backstop) After booking is confirmed, the modal remains a hard stop: only the action buttons may proceed.
+      if (window.__bookingCompleted || overlay.dataset.finalized === "1") {
+        return;
+      }
+// Stop message cycling if still running
+      if (bookingMessageInterval) {
+        clearInterval(bookingMessageInterval);
+        bookingMessageInterval = null;
+      }
+
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+    window.closeBookingModalOverlay = closeBookingModalOverlay;
+
+    (function initBookingModalCloseButton(){
+  function bindBookingModalClose(){
+    const btn = document.getElementById("booking-modal-close-btn");
+
+    if (btn) {
+      // Click closes (desktop)
+      btn.addEventListener("click", (e) => {
+        try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+        closeBookingModalOverlay();
+      }, { capture: true });
+
+      // Touch closes (mobile Safari)
+      btn.addEventListener("touchstart", (e) => {
+        try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+        closeBookingModalOverlay();
+      }, { passive: false, capture: true });
+    }
+
+    // Backdrop click closes ONLY after booking finished (success or error)
+    const overlay = document.getElementById("booking-modal-overlay");
+    const card = document.querySelector("#booking-modal-overlay .booking-modal-card");
+    if (overlay && card) {
+      overlay.addEventListener("mousedown", (e) => {
+        if (e.target !== overlay) return;
+        // Do not allow closing while spinner is showing (booking still in progress)
+        const spinner = document.getElementById("booking-modal-spinner");
+        const inProgress = spinner && !spinner.classList.contains("hidden");
+        if (inProgress) return;
+        closeBookingModalOverlay();
+      }, true);
+
+      overlay.addEventListener("touchstart", (e) => {
+        if (e.target !== overlay) return;
+        const spinner = document.getElementById("booking-modal-spinner");
+        const inProgress = spinner && !spinner.classList.contains("hidden");
+        if (inProgress) return;
+        closeBookingModalOverlay();
+      }, { passive: true, capture: true });
+    }
+
+    // Escape closes (capture phase so Places Autocomplete can't swallow it)
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const overlay = document.getElementById("booking-modal-overlay");
+      if (!overlay || !overlay.classList.contains("active")) return;
+
+      // Booking overlay is intentionally not user-closable once opened.
+      if (overlay.dataset.locked === "1") return;
+
+      try { e.preventDefault(); } catch (_) {}
+      closeBookingModalOverlay();
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindBookingModalClose, { once: true });
+  } else {
+    bindBookingModalClose();
+  }
+})();function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
       const spinner = document.getElementById("booking-modal-spinner");
       const successIcon = document.getElementById("booking-modal-success");
@@ -1486,7 +1747,8 @@ function fillAddressFromPlace(place) {
       const substatusText = document.getElementById("booking-modal-substatus");
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const portalBtn = document.getElementById("booking-modal-portal-btn");
+      const closeBtn = document.getElementById("booking-modal-close-btn");
 
       // Ensure no stale message cycling is running
       if (bookingMessageInterval) {
@@ -1504,9 +1766,20 @@ function fillAddressFromPlace(place) {
       // Reset actions
       if (actions) actions.classList.add("hidden");
       if (homeBtn) homeBtn.onclick = null;
-      if (membershipBtn) membershipBtn.onclick = null;
+      if (portalBtn) portalBtn.onclick = null;
       window.__bookingCompleted = false;
 
+      //       // Booking-in-progress overlay is NOT user-closable (per requirements)
+      // Lock all close mechanisms immediately when this overlay opens.
+      if (closeBtn) {
+        closeBtn.style.display = "none";
+        closeBtn.setAttribute("aria-hidden", "true");
+        closeBtn.setAttribute("tabindex", "-1");
+      }
+      if (overlay) {
+        overlay.dataset.finalized = "0";
+        overlay.dataset.locked = "1";
+      }
       // Show modal
       overlay.classList.add("active");
       document.body.style.overflow = "hidden";
@@ -1524,6 +1797,8 @@ function fillAddressFromPlace(place) {
       }, 2000);
     }
 
+    
+
     function hideBookingModal(success = true, errorMessage = null) {
       // Stop message cycling
       if (bookingMessageInterval) {
@@ -1539,7 +1814,8 @@ function fillAddressFromPlace(place) {
       const overlay = document.getElementById("booking-modal-overlay");
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const portalBtn = document.getElementById("booking-modal-portal-btn");
+      const closeBtn = document.getElementById("booking-modal-close-btn");
 
       // Hide spinner, show appropriate icon
       spinner.classList.add("hidden");
@@ -1559,15 +1835,23 @@ function fillAddressFromPlace(place) {
       // we intentionally DO NOT refresh availability automatically (only a full page refresh will).
       if (success) {
         window.__bookingCompleted = true;
+        if (overlay) overlay.dataset.finalized = "1";
+        // Hide and disable close controls after booking is confirmed
+        if (closeBtn) {
+          closeBtn.style.display = "none";
+          closeBtn.setAttribute("aria-hidden", "true");
+        }
         if (actions) actions.classList.remove("hidden");
         if (homeBtn) {
           homeBtn.onclick = () => {
-            try { window.location.assign("https://www.relaxandrenew.ca"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca"; }
+            try { window.location.assign("https://relaxandrenew.ca/"); }
+            catch (_) { window.location.href = "https://relaxandrenew.ca/"; }
           };
         }
-        if (membershipBtn) {
-          membershipBtn.onclick = () => {
-            try { window.location.assign("https://www.relaxandrenew.ca/membership"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca/membership"; }
+        if (portalBtn) {
+          portalBtn.onclick = () => {
+            try { window.location.assign("/portal"); }
+            catch (_) { window.location.href = "/portal"; }
           };
         }
         // Keep overlay open (no auto-close)
@@ -1581,6 +1865,10 @@ function fillAddressFromPlace(place) {
       }, 3000);
     }
         // ---------------- END BOOKING CONFIRMATION MODAL ----------------
+
+                // Booking modal close wiring is handled inside the booking modal block.
+
+;
 
         function toDateStr(date) {
             const y = date.getFullYear();
@@ -2106,6 +2394,11 @@ container.appendChild(groupRow);
                     return null;
                 }
                 const postal = normalizeCanadianPostal(postalRaw);
+                const fsa = postal.replace(/\s+/g, '').charAt(0);
+                if (!'KLMNP'.includes(fsa)) {
+                    alert('We currently serve Ontario only. Please enter an Ontario postal code.');
+                    return null;
+                }
                 const full = city ? `${street}, ${city} ${postal}` : `${street} ${postal}`;
                 const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
@@ -2121,7 +2414,7 @@ container.appendChild(groupRow);
             const looksLikeUS = /\busa\b|\bunited states\b|\bu\.s\.a\b/.test(rawLower) || /\b\d{5}(?:-\d{4})?\b/.test(raw);
             const containsCanadianPostal = isCanadianPostal(raw);
             if (looksLikeUS && !containsCanadianPostal) {
-                alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                alert('We currently serve Ontario (Canada) addresses only. Please enter an Ontario address.');
                 return null;
             }
             // If lookup failed, require a Canadian postal code to ensure we do not accept US addresses
@@ -2132,6 +2425,11 @@ container.appendChild(groupRow);
 
             const match = raw.toUpperCase().match(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/);
             const postal = normalizeCanadianPostal(match ? match[0] : raw);
+            const fsa = postal.replace(/\s+/g, '').charAt(0);
+            if (!'KLMNP'.includes(fsa)) {
+                alert('We currently serve Ontario only. Please enter an Ontario address (Ontario postal code).');
+                return null;
+            }
             const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
             window.__selectedAddress = addrObj;
             return addrObj;
@@ -2295,21 +2593,39 @@ container.appendChild(groupRow);
                     return;
                 }
 
-                const data = await res.json();
+                const raw = await res.json();
+                const data = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
                 console.log('📥 Response received:', data);
                 console.log('📊 Response structure check:');
-                console.log('  - Has dates property?', 'dates' in data);
-                console.log('  - Is array?', Array.isArray(data));
-                console.log('  - dates.length:', data.dates?.length || 0);
-                if (data.dates && data.dates.length > 0) {
+                console.log('  - Raw is array?', Array.isArray(raw));
+                console.log('  - Has dates property?', data && typeof data === 'object' && 'dates' in data);
+                console.log('  - dates.length:', data?.dates?.length || 0);
+                if (data?.dates && data.dates.length > 0) {
                     console.log('  - First date sample:', data.dates[0]);
                     console.log('  - First date has slots?', data.dates[0]?.slots?.length || 0);
                 }
-                
-                // Store max drive time for travel charge calculation
-                window.__maxDriveTimeMinutes = data.maxDriveTimeMinutes || 0;
-                console.log('🚗 Max drive time:', window.__maxDriveTimeMinutes, 'minutes');
-                
+
+                // Store max drive time (informational only; do NOT use this for charging)
+                const inferredMaxDrive = (() => {
+                    const explicit =
+                        Number(data?.maxDriveTimeMinutes) ||
+                        Number(data?.travel?.maxDriveTimeMinutes) ||
+                        0;
+
+                    if (explicit > 0) return explicit;
+
+                    const mins = (data?.dates || [])
+                        .flatMap(d => (d?.slots || []).map(s =>
+                            Number(s?.driveTimeMinutes ?? s?.drive_time_minutes ?? s?.travel?.driveTimeMinutes ?? s?.travel?.drive_time_minutes ?? 0)
+                        ))
+                        .filter(n => Number.isFinite(n) && n > 0);
+
+                    return mins.length ? Math.max(...mins) : 0;
+                })();
+
+                window.__maxDriveTimeMinutes = inferredMaxDrive;
+                console.log('🚗 Max drive time (informational):', window.__maxDriveTimeMinutes, 'minutes');
+
                 setAvailabilityFromResponse(data);
 
                 const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
@@ -2607,69 +2923,171 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
-            function calculateAndShowTravelCharge() {
-                const warningEl = document.getElementById('travel-charge-warning');
-                const textEl = document.getElementById('travel-charge-text');
-                const stripeSection = document.getElementById('stripe-payment-section');
-                
-                // DEBUG: Log selected slot details
-                console.log('🔍 Selected Slot Full Object:', selectedSlot);
-                console.log('🔍 Slot Drive Time:', selectedSlot?.driveTimeMinutes);
-                console.log('🔍 Window Max Drive Time:', window.__maxDriveTimeMinutes);
-                
-                // Get drive time from SELECTED SLOT (most accurate)
-                const driveTimeMinutes = selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0;
-                
-                console.log('💳 Calculating travel charge for drive time:', driveTimeMinutes, 'minutes');
-                console.log('   From slot:', selectedSlot?.driveTimeMinutes);
-                console.log('   From max:', window.__maxDriveTimeMinutes);
-                
-                let requiresPayment = false;
-                
-                // Apply travel charges based on actual drive time
-                if (driveTimeMinutes >= 120) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes / 2+ hours), a <strong class="text-amber-400">$200 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 60) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$100 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 45) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$40 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else if (driveTimeMinutes >= 36) {
-                    textEl.innerHTML = `Due to extended travel distance (${driveTimeMinutes} minutes), a <strong class="text-amber-400">$20 travel charge</strong> will be added to your total (collected after treatment). <span class="block mt-3 text-amber-200 font-semibold">Card on file required to continue.</span><span class="block mt-1 text-amber-300">We only collect a credit card for clients outside our standard travel range (36+ min). Your card is saved for no-show protection only and is not charged today.</span>`;
-                    warningEl.classList.remove('hidden');
-                    requiresPayment = true;
-                } else {
-                    warningEl.classList.add('hidden');
-                }
-                
-                // Show/hide Stripe payment section
-                if (requiresPayment) {
-                    stripeSection.classList.remove('hidden');
-                    initializeStripe();
-                    // Pre-fill Canadian postal code (if available from Step 1)
-                    const postalEl = document.getElementById('stripe-postal-code');
-                    if (postalEl) {
-                        const p = window.__selectedAddress?.postal_code || '';
-                        postalEl.value = normalizeCanadianPostal(p);
-                    }
-                } else {
-                    stripeSection.classList.add('hidden');
-                }
-            }
-
+    
             function closeClientDetailsModal() {
                 const modal = document.getElementById('client-details-modal');
-                if (modal) modal.classList.add('hidden');
+                if (!modal) return;
+                modal.classList.add('hidden');
             }
 
-            document.getElementById('client-modal-close').addEventListener('click', closeClientDetailsModal);
+            function bindClientDetailsModalClose() {
+                const modal = document.getElementById('client-details-modal');
+                const closeBtn = document.getElementById('client-modal-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        closeClientDetailsModal();
+                    });
+                }
 
-            // Confirmation modal functions
+                // Click outside the card closes (overlay only)
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeClientDetailsModal();
+                    });
+                }
+
+                // ESC closes
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const m = document.getElementById('client-details-modal');
+                        if (m && !m.classList.contains('hidden')) closeClientDetailsModal();
+                    }
+                });
+            }
+
+// Ensure the Client Details (final confirmation) modal close handlers are always bound
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bindClientDetailsModalClose, { once: true });
+} else {
+  bindClientDetailsModalClose();
+}
+
+
+function getTravelCanonicalFromSlot(slot) {
+        // v7 FIX: trust server-side travel fields computed per-slot by the n8n workflow.
+        // We still return a few alias fields (driveMins/driveTimeMinutes/travelFeeCents) so the rest
+        // of this file remains backward-compatible.
+
+        if (!slot) {
+            return {
+                minutes: 0,
+                feeCents: 0,
+                requiresCard: false,
+                travelFeeApplies: false,
+                // aliases
+                driveMins: 0,
+                driveTimeMinutes: 0,
+                travelFeeCents: 0,
+            };
+        }
+
+        // Prefer v7 fields directly on the slot; allow snake_case and nested travel objects defensively.
+        const minutesRaw =
+            (slot.driveTimeMinutes ?? slot.drive_time_minutes ??
+             slot.travel?.driveTimeMinutes ?? slot.travel?.drive_time_minutes ?? 0);
+
+        const feeCentsRaw =
+            (slot.travelFeeCents ?? slot.travel_fee_cents ??
+             slot.travel?.travelFeeCents ?? slot.travel?.travel_fee_cents ?? 0);
+
+        const requiresCard =
+            !!(slot.requiresCard ?? slot.requires_card ??
+               slot.travel?.requiresCard ?? slot.travel?.requires_card ?? false);
+
+        const minutes = Math.max(0, Math.round(Number(minutesRaw) || 0));
+        const feeCents = Math.max(0, Math.round(Number(feeCentsRaw) || 0));
+
+        const travelFeeApplies =
+            !!(slot.travelFeeApplies ?? slot.travel_fee_applies ??
+               slot.travel?.travelFeeApplies ?? slot.travel?.travel_fee_applies ??
+               (feeCents > 0));
+
+        // Debug logging (safe to leave in; helps trace _debug fields from workflow)
+        if (typeof console !== 'undefined' && slot && slot._debug) {
+            console.log('🚗 Travel info for slot:', {
+                start: slot.start,
+                minutes,
+                feeCents,
+                requiresCard,
+                travelFeeApplies,
+                _debug: slot._debug,
+            });
+        }
+
+        return {
+            minutes,
+            feeCents,
+            requiresCard,
+            travelFeeApplies,
+
+            // aliases for older call-sites in this file
+            driveMins: minutes,
+            driveTimeMinutes: minutes,
+            travelFeeCents: feeCents,
+        };
+    }
+
+    function calculateAndShowTravelCharge() {
+        const warningBox = document.getElementById("travel-charge-warning");
+        const warningText = document.getElementById("travel-charge-text");
+        const stripeSection = document.getElementById("stripe-payment-section");
+
+        // IMPORTANT:
+        // - Travel fee / card-on-file rules must ONLY be evaluated after a time slot has been selected.
+        // - Never fall back to day-level max drive time (it can be influenced by other bookings and will incorrectly
+        //   flag local addresses).
+        if (!selectedSlot) {
+            warningBox.classList.add("hidden");
+            stripeSection.classList.add("hidden");
+            return {
+                travelFeeCents: 0,
+                travelCharge: "$0.00",
+                driveTimeMinutes: 0,
+                requiresPayment: false,
+            };
+        }
+
+        const info = getTravelCanonicalFromSlot(selectedSlot);
+
+        const travelFeeCents = Number(info.feeCents) || 0;
+        const driveTimeMinutes = Number(info.minutes) || 0;
+        const requiresPayment = !!info.requiresCard;
+
+        const travelCharge = travelFeeCents > 0 ? `$${(travelFeeCents / 100).toFixed(2)}` : "$0.00";
+
+        // Show/hide the warning box
+        if (travelFeeCents > 0) {
+            warningBox.classList.remove("hidden");
+            warningText.innerHTML = `
+                Due to extended travel distance (${driveTimeMinutes} minutes), a <b>${travelCharge}</b> travel charge will be added to your total (collected after treatment).
+            `;
+
+            if (requiresPayment) {
+                warningText.innerHTML += `
+                    <br><br><b>Card on file required to continue.</b>
+                    <br>We only collect a credit card for clients outside our standard travel range.
+                    <br>Your card is saved for no-show protection only and is not charged today.
+                `;
+            }
+        } else {
+            warningBox.classList.add("hidden");
+        }
+
+        // Only require/collect a card when backend indicates it is required for the selected slot.
+        stripeSection.classList.toggle("hidden", !requiresPayment);
+
+        if (requiresPayment) {
+            initializeStripe();
+        }
+
+        return {
+            travelFeeCents,
+            travelCharge,
+            driveTimeMinutes,
+            requiresPayment,
+        };
+    }
             function showConfirmationModal(firstName, lastName, phone, email, dateStr, slot, travelCharge) {
                 const modal = document.getElementById('confirmation-modal');
                 
@@ -2785,21 +3203,23 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     return;
                 }
 
-                // Calculate travel charge
-                const driveTimeMinutes = (selectedSlot?.driveTimeMinutes ?? window.__maxDriveTimeMinutes ?? 0);
-                let travelCharge = 0;
-                if (driveTimeMinutes >= 120) travelCharge = 200;
-                else if (driveTimeMinutes >= 60) travelCharge = 100;
-                else if (driveTimeMinutes >= 45) travelCharge = 40;
-                else if (driveTimeMinutes >= 36) travelCharge = 20;
-                
-                // If travel charge applies, process Stripe payment
+                // Travel (canonical from backend slot data; do not compute client-side)
+                const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
+                const driveTimeMinutes = (travelInfo.minutes ?? travelInfo.driveMins ?? travelInfo.driveTimeMinutes ?? null);
+                const travelFeeCents = travelInfo.feeCents ?? 0;
+                const travelCharge = (travelFeeCents || 0) / 100;
+                const requiresPayment = !!travelInfo.requiresCard;
+
+                // If backend requires a card on file for the selected slot, process Stripe setup
                 let paymentMethodId = null;
-                if (travelCharge > 0 && stripeCardElement) {
+                if (requiresPayment) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Saving Card on File...</span>';
                     
                     try {
+                        if (!stripeCardElement) {
+                            throw new Error('Payment details are required for this time slot. Please re-open the summary and try again.');
+                        }
                         // Ensure we collect a Canadian postal code (Stripe card element default label is "ZIP")
                         const postalInputEl = document.getElementById('stripe-postal-code');
                         const postalCandidate = (postalInputEl?.value || '').trim() || (window.__selectedAddress?.postal_code || '').trim();
@@ -2883,8 +3303,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     
                     // Travel charge info - GET FROM SLOT DATA
                     travel_charge: travelCharge,
-                    travel_fee_cents: Math.round((Number(travelCharge) || 0) * 100),
-                    drive_time_minutes: selectedSlot?.driveTimeMinutes || window.__maxDriveTimeMinutes || 0,
+                    travel_fee_cents: Number.isFinite(Number(travelFeeCents)) ? Number(travelFeeCents) : Math.round((Number(travelCharge) || 0) * 100),
+                    drive_time_minutes: (driveTimeMinutes ?? 0),
                     stripe_payment_method_id: paymentMethodId
                 };
 

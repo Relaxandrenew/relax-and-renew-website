@@ -111,7 +111,11 @@
       --shadow: 0 10px 30px rgba(0,0,0,0.55);
     }
 
-    html, body { height:100%; }
+    html, body { min-height: 100vh; height: auto; }
+    html { background-color: #050505; }
+    html, body { min-height: 100%; height: auto; }
+    body { min-height: 100vh; }
+
     
     body {
       font-family: 'Cormorant Garamond', serif;
@@ -149,15 +153,29 @@
     }
     .nav-link:hover::after { width: 100%; }
 
-    /* Mobile Menu */
+    /* Mobile Menu (Portal) */
     .mobile-menu {
       background: #050505;
       transform: translateX(100%);
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      will-change: transform;
     }
     .mobile-menu.open { transform: translateX(0); }
 
-    .header-hero { background: transparent; }
+    .mobile-menu-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    html.menu-open,
+    body.menu-open {
+      overflow: hidden !important;
+      height: 100%;
+    }
+
+    .header-hero { background: linear-gradient(145deg, rgba(8,8,8,0.95), rgba(5,5,5,0.98)); }
 
     /* Cards */
     .card-fancy, .glass-panel {
@@ -284,12 +302,19 @@
       right: 0;
       bottom: 0;
       z-index: 200; /* Higher than nav */
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(12px);
+      background: #000000;
+      /* backdrop-filter removed for solid overlay */
       display: flex;
       align-items: center;
       justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
+    
+      height: 100dvh;
+    
+      overflow: auto;
+    
+      pointer-events: auto;
+      touch-action: manipulation;
     }
     #login-overlay.hidden {
       opacity: 0;
@@ -297,7 +322,7 @@
       pointer-events: none;
     }
     .login-card {
-      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
+      background: #050505;
       border: 1px solid rgba(224, 197, 132, 0.25);
       backdrop-filter: blur(10px);
       padding: 2.5rem 2rem;
@@ -560,7 +585,84 @@
        - Keep Lock visible above mobile keyboard
        ========================================= */
 /* On short screens, start from top so Lock isn't trapped */
-    @media (max-height: 700px) {
+    
+    /* =========================================================
+       MOBILE OPTIMIZATION (visual + performance)
+       - Reduce oversizing on small screens
+       - Reduce heavy blur/background-fixed
+       - Center Auth0 Lock cleanly
+       - Make touch targets comfortable without being oversized
+       ========================================================= */
+
+    @media (max-width: 768px) {
+      body { background-attachment: scroll !important; }
+      .card-fancy, .glass-panel { backdrop-filter: none; }
+    }
+
+    @media (max-width: 640px) {
+      /* Global sizing */
+      html { font-size: 15px; }
+      .header-hero { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+      .header-hero h1 { font-size: clamp(1.6rem, 6vw, 2.2rem) !important; line-height: 1.15 !important; }
+      .header-hero p { font-size: 0.95rem !important; }
+
+      /* Cards / panels */
+      .card-fancy, .glass-panel { padding: 1rem !important; }
+      .divider { margin: 0.75rem 0 !important; }
+
+      /* Inputs / buttons */
+      select, input {
+        min-height: 44px !important;
+        padding: 0.65rem 0.8rem !important;
+        font-size: 0.95rem !important;
+      }
+      .btn-filled, .btn-outline {
+        padding: 0.6rem 0.85rem !important;
+        font-size: 0.95rem !important;
+      }
+
+      /* Time slot buttons */
+      .slot-btn { padding: 0.55rem 0.6rem !important; font-size: 0.9rem !important; }
+
+      /* Login overlay and Auth0 Lock */
+      #login-overlay { padding: 16px !important; }
+      .login-card {
+        width: 100% !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .login-card::before { display: none !important; }
+      #auth0-lock-container {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+      }
+      #auth0-lock-container .auth0-lock,
+      #auth0-lock-container .auth0-lock-widget {
+        width: 100% !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
+      }
+      /* Keep just one clean border on mobile (Auth0 widget only) */
+      #auth0-lock-container .auth0-lock-widget {
+        border: 1px solid rgba(224, 197, 132, 0.35) !important;
+      }
+
+      /* Mobile menu: keep content stable and prevent behind-scroll */
+      #mobile-menu { padding-bottom: env(safe-area-inset-bottom); }
+    }
+
+    /* Desktop-only: remove website header on portal (keep banner/hero) */
+    @media (min-width: 641px) {
+      #navbar { display: none !important; }
+      #navbar-spacer { display: none !important; height: 0 !important; }
+    }
+
+@media (max-height: 700px) {
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
@@ -573,6 +675,7 @@
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
+    const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
     const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
@@ -671,28 +774,64 @@
     </div>
   </nav>
 
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu-backdrop" class="mobile-menu-backdrop fixed inset-0 bg-black/70 opacity-0 pointer-events-none transition-opacity z-40 lg:hidden"></div>
+
   <!-- Mobile Menu Overlay -->
-  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
+  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-[100dvh] w-[88vw] max-w-[380px] bg-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
     <div class="p-6">
       <div class="flex justify-between items-center mb-8">
-        <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
-        <button id="mobile-menu-close" class="text-brand-gold p-2 hover:rotate-90 transition-transform">
+        <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">PORTAL</span>
+        <button id="mobile-menu-close" class="text-brand-gold p-2 hover:rotate-90 transition-transform" aria-label="Close menu">
           <i data-lucide="x" class="w-8 h-8"></i>
         </button>
       </div>
-      <div class="flex flex-col space-y-6">
-        <a href="index.html#services" class="nav-link text-lg">Services</a>
-        <a href="index.html#pricing" class="nav-link text-lg">Pricing</a>
-        <a href="index.html#giftcards" class="nav-link text-lg">Gift Cards</a>
-        <a href="index.html#area" class="nav-link text-lg">Service Area</a>
-        <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
-        <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
-        <a href="membership.html" class="nav-link text-lg">Membership</a>
+
+      <div class="flex flex-col space-y-4">
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="dashboard">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="rebook">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i>
+          Book / Rebook
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="history">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          Appointment History
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="membership">
+          <i data-lucide="badge-percent" class="w-5 h-5"></i>
+          Membership
+        </button>
+
+        <button class="text-left nav-link text-lg flex items-center gap-3 opacity-60 cursor-not-allowed" disabled>
+          <i data-lucide="user" class="w-5 h-5"></i>
+          Profile (Coming Soon)
+        </button>
 
         <hr class="divider mt-2">
 
-        <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200">
-          <i data-lucide="log-out" class="w-5 h-5 inline mr-2"></i>
+        <button id="install-app-btn" class="text-left nav-link text-lg flex items-center gap-3">
+          <i data-lucide="download" class="w-5 h-5"></i>
+          Download App
+        </button>
+
+        <button id="install-app-ios-btn" class="hidden text-left nav-link text-lg flex items-center gap-3">
+          <i data-lucide="square-plus" class="w-5 h-5"></i>
+          Add to Home Screen
+        </button>
+
+        <a href="index.html" class="nav-link text-lg flex items-center gap-3">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          Return to Website
+        </a>
+
+        <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200 flex items-center gap-3">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
           Sign Out
         </button>
       </div>
@@ -700,7 +839,7 @@
   </div>
 
   <!-- Spacer -->
-  <div aria-hidden="true" class="h-20"></div>
+  <div id="navbar-spacer" aria-hidden="true" class="h-20"></div>
 
   <!-- HEADER HERO -->
   <header class="header-hero pt-12 pb-10 border-b border-brand-gold/20">
@@ -723,7 +862,7 @@
 
   <!-- MAIN -->
   <main class="min-h-screen">
-    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-8">
+    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-6">
       <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
         <!-- SIDEBAR -->
         <aside class="hidden lg:block">
@@ -740,22 +879,21 @@
 
             <div class="space-y-2">
               <button class="sidebar-btn active" data-tab="dashboard">
-                <i data-lucide="calendar-check" class="w-5 h-5 text-brand-gold"></i>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-gold"></i>
+                <span>Dashboard</span>
+                <span id="appt-count-badge" class="ml-auto text-[10px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded hidden">0</span>
+              </button>
+              <button class="sidebar-btn" data-tab="rebook">
+                <i data-lucide="calendar-plus" class="w-5 h-5 text-brand-gold"></i>
                 <span>Rebook</span>
+              </button>
+              <button class="sidebar-btn" data-tab="history">
+                <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
+                <span>History</span>
               </button>
               <button class="sidebar-btn" data-tab="membership" disabled>
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
-                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
-              </button>
-              <button class="sidebar-btn" data-tab="history" disabled>
-                <i data-lucide="history" class="w-5 h-5 text-brand-dim"></i>
-                <span>History</span>
-                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
-              </button>
-              <button class="sidebar-btn" data-tab="profile" disabled>
-                <i data-lucide="settings" class="w-5 h-5 text-brand-dim"></i>
-                <span>Profile</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               <hr class="divider my-3">
@@ -769,8 +907,140 @@
 
         <!-- CONTENT -->
         <section>
-          <!-- Dashboard / Rebook -->
+          <!-- DASHBOARD TAB -->
           <div id="tab-dashboard" class="tab-content animate-fade-in-up">
+            <!-- Welcome Header -->
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 class="text-3xl font-serif text-brand-light">Welcome Back</h2>
+                  <p class="muted mt-2 font-light">Here's an overview of your account.</p>
+                </div>
+                <button onclick="switchTab('rebook')" class="btn-filled text-sm py-2 px-4">
+                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                  Book Appointment
+                </button>
+              </div>
+            </div>
+
+            <!-- Dashboard Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Upcoming</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-upcoming-count">0</div>
+                <div class="muted text-xs mt-1">Scheduled appointments</div>
+              </div>
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Completed</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-completed-count">0</div>
+                <div class="muted text-xs mt-1">Past sessions</div>
+              </div>
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Location</div>
+                </div>
+                <div class="text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
+                <div class="muted text-xs mt-1">Service address</div>
+              </div>
+            </div>
+
+            <!-- Upcoming Appointments Section -->
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
+                  <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
+                  Upcoming Appointments
+                </h3>
+                <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-1.5 px-3">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                  Refresh
+                </button>
+              </div>
+
+              <!-- Appointments Loading State -->
+              <div id="appointments-loading" class="py-8 text-center">
+                <div class="w-12 h-12 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                  <i data-lucide="loader-2" class="w-6 h-6 text-brand-gold animate-spin"></i>
+                </div>
+                <p class="text-brand-dim text-sm">Loading appointments...</p>
+              </div>
+
+              <!-- Appointments List -->
+              <div id="appointments-list" class="space-y-3 hidden"></div>
+
+              <!-- No Appointments State -->
+              <div id="appointments-empty" class="hidden py-8 text-center">
+                <div class="w-12 h-12 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                  <i data-lucide="calendar-x" class="w-6 h-6 text-brand-gold/50"></i>
+                </div>
+                <h4 class="text-lg font-serif text-brand-light mb-2">No Upcoming Appointments</h4>
+                <p class="muted text-sm mb-4">You don't have any scheduled sessions.</p>
+                <button onclick="switchTab('rebook')" class="btn-outline text-sm py-2 px-4">
+                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                  Book Now
+                </button>
+              </div>
+
+              <!-- Error State -->
+              <div id="appointments-error" class="hidden py-6">
+                <div class="card-fancy p-4 border-red-500/30">
+                  <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                    <div>
+                      <div class="font-bold text-brand-light">Unable to load appointments</div>
+                      <div class="muted mt-1 text-sm" id="appointments-error-message">Please try again.</div>
+                      <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-1.5 mt-3">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        Try Again
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onclick="switchTab('rebook')" class="card-fancy p-5 text-left hover:border-brand-gold/40 transition-all group">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded group-hover:bg-brand-gold/10 transition-all">
+                    <i data-lucide="calendar-plus" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <div class="font-serif text-lg text-brand-light">Rebook</div>
+                    <div class="muted text-sm">Schedule your next session</div>
+                  </div>
+                </div>
+              </button>
+              <button onclick="switchTab('history')" class="card-fancy p-5 text-left hover:border-brand-gold/40 transition-all group">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded group-hover:bg-brand-gold/10 transition-all">
+                    <i data-lucide="history" class="w-6 h-6"></i>
+                  </div>
+                  <div>
+                    <div class="font-serif text-lg text-brand-light">View History</div>
+                    <div class="muted text-sm">See past appointments</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- REBOOK TAB -->
+          <div id="tab-rebook" class="tab-content hidden animate-fade-in-up">
             <!-- Profile summary -->
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -1019,6 +1289,20 @@
     let selectedServiceKey = null;
     let selectedStandardDuration = null;
 
+    // Appointments state
+    let upcomingAppointments = [];
+    let cancelledAppointments = [];
+    let completedAppointments = [];
+    let historyAppointments = [];
+    
+    // Preload state
+    let availabilityPreloaded = false;
+    let preloadedTreatment = null;
+    let preloadedDuration = null;
+
+    // PWA install prompt (Android/Chromium)
+    let deferredInstallPrompt = null;
+
     const TREATMENT_RULES = {
       "relaxation":  { label: "Relaxation Massage", durations: [60,75,90,120] },
       "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
@@ -1034,26 +1318,31 @@
     // =========================================================
     // UTIL
     // =========================================================
-    function showToast(title, message, isError=false) {
+    function showToast(title, message, isError=false, durationMs=3200) {
       const toast = document.getElementById("toast");
       const msgEl = document.getElementById("toast-message");
+      if (!toast || !msgEl) return;
+
       msgEl.textContent = message || title || "—";
       toast.classList.add("show");
-      // Specific styling for toast show state handled in CSS via opacity
       toast.style.opacity = "1";
       toast.style.transform = "translateX(-50%) translateY(-10px)";
-      
+
       const iconWrap = toast.querySelector("i");
       if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Attempt to restore previously selected time slot (after refresh)
-      maybeAutoSelectRestoredSlot(dateStr);
-      setTimeout(() => {
-          toast.style.opacity = "0";
-          toast.style.transform = "translateX(-50%) translateY(0)";
-          toast.classList.remove("show");
-      }, 3200);
+      // Cancel any prior hide timers (prevents "sticky" toasts)
+      try {
+        if (toast._hideTimer) clearTimeout(toast._hideTimer);
+      } catch (e) {}
+
+      const d = Math.max(800, Number(durationMs) || 3200);
+      toast._hideTimer = setTimeout(async () => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(-50%) translateY(0)";
+        toast.classList.remove("show");
+      }, d);
     }
 
 
@@ -1095,7 +1384,7 @@
       bookingMessageInterval = setInterval(() => {
         messageIndex = (messageIndex + 1) % bookingMessages.length;
         statusText.style.opacity = "0";
-        setTimeout(() => {
+        setTimeout(async () => {
           statusText.textContent = bookingMessages[messageIndex].text;
           substatusText.textContent = bookingMessages[messageIndex].sub;
           statusText.style.opacity = "1";
@@ -1464,6 +1753,12 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
       document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
+      // Dashboard location
+      const dashLoc = document.getElementById("dash-location");
+      if (dashLoc) {
+        dashLoc.textContent = portalProfile?.city || portalProfile?.address?.split(",")[0] || "—";
+      }
+
       const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
       document.getElementById("profile-missing").classList.toggle("hidden", !missing);
 
@@ -1613,6 +1908,323 @@ if (selectedSlot && driveTime > 0) {
       }
     }
 
+
+    // =========================================================
+    // APPOINTMENT CARD RENDERER
+    // =========================================================
+    function renderAppointmentCard(appt, isCancelled = false, isHistory = false) {
+      const start = appt?.starts_at ? new Date(appt.starts_at) : null;
+      const dateStr = start ? start.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
+      const timeStr = start ? start.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
+      const treatment = appt?.appointment_type?.name || appt?.treatment_type || "Massage";
+      const duration = appt?.duration || 60;
+      
+      const statusClass = isCancelled ? "text-red-400" : (isHistory ? "text-brand-dim" : "text-green-400");
+      const statusText = isCancelled ? "Cancelled" : (isHistory ? "Completed" : "Confirmed");
+      const statusIcon = isCancelled ? "x-circle" : (isHistory ? "check-circle" : "calendar-check");
+      
+      return `
+        <div class="card-fancy p-4 ${isCancelled ? 'opacity-60' : ''}">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex-1">
+              <div class="font-serif text-lg text-brand-light">${treatment}</div>
+              <div class="text-brand-dim text-sm mt-1">${dateStr} at ${timeStr}</div>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs ${statusClass} flex items-center gap-1">
+                  <i data-lucide="${statusIcon}" class="w-3 h-3"></i>
+                  ${statusText}
+                </span>
+                <span class="text-xs text-brand-dim">${duration} min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================
+    // LOAD UPCOMING APPOINTMENTS
+    // =========================================================
+    async function loadUpcomingAppointments() {
+      if (!portalProfile || !portalProfile.email) {
+        console.warn("No profile/email to load appointments");
+        document.getElementById("appointments-loading")?.classList.add("hidden");
+        document.getElementById("appointments-empty")?.classList.remove("hidden");
+        document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-empty")?.classList.remove("hidden");
+        return;
+      }
+
+      // Show loading states
+      document.getElementById("appointments-loading")?.classList.remove("hidden");
+      document.getElementById("appointments-list")?.classList.add("hidden");
+      document.getElementById("appointments-empty")?.classList.add("hidden");
+      document.getElementById("appointments-error")?.classList.add("hidden");
+      
+      document.getElementById("history-loading")?.classList.remove("hidden");
+      document.getElementById("history-list")?.classList.add("hidden");
+      document.getElementById("history-empty")?.classList.add("hidden");
+      document.getElementById("history-error")?.classList.add("hidden");
+
+      // Set timeout to show empty state if request takes too long
+      const loadingTimeout = setTimeout(() => {
+        console.warn("Appointments loading timeout - showing empty state");
+        document.getElementById("appointments-loading")?.classList.add("hidden");
+        document.getElementById("appointments-empty")?.classList.remove("hidden");
+        document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-empty")?.classList.remove("hidden");
+        
+        const dashUpcoming = document.getElementById("dash-upcoming-count");
+        const dashCompleted = document.getElementById("dash-completed-count");
+        if (dashUpcoming) dashUpcoming.textContent = "0";
+        if (dashCompleted) dashCompleted.textContent = "0";
+      }, 10000);
+
+      try {
+        const res = await fetch(APPOINTMENTS_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: portalProfile.email,
+            firstName: portalProfile.firstName || "",
+            lastName: portalProfile.lastName || ""
+          })
+        });
+
+        clearTimeout(loadingTimeout);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        const all = Array.isArray(data.appointments) ? data.appointments : [];
+        const now = new Date();
+
+        // Separate appointments
+        cancelledAppointments = all.filter(a => {
+          const s = String(a?.status || "").toLowerCase();
+          return s.includes("cancel");
+        });
+
+        completedAppointments = all.filter(a => {
+          const s = String(a?.status || "").toLowerCase();
+          if (s.includes("cancel")) return false;
+          const start = a?.starts_at ? new Date(a.starts_at) : null;
+          return start && start <= now;
+        });
+
+        upcomingAppointments = all.filter(a => {
+          const s = String(a?.status || "").toLowerCase();
+          if (s.includes("cancel")) return false;
+          const start = a?.starts_at ? new Date(a.starts_at) : null;
+          return start && start > now;
+        });
+
+        historyAppointments = [...cancelledAppointments, ...completedAppointments].sort((a, b) => {
+          const as = a?.starts_at ? new Date(a.starts_at).getTime() : 0;
+          const bs = b?.starts_at ? new Date(b.starts_at).getTime() : 0;
+          return bs - as;
+        });
+
+        // Store last treatment for preloading
+        if (completedAppointments.length > 0 || upcomingAppointments.length > 0) {
+          const lastAppt = upcomingAppointments[0] || completedAppointments[0];
+          if (lastAppt) {
+            try {
+              localStorage.setItem("rnr_portal_last_treatment", JSON.stringify({
+                treatment_type: lastAppt.appointment_type?.name || lastAppt.treatment_type || "",
+                duration: lastAppt.duration || 60
+              }));
+            } catch(e) {}
+          }
+        }
+
+        renderAppointments();
+        renderHistory();
+
+      } catch (e) {
+        clearTimeout(loadingTimeout);
+        console.error("Failed to load appointments:", e);
+
+        document.getElementById("appointments-loading")?.classList.add("hidden");
+        document.getElementById("appointments-error")?.classList.remove("hidden");
+        const errMsg = document.getElementById("appointments-error-message");
+        if (errMsg) errMsg.textContent = e.message || "Please try again.";
+
+        document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-error")?.classList.remove("hidden");
+      }
+    }
+
+    function renderAppointments() {
+      document.getElementById("appointments-loading")?.classList.add("hidden");
+
+      const listEl = document.getElementById("appointments-list");
+      const emptyEl = document.getElementById("appointments-empty");
+      const badge = document.getElementById("appt-count-badge");
+      const dashUpcoming = document.getElementById("dash-upcoming-count");
+      const dashCompleted = document.getElementById("dash-completed-count");
+
+      if (dashUpcoming) dashUpcoming.textContent = upcomingAppointments.length;
+      if (dashCompleted) dashCompleted.textContent = completedAppointments.length;
+
+      if (upcomingAppointments.length > 0) {
+        if (badge) {
+          badge.textContent = upcomingAppointments.length;
+          badge.classList.remove("hidden");
+        }
+      } else {
+        badge?.classList.add("hidden");
+      }
+
+      if (upcomingAppointments.length === 0) {
+        listEl?.classList.add("hidden");
+        emptyEl?.classList.remove("hidden");
+      } else {
+        emptyEl?.classList.add("hidden");
+        listEl?.classList.remove("hidden");
+        if (listEl) {
+          listEl.innerHTML = upcomingAppointments.map(appt => renderAppointmentCard(appt, false, false)).join("");
+        }
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function renderHistory() {
+      document.getElementById("history-loading")?.classList.add("hidden");
+
+      const listEl = document.getElementById("history-list");
+      const emptyEl = document.getElementById("history-empty");
+
+      if (!historyAppointments || historyAppointments.length === 0) {
+        listEl?.classList.add("hidden");
+        emptyEl?.classList.remove("hidden");
+      } else {
+        emptyEl?.classList.add("hidden");
+        listEl?.classList.remove("hidden");
+        if (listEl) {
+          listEl.innerHTML = historyAppointments.map(appt => {
+            const isCancelled = String(appt?.status || "").toLowerCase().includes("cancel");
+            return renderAppointmentCard(appt, isCancelled, !isCancelled);
+          }).join("");
+        }
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =========================================================
+    // PRELOAD AVAILABILITY IN BACKGROUND
+    // =========================================================
+    async function preloadAvailabilityInBackground(forceReload = false) {
+      console.log("preloadAvailabilityInBackground called, forceReload:", forceReload);
+      
+      const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
+      if (!addrOk) {
+        console.log("Cannot preload: missing address info");
+        return;
+      }
+
+      if (availabilityPreloaded && !forceReload) {
+        console.log("Already preloaded, skipping");
+        return;
+      }
+
+      // Determine treatment from last booking or default
+      let preloadTreatment = "relaxation";
+      let preloadDuration = 60;
+
+      try {
+        const lastRaw = localStorage.getItem("rnr_portal_last_treatment");
+        if (lastRaw) {
+          const last = JSON.parse(lastRaw);
+          const name = String(last.treatment_type || "").toLowerCase();
+          if (name.includes("deep tissue")) preloadTreatment = "deep-tissue";
+          else if (name.includes("sport")) preloadTreatment = "sports";
+          else if (name.includes("senior")) preloadTreatment = "senior";
+          else if (name.includes("hot stone")) preloadTreatment = "hot-stone";
+          else if (name.includes("cupping")) preloadTreatment = "cupping";
+          else if (name.includes("prenatal")) preloadTreatment = "prenatal";
+          else if (name.includes("pediatric")) preloadTreatment = "pediatric";
+          else if (name.includes("infant")) preloadTreatment = "infant";
+          
+          const dur = Number(last.duration);
+          if (dur && [30, 45, 60, 75, 90, 120].includes(dur)) {
+            preloadDuration = dur;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not parse last treatment:", e);
+      }
+
+      console.log("Preloading:", preloadTreatment, preloadDuration + "min");
+
+      const treatRule = TREATMENT_RULES[preloadTreatment];
+      if (!treatRule) return;
+
+      if (!treatRule.durations.includes(preloadDuration)) {
+        preloadDuration = treatRule.durations[0] || 60;
+      }
+
+      // Set state
+      selectedServiceKey = preloadTreatment;
+      selectedStandardDuration = preloadDuration;
+      preloadedTreatment = preloadTreatment;
+      preloadedDuration = preloadDuration;
+
+      // Update UI
+      if (treatmentSelect) treatmentSelect.value = preloadTreatment;
+      rebuildDurationOptions();
+      if (durationSelect) durationSelect.value = String(preloadDuration);
+
+      // Build request
+      const { from, to } = computeMonthRange(calendarCurrent);
+      const blockMinutes = preloadDuration + STATIC_SETUP_MINUTES;
+
+      const payload = {
+        address: portalProfile.address,
+        city: portalProfile.city,
+        postal_code: portalProfile.postal_code,
+        from,
+        to,
+        standardDurationMinutes: preloadDuration,
+        blockDurationMinutes: blockMinutes,
+        slotIntervalMinutes: 15,
+        practitionerId: DEFAULT_PRACTITIONER_ID,
+        travel_time_buffer_minutes: 0
+      };
+
+      updateAvailabilityStatus("Loading availability...", false);
+
+      try {
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const cacheKey = getRequestCacheKey(payload);
+          availabilityCache.set(cacheKey, data);
+          parseAvailabilityResponse(data);
+          availabilityPreloaded = true;
+          
+          renderCalendar();
+          setTimeout(ensureCalendarClickableAfterPreload, 60);
+          updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
+          updateSummary();
+          console.log("Availability preloaded successfully");
+        } else {
+          console.warn("Preload failed:", res.status);
+          updateAvailabilityStatus("Select treatment and duration to load availability.", false);
+        }
+      } catch (e) {
+        console.warn("Preload error:", e);
+        updateAvailabilityStatus("Select treatment and duration to load availability.", false);
+      }
+    }
+
     // =========================================================
     // AUTH CHECK ON LOAD
     // =========================================================
@@ -1649,6 +2261,10 @@ if (selectedSlot && driveTime > 0) {
           hideLoginOverlay();
           hydrateProfileUI();
           renderCalendar();
+          
+          // Load appointments and preload availability
+          loadUpcomingAppointments();
+          if (!availabilityPreloaded) preloadAvailabilityInBackground();
           
           return true;
         } else {
@@ -1728,11 +2344,61 @@ if (selectedSlot && driveTime > 0) {
           } catch (e) {}
 
           // Hide login overlay with slight delay for smooth transition
-          setTimeout(() => {
+          setTimeout(async () => {
             hideLoginOverlay();
             hydrateProfileUI();
             renderCalendar();
-            showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`);
+            const _n = (portalProfile && (`${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim())) || "Client";
+            const _isMobile = (window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+            showToast("Welcome!", `Signed in as ${_n}.`, false, _isMobile ? 1100 : 2200);
+            // After sign-in, restore any in-progress selection and ensure availability loads
+            try { await restorePortalStateIfPossible(); } catch (e) {}
+
+      // Mobile-only: the selects can appear preloaded visually, but globals may not hydrate without a stored state.
+      // This causes the calendar to render as fully disabled. On mobile, synchronize selection from UI and load availability if needed.
+      if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+        try {
+          const uiServiceKey = (treatmentSelect && treatmentSelect.value) ? String(treatmentSelect.value).trim() : "";
+          const uiDurVal = (durationSelect && durationSelect.value) ? Number(durationSelect.value) : NaN;
+
+          if (!selectedServiceKey && uiServiceKey) selectedServiceKey = uiServiceKey;
+          if ((!selectedStandardDuration || isNaN(Number(selectedStandardDuration))) && !isNaN(uiDurVal) && uiDurVal > 0) {
+            selectedStandardDuration = uiDurVal;
+          }
+
+          const hasAvailabilityData = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+
+          if (selectedServiceKey && selectedStandardDuration && !hasAvailabilityData) {
+            await maybeLoadAvailabilityForCurrentMonth();
+          } else {
+            renderCalendar();
+          }
+        } catch (e) {
+          console.warn("Mobile calendar hydration failed:", e);
+          renderCalendar();
+        }
+      }
+
+            try {
+              if (portalProfile) {
+                if (!selectedServiceKey && treatmentSelect && treatmentSelect.value && TREATMENT_RULES[treatmentSelect.value]) {
+                  selectedServiceKey = treatmentSelect.value;
+                  rebuildDurationOptions();
+                }
+                if (!selectedStandardDuration && durationSelect && durationSelect.value) {
+                  selectedStandardDuration = Number(durationSelect.value);
+                }
+                if (selectedServiceKey && selectedStandardDuration) {
+                  await maybeLoadAvailabilityForCurrentMonth();
+                }
+                renderCalendar();
+              }
+            } catch (e) {}
+
+            
+            // Load appointments and preload availability
+            loadUpcomingAppointments();
+            preloadAvailabilityInBackground();
           }, 300);
 
         } catch (e) {
@@ -1929,6 +2595,7 @@ if (selectedSlot && driveTime > 0) {
           const cached = availabilityCache.get(cacheKey);
           parseAvailabilityResponse(cached);
           renderCalendar();
+          setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           savePortalState();
           // Restore date selection (if any) after availability is loaded
@@ -1953,6 +2620,7 @@ if (selectedSlot && driveTime > 0) {
         parseAvailabilityResponse(data);
 
         renderCalendar();
+        setTimeout(ensureCalendarClickableAfterPreload, 60);
         updateAvailabilityStatus("Live availability loaded for this month.", true);
 
       } catch (e) {
@@ -2021,7 +2689,38 @@ if (selectedSlot && driveTime > 0) {
         daysContainer.appendChild(cell);
       }
 
+      
       if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // Mobile/Browser robustness: if availability data exists but all days render as disabled,
+    // trigger a single refresh through the existing duration-change path (this matches the
+    // user action that makes availability appear).
+    function ensureCalendarClickableAfterPreload() {
+      try {
+        const daysContainer = document.getElementById("calendar-days");
+        if (!daysContainer) return;
+
+        const anyClickable = daysContainer.querySelector(".calendar-day-available:not([disabled])");
+        if (anyClickable) return;
+
+        const hasData = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+        const hasSelection = !!(selectedServiceKey && selectedStandardDuration);
+
+        if (!hasData || !hasSelection) return;
+
+        if (window.__rnr_calendar_auto_refresh_done) return;
+        window.__rnr_calendar_auto_refresh_done = true;
+
+        // Prefer the established flow (duration change -> maybeLoadAvailabilityForCurrentMonth)
+        if (durationSelect) {
+          durationSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          maybeLoadAvailabilityForCurrentMonth();
+        }
+      } catch (e) {
+        console.warn("ensureCalendarClickableAfterPreload error:", e);
+      }
     }
 
     function selectDate(dateStr) {
@@ -2183,10 +2882,13 @@ if (selectedSlot && driveTime > 0) {
         // Clear the cache so fresh data loads next time
         availabilityCache.clear();
 
-        // Wait for modal to close, then reset the form to default state
+        // Wait for modal to close, then go to dashboard
         setTimeout(() => {
           resetBookingForm();
           showToast("Success", "Your appointment has been confirmed!");
+          switchTab('dashboard');
+          loadUpcomingAppointments();
+          preloadAvailabilityInBackground(true);
         }, 2200);
 
       } catch (e) {
@@ -2225,12 +2927,121 @@ if (selectedSlot && driveTime > 0) {
     async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Mobile menu
+      // Mobile menu (portal navigation)
       const mm = document.getElementById("mobile-menu");
-      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
-      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+      const mmBackdrop = document.getElementById("mobile-menu-backdrop");
 
-      // Get form elements
+      let mobileMenuScrollY = 0;
+
+      const openMobileMenu = () => {
+        mobileMenuScrollY = window.scrollY || 0;
+
+        mm?.classList.add("open");
+        mmBackdrop?.classList.add("open");
+
+        document.documentElement.classList.add("menu-open");
+        document.body.classList.add("menu-open");
+
+        // Prevent background scrolling (including iOS)
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${mobileMenuScrollY}px`;
+        document.body.style.width = "100%";
+      };
+
+      const closeMobileMenu = () => {
+        mm?.classList.remove("open");
+        mmBackdrop?.classList.remove("open");
+
+        document.documentElement.classList.remove("menu-open");
+        document.body.classList.remove("menu-open");
+
+        // Restore scroll position
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, mobileMenuScrollY);
+      };
+
+      document.getElementById("mobile-menu-btn")?.addEventListener("click", openMobileMenu);
+      document.getElementById("mobile-menu-close")?.addEventListener("click", closeMobileMenu);
+      mmBackdrop?.addEventListener("click", closeMobileMenu);
+
+      // Close menu on ESC
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMobileMenu();
+      });
+
+      // Wire portal tab buttons inside the mobile menu
+      document.querySelectorAll(".mobile-portal-btn").forEach(btn => {
+        const tab = btn.dataset.tab;
+        if (!tab) return;
+        btn.addEventListener("click", () => {
+          switchTab(tab);
+          closeMobileMenu();
+        });
+      });
+
+      // Add-to-Home-Screen / Install (PWA)
+      const installBtn = document.getElementById("install-app-btn");
+      const installIosBtn = document.getElementById("install-app-ios-btn");
+
+      const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+      const isStandalone = () =>
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        (window.navigator && window.navigator.standalone === true);
+
+      const refreshInstallButtons = () => {
+        // If already installed as an app, hide install UI
+        if (isStandalone()) {
+          installBtn?.classList.add("hidden");
+          installIosBtn?.classList.add("hidden");
+          return;
+        }
+
+        // Always show a single "Download App" entry on Android/desktop browsers;
+        // it will either trigger the install prompt (if available) or show instructions.
+        installBtn?.classList.remove("hidden");
+
+        // On iOS Safari, also show the dedicated instruction entry (optional).
+        if (isIOS()) installIosBtn?.classList.remove("hidden");
+        else installIosBtn?.classList.add("hidden");
+      };
+
+      // Android/Chromium: capture prompt when available
+      window.addEventListener("beforeinstallprompt", (e) => {
+        try { e.preventDefault(); } catch (err) {}
+        deferredInstallPrompt = e;
+        refreshInstallButtons();
+      });
+
+      // Initial state
+      refreshInstallButtons();
+
+      installBtn?.addEventListener("click", async () => {
+        try {
+          if (isStandalone()) return;
+
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            try { await deferredInstallPrompt.userChoice; } catch (e) {}
+            deferredInstallPrompt = null;
+            refreshInstallButtons();
+          } else if (isIOS()) {
+            showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6500);
+          } else {
+            showToast("Install the app", "In Chrome: tap the menu (⋮) then choose ‘Install app’ or ‘Add to Home screen’.", false, 6500);
+          }
+        } finally {
+          closeMobileMenu();
+        }
+      });
+
+      installIosBtn?.addEventListener("click", () => {
+        showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6500);
+        closeMobileMenu();
+      });
+
+// Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
 
@@ -2256,6 +3067,7 @@ if (selectedSlot && driveTime > 0) {
 
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        availabilityPreloaded = false;
         clearSelectionUI();
         renderCalendar();
 
@@ -2263,7 +3075,7 @@ if (selectedSlot && driveTime > 0) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
         } else {
           updateAvailabilityStatus("Now choose a duration to load live availability.", false);
-        savePortalState();
+          savePortalState();
         }
       });
 
@@ -2273,6 +3085,7 @@ if (selectedSlot && driveTime > 0) {
 
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        availabilityPreloaded = false;
         clearSelectionUI();
         renderCalendar();
 
