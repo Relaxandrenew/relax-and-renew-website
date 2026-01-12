@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Client Portal | Relax & Renew RMT</title>
+  <script>
+    // Force HTTPS for PWA install eligibility
+    (function rnr_force_https(){
+      try {
+        if (location && location.protocol === "http:" && /relaxandrenew\.ca$/i.test(location.hostname)) {
+          location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <meta name="description" content="Relax & Renew Client Portal — rebook appointments, view your details, and manage your membership." />
 
   <!-- Meta Pixel -->
@@ -666,6 +677,34 @@
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
+
+    /* Light mode: swap gold accents to black for legibility */
+    html.light-mode {
+      --brand-gold: #111111;
+      --brand-gold-hover: #111111;
+      --brand-light: #111111;
+      --brand-dim: rgba(0,0,0,0.6);
+      --brand-black: #ffffff;
+    }
+    html.light-mode .text-brand-gold,
+    html.light-mode .pill.text-brand-gold { color: #111111 !important; }
+    html.light-mode .border-brand-gold { border-color: rgba(0,0,0,0.35) !important; }
+    html.light-mode .btn-outline { border-color: rgba(0,0,0,0.35) !important; color: #111111 !important; }
+    html.light-mode .divider { border-color: rgba(0,0,0,0.20) !important; }
+
+
+    /* Mobile time picker overlay tweaks */
+    @media (max-width: 768px) {
+      #mobile-times-overlay .modal-card {
+        width: calc(100vw - 24px);
+        max-width: 100vw !important;
+        margin: 0 auto;
+      }
+      #mobile-times-overlay .modal-card #time-slots-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
 </style>
 
   <script>
@@ -1355,6 +1394,8 @@
                 </div>
 
                 <!-- Selected Date -->
+                <div id="mobile-times-anchor" class="hidden"></div>
+
                 <div id="selected-date-info" class="mt-8 hidden animate-fade-in-up">
                   <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 2</div>
                   <h3 class="text-2xl font-serif mt-1">Select a Time</h3>
@@ -1499,6 +1540,58 @@
       </div>
     </div>
   </main>
+
+
+  <!-- Mobile Time Picker Overlay (mobile only) -->
+  <div id="mobile-times-overlay" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Select a Time</div>
+          <div class="muted text-sm mt-1">Choose an available time, then confirm.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileTimesOverlay()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-times-content"></div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mobile-confirm-btn" class="btn-filled flex-1 btn-disabled py-3" disabled onclick="mobileConfirmBooking()">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Confirm</span>
+        </button>
+        <button class="btn-outline flex-1 py-2 text-xs" onclick="closeMobileTimesOverlay()">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install App Prompt (Chromium/Android/Desktop) -->
+  <div id="install-prompt-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Install the app</div>
+          <div class="muted text-sm mt-1">Add Relax & Renew Portal to your Home Screen for faster access.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeInstallPromptModal(true)">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-filled flex-1 py-3" onclick="triggerInstallPrompt()">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Install
+        </button>
+        <button class="btn-outline flex-1 py-3" onclick="closeInstallPromptModal(true)">Not now</button>
+      </div>
+
+      <div id="install-prompt-debug" class="hidden muted text-xs mt-4"></div>
+    </div>
+  </div>
+
 
   <!-- Toast -->
   <div id="toast" class="toast fixed left-1/2 bottom-6 -translate-x-1/2 flex items-center gap-3 py-3 px-5 rounded opacity-0 pointer-events-none transition-all z-50">
@@ -3487,6 +3580,9 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
 
       loadTimeSlots(dateStr);
+      if (typeof isMobileUI === "function" && isMobileUI()) {
+        openMobileTimesOverlay();
+      }
     }
 
     function loadTimeSlots(dateStr) {
@@ -3592,6 +3688,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     // BOOKING CONFIRMATION
     // =========================================================
     async function confirmBooking() {
+      try { closeMobileTimesOverlay(); } catch (e) {}
       if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
         showToast("Missing info", "Please select a treatment, duration, date, and time.", true);
         return;
@@ -3767,7 +3864,134 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
 
-      const refreshInstallButtons = () => {
+      
+      const isMobileUI = () => (window.matchMedia ? window.matchMedia("(max-width: 768px)").matches : (window.innerWidth <= 768));
+
+      let __mobileTimesMoved = false;
+
+      function openMobileTimesOverlay() {
+        if (!isMobileUI()) return;
+        const overlay = document.getElementById("mobile-times-overlay");
+        const content = document.getElementById("mobile-times-content");
+        const anchor = document.getElementById("mobile-times-anchor");
+        if (!overlay || !content || !anchor) return;
+
+        // Move existing DOM blocks (preserves IDs and existing logic)
+        const ids = ["selected-date-info", "time-slots-container", "no-slots"];
+        if (!__mobileTimesMoved) {
+          ids.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) content.appendChild(el);
+          });
+          __mobileTimesMoved = true;
+        }
+
+        overlay.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+        syncMobileConfirmButton();
+        try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+      }
+
+      function closeMobileTimesOverlay() {
+        const overlay = document.getElementById("mobile-times-overlay");
+        const content = document.getElementById("mobile-times-content");
+        const anchor = document.getElementById("mobile-times-anchor");
+        if (!overlay || !content || !anchor) return;
+
+        if (__mobileTimesMoved) {
+          const ids = ["selected-date-info", "time-slots-container", "no-slots"];
+          let ref = anchor;
+          ids.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+              ref.insertAdjacentElement("afterend", el);
+              ref = el;
+            }
+          });
+          __mobileTimesMoved = false;
+        }
+
+        overlay.classList.add("hidden");
+        document.body.style.overflow = "";
+      }
+
+      function syncMobileConfirmButton() {
+        const mainBtn = document.getElementById("confirm-booking-btn");
+        const mobileBtn = document.getElementById("mobile-confirm-btn");
+        if (!mainBtn || !mobileBtn) return;
+
+        const enabled = !mainBtn.disabled;
+        mobileBtn.disabled = !enabled;
+        mobileBtn.classList.toggle("btn-disabled", !enabled);
+      }
+
+      function mobileConfirmBooking() {
+        const btn = document.getElementById("confirm-booking-btn");
+        if (btn && !btn.disabled) {
+          btn.click();
+        } else {
+          showToast("Select a time", "Please select a time first.", true, 4500);
+        }
+      }
+
+      // Install prompt modal helpers
+      function maybeShowInstallPromptModal(force) {
+        try {
+          if (isStandalone()) return;
+          if (!deferredInstallPrompt) return;
+
+          const key = "rnr_install_prompt_dismissed_at";
+          const last = Number(localStorage.getItem(key) || 0);
+          const now = Date.now();
+          const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+          if (!force && last && (now - last) < sevenDays) return;
+
+          const modal = document.getElementById("install-prompt-modal");
+          if (!modal) return;
+          modal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+          try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+        } catch (e) {}
+      }
+
+      function closeInstallPromptModal(setCooldown) {
+        const modal = document.getElementById("install-prompt-modal");
+        if (!modal) return;
+        modal.classList.add("hidden");
+        document.body.style.overflow = "";
+        if (setCooldown) {
+          try { localStorage.setItem("rnr_install_prompt_dismissed_at", String(Date.now())); } catch (e) {}
+        }
+      }
+
+      async function triggerInstallPrompt() {
+        try {
+          if (isStandalone()) return;
+          if (!deferredInstallPrompt) {
+            const dbg = document.getElementById("install-prompt-debug");
+            if (dbg) {
+              dbg.classList.remove("hidden");
+              dbg.textContent = (!window.isSecureContext)
+                ? "Install requires HTTPS. Open this page using https:// and refresh."
+                : "Install isn’t available yet. Ensure /manifest.json and /sw.js are deployed and refresh.";
+            } else {
+              showToast("Install not available", (!window.isSecureContext) ? "Use https:// then refresh." : "Ensure manifest + service worker are deployed, then refresh.", true, 6500);
+            }
+            return;
+          }
+
+          deferredInstallPrompt.prompt();
+          try { await deferredInstallPrompt.userChoice; } catch (e) {}
+          deferredInstallPrompt = null;
+          refreshInstallButtons();
+          closeInstallPromptModal(true);
+        } catch (e) {
+          closeInstallPromptModal(true);
+        }
+      }
+
+const refreshInstallButtons = () => {
         // If already installed as an app, hide install UI
         if (isStandalone()) {
           installBtn?.classList.add("hidden");
@@ -3789,6 +4013,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         try { e.preventDefault(); } catch (err) {}
         deferredInstallPrompt = e;
         refreshInstallButtons();
+        // Show our own in-app prompt (browser prompt requires a user gesture)
+        setTimeout(() => maybeShowInstallPromptModal(false), 800);
       });
 
       // Initial state
@@ -3797,6 +4023,11 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       installBtn?.addEventListener("click", async () => {
         try {
           if (isStandalone()) return;
+
+          if (!window.isSecureContext) {
+            showToast("Install requires HTTPS", "Open this page using https:// and refresh.", true, 6500);
+            return;
+          }
 
           if (deferredInstallPrompt) {
             deferredInstallPrompt.prompt();
