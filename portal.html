@@ -659,7 +659,7 @@
     /* Desktop-only: remove website header on portal (keep banner/hero) */
     @media (min-width: 641px) {
       #navbar { display: none !important; }
-      #navbar + div[aria-hidden="true"].h-20 { display: none !important; }
+      #navbar-spacer { display: none !important; height: 0 !important; }
     }
 
 @media (max-height: 700px) {
@@ -839,7 +839,7 @@
   </div>
 
   <!-- Spacer -->
-  <div aria-hidden="true" class="h-20"></div>
+  <div id="navbar-spacer" aria-hidden="true" class="h-20"></div>
 
   <!-- HEADER HERO -->
   <header class="header-hero pt-12 pb-10 border-b border-brand-gold/20">
@@ -2211,6 +2211,7 @@ if (selectedSlot && driveTime > 0) {
           availabilityPreloaded = true;
           
           renderCalendar();
+          setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
           updateSummary();
           console.log("Availability preloaded successfully");
@@ -2594,6 +2595,7 @@ if (selectedSlot && driveTime > 0) {
           const cached = availabilityCache.get(cacheKey);
           parseAvailabilityResponse(cached);
           renderCalendar();
+          setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           savePortalState();
           // Restore date selection (if any) after availability is loaded
@@ -2618,6 +2620,7 @@ if (selectedSlot && driveTime > 0) {
         parseAvailabilityResponse(data);
 
         renderCalendar();
+        setTimeout(ensureCalendarClickableAfterPreload, 60);
         updateAvailabilityStatus("Live availability loaded for this month.", true);
 
       } catch (e) {
@@ -2686,7 +2689,38 @@ if (selectedSlot && driveTime > 0) {
         daysContainer.appendChild(cell);
       }
 
+      
       if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // Mobile/Browser robustness: if availability data exists but all days render as disabled,
+    // trigger a single refresh through the existing duration-change path (this matches the
+    // user action that makes availability appear).
+    function ensureCalendarClickableAfterPreload() {
+      try {
+        const daysContainer = document.getElementById("calendar-days");
+        if (!daysContainer) return;
+
+        const anyClickable = daysContainer.querySelector(".calendar-day-available:not([disabled])");
+        if (anyClickable) return;
+
+        const hasData = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+        const hasSelection = !!(selectedServiceKey && selectedStandardDuration);
+
+        if (!hasData || !hasSelection) return;
+
+        if (window.__rnr_calendar_auto_refresh_done) return;
+        window.__rnr_calendar_auto_refresh_done = true;
+
+        // Prefer the established flow (duration change -> maybeLoadAvailabilityForCurrentMonth)
+        if (durationSelect) {
+          durationSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          maybeLoadAvailabilityForCurrentMonth();
+        }
+      } catch (e) {
+        console.warn("ensureCalendarClickableAfterPreload error:", e);
+      }
     }
 
     function selectDate(dateStr) {
