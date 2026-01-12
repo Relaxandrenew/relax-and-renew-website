@@ -303,7 +303,7 @@
       bottom: 0;
       z-index: 200; /* Higher than nav */
       background: #000000;
-      backdrop-filter: blur(12px);
+      /* backdrop-filter removed for solid overlay */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2336,7 +2336,7 @@ if (selectedSlot && driveTime > 0) {
           } catch (e) {}
 
           // Hide login overlay with slight delay for smooth transition
-          setTimeout(() => {
+          setTimeout(async () => {
             hideLoginOverlay();
             hydrateProfileUI();
             renderCalendar();
