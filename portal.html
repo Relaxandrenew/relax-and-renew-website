@@ -676,6 +676,12 @@
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
+    const CANCEL_WEBHOOK_URL        = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
+    const LAST_BOOKING_WEBHOOK_URL  = `${N8N_WEBHOOK_BASE}/portal-get-last-booking`;
+    const WAITLIST_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-join-waitlist`;
+    const INVOICE_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-get-invoice`;
+    const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
+
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
     const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
@@ -700,11 +706,135 @@
     const CLAIM_POSTAL       = "https://relaxandrenew.ca/postal_code";
     const CLAIM_PHONE        = "https://relaxandrenew.ca/phone";
   </script>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#E0C584" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+  <style>
+    /* Offline banner */
+    .offline-banner {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(224,197,132,0.25);
+      color: #E0C584;
+      padding: 10px 14px;
+      border-radius: 999px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      font-size: 0.85rem;
+    }
+    .offline-banner.show { display: inline-flex; }
+
+    /* Stepper */
+    .stepper-item { display: flex; align-items: center; gap: 10px; opacity: 0.65; }
+    .stepper-item.active { opacity: 1; }
+    .stepper-circle {
+      width: 30px; height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,197,132,0.35);
+      display: flex; align-items: center; justify-content: center;
+      color: #E0C584;
+      background: rgba(224,197,132,0.06);
+      font-weight: 700;
+    }
+    .stepper-item.active .stepper-circle { background: rgba(224,197,132,0.12); }
+    .stepper-label { font-size: 0.85rem; color: rgba(224,197,132,0.9); }
+    .stepper-line { flex: 1; height: 1px; background: rgba(224,197,132,0.18); min-width: 24px; }
+
+    /* Skeleton */
+    .skeleton { position: relative; overflow: hidden; background: rgba(255,255,255,0.06); border-radius: 10px; }
+    .skeleton::after {
+      content: "";
+      position: absolute; top: 0; left: -150px; height: 100%; width: 150px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer { 0% { left: -150px; } 100% { left: 100%; } }
+    .skeleton-avatar { width: 44px; height: 44px; border-radius: 999px; }
+    .skeleton-text { height: 10px; border-radius: 999px; margin-top: 10px; }
+    .skeleton-text-lg { height: 14px; border-radius: 999px; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9998;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      width: min(560px, 94vw);
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(224,197,132,0.22);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .btn-danger {
+      background: rgba(248,113,113,0.15);
+      border: 1px solid rgba(248,113,113,0.35);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.22); transform: translateY(-1px); }
+
+    /* Therapist card */
+    .therapist-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(224,197,132,0.18);
+      background: rgba(224,197,132,0.06);
+    }
+    .therapist-avatar {
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid rgba(224,197,132,0.25);
+    }
+    .therapist-name { font-weight: 800; color: #E0C584; }
+    .therapist-title { font-size: 0.85rem; color: rgba(224,197,132,0.75); }
+
+    /* Light mode */
+    html.light-mode body { background-color: #f7f5ee !important; color: #111827 !important; }
+    html.light-mode .glass-panel,
+    html.light-mode .card-fancy,
+    html.light-mode .booking-modal-card,
+    html.light-mode .modal-card { background: rgba(255,255,255,0.86) !important; color: #111827 !important; }
+    html.light-mode .muted { color: rgba(17,24,39,0.65) !important; }
+    html.light-mode .pill { color: #111827 !important; border-color: rgba(17,24,39,0.15) !important; }
+  </style>
+
 </head>
 
 <body class="bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900 text-brand-light">
   
-  <!-- =========================================================
+  
+  <div id="offline-banner" class="offline-banner">
+    <i data-lucide="wifi-off" class="w-4 h-4"></i>
+    You're offline — some features may be unavailable
+  </div>
+<!-- =========================================================
        LOGIN OVERLAY (shows on top of portal until authenticated)
        ========================================================= -->
   <div id="login-overlay">
@@ -736,7 +866,7 @@
 
       <p class="text-xs text-brand-dim mt-6 text-center opacity-70">
         Note: This portal is for returning clients only. New to Relax &amp; Renew?
-        <a href="index.html" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
+        <a href="/" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
       </p>
     </div>
   </div>
@@ -744,7 +874,7 @@
   <!-- NAV -->
   <nav id="navbar" class="fixed-nav h-20 flex items-center">
     <div class="container mx-auto px-6 flex justify-between items-center h-full">
-      <a href="index.html" class="flex items-center gap-3 no-underline group">
+      <a href="/" class="flex items-center gap-3 no-underline group">
         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
         <div class="hidden md:flex flex-col">
           <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
@@ -825,7 +955,7 @@
           Add to Home Screen
         </button>
 
-        <a href="index.html" class="nav-link text-lg flex items-center gap-3">
+        <a href="/" class="nav-link text-lg flex items-center gap-3">
           <i data-lucide="arrow-left" class="w-5 h-5"></i>
           Return to Website
         </a>
@@ -896,7 +1026,12 @@
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
-              <hr class="divider my-3">
+              
+              <button id="theme-toggle-btn" class="sidebar-btn text-left nav-link text-lg flex items-center gap-3" onclick="toggleTheme()">
+                <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-brand-gold"></i>
+                <span id="theme-label">Light Mode</span>
+              </button>
+<hr class="divider my-3">
               <button id="logout-btn" class="sidebar-btn text-red-400 hover:text-red-200 hover:bg-red-900/10 hover:border-red-900/30">
                 <i data-lucide="log-out" class="w-5 h-5"></i>
                 <span>Sign Out</span>
@@ -924,7 +1059,7 @@
             </div>
 
             <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               <div class="card-fancy p-5">
                 <div class="flex items-center gap-3 mb-3">
                   <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
@@ -955,9 +1090,48 @@
                 <div class="text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
                 <div class="muted text-xs mt-1">Service address</div>
               </div>
+            
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Visits</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-total-visits">0</div>
+                <div class="muted text-xs mt-1">Lifetime completed sessions</div>
+              </div>
+</div>
+
+            
+            <!-- Book Same as Last Time -->
+            <div id="book-same-container" class="hidden mb-6">
+              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="repeat" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-serif text-lg text-brand-light">Book Same as Last Time</div>
+                    <div class="muted text-sm" id="last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                </div>
+              </button>
             </div>
 
-            <!-- Upcoming Appointments Section -->
+            <!-- Next Appointment Countdown -->
+            <div id="next-appt-countdown-card" class="hidden glass-panel p-6 mb-6">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
+                  <i data-lucide="timer" class="w-5 h-5 text-brand-gold"></i>
+                  Next Appointment
+                </h3>
+              </div>
+              <div class="text-2xl font-serif text-brand-light" id="next-appt-countdown">—</div>
+              <div class="muted text-xs mt-2">Countdown to your next session</div>
+            </div>
+<!-- Upcoming Appointments Section -->
             <div class="glass-panel p-6 mb-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
@@ -972,11 +1146,28 @@
 
               <!-- Appointments Loading State -->
               <div id="appointments-loading" class="py-8 text-center">
-                <div class="w-12 h-12 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
-                  <i data-lucide="loader-2" class="w-6 h-6 text-brand-gold animate-spin"></i>
+                <div id="appointments-skeleton" class="space-y-3">
+                  <div class="card-fancy p-4">
+                    <div class="flex items-center gap-4">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="flex-1">
+                        <div class="skeleton skeleton-text-lg w-3/4"></div>
+                        <div class="skeleton skeleton-text w-1/2"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-fancy p-4">
+                    <div class="flex items-center gap-4">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="flex-1">
+                        <div class="skeleton skeleton-text-lg w-2/3"></div>
+                        <div class="skeleton skeleton-text w-1/3"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p class="text-brand-dim text-sm">Loading appointments...</p>
-              </div>
+                <p class="text-brand-dim text-sm mt-4">Loading appointments...</p>
+</div>
 
               <!-- Appointments List -->
               <div id="appointments-list" class="space-y-3 hidden"></div>
@@ -1072,6 +1263,26 @@
                 </div>
               </div>
             </div>
+            <!-- Booking Progress Stepper -->
+            <div id="booking-stepper" class="glass-panel p-6 mb-8">
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="stepper-item" id="step-1">
+                  <div class="stepper-circle">1</div>
+                  <div class="stepper-label">Select Treatment</div>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item" id="step-2">
+                  <div class="stepper-circle">2</div>
+                  <div class="stepper-label">Choose Date</div>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item" id="step-3">
+                  <div class="stepper-circle">3</div>
+                  <div class="stepper-label">Pick Time</div>
+                </div>
+              </div>
+            </div>
+
 
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
@@ -1196,7 +1407,17 @@
                     <div class="font-bold text-brand-gold font-serif text-lg" id="summary-travel-fee">$0.00</div>
                     <div class="muted mt-0 text-xs" id="summary-drive-time">—</div>
                   </div>
+                
+              <div class="therapist-card mt-3">
+                <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
+                     alt="Cassandra S." class="therapist-avatar">
+                <div class="therapist-info">
+                  <div class="therapist-name">Cassandra S.</div>
+                  <div class="therapist-title">Registered Massage Therapist</div>
                 </div>
+              </div>
+
+</div>
 
                 <button id="confirm-booking-btn" class="btn-filled w-full mt-8 btn-disabled py-4" disabled>
                   <i data-lucide="check-circle" class="w-5 h-5"></i>
@@ -1222,10 +1443,48 @@
           <!-- History -->
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
             <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
-            <div class="card-fancy p-6">
-              <div class="pill">Coming Soon</div>
-              <p class="muted mt-4">Your session history will appear here.</p>
+
+            <div id="history-loading" class="py-8 text-center">
+              <div id="history-skeleton" class="space-y-3">
+                <div class="card-fancy p-4">
+                  <div class="flex items-center gap-4">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="flex-1">
+                      <div class="skeleton skeleton-text-lg w-3/4"></div>
+                      <div class="skeleton skeleton-text w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-fancy p-4">
+                  <div class="flex items-center gap-4">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="flex-1">
+                      <div class="skeleton skeleton-text-lg w-2/3"></div>
+                      <div class="skeleton skeleton-text w-1/3"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-brand-dim text-sm mt-4">Loading history...</p>
             </div>
+
+            <div id="history-error" class="hidden card-fancy p-6 border-red-500/30">
+              <div class="flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                <div>
+                  <div class="font-bold text-brand-light">Couldn’t load history</div>
+                  <div class="muted mt-1 text-sm">Please try again.</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="history-list" class="space-y-3 hidden"></div>
+
+            <div id="history-empty" class="hidden card-fancy p-6">
+              <div class="pill">No completed sessions yet</div>
+              <p class="muted mt-4">Your completed appointments will appear here.</p>
+            </div>
+
           </div>
 
           <!-- Profile -->
@@ -1264,6 +1523,12 @@
       </div>
       <div id="booking-modal-status" class="booking-status-text">Preparing your booking...</div>
       <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
+      <div id="booking-email-preview" class="hidden mt-4 text-sm text-brand-dim"></div>
+      <div id="booking-success-actions" class="hidden mt-5 flex gap-3">
+        <a href="/portal" class="btn-filled flex-1 text-center">To Client Portal</a>
+        <a href="/" class="btn-outline flex-1 text-center">Go Home</a>
+      </div>
+
     </div>
   </div>
 
@@ -1279,7 +1544,7 @@
     let selectedSlot = null;
 
     let availabilityByDate = {};
-    let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+    let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
     const availabilityCache = new Map();
 
@@ -1345,6 +1610,395 @@
       }, d);
     }
 
+    // =============================
+    // Theme Toggle (Feature #16)
+    // =============================
+    function applySavedTheme() {
+      const saved = localStorage.getItem("rnr_theme");
+      const wantLight = saved === "light";
+      document.documentElement.classList.toggle("light-mode", wantLight);
+      updateThemeUI();
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isLight = html.classList.toggle("light-mode");
+      localStorage.setItem("rnr_theme", isLight ? "light" : "dark");
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const isLight = document.documentElement.classList.contains("light-mode");
+      const icon = document.getElementById("theme-icon");
+      const label = document.getElementById("theme-label");
+      if (icon) icon.setAttribute("data-lucide", isLight ? "moon" : "sun");
+      if (label) label.textContent = isLight ? "Dark Mode" : "Light Mode";
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =============================
+    // Offline Banner (Feature #22)
+    // =============================
+    function initOfflineBanner() {
+      const banner = document.getElementById("offline-banner");
+      if (!banner) return;
+      const update = () => {
+        banner.classList.toggle("show", !navigator.onLine);
+      };
+      window.addEventListener("online", update);
+      window.addEventListener("offline", update);
+      update();
+    }
+
+    // =============================
+    // Booking Stepper (Feature #8/#9)
+    // =============================
+    function updateBookingStepper() {
+      const s1 = document.getElementById("step-1");
+      const s2 = document.getElementById("step-2");
+      const s3 = document.getElementById("step-3");
+      if (!s1 || !s2 || !s3) return;
+
+      const hasTreatment = !!selectedServiceKey && !!selectedStandardDuration;
+      const hasDate = !!selectedDateStr;
+      const hasTime = !!selectedSlot;
+
+      s1.classList.toggle("active", hasTreatment);
+      s2.classList.toggle("active", hasTreatment && hasDate);
+      s3.classList.toggle("active", hasTreatment && hasDate && hasTime);
+    }
+
+    // =============================
+    // Cancel Appointment (Feature #5/#6)
+    // =============================
+    let pendingCancel = { appointmentId: null, startsAt: null };
+
+    function initiateCancel(appointmentId, startsAt) {
+      pendingCancel = { appointmentId, startsAt };
+      const dt = startsAt ? new Date(startsAt) : null;
+      document.getElementById("cancel-modal-datetime").textContent = dt
+        ? dt.toLocaleString("en-CA", { timeZone: "America/Toronto" })
+        : "—";
+      document.getElementById("cancel-reason").value = "";
+      document.getElementById("cancel-cutoff-warning").classList.add("hidden");
+      document.getElementById("cancel-modal").classList.remove("hidden");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeCancelModal() {
+      document.getElementById("cancel-modal")?.classList.add("hidden");
+    }
+
+    async function confirmCancelAppointment() {
+      if (!pendingCancel.appointmentId || !portalProfile?.email) return;
+
+      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+
+      const res = await fetch(CANCEL_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentId: pendingCancel.appointmentId,
+          email: String(portalProfile.email).trim().toLowerCase(),
+          reason: reason || "Cancelled by client via portal"
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (data.success) {
+        showToast("Cancelled", "Your appointment was cancelled.");
+        closeCancelModal();
+        await loadUpcomingAppointments();
+        return;
+      }
+
+      if (data.withinCutoff || data.contactRequired) {
+        document.getElementById("cancel-cutoff-warning")?.classList.remove("hidden");
+        showToast("Within 12 hours", "Submit a request or contact us directly.", true, 6500);
+        return;
+      }
+
+      showToast("Cancel failed", data.error || "Please try again.", true, 6500);
+    }
+
+    async function submitUnder12HourCancellationRequest() {
+      if (!pendingCancel.appointmentId || !portalProfile?.email) return;
+
+      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+      const starts = pendingCancel.startsAt ? new Date(pendingCancel.startsAt) : null;
+      const appointmentDate = starts ? starts.toLocaleDateString("en-CA", { timeZone: "America/Toronto" }) : "";
+      const appointmentTime = starts ? starts.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
+
+      const res = await fetch(REQUEST_CANCEL_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentId: pendingCancel.appointmentId,
+          email: String(portalProfile.email).trim().toLowerCase(),
+          firstName: portalProfile.firstName || "",
+          lastName: portalProfile.lastName || "",
+          phone: portalProfile.phone || "",
+          reason: reason || "Client requested cancellation (within 12 hours)",
+          appointmentDate,
+          appointmentTime
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        showToast("Request sent", data.message || "We’ll contact you shortly.");
+        closeCancelModal();
+      } else {
+        showToast("Request failed", data.error || "Please contact us directly.", true, 6500);
+      }
+    }
+
+    // =============================
+    // Waitlist (Feature #10)
+    // =============================
+    let pendingWaitlistDate = null;
+
+    function showWaitlistModal(dateStr) {
+      pendingWaitlistDate = dateStr;
+      document.getElementById("waitlist-date-label").textContent = formatDatePretty(dateStr);
+      document.getElementById("waitlist-notes").value = "";
+      document.getElementById("waitlist-modal").classList.remove("hidden");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeWaitlistModal() {
+      document.getElementById("waitlist-modal")?.classList.add("hidden");
+    }
+
+    async function submitWaitlist() {
+      if (!pendingWaitlistDate || !portalProfile?.email) return;
+
+      const notes = (document.getElementById("waitlist-notes")?.value || "").trim();
+
+      const res = await fetch(WAITLIST_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(portalProfile.email).trim().toLowerCase(),
+          firstName: portalProfile.firstName || "",
+          lastName: portalProfile.lastName || "",
+          phone: portalProfile.phone || "",
+          preferredDate: pendingWaitlistDate,
+          treatmentKey: selectedServiceKey || "",
+          durationMinutes: Number(selectedStandardDuration || 0),
+          notes: notes || ""
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        showToast("Waitlist", data.message || "Added to waitlist.");
+        closeWaitlistModal();
+      } else {
+        showToast("Waitlist failed", data.error || "Please try again.", true, 6500);
+      }
+    }
+
+    // =============================
+    // Invoice / Receipt (Portal - Get Invoice)
+    // =============================
+    async function openInvoice(appointmentId, subtitle) {
+      if (!appointmentId || !portalProfile?.email) return;
+
+      document.getElementById("invoice-modal-subtitle").textContent = subtitle || "";
+      const body = document.getElementById("invoice-modal-body");
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      document.getElementById("invoice-modal").classList.remove("hidden");
+
+      try {
+        const res = await fetch(INVOICE_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            appointmentId,
+            email: String(portalProfile.email).trim().toLowerCase()
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!data.success || !data.invoice) {
+          body.innerHTML = '<div class="muted">No receipt available.</div>';
+          return;
+        }
+
+        const inv = data.invoice;
+        const items = Array.isArray(inv.items) ? inv.items : [];
+        const rows = items.map(it => `
+          <div class="flex justify-between gap-4 py-2 border-b border-brand-gold/10">
+            <div>
+              <div class="text-brand-light font-semibold">${it.description || "Item"}</div>
+              ${it.quantity ? `<div class="muted text-xs">Qty: ${it.quantity}</div>` : ""}
+            </div>
+            <div class="text-brand-light font-semibold">$${Number(it.total || it.amount || 0).toFixed(2)}</div>
+          </div>
+        `).join("");
+
+        body.innerHTML = `
+          <div class="space-y-3">
+            ${inv.receiptNumber ? `<div class="pill">Receipt: ${inv.receiptNumber}</div>` : ""}
+            <div class="card-fancy p-3">
+              ${rows || '<div class="muted">No line items.</div>'}
+              <div class="flex justify-between gap-4 pt-3">
+                <div class="muted">Total</div>
+                <div class="text-brand-light font-bold">$${Number(inv.total || 0).toFixed(2)}</div>
+              </div>
+              ${inv.tax !== undefined ? `
+                <div class="flex justify-between gap-4 pt-1">
+                  <div class="muted">Tax</div>
+                  <div class="text-brand-light">$${Number(inv.tax || 0).toFixed(2)}</div>
+                </div>` : ""}
+              ${inv.paid !== undefined ? `
+                <div class="flex justify-between gap-4 pt-1">
+                  <div class="muted">Paid</div>
+                  <div class="text-brand-light">${inv.paid ? "Yes" : "No"}</div>
+                </div>` : ""}
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        body.innerHTML = '<div class="muted">Unable to load receipt.</div>';
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeInvoiceModal() {
+      document.getElementById("invoice-modal")?.classList.add("hidden");
+    }
+
+    // =============================
+    // Book Same as Last Time (Feature #3/#4)
+    // =============================
+    async function loadLastBookingSummary() {
+      const wrap = document.getElementById("book-same-container");
+      const summary = document.getElementById("last-booking-summary");
+      if (!wrap || !summary) return;
+
+      if (!portalProfile?.email) {
+        wrap.classList.add("hidden");
+        return;
+      }
+
+      summary.textContent = "Loading...";
+      try {
+        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!data.success || !data.lastBooking) {
+          wrap.classList.add("hidden");
+          return;
+        }
+
+        wrap.classList.remove("hidden");
+        const lb = data.lastBooking;
+        summary.textContent = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
+      } catch (e) {
+        wrap.classList.add("hidden");
+      }
+    }
+
+    async function bookSameAsLastTime() {
+      if (!portalProfile?.email) return;
+
+      try {
+        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!data.success || !data.lastBooking) {
+          showToast("No previous booking found", "Please book manually.", true);
+          switchTab("rebook");
+          return;
+        }
+
+        const lb = data.lastBooking;
+        selectedServiceKey = lb.treatment_key || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        switchTab("rebook");
+        updateBookingStepper();
+
+        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Try selecting next matching day-of-week if provided
+        const dow = lb.day_of_week;
+        if (dow && availabilityByDate) {
+          const entries = Object.keys(availabilityByDate).sort();
+          const match = entries.find(d => {
+            const dt = new Date(d + "T12:00:00");
+            const day = dt.getDay(); // 0 Sun
+            const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+            return map[String(dow).toLowerCase()] === day && Array.isArray(availabilityByDate[d]) && availabilityByDate[d].some(isSlotAvailable);
+          });
+          if (match) selectDate(match);
+        }
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
+
+    // =============================
+    // Session Countdown (Feature #19)
+    // =============================
+    let countdownTimer = null;
+
+    function updateCountdown() {
+      const card = document.getElementById("next-appt-countdown-card");
+      const el = document.getElementById("next-appt-countdown");
+      if (!card || !el) return;
+
+      if (!Array.isArray(upcomingAppointments) || upcomingAppointments.length === 0) {
+        card.classList.add("hidden");
+        return;
+      }
+
+      const nextAppt = upcomingAppointments[0];
+      const start = new Date(nextAppt.starts_at);
+      const now = new Date();
+      const diff = start - now;
+
+      card.classList.remove("hidden");
+
+      if (diff <= 0) {
+        el.textContent = "Starting soon!";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+      const parts = [];
+      if (days) parts.push(`${days}d`);
+      parts.push(`${hours}h`);
+      parts.push(`${minutes}m`);
+      el.textContent = parts.join(" ");
+    }
+
+
 
 
 // =========================================================
@@ -1392,7 +2046,7 @@
       }, 2000);
     }
 
-    function hideBookingModal(success = true, errorMessage = null) {
+    function hideBookingModal(success = true, errorMessage = null, clientEmail = null) {
       // Stop message cycling
       if (bookingMessageInterval) {
         clearInterval(bookingMessageInterval);
@@ -1415,6 +2069,8 @@
         substatusText.textContent = "Your appointment has been scheduled";
       } else {
         errorIcon.classList.remove("hidden");
+        document.getElementById("booking-email-preview")?.classList.add("hidden");
+        document.getElementById("booking-success-actions")?.classList.add("hidden");
         statusText.textContent = "Booking Failed";
         substatusText.textContent = errorMessage || "Please try again or contact support";
       }
@@ -1442,7 +2098,7 @@
 
       // Clear availability data (prevents auto-reload of calendar)
       availabilityByDate = {};
-      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
       // Clear all selections
       clearSelectionUI();
@@ -1616,11 +2272,19 @@ if (selectedSlot && driveTime > 0) {
     function updateAvailabilityStatus(body, loaded) {
       document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
       document.getElementById("availability-status-body").textContent = body || "";
+
       const metaEl = document.getElementById("availability-meta");
       const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
       const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
-      metaEl.textContent = (loaded && (buffer || maxDrive))
-        ? `Travel buffer applied: ${buffer} min • Max drive time used: ${maxDrive} min`
+      const baseDrive = availabilityMeta.baseToClientDriveTimeMinutes || 0;
+
+      const show = loaded && (
+        (maxDrive > 0 && baseDrive > maxDrive) ||
+        (baseDrive >= TRAVEL_FEE_THRESHOLD_MINUTES)
+      );
+
+      metaEl.textContent = show
+        ? `Travel time from base: ${baseDrive} min${buffer ? ` • Buffer applied: ${buffer} min` : ""}`
         : "";
     }
 
@@ -1914,15 +2578,18 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function renderAppointmentCard(appt, isCancelled = false, isHistory = false) {
       const start = appt?.starts_at ? new Date(appt.starts_at) : null;
-      const dateStr = start ? start.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
+      const dateStr = start ? start.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
       const timeStr = start ? start.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
       const treatment = appt?.appointment_type?.name || appt?.treatment_type || "Massage";
-      const duration = appt?.duration || 60;
-      
+      const duration = Number(appt?.duration || 60);
+
       const statusClass = isCancelled ? "text-red-400" : (isHistory ? "text-brand-dim" : "text-green-400");
       const statusText = isCancelled ? "Cancelled" : (isHistory ? "Completed" : "Confirmed");
       const statusIcon = isCancelled ? "x-circle" : (isHistory ? "check-circle" : "calendar-check");
-      
+
+      const canCancel = (!isCancelled && !isHistory);
+      const canReceipt = (isHistory && !isCancelled);
+
       return `
         <div class="card-fancy p-4 ${isCancelled ? 'opacity-60' : ''}">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1936,6 +2603,28 @@ if (selectedSlot && driveTime > 0) {
                 </span>
                 <span class="text-xs text-brand-dim">${duration} min</span>
               </div>
+
+              ${canCancel ? `
+                <div class="text-xs text-brand-dim mt-3">
+                  Free cancellation until 12 hours before. After that, contact us directly.
+                </div>
+                <button class="btn-danger text-xs mt-3" onclick="initiateCancel('${appt?.id || ""}', '${appt?.starts_at || ""}')">
+                  <i data-lucide="x" class="w-3 h-3"></i>
+                  Cancel
+                </button>
+              ` : ''}
+
+              ${canReceipt ? `
+                <div class="mt-3 p-2 bg-brand-gold/5 border border-brand-gold/10 rounded">
+                  <div class="text-xs text-brand-gold uppercase tracking-wider mb-1">Session Notes</div>
+                  <div class="pill text-xs">Coming Soon</div>
+                </div>
+                <button class="btn-outline text-xs mt-3" onclick="openInvoice('${appt?.id || ""}', '${dateStr} ${timeStr}')">
+                  <i data-lucide="receipt" class="w-3 h-3"></i>
+                  View Receipt
+                </button>
+              ` : ''}
+
             </div>
           </div>
         </div>
@@ -1976,6 +2665,7 @@ if (selectedSlot && driveTime > 0) {
         
         const dashUpcoming = document.getElementById("dash-upcoming-count");
         const dashCompleted = document.getElementById("dash-completed-count");
+      const dashTotal = document.getElementById("dash-total-visits");
         if (dashUpcoming) dashUpcoming.textContent = "0";
         if (dashCompleted) dashCompleted.textContent = "0";
       }, 10000);
@@ -2040,6 +2730,11 @@ if (selectedSlot && driveTime > 0) {
 
         renderAppointments();
         renderHistory();
+        updateCountdown();
+        if (countdownTimer) clearInterval(countdownTimer);
+        countdownTimer = setInterval(updateCountdown, 60000);
+        loadLastBookingSummary();
+
 
       } catch (e) {
         clearTimeout(loadingTimeout);
@@ -2550,6 +3245,11 @@ if (selectedSlot && driveTime > 0) {
         data.travel_buffer_minutes || data.travelBufferMinutes || 0
       );
 
+      availabilityMeta.baseToClientDriveTimeMinutes = Number(
+        data.baseToClientDriveTimeMinutes || data.base_to_client_drive_time_minutes ||
+        data.baseToClientDriveTime || data.base_to_client_drive_time || 0
+      );
+
       // Find dates array in response
       var datesArray = null;
       if (data.dates && Array.isArray(data.dates)) datesArray = data.dates;
@@ -2728,6 +3428,7 @@ if (selectedSlot && driveTime > 0) {
       selectedSlot = null;
       renderCalendar();
       updateSummary();
+      updateBookingStepper();
       savePortalState();
 
       document.getElementById("selected-date-info").classList.remove("hidden");
@@ -2787,7 +3488,26 @@ if (selectedSlot && driveTime > 0) {
         grid.appendChild(btn);
       });
 
-      noSlots.classList.toggle("hidden", anyAvailable);
+      if (!anyAvailable) {
+        noSlots.classList.remove("hidden");
+        noSlots.innerHTML = `
+          <div class="flex items-start gap-3">
+            <i data-lucide="calendar-x" class="w-5 h-5 text-amber-400 mt-0.5"></i>
+            <div class="flex-1">
+              <div class="font-bold text-brand-light">Fully Booked</div>
+              <div class="muted mt-1 text-sm">This day has no available slots.</div>
+              <button onclick="showWaitlistModal('${dateStr}')" class="btn-outline text-xs mt-3">
+                <i data-lucide="bell" class="w-3 h-3"></i>
+                Join Waitlist
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        noSlots.classList.add("hidden");
+        noSlots.innerHTML = "";
+      }
+
       container.classList.toggle("hidden", !anyAvailable);
 
       if (typeof lucide !== "undefined") lucide.createIcons();
@@ -2800,6 +3520,8 @@ if (selectedSlot && driveTime > 0) {
       btnElement.classList.add("time-slot-selected");
 
       updateSummary();
+      updateBookingStepper();
+      savePortalState();
     }
 
     function prevMonth() {
@@ -2875,7 +3597,7 @@ if (selectedSlot && driveTime > 0) {
         const result = await res.json().catch(() => ({}));
 
         // Show success in modal
-        hideBookingModal(true);
+        hideBookingModal(true, null, portalProfile?.email || null);
 
         console.log("Booking confirmed:", result);
 
@@ -2926,6 +3648,9 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
+
+      applySavedTheme();
+      initOfflineBanner();
 
       // Mobile menu (portal navigation)
       const mm = document.getElementById("mobile-menu");
@@ -3116,5 +3841,99 @@ if (selectedSlot && driveTime > 0) {
     // Run on DOM ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
+  <!-- Cancel Appointment Modal -->
+  <div id="cancel-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Cancel appointment</div>
+          <div class="muted text-sm mt-1" id="cancel-modal-datetime">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeCancelModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="muted text-sm mb-4">
+        Free cancellation until 12 hours before your appointment.
+      </div>
+
+      <textarea id="cancel-reason" class="input w-full" rows="3" placeholder="Optional: reason for cancelling"></textarea>
+
+      <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
+        <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
+        <div class="muted text-sm">
+          You can’t cancel instantly in the portal. Submit a request and we’ll contact you shortly.
+        </div>
+        <button class="btn-outline text-xs mt-3" onclick="submitUnder12HourCancellationRequest()">
+          <i data-lucide="send" class="w-3 h-3"></i>
+          Request cancellation
+        </button>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-danger flex-1" onclick="confirmCancelAppointment()">Confirm cancel</button>
+        <button class="btn-outline flex-1" onclick="closeCancelModal()">Keep appointment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waitlist Modal -->
+  <div id="waitlist-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Join the waitlist</div>
+          <div class="muted text-sm mt-1" id="waitlist-date-label">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeWaitlistModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="muted text-sm mb-4">
+        If a spot opens up, we’ll notify you.
+      </div>
+
+      <textarea id="waitlist-notes" class="input w-full" rows="3" placeholder="Optional: preferences (time of day, notes)"></textarea>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-filled flex-1" onclick="submitWaitlist()">Join Waitlist</button>
+        <button class="btn-outline flex-1" onclick="closeWaitlistModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt / Invoice Modal -->
+  <div id="invoice-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Receipt</div>
+          <div class="muted text-sm mt-1" id="invoice-modal-subtitle">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeInvoiceModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="invoice-modal-body" class="text-sm">
+        <div class="muted">Loading…</div>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-outline flex-1" onclick="closeInvoiceModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+
 </body>
 </html>
