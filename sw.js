@@ -9,8 +9,6 @@ const CACHE_NAME = 'rnr-portal-v4';
 const PRECACHE_URLS = [
   '/',                // optional - your home route
   '/portal',
-  'https://deploy-preview-35--relaxandrenew.netlify.app/portal',  // deploy preview explicit
-
   '/portal.html',     // backward compatibility
   '/offline.html',
   '/manifest.json',

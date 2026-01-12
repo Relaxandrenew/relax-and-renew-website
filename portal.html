@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1003,6 +1003,7 @@
           <i data-lucide="log-out" class="w-5 h-5"></i>
           Sign Out
         </button>
+        <div class="mt-3 text-xs opacity-60">Build: 2026-01-12-v4</div>
       </div>
     </div>
   </div>
@@ -1423,7 +1424,8 @@
               </div>
 
               <!-- Summary + confirm -->
-              <div class="glass-panel p-6">
+              <div id="summary-confirm-anchor" class="hidden"></div>
+              <div id="summary-confirm-panel" class="glass-panel p-6">
                 <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 3</div>
                 <h3 class="text-2xl font-serif mt-1">Confirm</h3>
                 <p class="muted mt-2 text-sm font-light">We will confirm your booking and send your confirmation automatically.</p>
@@ -2378,6 +2380,14 @@ if (selectedSlot && driveTime > 0) {
 }
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+
+      try {
+        const overlay = document.getElementById("mobile-times-overlay");
+        if (overlay && !overlay.classList.contains("hidden")) {
+          syncMobileConfirmButton();
+        }
+      } catch (e) {}
+
     }
 
     function updateAvailabilityStatus(body, loaded) {
@@ -3863,6 +3873,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const isStandalone = () =>
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
+      const isMobileUI = () => (window.matchMedia && window.matchMedia("(max-width: 768px)").matches);
+
 
       
       const isMobileUI = () => (window.matchMedia ? window.matchMedia("(max-width: 768px)").matches : (window.innerWidth <= 768));
@@ -3877,7 +3889,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         if (!overlay || !content || !anchor) return;
 
         // Move existing DOM blocks (preserves IDs and existing logic)
-        const ids = ["selected-date-info", "time-slots-container", "no-slots"];
+        const ids = ["selected-date-info", "time-slots-container", "no-slots", "summary-confirm-panel"];
         if (!__mobileTimesMoved) {
           ids.forEach((id) => {
             const el = document.getElementById(id);
@@ -3899,6 +3911,9 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         if (!overlay || !content || !anchor) return;
 
         if (__mobileTimesMoved) {
+          const summaryAnchor = document.getElementById("summary-confirm-anchor");
+
+          // Restore Step 2 blocks (date + times) back to their original anchor
           const ids = ["selected-date-info", "time-slots-container", "no-slots"];
           let ref = anchor;
           ids.forEach((id) => {
@@ -3908,10 +3923,15 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
               ref = el;
             }
           });
-          __mobileTimesMoved = false;
+
+          // Restore Step 3 confirm panel back to its original anchor
+          const summaryPanel = document.getElementById("summary-confirm-panel");
+          if (summaryAnchor && summaryPanel) {
+            summaryAnchor.insertAdjacentElement("afterend", summaryPanel);
+          }
         }
 
-        overlay.classList.add("hidden");
+                overlay.classList.add("hidden");
         document.body.style.overflow = "";
       }
 
@@ -4212,9 +4232,35 @@ const refreshInstallButtons = () => {
   </div>
 
   <script>
+    // PWA SW registration (v4)
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+
+          // If there's a waiting worker, trigger it to activate immediately
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            if (!sw) return;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version installed; activate ASAP
+                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // Reload once to get the latest HTML/JS
+            window.location.reload();
+          });
+        } catch (e) {
+          console.warn('Service worker registration failed:', e);
+        }
       });
     }
   </script>

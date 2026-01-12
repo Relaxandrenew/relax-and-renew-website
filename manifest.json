@@ -2,7 +2,7 @@
   "name": "Relax & Renew Client Portal",
   "short_name": "R&R Portal",
   "description": "Book appointments, view history, and manage your massage therapy sessions with Relax & Renew RMT.",
-  "start_url": "https://deploy-preview-35--relaxandrenew.netlify.app/portal",
+  "start_url": "/portal",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#E0C584",
@@ -71,7 +71,7 @@
       "name": "Book Appointment",
       "short_name": "Book",
       "description": "Quickly book your next massage session",
-      "url": "https://deploy-preview-35--relaxandrenew.netlify.app/portal.html?tab=rebook",
+      "url": "/portal.html?tab=rebook",
       "icons": [
         {
           "src": "icons/shortcut-book.png",
@@ -84,7 +84,7 @@
       "name": "View Dashboard",
       "short_name": "Dashboard",
       "description": "View your upcoming appointments",
-      "url": "https://deploy-preview-35--relaxandrenew.netlify.app/portal.html?tab=dashboard",
+      "url": "/portal.html?tab=dashboard",
       "icons": [
         {
           "src": "icons/shortcut-dashboard.png",
@@ -94,5 +94,5 @@
       ]
     }
   ],
-  "id": "https://deploy-preview-35--relaxandrenew.netlify.app/portal"
+  "id": "/portal"
 }
