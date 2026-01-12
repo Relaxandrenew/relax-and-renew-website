@@ -655,6 +655,13 @@
       /* Mobile menu: keep content stable and prevent behind-scroll */
       #mobile-menu { padding-bottom: env(safe-area-inset-bottom); }
     }
+
+    /* Desktop-only: remove website header on portal (keep banner/hero) */
+    @media (min-width: 641px) {
+      #navbar { display: none !important; }
+      #navbar + div[aria-hidden="true"].h-20 { display: none !important; }
+    }
+
 @media (max-height: 700px) {
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
@@ -2345,6 +2352,32 @@ if (selectedSlot && driveTime > 0) {
             showToast("Welcome!", `Signed in as ${_n}.`, false, _isMobile ? 1100 : 2200);
             // After sign-in, restore any in-progress selection and ensure availability loads
             try { await restorePortalStateIfPossible(); } catch (e) {}
+
+      // Mobile-only: the selects can appear preloaded visually, but globals may not hydrate without a stored state.
+      // This causes the calendar to render as fully disabled. On mobile, synchronize selection from UI and load availability if needed.
+      if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+        try {
+          const uiServiceKey = (treatmentSelect && treatmentSelect.value) ? String(treatmentSelect.value).trim() : "";
+          const uiDurVal = (durationSelect && durationSelect.value) ? Number(durationSelect.value) : NaN;
+
+          if (!selectedServiceKey && uiServiceKey) selectedServiceKey = uiServiceKey;
+          if ((!selectedStandardDuration || isNaN(Number(selectedStandardDuration))) && !isNaN(uiDurVal) && uiDurVal > 0) {
+            selectedStandardDuration = uiDurVal;
+          }
+
+          const hasAvailabilityData = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+
+          if (selectedServiceKey && selectedStandardDuration && !hasAvailabilityData) {
+            await maybeLoadAvailabilityForCurrentMonth();
+          } else {
+            renderCalendar();
+          }
+        } catch (e) {
+          console.warn("Mobile calendar hydration failed:", e);
+          renderCalendar();
+        }
+      }
+
             try {
               if (portalProfile) {
                 if (!selectedServiceKey && treatmentSelect && treatmentSelect.value && TREATMENT_RULES[treatmentSelect.value]) {
