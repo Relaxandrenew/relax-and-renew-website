@@ -314,18 +314,22 @@
                 border-radius: 8px;
                 position: relative;
                             }
-            /* Client details modal: keep X always visible while content scrolls */
+                        #client-details-modal{ overflow-x: hidden; }
+/* Client details modal: scrolling (no horizontal scroll) */
             #client-details-modal .client-details-scroll{
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
+                overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
-                padding-right: 0.35rem; /* keeps content off the scrollbar */
+                padding-right: 0; /* scrollbar flush to the right edge */
+            }
+            /* keep content comfortably off the scrollbar without shifting it left */
+            #client-details-modal .client-details-scroll > *{
+                padding-right: 0.75rem;
             }
 
-            
-
-            /* Client details modal: ensure the content area scrolls and keep scrollbar visible */
+/* Client details modal: ensure the content area scrolls and keep scrollbar visible */
             #client-details-modal .client-details-scroll--content{
                 overflow-y: auto !important;
             }
@@ -895,7 +899,7 @@ function fillAddressFromPlace(place) {
             <div class="flex justify-between items-center mb-8">
                 <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
                 <button id="mobile-menu-close" class="text-brand-gold p-2 hover:bg-brand-gold/10 rounded transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                    <i data-lucide="x" class="w-6 h-6 pointer-events-none"></i>
                 </button>
             </div>
             <div class="flex flex-col space-y-6">
@@ -1275,7 +1279,7 @@ function fillAddressFromPlace(place) {
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
 <div class="client-details-scroll client-details-scroll--content">
             <div class="flex justify-end mb-2">
-                <button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors">
+                <button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors"></i>
             </button>
             </div>
@@ -2926,7 +2930,40 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
-    function getTravelCanonicalFromSlot(slot) {
+    
+            function closeClientDetailsModal() {
+                const modal = document.getElementById('client-details-modal');
+                if (!modal) return;
+                modal.classList.add('hidden');
+            }
+
+            function bindClientDetailsModalClose() {
+                const modal = document.getElementById('client-details-modal');
+                const closeBtn = document.getElementById('client-modal-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        closeClientDetailsModal();
+                    });
+                }
+
+                // Click outside the card closes (overlay only)
+                if (modal) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeClientDetailsModal();
+                    });
+                }
+
+                // ESC closes
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const m = document.getElementById('client-details-modal');
+                        if (m && !m.classList.contains('hidden')) closeClientDetailsModal();
+                    }
+                });
+            }
+
+function getTravelCanonicalFromSlot(slot) {
         // v7 FIX: trust server-side travel fields computed per-slot by the n8n workflow.
         // We still return a few alias fields (driveMins/driveTimeMinutes/travelFeeCents) so the rest
         // of this file remains backward-compatible.
