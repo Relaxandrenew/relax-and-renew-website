@@ -154,7 +154,7 @@
     .mobile-menu.open { transform: translateX(0); }
 
     .header-hero {
-      background: linear-gradient(145deg, rgba(20,20,20,0.70), rgba(10,10,10,0.80));
+      background: linear-gradient(145deg, rgba(8,8,8,0.95), rgba(5,5,5,0.98));
       border-bottom: 1px solid rgba(224, 197, 132, 0.20);
       backdrop-filter: blur(10px);
     }
@@ -779,7 +779,7 @@
 
   <!-- MAIN -->
   <main class="min-h-screen">
-    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-8">
+    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-4">
       <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
         <!-- SIDEBAR -->
         <aside class="hidden lg:block">
@@ -894,15 +894,12 @@
 
               <!-- Appointments Loading State -->
               <div id="appointments-loading" class="space-y-4">
-                <div class="appointment-card">
-                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="flex-1 space-y-3">
-                      <div class="skeleton h-6 w-48"></div>
-                      <div class="skeleton h-4 w-64"></div>
-                      <div class="skeleton h-4 w-32"></div>
-                    </div>
-                    <div class="skeleton h-8 w-24"></div>
+                <div class="text-center py-8">
+                  <div class="w-14 h-14 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                    <i data-lucide="loader-2" class="w-7 h-7 text-brand-gold animate-spin"></i>
                   </div>
+                  <h3 class="text-lg font-serif text-brand-light mb-2">Loading Appointments</h3>
+                  <p class="muted text-sm">Fetching your scheduled sessions...</p>
                 </div>
               </div>
 
@@ -1440,6 +1437,11 @@
     async function loadUpcomingAppointments() {
       if (!portalProfile || !portalProfile.email) {
         console.warn("No profile/email to load appointments");
+        // Show empty states immediately if no profile
+        document.getElementById("appointments-loading")?.classList.add("hidden");
+        document.getElementById("appointments-empty")?.classList.remove("hidden");
+        document.getElementById("history-initial")?.classList.add("hidden");
+        document.getElementById("history-empty")?.classList.remove("hidden");
         return;
       }
 
@@ -1456,6 +1458,22 @@
       document.getElementById("history-error")?.classList.add("hidden");
       document.getElementById("history-initial")?.classList.add("hidden");
 
+      // Set a timeout to show empty state if request takes too long
+      const loadingTimeout = setTimeout(() => {
+        console.warn("Appointments loading timeout - showing empty state");
+        document.getElementById("appointments-loading")?.classList.add("hidden");
+        document.getElementById("appointments-empty")?.classList.remove("hidden");
+        document.getElementById("history-loading")?.classList.add("hidden");
+        document.getElementById("history-initial")?.classList.add("hidden");
+        document.getElementById("history-empty")?.classList.remove("hidden");
+        
+        // Update dashboard stats to 0
+        const dashUpcoming = document.getElementById("dash-upcoming-count");
+        const dashCompleted = document.getElementById("dash-completed-count");
+        if (dashUpcoming) dashUpcoming.textContent = "0";
+        if (dashCompleted) dashCompleted.textContent = "0";
+      }, 10000); // 10 second timeout
+
       try {
         const res = await fetch(APPOINTMENTS_WEBHOOK_URL, {
           method: "POST",
@@ -1466,6 +1484,8 @@
             lastName: portalProfile.lastName || ""
           })
         });
+
+        clearTimeout(loadingTimeout);
 
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -1514,6 +1534,7 @@
         renderHistory();
 
       } catch (e) {
+        clearTimeout(loadingTimeout);
         console.error("Failed to load appointments:", e);
 
         // Upcoming error
@@ -1843,29 +1864,29 @@
     }
 
     function resetBookingForm() {
-      if (treatmentSelect) {
-        treatmentSelect.value = "";
-        selectedServiceKey = null;
-      }
+      // Clear the date/time selection but keep treatment/duration
+      selectedDateStr = null;
+      selectedSlot = null;
 
-      if (durationSelect) {
-        durationSelect.innerHTML = '<option value="">Select a treatment first…</option>';
-        durationSelect.disabled = true;
-        selectedStandardDuration = null;
-      }
+      // Clear selection UI
+      document.getElementById("selected-date-info").classList.add("hidden");
+      document.getElementById("time-slots-container").classList.add("hidden");
+      document.getElementById("no-slots").classList.add("hidden");
+      document.getElementById("confirm-booking-btn").classList.add("btn-disabled");
+      setConfirmEnabled(false);
 
+      // Clear availability cache to get fresh data
+      availabilityCache.clear();
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+      availabilityPreloaded = false;
 
-      clearSelectionUI();
       renderCalendar();
-      updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-      savePortalState();
       updateSummary();
       savePortalState();
 
-      // Re-preload availability for next booking
-      setTimeout(() => preloadAvailabilityInBackground(), 500);
+      // Re-preload availability for next booking (force reload)
+      setTimeout(() => preloadAvailabilityInBackground(true), 500);
     }
 
     function showAuthError(msg) {
@@ -2325,11 +2346,22 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
     // =========================================================
     // PRELOAD AVAILABILITY IN BACKGROUND
     // =========================================================
-    async function preloadAvailabilityInBackground() {
+    // Global flag to track if availability has been preloaded
+    let availabilityPreloaded = false;
+    let preloadedTreatment = null;
+    let preloadedDuration = null;
+
+    async function preloadAvailabilityInBackground(forceReload = false) {
       // Only preload if we have address info
       const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
       if (!addrOk) {
         console.log("Cannot preload availability: missing address info");
+        return;
+      }
+
+      // Don't reload if already preloaded (unless forced)
+      if (availabilityPreloaded && !forceReload) {
+        console.log("Availability already preloaded, skipping");
         return;
       }
 
@@ -2365,18 +2397,32 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
 
       console.log(`Preloading availability for ${preloadTreatment} - ${preloadDuration}min`);
 
-      // Set the treatment and duration in the form (hidden)
+      // Set the treatment and duration in the form
       const treatRule = TREATMENT_RULES[preloadTreatment];
-      if (!treatRule) return;
+      if (!treatRule) {
+        console.warn("Invalid treatment rule for:", preloadTreatment);
+        return;
+      }
 
       // Validate duration is valid for this treatment
       if (!treatRule.durations.includes(preloadDuration)) {
         preloadDuration = treatRule.durations[0] || 60;
       }
 
-      // Set state variables
+      // Set state variables FIRST
       selectedServiceKey = preloadTreatment;
       selectedStandardDuration = preloadDuration;
+      preloadedTreatment = preloadTreatment;
+      preloadedDuration = preloadDuration;
+
+      // Update the form UI immediately
+      if (treatmentSelect) {
+        treatmentSelect.value = preloadTreatment;
+      }
+      rebuildDurationOptions();
+      if (durationSelect) {
+        durationSelect.value = String(preloadDuration);
+      }
 
       // Build the payload and fetch
       const { from, to } = computeMonthRange(calendarCurrent);
@@ -2397,6 +2443,9 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
 
       const cacheKey = getRequestCacheKey(payload);
 
+      // Show loading state on calendar
+      updateAvailabilityStatus("Loading availability...", false);
+
       try {
         const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
           method: "POST",
@@ -2408,19 +2457,20 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
           const data = await res.json();
           availabilityCache.set(cacheKey, data);
           parseAvailabilityResponse(data);
+          availabilityPreloaded = true;
           console.log("Background availability preloaded successfully");
-
-          // Update the form to show the preloaded selection
-          if (treatmentSelect) treatmentSelect.value = preloadTreatment;
-          rebuildDurationOptions();
-          if (durationSelect) durationSelect.value = String(preloadDuration);
 
           // Render calendar with preloaded data
           renderCalendar();
-          updateAvailabilityStatus("Availability loaded. Select a date to continue.", true);
+          updateAvailabilityStatus(`Availability loaded for ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
+          updateSummary();
+        } else {
+          console.warn("Availability preload failed with status:", res.status);
+          updateAvailabilityStatus("Could not load availability. Please try selecting treatment again.", false);
         }
       } catch (e) {
         console.warn("Background availability preload failed:", e);
+        updateAvailabilityStatus("Could not load availability. Please try selecting treatment again.", false);
       }
     }
 
@@ -2976,6 +3026,8 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
           resetBookingForm();
           loadUpcomingAppointments();
           showToast("Success", "Your appointment has been confirmed!");
+          // Go back to Dashboard after successful booking
+          switchTab('dashboard');
         }, 2200);
 
       } catch (e) {
@@ -3055,8 +3107,10 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
         selectedServiceKey = treatmentSelect.value || null;
         rebuildDurationOptions();
 
+        // Clear availability when user manually changes treatment
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        availabilityPreloaded = false; // Allow reload
         clearSelectionUI();
         renderCalendar();
 
@@ -3072,8 +3126,10 @@ const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalPro
       durationSelect.addEventListener("change", () => {
         selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
 
+        // Clear availability when user manually changes duration
         availabilityByDate = {};
         availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+        availabilityPreloaded = false; // Allow reload
         clearSelectionUI();
         renderCalendar();
 
