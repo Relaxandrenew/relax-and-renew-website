@@ -149,13 +149,27 @@
     }
     .nav-link:hover::after { width: 100%; }
 
-    /* Mobile Menu */
+    /* Mobile Menu (Portal) */
     .mobile-menu {
       background: #050505;
       transform: translateX(100%);
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      will-change: transform;
     }
     .mobile-menu.open { transform: translateX(0); }
+
+    .mobile-menu-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    html.menu-open,
+    body.menu-open {
+      overflow: hidden !important;
+      height: 100%;
+    }
 
     .header-hero { background: linear-gradient(145deg, rgba(8,8,8,0.95), rgba(5,5,5,0.98)); }
 
@@ -560,7 +574,77 @@
        - Keep Lock visible above mobile keyboard
        ========================================= */
 /* On short screens, start from top so Lock isn't trapped */
-    @media (max-height: 700px) {
+    
+    /* =========================================================
+       MOBILE OPTIMIZATION (visual + performance)
+       - Reduce oversizing on small screens
+       - Reduce heavy blur/background-fixed
+       - Center Auth0 Lock cleanly
+       - Make touch targets comfortable without being oversized
+       ========================================================= */
+
+    @media (max-width: 768px) {
+      body { background-attachment: scroll !important; }
+      .card-fancy, .glass-panel { backdrop-filter: none; }
+    }
+
+    @media (max-width: 640px) {
+      /* Global sizing */
+      html { font-size: 15px; }
+      .header-hero { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+      .header-hero h1 { font-size: clamp(1.6rem, 6vw, 2.2rem) !important; line-height: 1.15 !important; }
+      .header-hero p { font-size: 0.95rem !important; }
+
+      /* Cards / panels */
+      .card-fancy, .glass-panel { padding: 1rem !important; }
+      .divider { margin: 0.75rem 0 !important; }
+
+      /* Inputs / buttons */
+      select, input {
+        min-height: 44px !important;
+        padding: 0.65rem 0.8rem !important;
+        font-size: 0.95rem !important;
+      }
+      .btn-filled, .btn-outline {
+        padding: 0.6rem 0.85rem !important;
+        font-size: 0.95rem !important;
+      }
+
+      /* Time slot buttons */
+      .slot-btn { padding: 0.55rem 0.6rem !important; font-size: 0.9rem !important; }
+
+      /* Login overlay and Auth0 Lock */
+      #login-overlay { padding: 16px !important; }
+      .login-card {
+        width: 100% !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .login-card::before { display: none !important; }
+      #auth0-lock-container {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+      }
+      #auth0-lock-container .auth0-lock,
+      #auth0-lock-container .auth0-lock-widget {
+        width: 100% !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
+      }
+      /* Keep just one clean border on mobile (Auth0 widget only) */
+      #auth0-lock-container .auth0-lock-widget {
+        border: 1px solid rgba(224, 197, 132, 0.35) !important;
+      }
+
+      /* Mobile menu: keep content stable and prevent behind-scroll */
+      #mobile-menu { padding-bottom: env(safe-area-inset-bottom); }
+    }
+@media (max-height: 700px) {
       #login-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
@@ -672,28 +756,64 @@
     </div>
   </nav>
 
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu-backdrop" class="mobile-menu-backdrop fixed inset-0 bg-black/70 opacity-0 pointer-events-none transition-opacity z-40 lg:hidden"></div>
+
   <!-- Mobile Menu Overlay -->
-  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-full md:w-80 bg-brand-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
+  <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-[100dvh] w-[88vw] max-w-[380px] bg-black border-l border-brand-gold/30 z-50 lg:hidden overflow-y-auto">
     <div class="p-6">
       <div class="flex justify-between items-center mb-8">
-        <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">MENU</span>
-        <button id="mobile-menu-close" class="text-brand-gold p-2 hover:rotate-90 transition-transform">
+        <span class="text-brand-gold font-bold tracking-[0.2em] text-sm">PORTAL</span>
+        <button id="mobile-menu-close" class="text-brand-gold p-2 hover:rotate-90 transition-transform" aria-label="Close menu">
           <i data-lucide="x" class="w-8 h-8"></i>
         </button>
       </div>
-      <div class="flex flex-col space-y-6">
-        <a href="index.html#services" class="nav-link text-lg">Services</a>
-        <a href="index.html#pricing" class="nav-link text-lg">Pricing</a>
-        <a href="index.html#giftcards" class="nav-link text-lg">Gift Cards</a>
-        <a href="index.html#area" class="nav-link text-lg">Service Area</a>
-        <a href="index.html#faq" class="nav-link text-lg">FAQ</a>
-        <a href="therapists.html" class="nav-link text-lg">Our Therapists</a>
-        <a href="membership.html" class="nav-link text-lg">Membership</a>
+
+      <div class="flex flex-col space-y-4">
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="dashboard">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="rebook">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i>
+          Book / Rebook
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="history">
+          <i data-lucide="history" class="w-5 h-5"></i>
+          Appointment History
+        </button>
+
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="membership">
+          <i data-lucide="badge-percent" class="w-5 h-5"></i>
+          Membership
+        </button>
+
+        <button class="text-left nav-link text-lg flex items-center gap-3 opacity-60 cursor-not-allowed" disabled>
+          <i data-lucide="user" class="w-5 h-5"></i>
+          Profile (Coming Soon)
+        </button>
 
         <hr class="divider mt-2">
 
-        <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200">
-          <i data-lucide="log-out" class="w-5 h-5 inline mr-2"></i>
+        <button id="install-app-btn" class="hidden text-left nav-link text-lg flex items-center gap-3">
+          <i data-lucide="download" class="w-5 h-5"></i>
+          Download App
+        </button>
+
+        <button id="install-app-ios-btn" class="hidden text-left nav-link text-lg flex items-center gap-3">
+          <i data-lucide="square-plus" class="w-5 h-5"></i>
+          Add to Home Screen
+        </button>
+
+        <a href="index.html" class="nav-link text-lg flex items-center gap-3">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          Return to Website
+        </a>
+
+        <button id="logout-btn-mobile" class="text-left nav-link text-lg text-red-300 hover:text-red-200 flex items-center gap-3">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
           Sign Out
         </button>
       </div>
@@ -1162,6 +1282,9 @@
     let preloadedTreatment = null;
     let preloadedDuration = null;
 
+    // PWA install prompt (Android/Chromium)
+    let deferredInstallPrompt = null;
+
     const TREATMENT_RULES = {
       "relaxation":  { label: "Relaxation Massage", durations: [60,75,90,120] },
       "deep-tissue": { label: "Deep Tissue Massage", durations: [60,75,90,120] },
@@ -1177,26 +1300,31 @@
     // =========================================================
     // UTIL
     // =========================================================
-    function showToast(title, message, isError=false) {
+    function showToast(title, message, isError=false, durationMs=3200) {
       const toast = document.getElementById("toast");
       const msgEl = document.getElementById("toast-message");
+      if (!toast || !msgEl) return;
+
       msgEl.textContent = message || title || "—";
       toast.classList.add("show");
-      // Specific styling for toast show state handled in CSS via opacity
       toast.style.opacity = "1";
       toast.style.transform = "translateX(-50%) translateY(-10px)";
-      
+
       const iconWrap = toast.querySelector("i");
       if (iconWrap) iconWrap.setAttribute("data-lucide", isError ? "alert-circle" : "check");
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Attempt to restore previously selected time slot (after refresh)
-      maybeAutoSelectRestoredSlot(dateStr);
-      setTimeout(() => {
-          toast.style.opacity = "0";
-          toast.style.transform = "translateX(-50%) translateY(0)";
-          toast.classList.remove("show");
-      }, 3200);
+      // Cancel any prior hide timers (prevents "sticky" toasts)
+      try {
+        if (toast._hideTimer) clearTimeout(toast._hideTimer);
+      } catch (e) {}
+
+      const d = Math.max(800, Number(durationMs) || 3200);
+      toast._hideTimer = setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(-50%) translateY(0)";
+        toast.classList.remove("show");
+      }, d);
     }
 
 
@@ -2201,7 +2329,7 @@ if (selectedSlot && driveTime > 0) {
             hideLoginOverlay();
             hydrateProfileUI();
             renderCalendar();
-            showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`);
+            showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`, false, (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) ? 1100 : 2200);
             
             // Load appointments and preload availability
             loadUpcomingAppointments();
@@ -2701,10 +2829,97 @@ if (selectedSlot && driveTime > 0) {
     async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
 
-      // Mobile menu
+      // Mobile menu (portal navigation)
       const mm = document.getElementById("mobile-menu");
-      document.getElementById("mobile-menu-btn")?.addEventListener("click", () => mm.classList.add("open"));
-      document.getElementById("mobile-menu-close")?.addEventListener("click", () => mm.classList.remove("open"));
+      const mmBackdrop = document.getElementById("mobile-menu-backdrop");
+
+      let mobileMenuScrollY = 0;
+
+      const openMobileMenu = () => {
+        mobileMenuScrollY = window.scrollY || 0;
+
+        mm?.classList.add("open");
+        mmBackdrop?.classList.add("open");
+
+        document.documentElement.classList.add("menu-open");
+        document.body.classList.add("menu-open");
+
+        // Prevent background scrolling (including iOS)
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${mobileMenuScrollY}px`;
+        document.body.style.width = "100%";
+      };
+
+      const closeMobileMenu = () => {
+        mm?.classList.remove("open");
+        mmBackdrop?.classList.remove("open");
+
+        document.documentElement.classList.remove("menu-open");
+        document.body.classList.remove("menu-open");
+
+        // Restore scroll position
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, mobileMenuScrollY);
+      };
+
+      document.getElementById("mobile-menu-btn")?.addEventListener("click", openMobileMenu);
+      document.getElementById("mobile-menu-close")?.addEventListener("click", closeMobileMenu);
+      mmBackdrop?.addEventListener("click", closeMobileMenu);
+
+      // Close menu on ESC
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMobileMenu();
+      });
+
+      // Wire portal tab buttons inside the mobile menu
+      document.querySelectorAll(".mobile-portal-btn").forEach(btn => {
+        const tab = btn.dataset.tab;
+        if (!tab) return;
+        btn.addEventListener("click", () => {
+          switchTab(tab);
+          closeMobileMenu();
+        });
+      });
+
+      // Add-to-Home-Screen / Install (PWA)
+      const installBtn = document.getElementById("install-app-btn");
+      const installIosBtn = document.getElementById("install-app-ios-btn");
+
+      const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+      const isStandalone = () =>
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        (window.navigator && window.navigator.standalone === true);
+
+      // Android/Chromium: show install button when prompt becomes available
+      window.addEventListener("beforeinstallprompt", (e) => {
+        try { e.preventDefault(); } catch(err) {}
+        deferredInstallPrompt = e;
+        if (installBtn) installBtn.classList.remove("hidden");
+      });
+
+      // iOS: show instruction button when not installed
+      if (installIosBtn && isIOS() && !isStandalone()) {
+        installIosBtn.classList.remove("hidden");
+      }
+
+      installBtn?.addEventListener("click", async () => {
+        if (!deferredInstallPrompt) {
+          showToast("Install", "Install isn’t available yet. Use your browser menu to add this page to your Home Screen.", false, 5200);
+          return;
+        }
+        deferredInstallPrompt.prompt();
+        try { await deferredInstallPrompt.userChoice; } catch(e) {}
+        deferredInstallPrompt = null;
+        installBtn.classList.add("hidden");
+        closeMobileMenu();
+      });
+
+      installIosBtn?.addEventListener("click", () => {
+        showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6200);
+        closeMobileMenu();
+      });
 
       // Get form elements
       treatmentSelect = document.getElementById("treatment-select");
