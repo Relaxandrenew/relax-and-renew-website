@@ -111,7 +111,11 @@
       --shadow: 0 10px 30px rgba(0,0,0,0.55);
     }
 
-    html, body { height:100%; }
+    html, body { min-height: 100vh; height: auto; }
+    html { background-color: #050505; }
+    html, body { min-height: 100%; height: auto; }
+    body { min-height: 100vh; }
+
     
     body {
       font-family: 'Cormorant Garamond', serif;
@@ -797,7 +801,7 @@
 
         <hr class="divider mt-2">
 
-        <button id="install-app-btn" class="hidden text-left nav-link text-lg flex items-center gap-3">
+        <button id="install-app-btn" class="text-left nav-link text-lg flex items-center gap-3">
           <i data-lucide="download" class="w-5 h-5"></i>
           Download App
         </button>
@@ -1320,7 +1324,7 @@
       } catch (e) {}
 
       const d = Math.max(800, Number(durationMs) || 3200);
-      toast._hideTimer = setTimeout(() => {
+      toast._hideTimer = setTimeout(async () => {
         toast.style.opacity = "0";
         toast.style.transform = "translateX(-50%) translateY(0)";
         toast.classList.remove("show");
@@ -2245,7 +2249,7 @@ if (selectedSlot && driveTime > 0) {
           
           // Load appointments and preload availability
           loadUpcomingAppointments();
-          preloadAvailabilityInBackground();
+          if (!availabilityPreloaded) preloadAvailabilityInBackground();
           
           return true;
         } else {
@@ -2329,7 +2333,27 @@ if (selectedSlot && driveTime > 0) {
             hideLoginOverlay();
             hydrateProfileUI();
             renderCalendar();
-            showToast("Welcome!", `Signed in as ${portalProfile?.firstName || portalProfile?.email || 'Client'}`, false, (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) ? 1100 : 2200);
+            const _n = (portalProfile && (`${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim())) || "Client";
+            const _isMobile = (window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
+            showToast("Welcome!", `Signed in as ${_n}.`, false, _isMobile ? 1100 : 2200);
+            // After sign-in, restore any in-progress selection and ensure availability loads
+            try { await restorePortalStateIfPossible(); } catch (e) {}
+            try {
+              if (portalProfile) {
+                if (!selectedServiceKey && treatmentSelect && treatmentSelect.value && TREATMENT_RULES[treatmentSelect.value]) {
+                  selectedServiceKey = treatmentSelect.value;
+                  rebuildDurationOptions();
+                }
+                if (!selectedStandardDuration && durationSelect && durationSelect.value) {
+                  selectedStandardDuration = Number(durationSelect.value);
+                }
+                if (selectedServiceKey && selectedStandardDuration) {
+                  await maybeLoadAvailabilityForCurrentMonth();
+                }
+                renderCalendar();
+              }
+            } catch (e) {}
+
             
             // Load appointments and preload availability
             loadUpcomingAppointments();
@@ -2892,36 +2916,58 @@ if (selectedSlot && driveTime > 0) {
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
 
-      // Android/Chromium: show install button when prompt becomes available
-      window.addEventListener("beforeinstallprompt", (e) => {
-        try { e.preventDefault(); } catch(err) {}
-        deferredInstallPrompt = e;
-        if (installBtn) installBtn.classList.remove("hidden");
-      });
-
-      // iOS: show instruction button when not installed
-      if (installIosBtn && isIOS() && !isStandalone()) {
-        installIosBtn.classList.remove("hidden");
-      }
-
-      installBtn?.addEventListener("click", async () => {
-        if (!deferredInstallPrompt) {
-          showToast("Install", "Install isn’t available yet. Use your browser menu to add this page to your Home Screen.", false, 5200);
+      const refreshInstallButtons = () => {
+        // If already installed as an app, hide install UI
+        if (isStandalone()) {
+          installBtn?.classList.add("hidden");
+          installIosBtn?.classList.add("hidden");
           return;
         }
-        deferredInstallPrompt.prompt();
-        try { await deferredInstallPrompt.userChoice; } catch(e) {}
-        deferredInstallPrompt = null;
-        installBtn.classList.add("hidden");
-        closeMobileMenu();
+
+        // Always show a single "Download App" entry on Android/desktop browsers;
+        // it will either trigger the install prompt (if available) or show instructions.
+        installBtn?.classList.remove("hidden");
+
+        // On iOS Safari, also show the dedicated instruction entry (optional).
+        if (isIOS()) installIosBtn?.classList.remove("hidden");
+        else installIosBtn?.classList.add("hidden");
+      };
+
+      // Android/Chromium: capture prompt when available
+      window.addEventListener("beforeinstallprompt", (e) => {
+        try { e.preventDefault(); } catch (err) {}
+        deferredInstallPrompt = e;
+        refreshInstallButtons();
+      });
+
+      // Initial state
+      refreshInstallButtons();
+
+      installBtn?.addEventListener("click", async () => {
+        try {
+          if (isStandalone()) return;
+
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            try { await deferredInstallPrompt.userChoice; } catch (e) {}
+            deferredInstallPrompt = null;
+            refreshInstallButtons();
+          } else if (isIOS()) {
+            showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6500);
+          } else {
+            showToast("Install the app", "In Chrome: tap the menu (⋮) then choose ‘Install app’ or ‘Add to Home screen’.", false, 6500);
+          }
+        } finally {
+          closeMobileMenu();
+        }
       });
 
       installIosBtn?.addEventListener("click", () => {
-        showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6200);
+        showToast("Add to Home Screen", "On iPhone/iPad: tap Share, then ‘Add to Home Screen’.", false, 6500);
         closeMobileMenu();
       });
 
-      // Get form elements
+// Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
 
