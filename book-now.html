@@ -313,6 +313,15 @@
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
             }
+            /* Client details modal: keep X always visible while content scrolls */
+            #client-details-modal .client-details-scroll{
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-right: 0.35rem; /* keeps content off the scrollbar */
+            }
+
             
             #client-details-modal h3 {
                 font-size: 1.35rem;
@@ -504,17 +513,17 @@
         
 /* Booking modal close button pinned outside scroll (desktop + mobile) */
 #booking-modal-close-btn{
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 16px);
-  right: calc(env(safe-area-inset-right, 0px) + 16px);
-  z-index: 320;
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 16px) !important;
+  right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
+  z-index: 9999 !important;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(224, 197, 132, 0.35);
-  background: rgba(0,0,0,0.45);
+  background: rgba(0,0,0,0.55);
   color: #E0C584;
   border-radius: 10px;
   backdrop-filter: blur(10px);
@@ -533,20 +542,25 @@
   transform: translateY(0);
 }
 #booking-modal-close-btn:hover{
-  background: rgba(224, 197, 132, 0.08);
-  border-color: rgba(224, 197, 132, 0.65);
+  background: rgba(224, 197, 132, 0.10);
+  border-color: rgba(224, 197, 132, 0.75);
 }
 #booking-modal-close-btn svg{
   width: 22px;
   height: 22px;
 }
 
-/* Make the modal content scroll independently (X stays pinned) */
+/* Keep the overlay fixed and prevent background scroll; card scrolls independently */
+#booking-modal-overlay{
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
 .booking-modal-card{
   max-height: min(82vh, 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding-bottom: 28px;
 }
 @media (max-width: 520px){
@@ -557,8 +571,8 @@
   #booking-modal-close-btn{
     width: 42px;
     height: 42px;
-    top: calc(env(safe-area-inset-top, 0px) + 12px);
-    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+    right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
   }
 }
 
@@ -1182,11 +1196,13 @@ function fillAddressFromPlace(place) {
 
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
     <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
             <button id="client-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             
+            <div class="client-details-scroll">
+
             <div class="text-center mb-8">
                 <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
                     <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
@@ -1438,6 +1454,7 @@ function fillAddressFromPlace(place) {
                 <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
                 Please fill in all required fields.
             </p>
+            </div>
         </div>
     </div>
 
@@ -1445,7 +1462,7 @@ function fillAddressFromPlace(place) {
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
         <!-- Close button outside the card -->
-        <button id="booking-modal-close-btn" type="button" class="absolute top-4 right-4 md:top-8 md:right-8 text-brand-gold/70 hover:text-brand-light transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
+        <button id="booking-modal-close-btn" type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1471,8 +1488,8 @@ function fillAddressFromPlace(place) {
             <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
 
             <div id="booking-modal-actions" class="booking-actions hidden">
-                <button id="booking-modal-home-btn" type="button" class="booking-home-btn">Return to Home</button>
-                <button id="booking-modal-membership-btn" type="button" class="booking-home-btn">See Memberships</button>
+                <button id="booking-modal-portal-btn" type="button" class="booking-home-btn">To Client Portal</button>
+                <button id="booking-modal-home-btn" type="button" class="booking-home-btn">Go to Home</button>
             </div>
         </div>
     </div>
@@ -1570,7 +1587,15 @@ function fillAddressFromPlace(place) {
       const overlay = document.getElementById("booking-modal-overlay");
       if (!overlay) return;
 
-      // Stop message cycling if still running
+      
+      // Booking progress overlay is never user-closable once opened.
+      if (overlay.dataset.locked === "1") return;
+
+      // (Backstop) After booking is confirmed, the modal remains a hard stop: only the action buttons may proceed.
+      if (window.__bookingCompleted || overlay.dataset.finalized === "1") {
+        return;
+      }
+// Stop message cycling if still running
       if (bookingMessageInterval) {
         clearInterval(bookingMessageInterval);
         bookingMessageInterval = null;
@@ -1582,16 +1607,65 @@ function fillAddressFromPlace(place) {
     window.closeBookingModalOverlay = closeBookingModalOverlay;
 
     (function initBookingModalCloseButton(){
-      const btn = document.getElementById("booking-modal-close-btn");
-      if (btn) btn.addEventListener("click", closeBookingModalOverlay);
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeBookingModalOverlay();
-      });
-    })();
+  function bindBookingModalClose(){
+    const btn = document.getElementById("booking-modal-close-btn");
 
+    if (btn) {
+      // Click closes (desktop)
+      btn.addEventListener("click", (e) => {
+        try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+        closeBookingModalOverlay();
+      }, { capture: true });
 
+      // Touch closes (mobile Safari)
+      btn.addEventListener("touchstart", (e) => {
+        try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+        closeBookingModalOverlay();
+      }, { passive: false, capture: true });
+    }
 
-    function showBookingModal() {
+    // Backdrop click closes ONLY after booking finished (success or error)
+    const overlay = document.getElementById("booking-modal-overlay");
+    const card = document.querySelector("#booking-modal-overlay .booking-modal-card");
+    if (overlay && card) {
+      overlay.addEventListener("mousedown", (e) => {
+        if (e.target !== overlay) return;
+        // Do not allow closing while spinner is showing (booking still in progress)
+        const spinner = document.getElementById("booking-modal-spinner");
+        const inProgress = spinner && !spinner.classList.contains("hidden");
+        if (inProgress) return;
+        closeBookingModalOverlay();
+      }, true);
+
+      overlay.addEventListener("touchstart", (e) => {
+        if (e.target !== overlay) return;
+        const spinner = document.getElementById("booking-modal-spinner");
+        const inProgress = spinner && !spinner.classList.contains("hidden");
+        if (inProgress) return;
+        closeBookingModalOverlay();
+      }, { passive: true, capture: true });
+    }
+
+    // Escape closes (capture phase so Places Autocomplete can't swallow it)
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const overlay = document.getElementById("booking-modal-overlay");
+      if (!overlay || !overlay.classList.contains("active")) return;
+
+      // Booking overlay is intentionally not user-closable once opened.
+      if (overlay.dataset.locked === "1") return;
+
+      try { e.preventDefault(); } catch (_) {}
+      closeBookingModalOverlay();
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindBookingModalClose, { once: true });
+  } else {
+    bindBookingModalClose();
+  }
+})();function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
       const spinner = document.getElementById("booking-modal-spinner");
       const successIcon = document.getElementById("booking-modal-success");
@@ -1600,7 +1674,8 @@ function fillAddressFromPlace(place) {
       const substatusText = document.getElementById("booking-modal-substatus");
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const portalBtn = document.getElementById("booking-modal-portal-btn");
+      const closeBtn = document.getElementById("booking-modal-close-btn");
 
       // Ensure no stale message cycling is running
       if (bookingMessageInterval) {
@@ -1618,9 +1693,20 @@ function fillAddressFromPlace(place) {
       // Reset actions
       if (actions) actions.classList.add("hidden");
       if (homeBtn) homeBtn.onclick = null;
-      if (membershipBtn) membershipBtn.onclick = null;
+      if (portalBtn) portalBtn.onclick = null;
       window.__bookingCompleted = false;
 
+      //       // Booking-in-progress overlay is NOT user-closable (per requirements)
+      // Lock all close mechanisms immediately when this overlay opens.
+      if (closeBtn) {
+        closeBtn.style.display = "none";
+        closeBtn.setAttribute("aria-hidden", "true");
+        closeBtn.setAttribute("tabindex", "-1");
+      }
+      if (overlay) {
+        overlay.dataset.finalized = "0";
+        overlay.dataset.locked = "1";
+      }
       // Show modal
       overlay.classList.add("active");
       document.body.style.overflow = "hidden";
@@ -1638,6 +1724,8 @@ function fillAddressFromPlace(place) {
       }, 2000);
     }
 
+    
+
     function hideBookingModal(success = true, errorMessage = null) {
       // Stop message cycling
       if (bookingMessageInterval) {
@@ -1653,7 +1741,8 @@ function fillAddressFromPlace(place) {
       const overlay = document.getElementById("booking-modal-overlay");
       const actions = document.getElementById("booking-modal-actions");
       const homeBtn = document.getElementById("booking-modal-home-btn");
-      const membershipBtn = document.getElementById("booking-modal-membership-btn");
+      const portalBtn = document.getElementById("booking-modal-portal-btn");
+      const closeBtn = document.getElementById("booking-modal-close-btn");
 
       // Hide spinner, show appropriate icon
       spinner.classList.add("hidden");
@@ -1673,15 +1762,23 @@ function fillAddressFromPlace(place) {
       // we intentionally DO NOT refresh availability automatically (only a full page refresh will).
       if (success) {
         window.__bookingCompleted = true;
+        if (overlay) overlay.dataset.finalized = "1";
+        // Hide and disable close controls after booking is confirmed
+        if (closeBtn) {
+          closeBtn.style.display = "none";
+          closeBtn.setAttribute("aria-hidden", "true");
+        }
         if (actions) actions.classList.remove("hidden");
         if (homeBtn) {
           homeBtn.onclick = () => {
-            try { window.location.assign("https://www.relaxandrenew.ca"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca"; }
+            try { window.location.assign("https://relaxandrenew.ca/"); }
+            catch (_) { window.location.href = "https://relaxandrenew.ca/"; }
           };
         }
-        if (membershipBtn) {
-          membershipBtn.onclick = () => {
-            try { window.location.assign("https://www.relaxandrenew.ca/membership"); } catch (_) { window.location.href = "https://www.relaxandrenew.ca/membership"; }
+        if (portalBtn) {
+          portalBtn.onclick = () => {
+            try { window.location.assign("/portal"); }
+            catch (_) { window.location.href = "/portal"; }
           };
         }
         // Keep overlay open (no auto-close)
