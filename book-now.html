@@ -312,6 +312,8 @@
                 margin: 0.25rem;
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
+                position: relative;
+                overflow: visible !important; /* allow floating close button outside the card */
             }
             /* Client details modal: keep X always visible while content scrolls */
             #client-details-modal .client-details-scroll{
@@ -323,6 +325,47 @@
             }
 
             
+
+            /* Client details modal: ensure the content area scrolls and keep scrollbar visible */
+            #client-details-modal .client-details-scroll--content{
+                overflow-y: auto !important;
+            }
+
+            /* Client details modal: floating close button outside the card */
+            #client-details-modal .client-modal-header{
+                height: 0;
+                padding: 0;
+                margin: 0;
+                flex: 0 0 auto;
+            }
+            #client-details-modal #client-modal-close{
+                position: absolute;
+                top: -14px;
+                right: -14px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(224, 197, 132, 0.35);
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+                z-index: 5;
+            }
+            #client-details-modal #client-modal-close:hover{
+                border-color: rgba(224, 197, 132, 0.75);
+                background: rgba(0, 0, 0, 0.92);
+            }
+            #client-details-modal #client-modal-close:focus{
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(224,197,132,0.18), 0 10px 30px rgba(0,0,0,0.55);
+            }
+            #client-details-modal #client-modal-close i{
+                pointer-events: none;
+            }
+
             #client-details-modal h3 {
                 font-size: 1.35rem;
             }
@@ -647,10 +690,17 @@
                 }
                 const addrInput = document.getElementById('address-input-initial');
                 if (addrInput) {
+                    const ontarioBounds = new google.maps.LatLngBounds(
+                        new google.maps.LatLng(41.676555, -95.156227),
+                        new google.maps.LatLng(56.860743, -74.320648)
+                    );
+
                     const ac = new google.maps.places.Autocomplete(addrInput, {
                         componentRestrictions: { country: "ca" },
                         fields: ["address_components", "formatted_address"],
                         types: ["geocode"],
+                        bounds: ontarioBounds,
+                        strictBounds: true,
                     });
                     ac.addListener("place_changed", () => {
                         const place = ac.getPlace();
@@ -753,6 +803,8 @@ function fillAddressFromPlace(place) {
                 let city = "";
                 let postal = "";
                 let countryCode = "";
+                let province = "";
+                let provinceShort = "";
                 let hasStreetNumber = false;
                 
                 if (place.address_components) {
@@ -762,13 +814,29 @@ function fillAddressFromPlace(place) {
                         if (t === "locality" || t === "administrative_area_level_3") city = c.long_name;
                         if (t === "postal_code") postal = c.long_name;
                         if (t === "country") countryCode = c.short_name || c.long_name || "";
+                        if (t === "administrative_area_level_1") { province = c.long_name || ""; provinceShort = c.short_name || ""; }
                     }
                 }
 
-                // Restrict service addresses to Canada only
+                // Restrict service addresses to Ontario, Canada only
                 if (countryCode && String(countryCode).toUpperCase() !== "CA") {
                     document.getElementById('address-input-initial').value = '';
-                    alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                    alert('We currently serve Ontario (Canada) addresses only. Please enter an Ontario address.');
+                    window.__selectedAddress = null;
+                    return;
+                }
+
+                // Restrict service addresses to Ontario only (validated from Places result)
+                const prov = String(provinceShort || province || '').toUpperCase().trim();
+                if (!prov) {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Ontario only. Please enter an Ontario address.');
+                    window.__selectedAddress = null;
+                    return;
+                }
+                if (prov !== "ON" && prov !== "ONTARIO") {
+                    document.getElementById('address-input-initial').value = '';
+                    alert('We currently serve Ontario only. Please enter an Ontario address.');
                     window.__selectedAddress = null;
                     return;
                 }
@@ -2349,6 +2417,11 @@ container.appendChild(groupRow);
                     return null;
                 }
                 const postal = normalizeCanadianPostal(postalRaw);
+                const fsa = postal.replace(/\s+/g, '').charAt(0);
+                if (!'KLMNP'.includes(fsa)) {
+                    alert('We currently serve Ontario only. Please enter an Ontario postal code.');
+                    return null;
+                }
                 const full = city ? `${street}, ${city} ${postal}` : `${street} ${postal}`;
                 const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
@@ -2364,7 +2437,7 @@ container.appendChild(groupRow);
             const looksLikeUS = /\busa\b|\bunited states\b|\bu\.s\.a\b/.test(rawLower) || /\b\d{5}(?:-\d{4})?\b/.test(raw);
             const containsCanadianPostal = isCanadianPostal(raw);
             if (looksLikeUS && !containsCanadianPostal) {
-                alert('We currently serve Canadian addresses only (Ontario). Please enter a Canadian address.');
+                alert('We currently serve Ontario (Canada) addresses only. Please enter an Ontario address.');
                 return null;
             }
             // If lookup failed, require a Canadian postal code to ensure we do not accept US addresses
@@ -2375,6 +2448,11 @@ container.appendChild(groupRow);
 
             const match = raw.toUpperCase().match(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/);
             const postal = normalizeCanadianPostal(match ? match[0] : raw);
+            const fsa = postal.replace(/\s+/g, '').charAt(0);
+            if (!'KLMNP'.includes(fsa)) {
+                alert('We currently serve Ontario only. Please enter an Ontario address (Ontario postal code).');
+                return null;
+            }
             const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
             window.__selectedAddress = addrObj;
             return addrObj;
