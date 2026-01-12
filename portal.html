@@ -3181,6 +3181,10 @@ if (selectedSlot && driveTime > 0) {
         console.error("durationSelect not found");
         return;
       }
+
+      // Preserve any previously selected duration if it is still valid for the chosen treatment.
+      const prevDuration = Number(selectedStandardDuration) || null;
+
       durationSelect.innerHTML = "";
 
       const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
@@ -3208,7 +3212,16 @@ if (selectedSlot && driveTime > 0) {
       });
 
       durationSelect.disabled = false;
-      selectedStandardDuration = null;
+
+      // If a duration was already selected (e.g., preloading), keep it if it remains valid.
+      if (prevDuration && rule.durations.includes(prevDuration)) {
+        selectedStandardDuration = prevDuration;
+        durationSelect.value = String(prevDuration);
+      } else {
+        selectedStandardDuration = null;
+        durationSelect.value = "";
+      }
+
       updateSummary();
     }
 
@@ -3827,6 +3840,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       // Treatment selection
       treatmentSelect.addEventListener("change", () => {
         selectedServiceKey = treatmentSelect.value || null;
+        selectedStandardDuration = null;
         rebuildDurationOptions();
 
         availabilityByDate = {};
