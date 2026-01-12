@@ -302,12 +302,19 @@
       right: 0;
       bottom: 0;
       z-index: 200; /* Higher than nav */
-      background: rgba(0,0,0,0.85);
+      background: #000000;
       backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
+    
+      height: 100dvh;
+    
+      overflow: auto;
+    
+      pointer-events: auto;
+      touch-action: manipulation;
     }
     #login-overlay.hidden {
       opacity: 0;
@@ -315,7 +322,7 @@
       pointer-events: none;
     }
     .login-card {
-      background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98));
+      background: #050505;
       border: 1px solid rgba(224, 197, 132, 0.25);
       backdrop-filter: blur(10px);
       padding: 2.5rem 2rem;
@@ -1370,7 +1377,7 @@
       bookingMessageInterval = setInterval(() => {
         messageIndex = (messageIndex + 1) % bookingMessages.length;
         statusText.style.opacity = "0";
-        setTimeout(() => {
+        setTimeout(async () => {
           statusText.textContent = bookingMessages[messageIndex].text;
           substatusText.textContent = bookingMessages[messageIndex].sub;
           statusText.style.opacity = "1";
