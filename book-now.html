@@ -313,8 +313,7 @@
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
                 position: relative;
-                overflow: visible !important; /* allow floating close button outside the card */
-            }
+                            }
             /* Client details modal: keep X always visible while content scrolls */
             #client-details-modal .client-details-scroll{
                 flex: 1;
@@ -332,32 +331,6 @@
             }
 
             /* Client details modal: floating close button outside the card */
-            #client-details-modal .client-modal-header{
-                height: 0;
-                padding: 0;
-                margin: 0;
-                flex: 0 0 auto;
-            }
-            #client-details-modal #client-modal-close{
-                position: absolute;
-                top: -14px;
-                right: -14px;
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 1px solid rgba(224, 197, 132, 0.35);
-                background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(8px);
-                border-radius: 10px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.55);
-                z-index: 5;
-            }
-            #client-details-modal #client-modal-close:hover{
-                border-color: rgba(224, 197, 132, 0.75);
-                background: rgba(0, 0, 0, 0.92);
-            }
             #client-details-modal #client-modal-close:focus{
                 outline: none;
                 box-shadow: 0 0 0 3px rgba(224,197,132,0.18), 0 10px 30px rgba(0,0,0,0.55);
@@ -676,6 +649,16 @@
                 #client-details-modal .client-details-scroll--content{
                     max-height: calc(90vh - 3.0rem);
                 }
+            }
+
+
+            /* Client details modal: force scrolling (keeps close button inside scroll area) */
+            #client-details-modal .client-details-scroll{
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto !important;
+                max-height: calc(90vh - 1rem);
+                -webkit-overflow-scrolling: touch;
             }
 
 </style>
@@ -1290,16 +1273,13 @@ function fillAddressFromPlace(place) {
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
     <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="client-modal-header flex items-start justify-end flex-shrink-0">
-<button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors">
+<div class="client-details-scroll client-details-scroll--content">
+            <div class="flex justify-end mb-2">
+                <button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors"></i>
             </button>
-            
             </div>
-<div class="client-details-scroll client-details-scroll--content">
-
-
-            <div class="text-center mb-8">
+<div class="text-center mb-8">
                 <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
                     <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
                 </div>
