@@ -665,6 +665,14 @@
                 -webkit-overflow-scrolling: touch;
             }
 
+
+        /* v18: Final confirmation (Client Details) modal - ensure proper scrolling and close button behavior */
+        #client-details-modal { overflow-x: hidden !important; }
+        #client-details-modal .client-details-scroll { overflow-y: auto !important; overflow-x: hidden !important; padding: 0 !important; }
+        #client-details-modal .client-details-scroll-inner { width: 100%; }
+        #client-details-modal .client-modal-header { position: static !important; }
+        #client-details-modal button#client-modal-close { cursor: pointer; }
+
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -1275,70 +1283,66 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
-    <div id="client-details-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
-<div class="client-details-scroll client-details-scroll--content">
-            <div class="flex justify-end mb-2">
-                <button aria-label="Close" id="client-modal-close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors">
-                <i data-lucide="x" class="client-modal-close-btn inline-flex items-center justify-center p-2 -m-2 text-brand-gold/70 hover:text-brand-light transition-colors"></i>
-            </button>
-            </div>
+    <div class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden" id="client-details-modal">
+<div class="bg-brand-black border border-brand-gold/30 rounded-lg p-0 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
+<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-8 md:p-10">
+<div class="flex justify-end mb-2">
+<button aria-label="Close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors" id="client-modal-close" onclick="closeClientDetailsModal();">
+<i class="w-6 h-6" data-lucide="x"></i>
+</button>
+</div>
 <div class="text-center mb-8">
-                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
-                    <i data-lucide="user" class="w-8 h-8 text-brand-gold"></i>
-                </div>
-                <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
-                <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
+<div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+<i class="w-8 h-8 text-brand-gold" data-lucide="user"></i>
+</div>
+<h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
+<p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
                     Please provide your details to complete the booking.
                 </p>
-            </div>
-
-            <!-- Booking Summary -->
-            <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
-                <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Treatment:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Date & Time:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-brand-dim/80">Location:</span>
-                        <span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
-                    </div>
-                    <div class="flex justify-between pt-2 border-t border-brand-gold/20">
-                        <span class="text-brand-gold font-bold">Total:</span>
-                        <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
-                    </div>
-                </div>
-                <!-- Payment Notice -->
-                <div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
-                    <i data-lucide="info" class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5"></i>
-                    <span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
-                </div>
-            </div>
-
-            <form id="client-details-form" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
-                        <input id="client-first-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
-                        <input id="client-last-name" type="text" required class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
-                    <input id="client-phone" type="tel" required placeholder="(555) 123-4567" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                </div>
-
-                <script>
+</div>
+<!-- Booking Summary -->
+<div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+<div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3">Booking Summary</div>
+<div class="space-y-2 text-sm">
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Treatment:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-treatment">60-min Massage</span>
+</div>
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Date &amp; Time:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-datetime">Dec 17, 10:00 AM</span>
+</div>
+<div class="flex justify-between">
+<span class="text-brand-dim/80">Location:</span>
+<span class="text-brand-light font-semibold" id="summary-modal-address">Your address</span>
+</div>
+<div class="flex justify-between pt-2 border-t border-brand-gold/20">
+<span class="text-brand-gold font-bold">Total:</span>
+<span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
+</div>
+</div>
+<!-- Payment Notice -->
+<div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
+<i class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" data-lucide="info"></i>
+<span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
+</div>
+</div>
+<form class="space-y-4" id="client-details-form">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-first-name" required="" type="text"/>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-last-name" required="" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-phone" placeholder="(555) 123-4567" required="" type="tel"/>
+</div>
+<script>
                 // Phone number force-formatting (BACKSPACE/DELETE SAFE)
                 (function setupPhoneFormatting() {
                     const input = document.getElementById('client-phone');
@@ -1450,93 +1454,82 @@ function fillAddressFromPlace(place) {
                     });
                 })();
                 </script>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
-                    <input id="client-address-display" type="text" readonly class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75">
-                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
-                    <input id="client-email" type="email" required placeholder="your.email@example.com" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                    <p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
-                    <textarea id="client-notes" rows="3" placeholder="Any special requests, health concerns, or preferences..." class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none"></textarea>
-                </div>
-
-                <!-- Travel Charge Warning (populated dynamically if needed) -->
-                <div id="travel-charge-warning" class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg">
-                    <div class="flex items-start gap-3">
-                        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse"></i>
-                        <div>
-                            <div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
-                            <div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
-                            <div id="travel-charge-text" class="text-xs text-brand-light leading-relaxed"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stripe Payment Element (shows when travel charges apply) -->
-                <div id="stripe-payment-section" class="hidden mt-6 bg-brand-gold/5 border-2 border-brand-gold/30 rounded-lg p-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="shield-check" class="w-5 h-5 text-brand-gold"></i>
-                        <h4 class="text-sm font-bold text-brand-gold uppercase tracking-wider">Card on File (No-Show Protection)</h4>
-                    </div>
-                    <div id="stripe-card-element" class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2">
-                        <!-- Stripe Elements will be inserted here -->
-                    </div>
-                    <div class="mt-3">
-                        <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
-                        <input id="stripe-postal-code" type="text" placeholder="A1A 1A1" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all">
-                        <p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
-                    </div>
-                    <div id="stripe-card-errors" class="text-xs text-red-400 mt-2 hidden"></div>
-                    <p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
-                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Service Address *</label>
+<input class="w-full bg-black/30 border border-brand-gold/20 rounded-lg p-3 text-brand-light text-sm cursor-not-allowed opacity-75" id="client-address-display" readonly="" type="text"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">Address from Step 1</p>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-email" placeholder="your.email@example.com" required="" type="email"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
+<textarea class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all resize-none" id="client-notes" placeholder="Any special requests, health concerns, or preferences..." rows="3"></textarea>
+</div>
+<!-- Travel Charge Warning (populated dynamically if needed) -->
+<div class="hidden bg-amber-500/20 border-2 border-amber-400/80 ring-2 ring-amber-400/20 rounded-lg p-5 mt-5 shadow-lg" id="travel-charge-warning">
+<div class="flex items-start gap-3">
+<i class="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5 animate-pulse" data-lucide="alert-triangle"></i>
+<div>
+<div class="inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-amber-200 bg-amber-500/20 border border-amber-400/50 rounded-full px-2 py-1 mb-2">Action Required</div>
+<div class="text-sm font-extrabold text-amber-400 mb-2">Outside Our Standard Travel Range</div>
+<div class="text-xs text-brand-light leading-relaxed" id="travel-charge-text"></div>
+</div>
+</div>
+</div>
+<!-- Stripe Payment Element (shows when travel charges apply) -->
+<div class="hidden mt-6 bg-brand-gold/5 border-2 border-brand-gold/30 rounded-lg p-4" id="stripe-payment-section">
+<div class="flex items-center gap-2 mb-3">
+<i class="w-5 h-5 text-brand-gold" data-lucide="shield-check"></i>
+<h4 class="text-sm font-bold text-brand-gold uppercase tracking-wider">Card on File (No-Show Protection)</h4>
+</div>
+<div class="bg-white/5 border border-brand-gold/40 rounded-lg p-3 mb-2" id="stripe-card-element">
+<!-- Stripe Elements will be inserted here -->
+</div>
+<div class="mt-3">
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Postal Code *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="stripe-postal-code" placeholder="A1A 1A1" type="text"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">Canadian postal code required.</p>
+</div>
+<div class="text-xs text-red-400 mt-2 hidden" id="stripe-card-errors"></div>
+<p class="text-xs text-brand-dim/60 mt-3 leading-relaxed">
+<i class="w-3 h-3 inline mr-1" data-lucide="info"></i>
                         Your card is <strong class="text-brand-light">saved for no-show protection only</strong>. Payment for treatment and travel charge is collected after your appointment. You may pay with cash, credit, or e-transfer.
                     </p>
-                </div>
-
-                <div class="p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
-                    <div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-2">Marketing Emails</div>
-                    <p class="text-xs text-brand-dim/80 leading-relaxed mb-3">
+</div>
+<div class="p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
+<div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-2">Marketing Emails</div>
+<p class="text-xs text-brand-dim/80 leading-relaxed mb-3">
                         I want to receive marketing emails (Promotions, events, discounts, etc).
                     </p>
-
-                    <div class="flex items-center gap-8">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" name="email_marketing_consent" value="true" required class="w-4 h-4">
-                            <span class="text-sm text-brand-light font-semibold">Yes</span>
-                        </label>
-
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="radio" name="email_marketing_consent" value="false" required class="w-4 h-4">
-                            <span class="text-sm text-brand-light font-semibold">No</span>
-                        </label>
-                    </div>
-
-                    <p class="text-xs text-brand-dim/60 mt-2 leading-relaxed">
+<div class="flex items-center gap-8">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4" name="email_marketing_consent" required="" type="radio" value="true"/>
+<span class="text-sm text-brand-light font-semibold">Yes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4" name="email_marketing_consent" required="" type="radio" value="false"/>
+<span class="text-sm text-brand-light font-semibold">No</span>
+</label>
+</div>
+<p class="text-xs text-brand-dim/60 mt-2 leading-relaxed">
                         You can unsubscribe at any time.
                     </p>
-                </div>
-
-                <button type="submit" id="submit-booking-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i>
-                    <span>Confirm Booking</span>
-                </button>
-            </form>
-
-            <p id="client-error" class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
-                <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>
+</div>
+<button class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base" id="submit-booking-btn" type="submit">
+<i class="w-5 h-5" data-lucide="check-circle"></i>
+<span>Confirm Booking</span>
+</button>
+</form>
+<p class="text-xs text-red-400 mt-4 hidden bg-red-500/10 border border-red-500/30 p-3 rounded-lg" id="client-error">
+<i class="w-4 h-4 inline mr-1" data-lucide="alert-circle"></i>
                 Please fill in all required fields.
             </p>
-            </div>
-        </div>
-    </div>
+</div></div>
+</div>
+</div>
 
     
     <!-- Booking Confirmation Modal (Portal style) -->
@@ -2962,6 +2955,14 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     }
                 });
             }
+
+// Ensure the Client Details (final confirmation) modal close handlers are always bound
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bindClientDetailsModalClose, { once: true });
+} else {
+  bindClientDetailsModalClose();
+}
+
 
 function getTravelCanonicalFromSlot(slot) {
         // v7 FIX: trust server-side travel fields computed per-slot by the n8n workflow.
