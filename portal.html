@@ -3892,10 +3892,6 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const isStandalone = () =>
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
-      const isMobileUI = () => (window.matchMedia && window.matchMedia("(max-width: 768px)").matches);
-
-
-      
       const isMobileUI = () => (window.matchMedia ? window.matchMedia("(max-width: 768px)").matches : (window.innerWidth <= 768));
 
       let __mobileTimesMoved = false;
