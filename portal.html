@@ -314,7 +314,10 @@
       bottom: 0;
       z-index: 200; /* Higher than nav */
       background: #000000;
-      /* backdrop-filter removed for solid overlay */
+            padding: 24px 12px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+/* backdrop-filter removed for solid overlay */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -346,7 +349,18 @@
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
-    /* =========================================
+    
+    @media (max-width: 640px) {
+      #login-overlay { align-items: flex-start; }
+      .login-card {
+        padding: 1.75rem 1.25rem;
+        width: 94%;
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+      }
+    }
+
+/* =========================================
        FIXED: Auth0 Lock Styles (Robust Overrides)
        ========================================= */
     #auth0-lock-container { width: 100% !important; }
@@ -2427,6 +2441,7 @@ if (selectedSlot && driveTime > 0) {
     function showLoginOverlay() {
       document.getElementById("login-overlay").classList.remove("hidden");
       document.body.style.overflow = "hidden";
+      try { window.scrollTo(0, 0); } catch (e) {}
     }
 
     function hideLoginOverlay() {
@@ -3111,7 +3126,11 @@ if (selectedSlot && driveTime > 0) {
     // AUTH0 LOCK INITIALIZATION
     // =========================================================
     function initAuth0Lock() {
-      lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
+      if (lock) {
+        try { lock.show(); } catch (e) {}
+        return;
+      }
+lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
         container: 'auth0-lock-container',
         allowSignUp: false,
         theme: {
