@@ -707,6 +707,17 @@
     html.light-mode .divider { border-color: rgba(0,0,0,0.20) !important; }
 
 
+    /* Robust scroll lock (prevents background scroll behind overlays on mobile/desktop) */
+    html.rnr-scroll-locked, body.rnr-scroll-locked {
+      height: 100% !important;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+    body.rnr-scroll-locked {
+      touch-action: none;
+    }
+
+
     /* Mobile time picker overlay tweaks */
     @media (max-width: 768px) {
       #mobile-times-overlay .modal-card {
@@ -718,15 +729,15 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
-      /* Mobile calendar compaction: keep calendar + controls within viewport */
+      /* Mobile calendar compaction: reduce vertical space (desktop unaffected) */
       #calendar-days { gap: 0.35rem !important; }
       .calendar-day { font-size: 0.85rem !important; }
       #prev-month-btn, #next-month-btn { padding: 0.45rem 0.6rem !important; }
       #calendar-month-label { font-size: 1.05rem !important; }
       #tab-rebook h2 { font-size: 1.55rem !important; margin-bottom: 1rem !important; }
-      /* Reduce the weekday row height */
+      /* Weekday row */
       #tab-rebook .grid.grid-cols-7.gap-2.text-center { margin-top: 0.75rem !important; gap: 0.35rem !important; font-size: 9px !important; }
-      /* Reduce padding on stepper and main booking panel */
+      /* Stepper */
       #booking-stepper { padding: 0.9rem !important; margin-bottom: 1rem !important; }
       #booking-stepper .stepper-label { font-size: 0.75rem !important; }
 
@@ -749,10 +760,51 @@
     const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
 
     // =========================================================
-    // MOBILE OVERLAY HELPERS (GLOBAL)
-    // - Required so inline onclick handlers work
-    // - Required so selectDate() can open overlay on mobile
+    // GLOBAL UI HELPERS (do not remove)
+    // - Robust scroll lock (prevents behind-scroll on iOS/Android)
+    // - Mobile-only time picker overlay (date -> modal)
     // =========================================================
+    let __rnrScrollLockCount = 0;
+    let __rnrScrollLockY = 0;
+    let __mobileTimesMoved = false;
+
+    function lockBodyScroll() {
+      try {
+        __rnrScrollLockCount = (__rnrScrollLockCount || 0) + 1;
+        if (__rnrScrollLockCount > 1) return;
+
+        __rnrScrollLockY = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('rnr-scroll-locked');
+        document.body.classList.add('rnr-scroll-locked');
+
+        // iOS-friendly lock: pin body
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${__rnrScrollLockY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+      } catch (e) {}
+    }
+
+    function unlockBodyScroll() {
+      try {
+        if (!__rnrScrollLockCount) return;
+        __rnrScrollLockCount -= 1;
+        if (__rnrScrollLockCount > 0) return;
+
+        document.documentElement.classList.remove('rnr-scroll-locked');
+        document.body.classList.remove('rnr-scroll-locked');
+
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+
+        window.scrollTo(0, __rnrScrollLockY || 0);
+      } catch (e) {}
+    }
+
     function isMobileUI() {
       try {
         return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
@@ -760,8 +812,6 @@
         return (window.innerWidth || 1024) <= 768;
       }
     }
-
-    let __mobileTimesMoved = false;
 
     function openMobileTimesOverlay() {
       if (!isMobileUI()) return;
@@ -781,7 +831,7 @@
       }
 
       overlay.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
       syncMobileConfirmButton();
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
@@ -814,7 +864,7 @@
       }
 
       overlay.classList.add('hidden');
-      document.body.style.overflow = '';
+      unlockBodyScroll();
     }
 
     function syncMobileConfirmButton() {
@@ -836,10 +886,10 @@
     }
 
     // Expose for inline onclick handlers
+    window.isMobileUI = isMobileUI;
     window.openMobileTimesOverlay = openMobileTimesOverlay;
     window.closeMobileTimesOverlay = closeMobileTimesOverlay;
     window.mobileConfirmBooking = mobileConfirmBooking;
-    window.isMobileUI = isMobileUI;
 
 
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
@@ -2247,7 +2297,7 @@
 
       // Show modal
       overlay.classList.add("active");
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
 
       // Cycle through messages every 2 seconds
       let messageIndex = 0;
@@ -2294,7 +2344,7 @@
       // Hide modal after showing result
       setTimeout(() => {
         overlay.classList.remove("active");
-        document.body.style.overflow = "";
+        unlockBodyScroll();
       }, success ? 2000 : 3000);
     }
 
@@ -2547,13 +2597,13 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function showLoginOverlay() {
       document.getElementById("login-overlay").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
       try { window.scrollTo(0, 0); } catch (e) {}
     }
 
     function hideLoginOverlay() {
       document.getElementById("login-overlay").classList.add("hidden");
-      document.body.style.overflow = "";
+      unlockBodyScroll();
     }
     // =========================================================
     // STATE PERSISTENCE (survive refresh / accidental close)
@@ -3717,7 +3767,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
 
       loadTimeSlots(dateStr);
       if (typeof isMobileUI === "function" && isMobileUI()) {
-        try { openMobileTimesOverlay(); } catch (e) {}
+        openMobileTimesOverlay();
       }
     }
 
@@ -4017,7 +4067,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           const modal = document.getElementById("install-prompt-modal");
           if (!modal) return;
           modal.classList.remove("hidden");
-          document.body.style.overflow = "hidden";
+          lockBodyScroll();
           try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
         } catch (e) {}
       }
@@ -4026,7 +4076,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         const modal = document.getElementById("install-prompt-modal");
         if (!modal) return;
         modal.classList.add("hidden");
-        document.body.style.overflow = "";
+        unlockBodyScroll();
         if (setCooldown) {
           try { localStorage.setItem("rnr_install_prompt_dismissed_at", String(Date.now())); } catch (e) {}
         }
