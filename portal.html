@@ -3283,11 +3283,30 @@ if (selectedSlot && driveTime > 0) {
     // AUTH0 LOCK INITIALIZATION
     // =========================================================
     function initAuth0Lock() {
+      const containerEl = document.getElementById('auth0-lock-container');
+      // If a lock instance exists but the container was cleared (e.g., after logout),
+      // force a full re-init so the embed can render again.
       if (lock) {
-        try { lock.show(); } catch (e) {}
+        try {
+          const hasWidget = containerEl && containerEl.querySelector('.auth0-lock');
+          if (!hasWidget) {
+            try { lock.hide(); } catch (e) {}
+            lock = null;
+          } else {
+            lock.show();
+            return;
+          }
+        } catch (e) {
+          lock = null;
+        }
+      }
+      if (typeof Auth0Lock === 'undefined') {
+        showAuthError('Auth0 failed to load. Please disable ad-blockers for this site or refresh.');
+        console.error('Auth0Lock is undefined — lock.min.js did not load.');
         return;
       }
-lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
+
+      lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
         container: 'auth0-lock-container',
         allowSignUp: false,
         theme: {
@@ -3444,7 +3463,9 @@ lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
       if (lock) {
         try { lock.hide(); } catch(e) {}
       }
-      
+      // Destroy lock instance so embedded container is re-bound correctly
+      lock = null;
+
       // Clear the container and reinitialize
       document.getElementById("auth0-lock-container").innerHTML = "";
       initAuth0Lock();
@@ -4049,7 +4070,6 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const isStandalone = () =>
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
-      }
 
       // Install prompt modal helpers
       function maybeShowInstallPromptModal(force) {
