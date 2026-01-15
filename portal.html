@@ -717,6 +717,19 @@
       #mobile-times-overlay .modal-card #time-slots-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
+
+      /* Mobile calendar compaction: keep calendar + controls within viewport */
+      #calendar-days { gap: 0.35rem !important; }
+      .calendar-day { font-size: 0.85rem !important; }
+      #prev-month-btn, #next-month-btn { padding: 0.45rem 0.6rem !important; }
+      #calendar-month-label { font-size: 1.05rem !important; }
+      #tab-rebook h2 { font-size: 1.55rem !important; margin-bottom: 1rem !important; }
+      /* Reduce the weekday row height */
+      #tab-rebook .grid.grid-cols-7.gap-2.text-center { margin-top: 0.75rem !important; gap: 0.35rem !important; font-size: 9px !important; }
+      /* Reduce padding on stepper and main booking panel */
+      #booking-stepper { padding: 0.9rem !important; margin-bottom: 1rem !important; }
+      #booking-stepper .stepper-label { font-size: 0.75rem !important; }
+
     }
 
 </style>
@@ -734,6 +747,100 @@
     const WAITLIST_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-join-waitlist`;
     const INVOICE_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-get-invoice`;
     const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
+
+    // =========================================================
+    // MOBILE OVERLAY HELPERS (GLOBAL)
+    // - Required so inline onclick handlers work
+    // - Required so selectDate() can open overlay on mobile
+    // =========================================================
+    function isMobileUI() {
+      try {
+        return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      } catch (e) {
+        return (window.innerWidth || 1024) <= 768;
+      }
+    }
+
+    let __mobileTimesMoved = false;
+
+    function openMobileTimesOverlay() {
+      if (!isMobileUI()) return;
+      const overlay = document.getElementById('mobile-times-overlay');
+      const content = document.getElementById('mobile-times-content');
+      const anchor = document.getElementById('mobile-times-anchor');
+      if (!overlay || !content || !anchor) return;
+
+      // Move existing DOM blocks (preserves IDs and existing logic)
+      const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
+      if (!__mobileTimesMoved) {
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) content.appendChild(el);
+        });
+        __mobileTimesMoved = true;
+      }
+
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      syncMobileConfirmButton();
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function closeMobileTimesOverlay() {
+      const overlay = document.getElementById('mobile-times-overlay');
+      const content = document.getElementById('mobile-times-content');
+      const anchor = document.getElementById('mobile-times-anchor');
+      if (!overlay || !content || !anchor) return;
+
+      if (__mobileTimesMoved) {
+        const summaryAnchor = document.getElementById('summary-confirm-anchor');
+
+        // Restore Step 2 blocks (date + times) back to their original anchor
+        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+        let ref = anchor;
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            ref.insertAdjacentElement('afterend', el);
+            ref = el;
+          }
+        });
+
+        // Restore Step 3 confirm panel back to its original anchor
+        const summaryPanel = document.getElementById('summary-confirm-panel');
+        if (summaryAnchor && summaryPanel) {
+          summaryAnchor.insertAdjacentElement('afterend', summaryPanel);
+        }
+      }
+
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function syncMobileConfirmButton() {
+      const mainBtn = document.getElementById('confirm-booking-btn');
+      const mobileBtn = document.getElementById('mobile-confirm-btn');
+      if (!mainBtn || !mobileBtn) return;
+      const enabled = !mainBtn.disabled;
+      mobileBtn.disabled = !enabled;
+      mobileBtn.classList.toggle('btn-disabled', !enabled);
+    }
+
+    function mobileConfirmBooking() {
+      const btn = document.getElementById('confirm-booking-btn');
+      if (btn && !btn.disabled) {
+        btn.click();
+      } else {
+        showToast('Select a time', 'Please select a time first.', true, 4500);
+      }
+    }
+
+    // Expose for inline onclick handlers
+    window.openMobileTimesOverlay = openMobileTimesOverlay;
+    window.closeMobileTimesOverlay = closeMobileTimesOverlay;
+    window.mobileConfirmBooking = mobileConfirmBooking;
+    window.isMobileUI = isMobileUI;
+
 
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
@@ -3610,7 +3717,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
 
       loadTimeSlots(dateStr);
       if (typeof isMobileUI === "function" && isMobileUI()) {
-        openMobileTimesOverlay();
+        try { openMobileTimesOverlay(); } catch (e) {}
       }
     }
 
@@ -3892,81 +3999,6 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const isStandalone = () =>
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
-      const isMobileUI = () => (window.matchMedia ? window.matchMedia("(max-width: 768px)").matches : (window.innerWidth <= 768));
-
-      let __mobileTimesMoved = false;
-
-      function openMobileTimesOverlay() {
-        if (!isMobileUI()) return;
-        const overlay = document.getElementById("mobile-times-overlay");
-        const content = document.getElementById("mobile-times-content");
-        const anchor = document.getElementById("mobile-times-anchor");
-        if (!overlay || !content || !anchor) return;
-
-        // Move existing DOM blocks (preserves IDs and existing logic)
-        const ids = ["selected-date-info", "time-slots-container", "no-slots", "summary-confirm-panel"];
-        if (!__mobileTimesMoved) {
-          ids.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) content.appendChild(el);
-          });
-          __mobileTimesMoved = true;
-        }
-
-        overlay.classList.remove("hidden");
-        document.body.style.overflow = "hidden";
-        syncMobileConfirmButton();
-        try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
-      }
-
-      function closeMobileTimesOverlay() {
-        const overlay = document.getElementById("mobile-times-overlay");
-        const content = document.getElementById("mobile-times-content");
-        const anchor = document.getElementById("mobile-times-anchor");
-        if (!overlay || !content || !anchor) return;
-
-        if (__mobileTimesMoved) {
-          const summaryAnchor = document.getElementById("summary-confirm-anchor");
-
-          // Restore Step 2 blocks (date + times) back to their original anchor
-          const ids = ["selected-date-info", "time-slots-container", "no-slots"];
-          let ref = anchor;
-          ids.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) {
-              ref.insertAdjacentElement("afterend", el);
-              ref = el;
-            }
-          });
-
-          // Restore Step 3 confirm panel back to its original anchor
-          const summaryPanel = document.getElementById("summary-confirm-panel");
-          if (summaryAnchor && summaryPanel) {
-            summaryAnchor.insertAdjacentElement("afterend", summaryPanel);
-          }
-        }
-
-                overlay.classList.add("hidden");
-        document.body.style.overflow = "";
-      }
-
-      function syncMobileConfirmButton() {
-        const mainBtn = document.getElementById("confirm-booking-btn");
-        const mobileBtn = document.getElementById("mobile-confirm-btn");
-        if (!mainBtn || !mobileBtn) return;
-
-        const enabled = !mainBtn.disabled;
-        mobileBtn.disabled = !enabled;
-        mobileBtn.classList.toggle("btn-disabled", !enabled);
-      }
-
-      function mobileConfirmBooking() {
-        const btn = document.getElementById("confirm-booking-btn");
-        if (btn && !btn.disabled) {
-          btn.click();
-        } else {
-          showToast("Select a time", "Please select a time first.", true, 4500);
-        }
       }
 
       // Install prompt modal helpers
