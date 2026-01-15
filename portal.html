@@ -726,7 +726,8 @@
         margin: 0 auto;
       }
       #mobile-times-overlay .modal-card #time-slots-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        /* Mobile: 5 columns for 15-min blocks (10:00, 10:15, 10:30, 10:45, 11:00) */
+        grid-template-columns: repeat(5, minmax(0, 1fr));
       }
 
       /* Mobile calendar compaction: reduce vertical space (desktop unaffected) */
@@ -762,7 +763,12 @@
         font-size: 0.85rem !important;
         line-height: 1.15 !important;
         border-radius: var(--radius) !important;
-        min-height: 2.2rem;
+        min-height: 2.0rem;
+      }
+      /* Make the label itself a touch smaller and tighter */
+      #mobile-times-overlay .time-slot-btn span {
+        font-size: 0.74rem !important;
+        letter-spacing: 0.01em;
       }
       #mobile-times-overlay #time-slots-grid {
         gap: 0.35rem !important;
@@ -899,12 +905,13 @@
       for (let i = 0; i < 7; i++) {
         const d = _rnrAddDays(start, i);
         const ds = toDateStr(d);
+        const dsKey = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
 
-        const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : [];
+        const slots = (availabilityByDate && availabilityByDate[dsKey]) ? availabilityByDate[dsKey] : [];
         const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
-        const isPast = ds < todayStr;
+        const isPast = dsKey < todayStr;
         const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
-        const isSelected = selectedDateStr === ds;
+        const isSelected = selectedDateStr === dsKey;
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -926,11 +933,14 @@
         } else {
           btn.classList.add('border-brand-gold/30', 'bg-black/40', 'hover:bg-brand-gold/15', 'hover:border-brand-gold');
           btn.addEventListener('click', function() {
-            // Keep the same strip window; selection can move within it.
-            selectDate(ds);
-            // After selectDate triggers overlay open, ensure strip rerenders to update highlight.
-            try { try { setMobileOverlayStep('step2'); } catch(e) {}
-      renderMobileDateStrip(); } catch(e) {}
+            // If the mobile overlay is already open, update state without re-opening/re-moving DOM.
+            if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) {
+              setSelectedDateInOverlay(dsKey);
+            } else {
+              selectDate(dsKey);
+            }
+            try { setMobileOverlayStep('step2'); } catch(e) {}
+            try { renderMobileDateStrip(); } catch(e) {}
           });
         }
 
@@ -944,17 +954,70 @@
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
 
+    function isMobileTimesOverlayOpen() {
+      const overlay = document.getElementById('mobile-times-overlay');
+      return !!(overlay && !overlay.classList.contains('hidden'));
+    }
+
+    // Update selected date + time list while keeping the mobile overlay open.
+    function setSelectedDateInOverlay(dateStr) {
+      const norm = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      selectedDateStr = norm;
+      selectedSlot = null;
+
+      try { setConfirmEnabled(false); } catch (e) {}
+      try { document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('time-slot-selected')); } catch(e) {}
+
+      try {
+        const info = document.getElementById('selected-date-info');
+        if (info) info.classList.remove('hidden');
+        const disp = document.getElementById('selected-date-display');
+        if (disp) disp.textContent = formatDatePretty(norm);
+      } catch (e) {}
+
+      try { loadTimeSlots(norm); } catch (e) {}
+      try { updateSummary(); } catch (e) {}
+      try { updateBookingStepper(); } catch (e) {}
+      try { savePortalState(); } catch (e) {}
+      try { renderCalendar(); } catch (e) {}
+      try { syncMobileConfirmButton(); } catch (e) {}
+      try { setMobileOverlayStep('step2'); } catch (e) {}
+    }
+
+    // Shift the 7-day strip by a full week and automatically select the first available day
+    // in the newly visible window (this prevents the UI from snapping back to the prior week).
     function shiftMobileDateStrip(deltaDays) {
       if (!isMobileUI()) return;
       if (!selectedDateStr) return;
       if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+
       const start = _rnrDateFromStr(__mobileStripStartDateStr);
-      __mobileStripStartDateStr = toDateStr(_rnrAddDays(start, Number(deltaDays || 0)));
+      const newStart = _rnrAddDays(start, Number(deltaDays || 0));
+      __mobileStripStartDateStr = toDateStr(newStart);
+
+      const todayStr = toDateStr(new Date());
+      let chosen = null;
+      for (let i = 0; i < 7; i++) {
+        const d = _rnrAddDays(newStart, i);
+        const ds = toDateStr(d);
+        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
+        const slots = (availabilityByDate && availabilityByDate[key]) ? availabilityByDate[key] : [];
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const isPast = key < todayStr;
+        const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
+        if (selectable) { chosen = key; break; }
+      }
+      if (!chosen) chosen = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(__mobileStripStartDateStr) || __mobileStripStartDateStr) : __mobileStripStartDateStr);
+
+      // Keep the overlay open and update the time list for the newly selected day.
+      setSelectedDateInOverlay(chosen);
       renderMobileDateStrip();
     }
 
     window.renderMobileDateStrip = renderMobileDateStrip;
     window.shiftMobileDateStrip = shiftMobileDateStrip;
+    window.isMobileTimesOverlayOpen = isMobileTimesOverlayOpen;
+    window.setSelectedDateInOverlay = setSelectedDateInOverlay;
 
 
     function openMobileTimesOverlay() {
@@ -2696,6 +2759,39 @@ function computeMonthRange(date) {
       return "—";
     }
 
+    // Mobile: compact 15-min labels (10, 1015, 1030, 1045, 11) to reduce vertical space.
+    function formatTimeLabelCompact(slot) {
+      if (!slot) return "—";
+
+      // Prefer a real datetime if present
+      const start = slot.start || slot.start_time || slot.startTime || slot.begin || null;
+      if (start) {
+        try {
+          const d = new Date(start);
+          if (!isNaN(d.getTime())) {
+            const t = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: false, timeZone: "America/Toronto" });
+            const parts = String(t).split(":");
+            const h = String(Number(parts[0] || 0));
+            const m = String(parts[1] || "00");
+            return (m === "00") ? h : (h + m);
+          }
+        } catch (e) {}
+      }
+
+      // Fallback: strip to digits from any label/time field
+      const raw = slot.label || slot.time || slot.startLabel || "";
+      const digits = String(raw).replace(/\D+/g, "");
+      return digits || formatTimeLabel(slot);
+    }
+
+    function getSlotStartMs(slot) {
+      const start = slot && (slot.start || slot.start_time || slot.startTime || slot.begin);
+      if (!start) return 0;
+      const d = new Date(start);
+      const ms = d.getTime();
+      return isNaN(ms) ? 0 : ms;
+    }
+
     function formatDatePretty(dateStr) {
       const [y,m,d] = dateStr.split("-").map(Number);
       const dt = new Date(y, m-1, d);
@@ -3999,7 +4095,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     }
 
     function selectDate(dateStr) {
-      selectedDateStr = dateStr;
+      const norm = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      selectedDateStr = norm;
       selectedSlot = null;
       renderCalendar();
       updateSummary();
@@ -4007,9 +4104,9 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       savePortalState();
 
       document.getElementById("selected-date-info").classList.remove("hidden");
-      document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
+      document.getElementById("selected-date-display").textContent = formatDatePretty(norm);
 
-      loadTimeSlots(dateStr);
+      loadTimeSlots(norm);
       if (typeof isMobileUI === "function" && isMobileUI()) {
         openMobileTimesOverlay();
       }
@@ -4023,7 +4120,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       container.classList.remove("hidden");
       grid.innerHTML = "";
 
-      const slots = availabilityByDate[dateStr] || [];
+      const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      const slots = availabilityByDate[key] || [];
       const usable = Array.isArray(slots) ? slots : [];
 
       if (!usable.length) {
@@ -4032,7 +4130,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         return;
       }
 
-      usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      usable.sort((a,b) => getSlotStartMs(a) - getSlotStartMs(b));
 
       let anyAvailable = false;
 
@@ -4047,10 +4145,14 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         // Base class: we add 'time-slot-btn' and specific styles for available/booked below
         btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
         
-        // Clean label: strip EST, (Booked)
-        const labelRaw = formatTimeLabel(slot); 
-        // formatTimeLabel returns lower case.
-        const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+        // Mobile gets compact numeric labels; desktop keeps existing label normalization.
+        let labelClean = "—";
+        if (typeof isMobileUI === 'function' && isMobileUI()) {
+          labelClean = formatTimeLabelCompact(slot);
+        } else {
+          const labelRaw = formatTimeLabel(slot);
+          labelClean = String(labelRaw).replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+        }
 
         if (isSlotAvailable(slot)) {
           btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
