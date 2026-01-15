@@ -741,6 +741,38 @@
       #booking-stepper { padding: 0.9rem !important; margin-bottom: 1rem !important; }
       #booking-stepper .stepper-label { font-size: 0.75rem !important; }
 
+      /* Make the mobile overlay card scrollable (content scrolls, footer stays visible) */
+      #mobile-times-overlay .modal-card {
+        max-height: calc(100dvh - 24px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #mobile-times-overlay .rnr-modal-scroll {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding-right: 2px;
+      }
+
+      /* Shrink time slot buttons on mobile */
+      #mobile-times-overlay .time-slot-btn {
+        padding: 0.38rem !important;
+        font-size: 0.85rem !important;
+        line-height: 1.15 !important;
+        border-radius: var(--radius) !important;
+        min-height: 2.2rem;
+      }
+      #mobile-times-overlay #time-slots-grid {
+        gap: 0.35rem !important;
+      }
+
+      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown inside the modal) */
+      #summary-confirm-panel { display: none; }
+      #mobile-times-overlay #summary-confirm-panel { display: block !important; }
+
+
     }
 
 </style>
@@ -897,7 +929,8 @@
             // Keep the same strip window; selection can move within it.
             selectDate(ds);
             // After selectDate triggers overlay open, ensure strip rerenders to update highlight.
-            try { renderMobileDateStrip(); } catch(e) {}
+            try { try { setMobileOverlayStep('step2'); } catch(e) {}
+      renderMobileDateStrip(); } catch(e) {}
           });
         }
 
@@ -932,7 +965,7 @@
       if (!overlay || !content || !anchor) return;
 
       // Move existing DOM blocks (preserves IDs and existing logic)
-      const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+      const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
       if (!__mobileTimesMoved) {
         ids.forEach((id) => {
           const el = document.getElementById(id);
@@ -942,6 +975,7 @@
       }
 
       overlay.classList.remove('hidden');
+      setMobileOverlayStep('step2');
       lockBodyScroll();
       syncMobileConfirmButton();
       try {
@@ -964,7 +998,7 @@
         const summaryAnchor = document.getElementById('summary-confirm-anchor');
 
         // Restore Step 2 blocks (date + times) back to their original anchor
-        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+        const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
         let ref = anchor;
         ids.forEach((id) => {
           const el = document.getElementById(id);
@@ -977,6 +1011,7 @@
 
 
       overlay.classList.add('hidden');
+      __mobileOverlayStep = 'step2';
       unlockBodyScroll();
     }
 
@@ -989,10 +1024,65 @@
       mobileBtn.classList.toggle('btn-disabled', !enabled);
     }
 
-    function mobileConfirmBooking() {
+    
+
+    let __mobileOverlayStep = 'step2';
+
+    function setMobileOverlayStep(step) {
+      __mobileOverlayStep = step || 'step2';
+      const stripNav = document.getElementById('mobile-strip-nav');
+      const strip = document.getElementById('mobile-date-strip');
+      const times = document.getElementById('time-slots-container');
+      const noSlots = document.getElementById('no-slots');
+      const panel = document.getElementById('summary-confirm-panel');
+      const title = document.getElementById('mobile-times-title');
+      const subtitle = document.getElementById('mobile-times-subtitle');
+      const contBtn = document.getElementById('mobile-confirm-btn');
+      const backBtn = document.getElementById('mobile-back-btn');
+
+      if (__mobileOverlayStep === 'step3') {
+        if (stripNav) stripNav.classList.add('hidden');
+        if (strip) strip.classList.add('hidden');
+        if (times) times.classList.add('hidden');
+        if (noSlots) noSlots.classList.add('hidden');
+        if (panel) panel.classList.remove('hidden');
+        if (title) title.textContent = 'Confirm';
+        if (subtitle) subtitle.textContent = 'Review your details, then confirm your booking.';
+        if (contBtn) contBtn.classList.add('hidden');
+        if (backBtn) backBtn.textContent = 'Back to Times';
+      } else {
+        // Step 2
+        if (stripNav) stripNav.classList.remove('hidden');
+        if (strip) strip.classList.remove('hidden');
+        if (panel) panel.classList.add('hidden');
+        if (title) title.textContent = 'Select a Time';
+        if (subtitle) subtitle.textContent = 'Pick a day and time. Unavailable days are disabled.';
+        if (contBtn) contBtn.classList.remove('hidden');
+        if (backBtn) backBtn.textContent = 'Back';
+        // Do not force-show times/no-slots here; existing logic controls visibility.
+      }
+    }
+
+    function mobileBackInOverlay() {
+      if (!isMobileUI()) { closeMobileTimesOverlay(); return; }
+      if (__mobileOverlayStep === 'step3') {
+        setMobileOverlayStep('step2');
+        return;
+      }
+      closeMobileTimesOverlay();
+    }
+
+    window.mobileBackInOverlay = mobileBackInOverlay;
+function mobileConfirmBooking() {
       const btn = document.getElementById('confirm-booking-btn');
       if (btn && !btn.disabled) {
-        btn.click();
+        // Step 2 -> Step 3 (show summary inside the modal)
+        setMobileOverlayStep('step3');
+        // Scroll modal content to top for the confirmation view
+        try {
+          const scroller = document.getElementById('mobile-times-scroll');
+          if (scroller) scroller.scrollTop = 0;
+        } catch(e) {}
       } else {
         showToast('Select a time', 'Please select a time first.', true, 4500);
       }
@@ -1003,6 +1093,7 @@
     window.openMobileTimesOverlay = openMobileTimesOverlay;
     window.closeMobileTimesOverlay = closeMobileTimesOverlay;
     window.mobileConfirmBooking = mobileConfirmBooking;
+    window.setMobileOverlayStep = setMobileOverlayStep;
 
 
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
@@ -1833,15 +1924,15 @@
     <div class="modal-card" style="max-width: 620px;">
       <div class="flex items-start justify-between gap-4 mb-3">
         <div class="flex-1">
-          <div class="font-serif text-xl text-brand-light">Select a Time</div>
-          <div class="muted text-sm mt-1">Pick a day and time. Unavailable days are disabled.</div>
+          <div id="mobile-times-title" class="font-serif text-xl text-brand-light">Select a Time</div>
+          <div id="mobile-times-subtitle" class="muted text-sm mt-1">Pick a day and time. Unavailable days are disabled.</div>
         </div>
         <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileTimesOverlay()">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <div class="flex items-center justify-between gap-3 mb-3">
+      <div id="mobile-strip-nav" class="flex items-center justify-between gap-3 mb-3">
         <button id="mobile-week-prev" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(-7)">
           <i data-lucide="chevron-left" class="w-4 h-4"></i>
         </button>
@@ -1853,17 +1944,21 @@
           <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </button>
       </div>
+      <div id="mobile-times-scroll" class="rnr-modal-scroll">
+
 
       <div id="mobile-date-strip" class="grid grid-cols-7 gap-2 mb-4"></div>
 
-      <div id="mobile-times-content"></div>
+            <div id="mobile-times-content"></div>
+      </div>
+
 
       <div class="mt-5 flex gap-3">
         <button id="mobile-confirm-btn" class="btn-filled flex-1 btn-disabled py-3" disabled onclick="mobileConfirmBooking()">
           <i data-lucide="check-circle" class="w-4 h-4"></i>
-          <span>Confirm</span>
+          <span>Continue</span>
         </button>
-        <button class="btn-outline flex-1 py-2 text-xs" onclick="closeMobileTimesOverlay()">Back</button>
+        <button class="btn-outline flex-1 py-2 text-xs" id="mobile-back-btn" onclick="mobileBackInOverlay()">Back</button>
       </div>
     </div>
   </div>
