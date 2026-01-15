@@ -811,7 +811,118 @@
       } catch (e) {
         return (window.innerWidth || 1024) <= 768;
       }
+    
+
     }
+
+    // =========================================================
+    // Mobile Step 2 Date Strip (7-day window + prev/next 7 days)
+    // - Uses month-wide availabilityByDate cache
+    // - Unavailable/past days are disabled (unclickable)
+    // =========================================================
+    let __mobileStripStartDateStr = null; // YYYY-MM-DD start for the 7 tiles
+
+    function _rnrDateFromStr(dateStr) {
+      // dateStr is YYYY-MM-DD
+      try { return new Date(dateStr + 'T00:00:00'); } catch (e) { return new Date(dateStr); }
+    }
+
+    function _rnrAddDays(dateObj, n) {
+      const d = new Date(dateObj.getTime());
+      d.setDate(d.getDate() + Number(n || 0));
+      return d;
+    }
+
+    function renderMobileDateStrip() {
+      if (!isMobileUI()) return;
+      const strip = document.getElementById('mobile-date-strip');
+      const range = document.getElementById('mobile-strip-range');
+      if (!strip || !range) return;
+
+      if (!selectedDateStr) {
+        strip.innerHTML = '';
+        range.textContent = '—';
+        return;
+      }
+
+      // Ensure start date is initialized and keeps selected date inside the visible window
+      if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+
+      // If the selected date is outside the current 7-day window, re-anchor the strip to the selected date
+      const _tmpStart = _rnrDateFromStr(__mobileStripStartDateStr);
+      const _tmpStartStr = toDateStr(_tmpStart);
+      const _tmpEndStr = toDateStr(_rnrAddDays(_tmpStart, 6));
+      if (selectedDateStr < _tmpStartStr || selectedDateStr > _tmpEndStr) {
+        __mobileStripStartDateStr = selectedDateStr;
+      }
+
+      const start = _rnrDateFromStr(__mobileStripStartDateStr);
+      const startStr = toDateStr(start);
+      const endStr = toDateStr(_rnrAddDays(start, 6));
+      range.textContent = `${formatDatePretty(startStr)} – ${formatDatePretty(endStr)}`;
+
+      const todayStr = toDateStr(new Date());
+      strip.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const d = _rnrAddDays(start, i);
+        const ds = toDateStr(d);
+
+        const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : [];
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const isPast = ds < todayStr;
+        const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
+        const isSelected = selectedDateStr === ds;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'calendar-day px-0 py-2 text-xs rounded-lg border';
+
+        // Compact label: day letter + number
+        const weekday = d.toLocaleDateString('en-CA', { weekday: 'short' }).slice(0,1);
+        const dayNum = d.getDate();
+        btn.innerHTML = `
+          <div class="flex flex-col items-center leading-none">
+            <div class="text-[10px] uppercase tracking-[0.15em] text-brand-dim">${weekday}</div>
+            <div class="font-bold text-sm text-brand-light">${dayNum}</div>
+          </div>
+        `;
+
+        if (!selectable) {
+          btn.disabled = true;
+          btn.classList.add('border-white/5', 'bg-white/5', 'text-white/30', 'opacity-40', 'cursor-not-allowed');
+        } else {
+          btn.classList.add('border-brand-gold/30', 'bg-black/40', 'hover:bg-brand-gold/15', 'hover:border-brand-gold');
+          btn.addEventListener('click', function() {
+            // Keep the same strip window; selection can move within it.
+            selectDate(ds);
+            // After selectDate triggers overlay open, ensure strip rerenders to update highlight.
+            try { renderMobileDateStrip(); } catch(e) {}
+          });
+        }
+
+        if (isSelected) {
+          btn.classList.add('calendar-day-selected');
+        }
+
+        strip.appendChild(btn);
+      }
+
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function shiftMobileDateStrip(deltaDays) {
+      if (!isMobileUI()) return;
+      if (!selectedDateStr) return;
+      if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+      const start = _rnrDateFromStr(__mobileStripStartDateStr);
+      __mobileStripStartDateStr = toDateStr(_rnrAddDays(start, Number(deltaDays || 0)));
+      renderMobileDateStrip();
+    }
+
+    window.renderMobileDateStrip = renderMobileDateStrip;
+    window.shiftMobileDateStrip = shiftMobileDateStrip;
+
 
     function openMobileTimesOverlay() {
       if (!isMobileUI()) return;
@@ -821,7 +932,7 @@
       if (!overlay || !content || !anchor) return;
 
       // Move existing DOM blocks (preserves IDs and existing logic)
-      const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
+      const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
       if (!__mobileTimesMoved) {
         ids.forEach((id) => {
           const el = document.getElementById(id);
@@ -833,6 +944,13 @@
       overlay.classList.remove('hidden');
       lockBodyScroll();
       syncMobileConfirmButton();
+      try {
+        // Align strip window so the selected date stays visible
+        if (selectedDateStr) {
+          if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+        }
+        renderMobileDateStrip();
+      } catch (e) {}
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
 
@@ -855,13 +973,8 @@
             ref = el;
           }
         });
-
-        // Restore Step 3 confirm panel back to its original anchor
-        const summaryPanel = document.getElementById('summary-confirm-panel');
-        if (summaryAnchor && summaryPanel) {
-          summaryAnchor.insertAdjacentElement('afterend', summaryPanel);
-        }
       }
+
 
       overlay.classList.add('hidden');
       unlockBodyScroll();
@@ -1719,14 +1832,29 @@
   <div id="mobile-times-overlay" class="modal-overlay hidden">
     <div class="modal-card" style="max-width: 620px;">
       <div class="flex items-start justify-between gap-4 mb-3">
-        <div>
+        <div class="flex-1">
           <div class="font-serif text-xl text-brand-light">Select a Time</div>
-          <div class="muted text-sm mt-1">Choose an available time, then confirm.</div>
+          <div class="muted text-sm mt-1">Pick a day and time. Unavailable days are disabled.</div>
         </div>
         <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileTimesOverlay()">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
+
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <button id="mobile-week-prev" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(-7)">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <div class="pill border-brand-gold text-brand-gold bg-brand-gold/10 flex-1 justify-center">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span id="mobile-strip-range" class="font-bold text-sm">—</span>
+        </div>
+        <button id="mobile-week-next" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(7)">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-date-strip" class="grid grid-cols-7 gap-2 mb-4"></div>
 
       <div id="mobile-times-content"></div>
 
