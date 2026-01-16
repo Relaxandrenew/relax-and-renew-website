@@ -303,10 +303,21 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
     }
 
+    /* Simple indeterminate loading bar animation (used in auth-check overlay) */
+    .animate-loading-bar {
+      animation: rnrLoadingBar 1.1s infinite ease-in-out;
+      will-change: transform;
+    }
+    @keyframes rnrLoadingBar {
+      0% { transform: translateX(-120%); }
+      50% { transform: translateX(220%); }
+      100% { transform: translateX(220%); }
+    }
+
     /* =========================================
        FIXED: Login Overlay CSS
        ========================================= */
-    #login-overlay {
+    #login-overlay, #auth-check-overlay {
       position: fixed;
       top: 0;
       left: 0;
@@ -330,7 +341,7 @@
       pointer-events: auto;
       touch-action: manipulation;
     }
-    #login-overlay.hidden {
+    #login-overlay.hidden, #auth-check-overlay.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -351,7 +362,7 @@
 
     
     @media (max-width: 640px) {
-      #login-overlay { align-items: flex-start; }
+      #login-overlay, #auth-check-overlay { align-items: flex-start; }
       .login-card {
         padding: 1.75rem 1.25rem;
         width: 94%;
@@ -650,7 +661,7 @@
       .slot-btn { padding: 0.55rem 0.6rem !important; font-size: 0.9rem !important; }
 
       /* Login overlay and Auth0 Lock */
-      #login-overlay { padding: 16px !important; }
+      #login-overlay, #auth-check-overlay { padding: 16px !important; }
       .login-card {
         width: 100% !important;
         max-width: 420px !important;
@@ -688,7 +699,7 @@
     }
 
 @media (max-height: 700px) {
-      #login-overlay { align-items: flex-start; justify-content: flex-start; }
+      #login-overlay, #auth-check-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
 
@@ -759,17 +770,37 @@
 
       /* Shrink time slot buttons on mobile */
       #mobile-times-overlay .time-slot-btn {
-        padding: 0.38rem !important;
-        font-size: 0.85rem !important;
-        line-height: 1.15 !important;
+        padding: 0.46rem !important;
         border-radius: var(--radius) !important;
-        min-height: 2.0rem;
+        min-height: 2.25rem;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.04rem;
+        line-height: 1.05 !important;
       }
-      /* Make the label itself a touch smaller and tighter */
-      #mobile-times-overlay .time-slot-btn span {
-        font-size: 0.74rem !important;
-        letter-spacing: 0.01em;
+      /* Mobile time label parts */
+      #mobile-times-overlay .time-slot-btn .time-main {
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
       }
+      #mobile-times-overlay .time-slot-btn .time-ampm {
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.10em;
+      }
+      #mobile-times-overlay #time-slots-grid {
+        gap: 0.35rem !important;
+      }
+
+      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown in its own confirm modal) */
+      #summary-confirm-panel { display: none !important; }
+      #mobile-times-overlay #summary-confirm-panel { display: none !important; }
+      #mobile-confirm-overlay #summary-confirm-panel { display: block !important; }
+
+
+    }
       #mobile-times-overlay #time-slots-grid {
         gap: 0.35rem !important;
       }
@@ -872,7 +903,23 @@
       return d;
     }
 
-    function renderMobileDateStrip() {
+    function getSlotsForDateKey(dateStr) {
+      try {
+        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+        let v = (availabilityByDate && (availabilityByDate[key] || availabilityByDate[dateStr])) || [];
+        if (v && !Array.isArray(v)) {
+          if (Array.isArray(v.slots)) v = v.slots;
+          else if (Array.isArray(v.times)) v = v.times;
+          else if (Array.isArray(v.timeSlots)) v = v.timeSlots;
+          else v = [];
+        }
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+function renderMobileDateStrip() {
       if (!isMobileUI()) return;
       const strip = document.getElementById('mobile-date-strip');
       const range = document.getElementById('mobile-strip-range');
@@ -908,7 +955,7 @@
         const ds = toDateStr(d);
         const dsKey = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
 
-        const slots = (availabilityByDate && availabilityByDate[dsKey]) ? availabilityByDate[dsKey] : [];
+        const slots = getSlotsForDateKey(dsKey);
         const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
         const isPast = dsKey < todayStr;
         const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
@@ -1015,7 +1062,7 @@
           await ensureAvailabilityMonthForDate(ds);
 
           const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
-          const slots = (availabilityByDate && availabilityByDate[key]) ? availabilityByDate[key] : [];
+          const slots = getSlotsForDateKey(key);
           const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
           const isPast = key < todayStr;
           const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
@@ -1034,6 +1081,35 @@
     window.shiftMobileDateStrip = shiftMobileDateStrip;
     window.isMobileTimesOverlayOpen = isMobileTimesOverlayOpen;
     window.setSelectedDateInOverlay = setSelectedDateInOverlay;
+
+    // If the user rotates or resizes to desktop, restore the time blocks back under the calendar.
+    function restoreMobileTimeBlocksToPageForDesktop() {
+      try {
+        if (!__mobileTimesMoved) return;
+        if (isMobileUI()) return;
+
+        const content = document.getElementById('mobile-times-content');
+        const anchor = document.getElementById('mobile-times-anchor');
+        if (!content || !anchor) return;
+
+        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+        let ref = anchor;
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            ref.insertAdjacentElement('afterend', el);
+            ref = el;
+          }
+        });
+        __mobileTimesMoved = false;
+      } catch (e) {}
+    }
+
+    window.addEventListener('resize', function() {
+      try { restoreMobileTimeBlocksToPageForDesktop(); } catch (e) {}
+    }, { passive: true });
+
+
 
     // Ensure month-wide availability is loaded for the month containing dateStr.
     async function ensureAvailabilityMonthForDate(dateStr) {
@@ -1094,30 +1170,13 @@
 
     function closeMobileTimesOverlay() {
       const overlay = document.getElementById('mobile-times-overlay');
-      const content = document.getElementById('mobile-times-content');
-      const anchor = document.getElementById('mobile-times-anchor');
-      if (!overlay || !content || !anchor) return;
-
-      if (__mobileTimesMoved) {
-        const summaryAnchor = document.getElementById('summary-confirm-anchor');
-
-        // Restore Step 2 blocks (date + times) back to their original anchor
-        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
-        let ref = anchor;
-        ids.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) {
-            ref.insertAdjacentElement('afterend', el);
-            ref = el;
-          }
-        });
-      }
-
+      if (!overlay) return;
 
       overlay.classList.add('hidden');
       __mobileOverlayStep = 'step2';
       unlockBodyScroll();
     }
+
 
     function syncMobileConfirmButton() {
       const mainBtn = document.getElementById('confirm-booking-btn');
@@ -1417,7 +1476,26 @@ function mobileConfirmBooking() {
 <!-- =========================================================
        LOGIN OVERLAY (shows on top of portal until authenticated)
        ========================================================= -->
-  <div id="login-overlay">
+<div id="auth-check-overlay">
+    <div class="login-card">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center">
+          <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+               alt="Relax & Renew"
+               class="w-16 h-16 object-contain opacity-95" />
+        </div>
+        <h2 class="text-3xl text-brand-gold mt-5 font-bold">Checking Session…</h2>
+        <p class="text-brand-dim text-sm mt-2">Please wait a moment.</p>
+      </div>
+      <div class="mt-6">
+        <div class="w-full h-1 bg-white/10 overflow-hidden rounded">
+          <div class="h-full w-1/3 bg-brand-gold animate-loading-bar rounded"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="login-overlay" class="hidden">
     <div class="login-card">
       <div class="text-center">
         <div class="mx-auto flex items-center justify-center">
@@ -3071,7 +3149,23 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     // LOGIN OVERLAY CONTROL
     // =========================================================
+    function showAuthCheckOverlay() {
+      const el = document.getElementById("auth-check-overlay");
+      if (!el) return;
+      el.classList.remove("hidden");
+      lockBodyScroll();
+      try { window.scrollTo(0, 0); } catch (e) {}
+    }
+
+    function hideAuthCheckOverlay() {
+      const el = document.getElementById("auth-check-overlay");
+      if (!el) return;
+      el.classList.add("hidden");
+      unlockBodyScroll();
+    }
+
     function showLoginOverlay() {
+      try { hideAuthCheckOverlay(); } catch (e) {}
       document.getElementById("login-overlay").classList.remove("hidden");
       lockBodyScroll();
       try { window.scrollTo(0, 0); } catch (e) {}
@@ -3145,7 +3239,7 @@ if (selectedSlot && driveTime > 0) {
 
       // After availability exists, restore date selection if that date has any data
       if (s.selectedDateStr && availabilityByDate && availabilityByDate[s.selectedDateStr]) {
-        selectDate(s.selectedDateStr);
+        selectDate(s.selectedDateStr, { userInitiated: false });
         // Slot restoration happens inside loadTimeSlots via maybeAutoSelectRestoredSlot()
       }
     }
@@ -3704,8 +3798,12 @@ if (selectedSlot && driveTime > 0) {
     // AUTH CHECK ON LOAD
     // =========================================================
     async function checkExistingAuth() {
+      // Prevent Auth0 flash: show a neutral session-check overlay first
+      try { hideLoginOverlay(); } catch (e) {}
+      try { showAuthCheckOverlay(); } catch (e) {}
+
       const { idToken, accessToken } = getStoredLockTokens();
-      
+
       if (idToken) {
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
@@ -3731,25 +3829,28 @@ if (selectedSlot && driveTime > 0) {
           } catch (e) {
             console.error("Error building profile:", e);
           }
-          
-          // ALWAYS hide login overlay if we have a valid token
-          hideLoginOverlay();
+
+          // Hide overlays immediately now that we know the session is valid
+          try { hideAuthCheckOverlay(); } catch (e) {}
+          try { hideLoginOverlay(); } catch (e) {}
+
           hydrateProfileUI();
           renderCalendar();
-          
+
           // Load appointments and preload availability
           loadUpcomingAppointments();
           if (!availabilityPreloaded) preloadAvailabilityInBackground();
-          
+
           return true;
         } else {
           // Token expired - clear it
-          localStorage.removeItem("rnr_id_token");
-          localStorage.removeItem("rnr_auth_token");
+          try { localStorage.removeItem("rnr_id_token"); } catch (e) {}
+          try { localStorage.removeItem("rnr_auth_token"); } catch (e) {}
         }
       }
-      
+
       // No valid auth - show login overlay and initialize Lock
+      try { hideAuthCheckOverlay(); } catch (e) {}
       showLoginOverlay();
       initAuth0Lock();
       return false;
@@ -4124,7 +4225,7 @@ if (selectedSlot && driveTime > 0) {
           savePortalState();
           // Restore date selection (if any) after availability is loaded
           const s = loadPortalState();
-          if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr);
+          if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr, { userInitiated: false });
           return;
         }
 
@@ -4210,7 +4311,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           cell.classList.add("calendar-day-available");
           if (isToday) cell.classList.add("calendar-day-today");
           if (isSelected) cell.classList.add("calendar-day-selected");
-          cell.addEventListener("click", () => selectDate(dateStr));
+          cell.addEventListener("click", () => selectDate(dateStr, { userInitiated: true }));
         }
 
         cell.textContent = String(day);
@@ -4251,23 +4352,35 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       }
     }
 
-    function selectDate(dateStr) {
+    function selectDate(dateStr, opts) {
+      const options = opts && typeof opts === 'object' ? opts : {};
+      const userInitiated = options.userInitiated !== false; // default true
+
       const norm = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
       selectedDateStr = norm;
       selectedSlot = null;
+
+      const mobile = (typeof isMobileUI === 'function' && isMobileUI());
+
+      // On mobile: only open the picker + render times when the user explicitly clicks a date.
+      if (mobile && userInitiated) {
+        try { openMobileTimesOverlay(); } catch (e) {}
+      }
+
       renderCalendar();
       updateSummary();
       updateBookingStepper();
       savePortalState();
 
+      // Do not auto-expand the time list / modal from restored state or programmatic selection.
+      if (!userInitiated) return;
+
       document.getElementById("selected-date-info").classList.remove("hidden");
       document.getElementById("selected-date-display").textContent = formatDatePretty(norm);
 
       loadTimeSlots(norm);
-      if (typeof isMobileUI === "function" && isMobileUI()) {
-        openMobileTimesOverlay();
-      }
     }
+
 
     function loadTimeSlots(dateStr) {
       const container = document.getElementById("time-slots-container");
@@ -4300,7 +4413,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         } catch (e) {}
         btn.type = "button";
         // Base class: we add 'time-slot-btn' and specific styles for available/booked below
-        btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
+        btn.className = "time-slot-btn w-full rounded-lg border";
         
         // Mobile gets compact numeric labels; desktop keeps existing label normalization.
         let labelClean = "—";
@@ -4315,7 +4428,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
           if (typeof isMobileUI === 'function' && isMobileUI()) {
           const p = formatTimeLabelCompactParts(slot);
-          btn.innerHTML = `<span class="font-extrabold text-[13px] whitespace-nowrap">${p.time}</span>` + (p.ampm ? `<span class="ml-1 text-[10px] font-semibold uppercase text-brand-dim whitespace-nowrap">${p.ampm}</span>` : '');
+          btn.innerHTML = `<span class="time-main whitespace-nowrap">${p.time}</span>` + (p.ampm ? `<span class="time-ampm uppercase whitespace-nowrap">${p.ampm}</span>` : '');
         } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
         }
@@ -4325,7 +4438,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           btn.classList.add("border-white/5", "bg-white/5", "text-white/30", "cursor-not-allowed", "opacity-50");
           if (typeof isMobileUI === 'function' && isMobileUI()) {
           const p = formatTimeLabelCompactParts(slot);
-          const inner = `<span class="font-extrabold text-[13px] whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${p.time}</span>` + (p.ampm ? `<span class="ml-1 text-[10px] font-semibold uppercase text-brand-dim whitespace-nowrap">${p.ampm}</span>` : '');
+          const inner = `<span class="time-main whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${p.time}</span>` + (p.ampm ? `<span class="time-ampm uppercase whitespace-nowrap">${p.ampm}</span>` : '');
           btn.innerHTML = inner;
         } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${labelClean}</span>`;
