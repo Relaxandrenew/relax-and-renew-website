@@ -774,9 +774,10 @@
         gap: 0.35rem !important;
       }
 
-      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown inside the modal) */
-      #summary-confirm-panel { display: none; }
-      #mobile-times-overlay #summary-confirm-panel { display: block !important; }
+      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown in its own confirm modal) */
+      #summary-confirm-panel { display: none !important; }
+      #mobile-times-overlay #summary-confirm-panel { display: none !important; }
+      #mobile-confirm-overlay #summary-confirm-panel { display: block !important; }
 
 
     }
@@ -986,38 +987,77 @@
 
     // Shift the 7-day strip by a full week and automatically select the first available day
     // in the newly visible window (this prevents the UI from snapping back to the prior week).
+    
+    // Shift the 7-day strip by a full week. If the shift crosses into another month,
+    // load that month (your month-wide fetch) so the strip uses the same availability data as the calendar.
     function shiftMobileDateStrip(deltaDays) {
-      if (!isMobileUI()) return;
-      if (!selectedDateStr) return;
-      if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+      (async function() {
+        if (!isMobileUI()) return;
+        if (!selectedDateStr) return;
+        if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
 
-      const start = _rnrDateFromStr(__mobileStripStartDateStr);
-      const newStart = _rnrAddDays(start, Number(deltaDays || 0));
-      __mobileStripStartDateStr = toDateStr(newStart);
+        const start = _rnrDateFromStr(__mobileStripStartDateStr);
+        const newStart = _rnrAddDays(start, Number(deltaDays || 0));
+        const newStartStr = toDateStr(newStart);
 
-      const todayStr = toDateStr(new Date());
-      let chosen = null;
-      for (let i = 0; i < 7; i++) {
-        const d = _rnrAddDays(newStart, i);
-        const ds = toDateStr(d);
-        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
-        const slots = (availabilityByDate && availabilityByDate[key]) ? availabilityByDate[key] : [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
-        const isPast = key < todayStr;
-        const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
-        if (selectable) { chosen = key; break; }
-      }
-      if (!chosen) chosen = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(__mobileStripStartDateStr) || __mobileStripStartDateStr) : __mobileStripStartDateStr);
+        // If month changes, repull month availability using your existing loader
+        await ensureAvailabilityMonthForDate(newStartStr);
 
-      // Keep the overlay open and update the time list for the newly selected day.
-      setSelectedDateInOverlay(chosen);
-      renderMobileDateStrip();
+        __mobileStripStartDateStr = newStartStr;
+
+        // Choose first selectable day in this 7-day window; if none, keep start date
+        const todayStr = toDateStr(new Date());
+        let chosen = null;
+        for (let i = 0; i < 7; i++) {
+          const d = _rnrAddDays(newStart, i);
+          const ds = toDateStr(d);
+          // If this particular day is in a different month than currently loaded, load it on-demand
+          await ensureAvailabilityMonthForDate(ds);
+
+          const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
+          const slots = (availabilityByDate && availabilityByDate[key]) ? availabilityByDate[key] : [];
+          const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+          const isPast = key < todayStr;
+          const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
+          if (selectable) { chosen = key; break; }
+        }
+        if (!chosen) chosen = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(__mobileStripStartDateStr) || __mobileStripStartDateStr) : __mobileStripStartDateStr);
+
+        // Keep the overlay open and update the time list for the newly selected day.
+        setSelectedDateInOverlay(chosen);
+        renderMobileDateStrip();
+      })().catch(function(e){ console.warn('shiftMobileDateStrip error:', e); });
     }
+
 
     window.renderMobileDateStrip = renderMobileDateStrip;
     window.shiftMobileDateStrip = shiftMobileDateStrip;
     window.isMobileTimesOverlayOpen = isMobileTimesOverlayOpen;
     window.setSelectedDateInOverlay = setSelectedDateInOverlay;
+
+    // Ensure month-wide availability is loaded for the month containing dateStr.
+    async function ensureAvailabilityMonthForDate(dateStr) {
+      try {
+        if (!dateStr || !selectedServiceKey || !selectedStandardDuration) return;
+        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+        const y = Number(String(key).slice(0,4));
+        const m = Number(String(key).slice(5,7));
+        if (!y || !m) return;
+        const desired = new Date(y, m - 1, 1);
+        if (!calendarCurrent || calendarCurrent.getFullYear() !== desired.getFullYear() || calendarCurrent.getMonth() !== desired.getMonth()) {
+          calendarCurrent = desired;
+          // Update calendar header immediately while we fetch
+          try { renderCalendar(); } catch(e) {}
+          // Fetch month availability (your existing month-wide loader)
+          if (typeof maybeLoadAvailabilityForCurrentMonth === 'function') {
+            await maybeLoadAvailabilityForCurrentMonth();
+          }
+        }
+      } catch (e) {
+        console.warn('ensureAvailabilityMonthForDate error:', e);
+      }
+    }
+
 
 
     function openMobileTimesOverlay() {
@@ -1027,8 +1067,9 @@
       const anchor = document.getElementById('mobile-times-anchor');
       if (!overlay || !content || !anchor) return;
 
-      // Move existing DOM blocks (preserves IDs and existing logic)
-      const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
+      // Move Step 2 DOM blocks (preserves IDs and existing logic)
+      restoreSummaryConfirmPanelToPage();
+      const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
       if (!__mobileTimesMoved) {
         ids.forEach((id) => {
           const el = document.getElementById(id);
@@ -1061,7 +1102,7 @@
         const summaryAnchor = document.getElementById('summary-confirm-anchor');
 
         // Restore Step 2 blocks (date + times) back to their original anchor
-        const ids = ['selected-date-info', 'time-slots-container', 'no-slots', 'summary-confirm-panel'];
+        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
         let ref = anchor;
         ids.forEach((id) => {
           const el = document.getElementById(id);
@@ -1136,26 +1177,88 @@
     }
 
     window.mobileBackInOverlay = mobileBackInOverlay;
-function mobileConfirmBooking() {
+
+function restoreSummaryConfirmPanelToPage() {
+      try {
+        const panel = document.getElementById('summary-confirm-panel');
+        const anchor = document.getElementById('summary-confirm-anchor');
+        if (panel && anchor && !anchor.contains(panel)) {
+          anchor.insertAdjacentElement('afterend', panel);
+        }
+      } catch (e) {}
+    }
+
+    function openMobileConfirmOverlay() {
+      if (!isMobileUI()) return;
+      const timesOverlay = document.getElementById('mobile-times-overlay');
+      const confirmOverlay = document.getElementById('mobile-confirm-overlay');
+      const content = document.getElementById('mobile-confirm-content');
+      if (!confirmOverlay || !content) return;
+
+      // Move the confirm panel into the confirm modal
+      const panel = document.getElementById('summary-confirm-panel');
+      if (panel) content.appendChild(panel);
+
+      // Hide Step 2 overlay (keep scroll lock active)
+      if (timesOverlay) timesOverlay.classList.add('hidden');
+
+      confirmOverlay.classList.remove('hidden');
+      lockBodyScroll(); // bump lock count so background stays locked while confirm is open
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function closeMobileConfirmOverlay(backToTimes) {
+      const confirmOverlay = document.getElementById('mobile-confirm-overlay');
+      const timesOverlay = document.getElementById('mobile-times-overlay');
+      if (!confirmOverlay) return;
+
+      confirmOverlay.classList.add('hidden');
+      unlockBodyScroll(); // release one layer of lock
+
+      // Always restore the confirm panel to the page anchor (it stays hidden on mobile)
+      restoreSummaryConfirmPanelToPage();
+
+      if (backToTimes) {
+        if (timesOverlay) timesOverlay.classList.remove('hidden');
+        // Ensure Step 2 view is in a sane state
+        try { setMobileOverlayStep('step2'); } catch(e) {}
+        try { renderMobileDateStrip(); } catch(e) {}
+        try { syncMobileConfirmButton(); } catch(e) {}
+        try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+      } else {
+        // Full close: also close the times overlay (which will unlock the remaining lock)
+        try { closeMobileTimesOverlay(); } catch (e) {}
+      }
+    }
+
+    function mobileFinalConfirm() {
       const btn = document.getElementById('confirm-booking-btn');
       if (btn && !btn.disabled) {
-        // Step 2 -> Step 3 (show summary inside the modal)
-        setMobileOverlayStep('step3');
-        // Scroll modal content to top for the confirmation view
-        try {
-          const scroller = document.getElementById('mobile-times-scroll');
-          if (scroller) scroller.scrollTop = 0;
-        } catch(e) {}
+        btn.click();
+      } else {
+        showToast('Select a time', 'Please select a time first.', true, 4500);
+      }
+    }
+
+function mobileConfirmBooking() {
+      // Step 2 -> Confirm overlay
+      const btn = document.getElementById('confirm-booking-btn');
+      if (btn && !btn.disabled) {
+        openMobileConfirmOverlay();
       } else {
         showToast('Select a time', 'Please select a time first.', true, 4500);
       }
     }
 
     // Expose for inline onclick handlers
+
     window.isMobileUI = isMobileUI;
     window.openMobileTimesOverlay = openMobileTimesOverlay;
     window.closeMobileTimesOverlay = closeMobileTimesOverlay;
     window.mobileConfirmBooking = mobileConfirmBooking;
+    window.openMobileConfirmOverlay = openMobileConfirmOverlay;
+    window.closeMobileConfirmOverlay = closeMobileConfirmOverlay;
+    window.mobileFinalConfirm = mobileFinalConfirm;
     window.setMobileOverlayStep = setMobileOverlayStep;
 
 
@@ -1847,7 +1950,7 @@ function mobileConfirmBooking() {
                 <!-- Time slots -->
                 <div id="time-slots-container" class="mt-4 hidden animate-fade-in-up" style="animation-delay:0.1s">
                   <!-- UPDATED GRID: 4 columns on mobile -->
-                  <div id="time-slots-grid" class="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                  <div id="time-slots-grid" class="grid grid-cols-5 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
                 </div>
 
                 <div id="no-slots" class="mt-4 hidden card-fancy p-4 border-red-500/20">
@@ -2007,21 +2110,45 @@ function mobileConfirmBooking() {
           <i data-lucide="chevron-right" class="w-4 h-4"></i>
         </button>
       </div>
+
       <div id="mobile-times-scroll" class="rnr-modal-scroll">
-
-
-      <div id="mobile-date-strip" class="grid grid-cols-7 gap-2 mb-4"></div>
-
-            <div id="mobile-times-content"></div>
+        <div id="mobile-date-strip" class="grid grid-cols-7 gap-2 mb-4"></div>
+        <div id="mobile-times-content"></div>
       </div>
-
 
       <div class="mt-5 flex gap-3">
         <button id="mobile-confirm-btn" class="btn-filled flex-1 btn-disabled py-3" disabled onclick="mobileConfirmBooking()">
           <i data-lucide="check-circle" class="w-4 h-4"></i>
-          <span>Continue</span>
+          <span>Next</span>
         </button>
         <button class="btn-outline flex-1 py-2 text-xs" id="mobile-back-btn" onclick="mobileBackInOverlay()">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Confirm Overlay (mobile only) -->
+  <div id="mobile-confirm-overlay" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div class="flex-1">
+          <div class="font-serif text-xl text-brand-light">Confirm Booking</div>
+          <div class="muted text-sm mt-1">Review your details, then confirm.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileConfirmOverlay(false)">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-confirm-scroll" class="rnr-modal-scroll">
+        <div id="mobile-confirm-content"></div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mobile-final-confirm-btn" class="btn-filled flex-1 py-3" onclick="mobileFinalConfirm()">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Confirm Booking</span>
+        </button>
+        <button class="btn-outline flex-1 py-2 text-xs" onclick="closeMobileConfirmOverlay(true)">Back</button>
       </div>
     </div>
   </div>
@@ -2760,28 +2887,58 @@ function computeMonthRange(date) {
     }
 
     // Mobile: compact 15-min labels (10, 1015, 1030, 1045, 11) to reduce vertical space.
-    function formatTimeLabelCompact(slot) {
-      if (!slot) return "—";
+    
+    // Mobile: 12-hour label parts (bold time + small AM/PM) for compact grid.
+    function formatTimeLabelCompactParts(slot) {
+      if (!slot) return { time: '—', ampm: '' };
 
-      // Prefer a real datetime if present
       const start = slot.start || slot.start_time || slot.startTime || slot.begin || null;
       if (start) {
         try {
           const d = new Date(start);
           if (!isNaN(d.getTime())) {
-            const t = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: false, timeZone: "America/Toronto" });
-            const parts = String(t).split(":");
-            const h = String(Number(parts[0] || 0));
-            const m = String(parts[1] || "00");
-            return (m === "00") ? h : (h + m);
+            const t = d.toLocaleTimeString('en-CA', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'America/Toronto'
+            });
+            const cleaned = String(t).replace(/\s+/g, ' ').trim();
+            const m = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+            if (m) {
+              const hh = m[1];
+              const mm = m[2] || '';
+              const ampm = String(m[3]).toUpperCase();
+              const time = (mm && mm !== '00') ? `${hh}:${mm}` : hh;
+              return { time, ampm };
+            }
+            // Last-resort: split on space
+            const parts = cleaned.split(' ');
+            if (parts.length >= 2) {
+              return { time: parts[0], ampm: String(parts[1]).toUpperCase() };
+            }
+            return { time: cleaned, ampm: '' };
           }
         } catch (e) {}
       }
 
-      // Fallback: strip to digits from any label/time field
-      const raw = slot.label || slot.time || slot.startLabel || "";
-      const digits = String(raw).replace(/\D+/g, "");
-      return digits || formatTimeLabel(slot);
+      const raw = slot.label || slot.time || slot.startLabel || '';
+      const cleaned = String(raw).replace(/\s+/g, ' ').trim();
+      const m2 = cleaned.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+      if (m2) {
+        const hh = m2[1];
+        const mm = m2[2] || '';
+        const ampm = String(m2[3]).toUpperCase();
+        const time = (mm && mm !== '00') ? `${hh}:${mm}` : hh;
+        return { time, ampm };
+      }
+
+      return { time: String(formatTimeLabel(slot) || '—').replace(/\(booked\)/ig, '').trim(), ampm: '' };
+    }
+
+    function formatTimeLabelCompact(slot) {
+      const parts = formatTimeLabelCompactParts(slot);
+      return parts.ampm ? `${parts.time} ${parts.ampm}` : parts.time;
     }
 
     function getSlotStartMs(slot) {
@@ -4156,12 +4313,23 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
 
         if (isSlotAvailable(slot)) {
           btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
+          if (typeof isMobileUI === 'function' && isMobileUI()) {
+          const p = formatTimeLabelCompactParts(slot);
+          btn.innerHTML = `<span class="font-extrabold text-[13px] whitespace-nowrap">${p.time}</span>` + (p.ampm ? `<span class="ml-1 text-[10px] font-semibold uppercase text-brand-dim whitespace-nowrap">${p.ampm}</span>` : '');
+        } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
+        }
           anyAvailable = true;
           btn.addEventListener("click", () => selectTimeSlot(slot, btn));
         } else {
           btn.classList.add("border-white/5", "bg-white/5", "text-white/30", "cursor-not-allowed", "opacity-50");
+          if (typeof isMobileUI === 'function' && isMobileUI()) {
+          const p = formatTimeLabelCompactParts(slot);
+          const inner = `<span class="font-extrabold text-[13px] whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${p.time}</span>` + (p.ampm ? `<span class="ml-1 text-[10px] font-semibold uppercase text-brand-dim whitespace-nowrap">${p.ampm}</span>` : '');
+          btn.innerHTML = inner;
+        } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${labelClean}</span>`;
+        }
           btn.disabled = true;
         }
 
