@@ -568,6 +568,17 @@
   animation: booking-spin 1s linear infinite;
   margin: 0 auto 1.5rem;
 }
+
+/* Small spinner for mobile weekly navigation (month re-fetch) */
+.rnr-spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(224, 197, 132, 0.25);
+  border-top-color: #E0C584;
+  border-radius: 50%;
+  animation: booking-spin 0.9s linear infinite;
+  display: inline-block;
+}
 @keyframes booking-spin {
   to { transform: rotate(360deg); }
 }
@@ -1034,44 +1045,76 @@ function renderMobileDateStrip() {
     // Shift the 7-day strip by a full week and automatically select the first available day
     // in the newly visible window (this prevents the UI from snapping back to the prior week).
     
-    // Shift the 7-day strip by a full week. If the shift crosses into another month,
-    // load that month (your month-wide fetch) so the strip uses the same availability data as the calendar.
+    // Weekly navigation helper: show a small spinner + disable arrows while month availability is re-fetching.
+    let __mobileWeekNavBusy = false;
+
+    function setMobileWeekLoading(isLoading) {
+      try {
+        const sp = document.getElementById('mobile-week-loading');
+        const prev = document.getElementById('mobile-week-prev');
+        const next = document.getElementById('mobile-week-next');
+        if (sp) sp.classList.toggle('hidden', !isLoading);
+        [prev, next].forEach(function(b){
+          if (!b) return;
+          b.disabled = !!isLoading;
+          b.classList.toggle('opacity-50', !!isLoading);
+          b.classList.toggle('cursor-not-allowed', !!isLoading);
+        });
+      } catch (e) {}
+    }
+
+    // Shift the 7-day strip by +/- 7 days.
+    // If the window crosses into a new month, pre-load that month ONCE (instead of re-loading per-day),
+    // then auto-select the first available day in the new window.
     function shiftMobileDateStrip(deltaDays) {
       (async function() {
         if (!isMobileUI()) return;
         if (!selectedDateStr) return;
         if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+        if (__mobileWeekNavBusy) return;
+
+        __mobileWeekNavBusy = true;
+        setMobileWeekLoading(true);
 
         const start = _rnrDateFromStr(__mobileStripStartDateStr);
         const newStart = _rnrAddDays(start, Number(deltaDays || 0));
         const newStartStr = toDateStr(newStart);
 
-        // If month changes, repull month availability using your existing loader
-        await ensureAvailabilityMonthForDate(newStartStr);
+        // Preload any month(s) covered by this 7-day window (max 2 months)
+        const monthSamples = {};
+        for (let i = 0; i < 7; i++) {
+          const ds = toDateStr(_rnrAddDays(newStart, i));
+          const mk = String(ds).slice(0, 7); // YYYY-MM
+          if (!monthSamples[mk]) monthSamples[mk] = ds;
+        }
+        const months = Object.keys(monthSamples);
+        for (const mk of months) {
+          await ensureAvailabilityMonthForDate(monthSamples[mk]);
+        }
 
         __mobileStripStartDateStr = newStartStr;
 
-        // Choose first selectable day in this 7-day window; if none, keep start date
+        // Choose first selectable day in this 7-day window; if none, keep newStart
         const todayStr = toDateStr(new Date());
         let chosen = null;
         for (let i = 0; i < 7; i++) {
-          const d = _rnrAddDays(newStart, i);
-          const ds = toDateStr(d);
-          // If this particular day is in a different month than currently loaded, load it on-demand
-          await ensureAvailabilityMonthForDate(ds);
-
+          const ds = toDateStr(_rnrAddDays(newStart, i));
           const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
           const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
           const isPast = ds < todayStr;
           const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
           if (selectable) { chosen = ds; break; }
         }
-        if (!chosen) chosen = toDateStr(_rnrDateFromStr(__mobileStripStartDateStr));
+        if (!chosen) chosen = newStartStr;
 
-        // Keep the overlay open and update the time list for the newly selected day.
         setSelectedDateInOverlay(chosen);
         renderMobileDateStrip();
-      })().catch(function(e){ console.warn('shiftMobileDateStrip error:', e); });
+      })().catch(function(e){
+        console.warn('shiftMobileDateStrip error:', e);
+      }).finally(function(){
+        __mobileWeekNavBusy = false;
+        setMobileWeekLoading(false);
+      });
     }
 
 
@@ -2183,6 +2226,7 @@ function mobileConfirmBooking() {
         </button>
         <div class="pill border-brand-gold text-brand-gold bg-brand-gold/10 flex-1 justify-center">
           <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span id="mobile-week-loading" class="rnr-spinner-sm hidden" aria-label="Loading"></span>
           <span id="mobile-strip-range" class="font-bold text-sm">—</span>
         </div>
         <button id="mobile-week-next" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(7)">
@@ -2297,7 +2341,7 @@ function mobileConfirmBooking() {
     let lock = null;
     let portalProfile = null;
 
-    let calendarCurrent = new Date();
+    let calendarCurrent = new Date((new Date()).getFullYear(), (new Date()).getMonth(), 1);
     let selectedDateStr = null;
     let selectedSlot = null;
 
@@ -3176,78 +3220,43 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("login-overlay").classList.add("hidden");
       unlockBodyScroll();
     }
+
     // =========================================================
-    // STATE PERSISTENCE (survive refresh / accidental close)
+    // STATE PERSISTENCE (DISABLED)
     // =========================================================
+    // Per latest requirements: always default to the current month, and do not persist
+    // selected date/service/duration/month across refreshes. We also clear any legacy
+    // saved state so old months (e.g., May) cannot force the UI.
     const PORTAL_STATE_KEY = "rnr_portal_state_v1";
 
-    function savePortalState() {
-      try {
-        const state = {
-          selectedServiceKey,
-          selectedStandardDuration,
-          selectedDateStr,
-          // Prefer a stable identifier for the selected slot
-          selectedSlotStart: selectedSlot?.start || selectedSlot?.label || null,
-          // Preserve the month user is browsing
-          calendarMonth: `${calendarCurrent.getFullYear()}-${String(calendarCurrent.getMonth()+1).padStart(2,"0")}`
-        };
-        localStorage.setItem(PORTAL_STATE_KEY, JSON.stringify(state));
-      } catch (e) {}
-    }
+    function savePortalState() { /* disabled */ }
 
-    function loadPortalState() {
-      try {
-        const raw = localStorage.getItem(PORTAL_STATE_KEY);
-        if (!raw) return null;
-        const s = JSON.parse(raw);
-        return s && typeof s === "object" ? s : null;
-      } catch (e) { return null; }
-    }
+    function loadPortalState() { return null; }
 
     function clearPortalState() {
       try { localStorage.removeItem(PORTAL_STATE_KEY); } catch (e) {}
     }
 
     async function restorePortalStateIfPossible() {
-      const s = loadPortalState();
-      if (!s) return;
-
-      // Restore calendar month first (pure UI)
-      if (s.calendarMonth && /^\d{4}-\d{2}$/.test(String(s.calendarMonth))) {
-        const parts = String(s.calendarMonth).split("-");
-        const y = Number(parts[0]);
-        const m = Number(parts[1]) - 1;
-        if (!isNaN(y) && !isNaN(m)) calendarCurrent = new Date(y, m, 1);
-      }
-
-      // Restore treatment + duration selections
-      if (s.selectedServiceKey && TREATMENT_RULES[s.selectedServiceKey]) {
-        selectedServiceKey = s.selectedServiceKey;
-        if (treatmentSelect) treatmentSelect.value = selectedServiceKey;
-        rebuildDurationOptions();
-      }
-
-      if (s.selectedStandardDuration && !isNaN(Number(s.selectedStandardDuration))) {
-        selectedStandardDuration = Number(s.selectedStandardDuration);
-        if (durationSelect) durationSelect.value = String(selectedStandardDuration);
-      }
-
-      // If we have enough to fetch availability, load it
-      if (portalProfile && selectedServiceKey && selectedStandardDuration) {
-        await maybeLoadAvailabilityForCurrentMonth();
-      }
-
-      // After availability exists, restore date selection if that date has any data
-      if (s.selectedDateStr && availabilityByDate && availabilityByDate[s.selectedDateStr]) {
-        selectDate(s.selectedDateStr, { userInitiated: false });
-        // Slot restoration happens inside loadTimeSlots via maybeAutoSelectRestoredSlot()
-      }
+      // Always clear legacy persisted state and reset the calendar to the current month.
+      clearPortalState();
+      const now = new Date();
+      calendarCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+      // Do not restore any selections.
+      return;
     }
 
     function maybeAutoSelectRestoredSlot(dateStr) {
       const s = loadPortalState();
       if (!s || !s.selectedSlotStart || !dateStr) return;
+
+      // Do not auto-select stale saved slots.
+      try {
+        const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+        const savedAt = Number(s.savedAt || 0);
+        const isFresh = !!(savedAt && (Date.now() - savedAt) < TTL_MS);
+        if (!isFresh) return;
+      } catch (e) { return; }
       const target = String(s.selectedSlotStart);
 
       // Find the button corresponding to the stored slot id
