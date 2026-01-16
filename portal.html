@@ -953,13 +953,12 @@ function renderMobileDateStrip() {
       for (let i = 0; i < 7; i++) {
         const d = _rnrAddDays(start, i);
         const ds = toDateStr(d);
-        const dsKey = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
 
-        const slots = getSlotsForDateKey(dsKey);
+        const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
         const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
-        const isPast = dsKey < todayStr;
+        const isPast = ds < todayStr;
         const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
-        const isSelected = selectedDateStr === dsKey;
+        const isSelected = selectedDateStr === ds;
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -983,9 +982,9 @@ function renderMobileDateStrip() {
           btn.addEventListener('click', function() {
             // If the mobile overlay is already open, update state without re-opening/re-moving DOM.
             if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) {
-              setSelectedDateInOverlay(dsKey);
+              setSelectedDateInOverlay(ds);
             } else {
-              selectDate(dsKey);
+              selectDate(ds);
             }
             try { setMobileOverlayStep('step2'); } catch(e) {}
             try { renderMobileDateStrip(); } catch(e) {}
@@ -1061,14 +1060,13 @@ function renderMobileDateStrip() {
           // If this particular day is in a different month than currently loaded, load it on-demand
           await ensureAvailabilityMonthForDate(ds);
 
-          const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(ds) || ds) : ds);
-          const slots = getSlotsForDateKey(key);
+          const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
           const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
-          const isPast = key < todayStr;
+          const isPast = ds < todayStr;
           const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
-          if (selectable) { chosen = key; break; }
+          if (selectable) { chosen = ds; break; }
         }
-        if (!chosen) chosen = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(__mobileStripStartDateStr) || __mobileStripStartDateStr) : __mobileStripStartDateStr);
+        if (!chosen) chosen = toDateStr(_rnrDateFromStr(__mobileStripStartDateStr));
 
         // Keep the overlay open and update the time list for the newly selected day.
         setSelectedDateInOverlay(chosen);
@@ -1157,15 +1155,18 @@ function renderMobileDateStrip() {
       overlay.classList.remove('hidden');
       setMobileOverlayStep('step2');
       lockBodyScroll();
-      syncMobileConfirmButton();
-      try {
-        // Align strip window so the selected date stays visible
-        if (selectedDateStr) {
-          if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
-        }
-        renderMobileDateStrip();
-      } catch (e) {}
-      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+      syncMobileConfirmButton();      try {
+        // Ensure the correct month availability is loaded before rendering the strip (matches calendar behavior)
+        (async function(){
+          try { if (selectedDateStr) await ensureAvailabilityMonthForDate(selectedDateStr); } catch(e) {}
+          try {
+            if (selectedDateStr) {
+              if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+            }
+            renderMobileDateStrip();
+          } catch(e) {}
+        })();
+      } catch (e) {}try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
 
     function closeMobileTimesOverlay() {
@@ -4220,6 +4221,7 @@ if (selectedSlot && driveTime > 0) {
           const cached = availabilityCache.get(cacheKey);
           parseAvailabilityResponse(cached);
           renderCalendar();
+          try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
           setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           savePortalState();
@@ -4243,8 +4245,8 @@ if (selectedSlot && driveTime > 0) {
         const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
-
         renderCalendar();
+        try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
         setTimeout(ensureCalendarClickableAfterPreload, 60);
         updateAvailabilityStatus("Live availability loaded for this month.", true);
 
