@@ -1539,27 +1539,101 @@ function computeMonthRange(date) {
     // - Hide any slots before 11:00 AM
     // - Hide 6:00 PM and later on all days
     // - On Sundays, hide anything after 5:00 PM (no 5:15/5:30/5:45/6:00)
-    function getTorontoMinutesFromSlot(slot) {
-      try {
-        if (!slot || !slot.start) return null;
-        const d = new Date(slot.start);
-        if (isNaN(d.getTime())) return null;
-        const parts = new Intl.DateTimeFormat('en-CA', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'America/Toronto'
-        }).formatToParts(d);
-        let hh = 0, mm = 0;
-        for (const p of parts) {
-          if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
-          if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
+        function parseLabelMinutes(label) {
+          try {
+            let s = String(label || "").toLowerCase();
+            s = s.replace(/\(booked\)/g, "").replace(/est/g, "").replace(/\s+/g, "").replace(/\./g, "");
+            if (!s) return null;
+
+            // 24-hour format: HH:MM
+            let m = s.match(/^(\d{1,2}):(\d{2})$/);
+            if (m) {
+              const hh = parseInt(m[1], 10);
+              const mm = parseInt(m[2], 10);
+              if (isNaN(hh) || isNaN(mm)) return null;
+              if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+              return (hh * 60) + mm;
+            }
+
+            // AM/PM format: H(:MM)?(am|pm)
+            m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)$/);
+            if (m) {
+              let hh = parseInt(m[1], 10);
+              const mm = m[2] ? (parseInt(m[2], 10) || 0) : 0;
+              const ap = m[3];
+              if (isNaN(hh) || isNaN(mm)) return null;
+              if (hh < 1 || hh > 12 || mm < 0 || mm > 59) return null;
+              if (ap === 'am') {
+                if (hh === 12) hh = 0;
+              } else {
+                if (hh !== 12) hh = hh + 12;
+              }
+              return (hh * 60) + mm;
+            }
+
+            // Fallback: H(am|pm)
+            m = s.match(/^(\d{1,2})(am|pm)$/);
+            if (m) {
+              let hh = parseInt(m[1], 10);
+              const ap = m[2];
+              if (isNaN(hh) || hh < 1 || hh > 12) return null;
+              if (ap === 'am') {
+                if (hh === 12) hh = 0;
+              } else {
+                if (hh !== 12) hh = hh + 12;
+              }
+              return hh * 60;
+            }
+
+            return null;
+          } catch (e) {
+            return null;
+          }
         }
-        return (hh * 60) + mm;
-      } catch (e) {
-        return null;
-      }
-    }
+
+        function getTorontoMinutesFromSlot(slot) {
+          try {
+            // Prefer slot.start when present (most reliable)
+            if (slot && slot.start) {
+              const d = new Date(slot.start);
+              if (!isNaN(d.getTime())) {
+                const fmt = new Intl.DateTimeFormat('en-CA', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZone: 'America/Toronto'
+                });
+
+                if (typeof fmt.formatToParts === 'function') {
+                  const parts = fmt.formatToParts(d);
+                  let hh = 0, mm = 0;
+                  for (const p of parts) {
+                    if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
+                    if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
+                  }
+                  return (hh * 60) + mm;
+                }
+
+                // Fallback if formatToParts is unavailable
+                const s = d.toLocaleTimeString('en-CA', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZone: 'America/Toronto'
+                });
+                const m = String(s).match(/^(\d{1,2}):(\d{2})/);
+                if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
+              }
+            }
+
+            // Fallback to label parsing (some payloads may omit start)
+            if (slot && slot.label) return parseLabelMinutes(slot.label);
+
+            return null;
+          } catch (e) {
+            return null;
+          }
+        }
 
     function isSundayToronto(dateStr) {
       try {
@@ -2812,7 +2886,13 @@ if (selectedSlot && driveTime > 0) {
         return;
       }
 
-      filtered.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      filtered.sort((a,b) => {
+        const am = getTorontoMinutesFromSlot(a);
+        const bm = getTorontoMinutesFromSlot(b);
+        const ak = (am === null ? 99999 : am);
+        const bk = (bm === null ? 99999 : bm);
+        return ak - bk;
+      });
 
       let anyAvailable = false;
 
