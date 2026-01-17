@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
@@ -3963,6 +3962,9 @@ if (selectedSlot && driveTime > 0) {
       };
 
       updateAvailabilityStatus("Loading availability...", false);
+      // Ensure the calendar loading bar appears for the initial preload as well.
+      // (Previously it only showed for month nav / duration change.)
+      try { setCalendarLoading(true); } catch (e) {}
 
       try {
         const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
@@ -4001,6 +4003,8 @@ if (selectedSlot && driveTime > 0) {
       } catch (e) {
         console.warn("Preload error:", e);
         updateAvailabilityStatus("Select treatment and duration to load availability.", false);
+      } finally {
+        try { setCalendarLoading(false); } catch (e) {}
       }
     }
 
