@@ -1656,12 +1656,12 @@ function computeMonthRange(date) {
       if (mins === null) return true;
 
       const START_MIN = 11 * 60;   // 11:00
-      const END_NON_SUN = 18 * 60; // 18:00 (do not show 6:00 PM or later)
+      const END_NON_SUN = 20 * 60; // 20:00 (cap non-Sunday to 8:00 PM)
       const END_SUN = 17 * 60;     // 17:00 (cap Sunday to 5:00 PM)
 
       if (mins < START_MIN) return false;
       if (isSundayToronto(dateStr)) return mins <= END_SUN;
-      return mins < END_NON_SUN;
+      return mins <= END_NON_SUN;
     }
 function formatDatePretty(dateStr) {
       const [y,m,d] = dateStr.split("-").map(Number);
