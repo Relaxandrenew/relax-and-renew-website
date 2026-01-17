@@ -966,7 +966,7 @@ function renderMobileDateStrip() {
         const ds = toDateStr(d);
 
         const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); });
         const isPast = ds < todayStr;
         const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
         const isSelected = selectedDateStr === ds;
@@ -1100,7 +1100,7 @@ function renderMobileDateStrip() {
         for (let i = 0; i < 7; i++) {
           const ds = toDateStr(_rnrAddDays(newStart, i));
           const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
-          const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+          const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s) && slotPassesUiWindow(ds, s); });
           const isPast = ds < todayStr;
           const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
           if (selectable) { chosen = ds; break; }
@@ -2348,6 +2348,10 @@ function mobileConfirmBooking() {
     let availabilityByDate = {};
     let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
+    // Optional: raw Cliniko blocks/appointments per day (used for UI edge-cases like end-of-day blocks)
+    // UI-only: does not affect booking logic.
+    let dayApptsByDate = {};
+
     const availabilityCache = new Map();
 
     let treatmentSelect = null;
@@ -2752,7 +2756,7 @@ function mobileConfirmBooking() {
             const dt = new Date(d + "T12:00:00");
             const day = dt.getDay(); // 0 Sun
             const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-            return map[String(dow).toLowerCase()] === day && Array.isArray(availabilityByDate[d]) && availabilityByDate[d].some(isSlotAvailable);
+            return map[String(dow).toLowerCase()] === day && Array.isArray(availabilityByDate[d]) && availabilityByDate[d].some(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
           });
           if (match) selectDate(match);
         }
@@ -2901,6 +2905,7 @@ function mobileConfirmBooking() {
       // Clear availability data (prevents auto-reload of calendar)
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
+      dayApptsByDate = {};
 
       // Clear all selections
       clearSelectionUI();
@@ -3070,6 +3075,174 @@ function computeMonthRange(date) {
       const d = new Date(start);
       const ms = d.getTime();
       return isNaN(ms) ? 0 : ms;
+    }
+
+    // =========================================================
+    // UI-ONLY TIME WINDOW (Calendar + slot list)
+    // - Hide any slots before 11:00 AM
+    // - Non-Sundays: cap last visible start at 8:00 PM
+    // - Sundays: cap last visible start at 5:00 PM (no 5:15/5:30/5:45/etc.)
+    // - Special edge-case: if an unavailable block runs from <=11:00 AM to the
+    //   day's final allowed start time, hide that boundary start time.
+    // =========================================================
+    function parseLabelMinutes(label) {
+      try {
+        let s = String(label || "").toLowerCase();
+        s = s.replace(/\(booked\)/g, "").replace(/est/g, "").replace(/\s+/g, "").replace(/\./g, "");
+        if (!s) return null;
+
+        // 24-hour format: HH:MM
+        let m = s.match(/^(\d{1,2}):(\d{2})$/);
+        if (m) {
+          const hh = parseInt(m[1], 10);
+          const mm = parseInt(m[2], 10);
+          if (isNaN(hh) || isNaN(mm)) return null;
+          if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+          return (hh * 60) + mm;
+        }
+
+        // AM/PM format: H(:MM)?(am|pm)
+        m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)$/);
+        if (m) {
+          let hh = parseInt(m[1], 10);
+          const mm = m[2] ? (parseInt(m[2], 10) || 0) : 0;
+          const ap = m[3];
+          if (isNaN(hh) || isNaN(mm)) return null;
+          if (hh < 1 || hh > 12 || mm < 0 || mm > 59) return null;
+          if (ap === 'am') {
+            if (hh === 12) hh = 0;
+          } else {
+            if (hh !== 12) hh = hh + 12;
+          }
+          return (hh * 60) + mm;
+        }
+
+        // Fallback: H(am|pm)
+        m = s.match(/^(\d{1,2})(am|pm)$/);
+        if (m) {
+          let hh = parseInt(m[1], 10);
+          const ap = m[2];
+          if (isNaN(hh) || hh < 1 || hh > 12) return null;
+          if (ap === 'am') {
+            if (hh === 12) hh = 0;
+          } else {
+            if (hh !== 12) hh = hh + 12;
+          }
+          return hh * 60;
+        }
+
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function getTorontoMinutesFromSlot(slot) {
+      try {
+        // Prefer slot.start when present (most reliable)
+        if (slot && slot.start) {
+          const d = new Date(slot.start);
+          if (!isNaN(d.getTime())) {
+            const fmt = new Intl.DateTimeFormat('en-CA', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Toronto'
+            });
+
+            if (typeof fmt.formatToParts === 'function') {
+              const parts = fmt.formatToParts(d);
+              let hh = 0, mm = 0;
+              for (const p of parts) {
+                if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
+                if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
+              }
+              return (hh * 60) + mm;
+            }
+
+            // Fallback if formatToParts is unavailable
+            const s = d.toLocaleTimeString('en-CA', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Toronto'
+            });
+            const m = String(s).match(/^(\d{1,2}):(\d{2})/);
+            if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
+          }
+        }
+
+        // Fallback to label parsing (some payloads may omit start)
+        if (slot && slot.label) return parseLabelMinutes(slot.label);
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function isSundayToronto(dateStr) {
+      try {
+        const m = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return false;
+        const y = Number(m[1]);
+        const mo = Number(m[2]) - 1;
+        const d = Number(m[3]);
+        const dt = new Date(Date.UTC(y, mo, d, 12, 0, 0));
+        const wd = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Toronto' }).format(dt);
+        return wd === 'Sun';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function hasClosingUnavailableBlock(dateStr) {
+      try {
+        const appts = dayApptsByDate && dayApptsByDate[dateStr];
+        if (!Array.isArray(appts) || appts.length === 0) return false;
+
+        const OPEN_MIN = 11 * 60;
+        const CLOSE_NON_SUN_MIN = 20 * 60;
+        const CLOSE_SUN_MIN = 17 * 60;
+        const closeMin = isSundayToronto(dateStr) ? CLOSE_SUN_MIN : CLOSE_NON_SUN_MIN;
+
+        for (const a of appts) {
+          if (!a) continue;
+          const kind = String(a.kind || a.type || a.category || '').toLowerCase();
+          if (!(kind.includes('unavailable') || kind.includes('block'))) continue;
+
+          const startIso = a.start || a.starts_at || a.startsAt || a.begin || a.begins_at || a.beginsAt || null;
+          const endIso   = a.end   || a.ends_at   || a.endsAt   || a.finish || a.finishes_at || a.finishesAt || null;
+
+          const startMin = startIso ? getTorontoMinutesFromSlot({ start: startIso }) : null;
+          const endMin   = endIso   ? getTorontoMinutesFromSlot({ start: endIso })   : null;
+
+          if (startMin === null || endMin === null) continue;
+          if (startMin <= OPEN_MIN && endMin === closeMin) return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function slotPassesUiWindow(dateStr, slot) {
+      const mins = getTorontoMinutesFromSlot(slot);
+      // If we cannot parse, do not hide (display-only rule).
+      if (mins === null) return true;
+
+      const START_MIN = 11 * 60;   // 11:00
+      const END_NON_SUN = 20 * 60; // 20:00 (cap non-Sunday to 8:00 PM)
+      const END_SUN = 17 * 60;     // 17:00 (cap Sunday to 5:00 PM)
+
+      if (mins < START_MIN) return false;
+
+      const isSun = isSundayToronto(dateStr);
+      const dayEnd = isSun ? END_SUN : END_NON_SUN;
+
+      // Special-case: if Cliniko shows a full-day unavailable block ending at the final start time,
+      // hide that boundary start time so the day correctly appears fully blocked.
+      if (mins === dayEnd && hasClosingUnavailableBlock(dateStr)) return false;
+
+      if (isSun) return mins <= END_SUN;
+      return mins <= END_NON_SUN;
     }
 
     function formatDatePretty(dateStr) {
@@ -4161,6 +4334,7 @@ if (selectedSlot && driveTime > 0) {
         function parseAvailabilityResponse(data) {
       availabilityByDate = {};
       availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
+      dayApptsByDate = {};
 
       if (!data) return;
 
@@ -4205,6 +4379,10 @@ if (selectedSlot && driveTime > 0) {
 
         var slots = day.slots || day.timeSlots || day.times || [];
         if (!Array.isArray(slots)) return;
+
+        // Preserve any per-day blocks/appointments if present (backend may include Cliniko unavailable blocks here)
+        var appts = day.appts || day.appointments || day.blocks || day.unavailableBlocks || day.unavailable_blocks || day.unavailable || [];
+        if (Array.isArray(appts)) dayApptsByDate[normalizedDate] = appts;
 
         availabilityByDate[normalizedDate] = slots;
       });
@@ -4305,7 +4483,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         const dateStr = toDateStr(dayDate);
 
         const slots = availabilityByDate[dateStr] || [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); });
 
         const isPast = dateStr < todayStr;
         const isSelected = selectedDateStr === dateStr;
@@ -4405,17 +4583,26 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const slots = availabilityByDate[key] || [];
       const usable = Array.isArray(slots) ? slots : [];
 
-      if (!usable.length) {
+      // UI-only: constrain visible slots to the current operating window
+      const filtered = usable.filter(s => slotPassesUiWindow(key, s));
+
+      if (!filtered.length) {
         noSlots.classList.remove("hidden");
         container.classList.add("hidden");
         return;
       }
 
-      usable.sort((a,b) => getSlotStartMs(a) - getSlotStartMs(b));
+      filtered.sort((a,b) => {
+        const am = getTorontoMinutesFromSlot(a);
+        const bm = getTorontoMinutesFromSlot(b);
+        const ak = (am === null ? 99999 : am);
+        const bk = (bm === null ? 99999 : bm);
+        return ak - bk;
+      });
 
       let anyAvailable = false;
 
-      usable.forEach(slot => {
+      filtered.forEach(slot => {
         const btn = document.createElement("button");
         // Persistable slot identifiers for refresh recovery
         try {
