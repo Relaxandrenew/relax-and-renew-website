@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Client Portal | Relax & Renew RMT</title>
+  <script>
+    // Force HTTPS for PWA install eligibility
+    (function rnr_force_https(){
+      try {
+        if (location && location.protocol === "http:" && /relaxandrenew\.ca$/i.test(location.hostname)) {
+          location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <meta name="description" content="Relax & Renew Client Portal — rebook appointments, view your details, and manage your membership." />
 
   <!-- Meta Pixel -->
@@ -292,10 +303,21 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
     }
 
+    /* Simple indeterminate loading bar animation (used in auth-check overlay) */
+    .animate-loading-bar {
+      animation: rnrLoadingBar 1.1s infinite ease-in-out;
+      will-change: transform;
+    }
+    @keyframes rnrLoadingBar {
+      0% { transform: translateX(-120%); }
+      50% { transform: translateX(220%); }
+      100% { transform: translateX(220%); }
+    }
+
     /* =========================================
        FIXED: Login Overlay CSS
        ========================================= */
-    #login-overlay {
+    #login-overlay, #auth-check-overlay {
       position: fixed;
       top: 0;
       left: 0;
@@ -303,7 +325,10 @@
       bottom: 0;
       z-index: 200; /* Higher than nav */
       background: #000000;
-      /* backdrop-filter removed for solid overlay */
+            padding: 24px 12px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+/* backdrop-filter removed for solid overlay */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -316,7 +341,7 @@
       pointer-events: auto;
       touch-action: manipulation;
     }
-    #login-overlay.hidden {
+    #login-overlay.hidden, #auth-check-overlay.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -335,7 +360,18 @@
       background: linear-gradient(90deg, transparent, #E0C584, transparent);
     }
 
-    /* =========================================
+    
+    @media (max-width: 640px) {
+      #login-overlay, #auth-check-overlay { align-items: flex-start; }
+      .login-card {
+        padding: 1.75rem 1.25rem;
+        width: 94%;
+        max-height: calc(100vh - 48px);
+        overflow-y: auto;
+      }
+    }
+
+/* =========================================
        FIXED: Auth0 Lock Styles (Robust Overrides)
        ========================================= */
     #auth0-lock-container { width: 100% !important; }
@@ -532,6 +568,17 @@
   animation: booking-spin 1s linear infinite;
   margin: 0 auto 1.5rem;
 }
+
+/* Small spinner for mobile weekly navigation (month re-fetch) */
+.rnr-spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(224, 197, 132, 0.25);
+  border-top-color: #E0C584;
+  border-radius: 50%;
+  animation: booking-spin 0.9s linear infinite;
+  display: inline-block;
+}
 @keyframes booking-spin {
   to { transform: rotate(360deg); }
 }
@@ -625,7 +672,7 @@
       .slot-btn { padding: 0.55rem 0.6rem !important; font-size: 0.9rem !important; }
 
       /* Login overlay and Auth0 Lock */
-      #login-overlay { padding: 16px !important; }
+      #login-overlay, #auth-check-overlay { padding: 16px !important; }
       .login-card {
         width: 100% !important;
         max-width: 420px !important;
@@ -663,9 +710,120 @@
     }
 
 @media (max-height: 700px) {
-      #login-overlay { align-items: flex-start; justify-content: flex-start; }
+      #login-overlay, #auth-check-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
+
+    /* Light mode: swap gold accents to black for legibility */
+    html.light-mode {
+      --brand-gold: #111111;
+      --brand-gold-hover: #111111;
+      --brand-light: #111111;
+      --brand-dim: rgba(0,0,0,0.6);
+      --brand-black: #ffffff;
+    }
+    html.light-mode .text-brand-gold,
+    html.light-mode .pill.text-brand-gold { color: #111111 !important; }
+    html.light-mode .border-brand-gold { border-color: rgba(0,0,0,0.35) !important; }
+    html.light-mode .btn-outline { border-color: rgba(0,0,0,0.35) !important; color: #111111 !important; }
+    html.light-mode .divider { border-color: rgba(0,0,0,0.20) !important; }
+
+
+    /* Robust scroll lock (prevents background scroll behind overlays on mobile/desktop) */
+    html.rnr-scroll-locked, body.rnr-scroll-locked {
+      height: 100% !important;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+    body.rnr-scroll-locked {
+      touch-action: none;
+    }
+
+
+    /* Mobile time picker overlay tweaks */
+    @media (max-width: 768px) {
+      #mobile-times-overlay .modal-card {
+        width: calc(100vw - 24px);
+        max-width: 100vw !important;
+        margin: 0 auto;
+      }
+      #mobile-times-overlay .modal-card #time-slots-grid {
+        /* Mobile: 5 columns for 15-min blocks (10:00, 10:15, 10:30, 10:45, 11:00) */
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      /* Mobile calendar compaction: reduce vertical space (desktop unaffected) */
+      #calendar-days { gap: 0.35rem !important; }
+      .calendar-day { font-size: 0.85rem !important; }
+      #prev-month-btn, #next-month-btn { padding: 0.45rem 0.6rem !important; }
+      #calendar-month-label { font-size: 1.05rem !important; }
+      #tab-rebook h2 { font-size: 1.55rem !important; margin-bottom: 1rem !important; }
+      /* Weekday row */
+      #tab-rebook .grid.grid-cols-7.gap-2.text-center { margin-top: 0.75rem !important; gap: 0.35rem !important; font-size: 9px !important; }
+      /* Stepper */
+      #booking-stepper { padding: 0.9rem !important; margin-bottom: 1rem !important; }
+      #booking-stepper .stepper-label { font-size: 0.75rem !important; }
+
+      /* Make the mobile overlay card scrollable (content scrolls, footer stays visible) */
+      #mobile-times-overlay .modal-card {
+        max-height: calc(100dvh - 24px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #mobile-times-overlay .rnr-modal-scroll {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding-right: 2px;
+      }
+
+      /* Shrink time slot buttons on mobile */
+      #mobile-times-overlay .time-slot-btn {
+        padding: 0.46rem !important;
+        border-radius: var(--radius) !important;
+        min-height: 2.25rem;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.04rem;
+        line-height: 1.05 !important;
+      }
+      /* Mobile time label parts */
+      #mobile-times-overlay .time-slot-btn .time-main {
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+      }
+      #mobile-times-overlay .time-slot-btn .time-ampm {
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.10em;
+      }
+      #mobile-times-overlay #time-slots-grid {
+        gap: 0.35rem !important;
+      }
+
+      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown in its own confirm modal) */
+      #summary-confirm-panel { display: none !important; }
+      #mobile-times-overlay #summary-confirm-panel { display: none !important; }
+      #mobile-confirm-overlay #summary-confirm-panel { display: block !important; }
+
+
+    }
+      #mobile-times-overlay #time-slots-grid {
+        gap: 0.35rem !important;
+      }
+
+      /* Hide Step 3 confirm panel under the calendar on mobile (it will be shown in its own confirm modal) */
+      #summary-confirm-panel { display: none !important; }
+      #mobile-times-overlay #summary-confirm-panel { display: none !important; }
+      #mobile-confirm-overlay #summary-confirm-panel { display: block !important; }
+
+
+    }
+
 </style>
 
   <script>
@@ -676,6 +834,537 @@
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
+    const CANCEL_WEBHOOK_URL        = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
+    const LAST_BOOKING_WEBHOOK_URL  = `${N8N_WEBHOOK_BASE}/portal-get-last-booking`;
+    const WAITLIST_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-join-waitlist`;
+    const INVOICE_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-get-invoice`;
+    const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
+
+    // =========================================================
+    // GLOBAL UI HELPERS (do not remove)
+    // - Robust scroll lock (prevents behind-scroll on iOS/Android)
+    // - Mobile-only time picker overlay (date -> modal)
+    // =========================================================
+    let __rnrScrollLockCount = 0;
+    let __rnrScrollLockY = 0;
+    let __mobileTimesMoved = false;
+
+    function lockBodyScroll() {
+      try {
+        __rnrScrollLockCount = (__rnrScrollLockCount || 0) + 1;
+        if (__rnrScrollLockCount > 1) return;
+
+        __rnrScrollLockY = window.scrollY || window.pageYOffset || 0;
+        document.documentElement.classList.add('rnr-scroll-locked');
+        document.body.classList.add('rnr-scroll-locked');
+
+        // iOS-friendly lock: pin body
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${__rnrScrollLockY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+      } catch (e) {}
+    }
+
+    function unlockBodyScroll() {
+      try {
+        if (!__rnrScrollLockCount) return;
+        __rnrScrollLockCount -= 1;
+        if (__rnrScrollLockCount > 0) return;
+
+        document.documentElement.classList.remove('rnr-scroll-locked');
+        document.body.classList.remove('rnr-scroll-locked');
+
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+
+        window.scrollTo(0, __rnrScrollLockY || 0);
+      } catch (e) {}
+    }
+
+    function isMobileUI() {
+      try {
+        return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      } catch (e) {
+        return (window.innerWidth || 1024) <= 768;
+      }
+    
+
+    }
+
+    // =========================================================
+    // Mobile Step 2 Date Strip (7-day window + prev/next 7 days)
+    // - Uses month-wide availabilityByDate cache
+    // - Unavailable/past days are disabled (unclickable)
+    // =========================================================
+    let __mobileStripStartDateStr = null; // YYYY-MM-DD start for the 7 tiles
+
+    function _rnrDateFromStr(dateStr) {
+      // dateStr is YYYY-MM-DD
+      try { return new Date(dateStr + 'T00:00:00'); } catch (e) { return new Date(dateStr); }
+    }
+
+    function _rnrAddDays(dateObj, n) {
+      const d = new Date(dateObj.getTime());
+      d.setDate(d.getDate() + Number(n || 0));
+      return d;
+    }
+
+    function getSlotsForDateKey(dateStr) {
+      try {
+        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+        let v = (availabilityByDate && (availabilityByDate[key] || availabilityByDate[dateStr])) || [];
+        if (v && !Array.isArray(v)) {
+          if (Array.isArray(v.slots)) v = v.slots;
+          else if (Array.isArray(v.times)) v = v.times;
+          else if (Array.isArray(v.timeSlots)) v = v.timeSlots;
+          else v = [];
+        }
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+function renderMobileDateStrip() {
+      if (!isMobileUI()) return;
+      const strip = document.getElementById('mobile-date-strip');
+      const range = document.getElementById('mobile-strip-range');
+      if (!strip || !range) return;
+
+      if (!selectedDateStr) {
+        strip.innerHTML = '';
+        range.textContent = '—';
+        return;
+      }
+
+      // Ensure start date is initialized and keeps selected date inside the visible window
+      if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+
+      // If the selected date is outside the current 7-day window, re-anchor the strip to the selected date
+      const _tmpStart = _rnrDateFromStr(__mobileStripStartDateStr);
+      const _tmpStartStr = toDateStr(_tmpStart);
+      const _tmpEndStr = toDateStr(_rnrAddDays(_tmpStart, 6));
+      if (selectedDateStr < _tmpStartStr || selectedDateStr > _tmpEndStr) {
+        __mobileStripStartDateStr = selectedDateStr;
+      }
+
+      const start = _rnrDateFromStr(__mobileStripStartDateStr);
+      const startStr = toDateStr(start);
+      const endStr = toDateStr(_rnrAddDays(start, 6));
+      range.textContent = `${formatDatePretty(startStr)} – ${formatDatePretty(endStr)}`;
+
+      const todayStr = toDateStr(new Date());
+      strip.innerHTML = '';
+
+      for (let i = 0; i < 7; i++) {
+        const d = _rnrAddDays(start, i);
+        const ds = toDateStr(d);
+
+        const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const isPast = ds < todayStr;
+        const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
+        const isSelected = selectedDateStr === ds;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'calendar-day px-0 py-2 text-xs rounded-lg border';
+
+        // Compact label: day letter + number
+        const weekday = d.toLocaleDateString('en-CA', { weekday: 'short' }).slice(0,1);
+        const dayNum = d.getDate();
+        btn.innerHTML = `
+          <div class="flex flex-col items-center leading-none">
+            <div class="text-[10px] uppercase tracking-[0.15em] text-brand-dim">${weekday}</div>
+            <div class="font-bold text-sm text-brand-light">${dayNum}</div>
+          </div>
+        `;
+
+        if (!selectable) {
+          btn.disabled = true;
+          btn.classList.add('border-white/5', 'bg-white/5', 'text-white/30', 'opacity-40', 'cursor-not-allowed');
+        } else {
+          btn.classList.add('border-brand-gold/30', 'bg-black/40', 'hover:bg-brand-gold/15', 'hover:border-brand-gold');
+          btn.addEventListener('click', function() {
+            // If the mobile overlay is already open, update state without re-opening/re-moving DOM.
+            if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) {
+              setSelectedDateInOverlay(ds);
+            } else {
+              selectDate(ds);
+            }
+            try { setMobileOverlayStep('step2'); } catch(e) {}
+            try { renderMobileDateStrip(); } catch(e) {}
+          });
+        }
+
+        if (isSelected) {
+          btn.classList.add('calendar-day-selected');
+        }
+
+        strip.appendChild(btn);
+      }
+
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function isMobileTimesOverlayOpen() {
+      const overlay = document.getElementById('mobile-times-overlay');
+      return !!(overlay && !overlay.classList.contains('hidden'));
+    }
+
+    // Update selected date + time list while keeping the mobile overlay open.
+    function setSelectedDateInOverlay(dateStr) {
+      const norm = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      selectedDateStr = norm;
+      selectedSlot = null;
+
+      try { setConfirmEnabled(false); } catch (e) {}
+      try { document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('time-slot-selected')); } catch(e) {}
+
+      try {
+        const info = document.getElementById('selected-date-info');
+        if (info) info.classList.remove('hidden');
+        const disp = document.getElementById('selected-date-display');
+        if (disp) disp.textContent = formatDatePretty(norm);
+      } catch (e) {}
+
+      try { loadTimeSlots(norm); } catch (e) {}
+      try { updateSummary(); } catch (e) {}
+      try { updateBookingStepper(); } catch (e) {}
+      try { savePortalState(); } catch (e) {}
+      try { renderCalendar(); } catch (e) {}
+      try { syncMobileConfirmButton(); } catch (e) {}
+      try { setMobileOverlayStep('step2'); } catch (e) {}
+    }
+
+    // Shift the 7-day strip by a full week and automatically select the first available day
+    // in the newly visible window (this prevents the UI from snapping back to the prior week).
+    
+    // Weekly navigation helper: show a small spinner + disable arrows while month availability is re-fetching.
+    let __mobileWeekNavBusy = false;
+
+    function setMobileWeekLoading(isLoading) {
+      try {
+        const sp = document.getElementById('mobile-week-loading');
+        const prev = document.getElementById('mobile-week-prev');
+        const next = document.getElementById('mobile-week-next');
+        if (sp) sp.classList.toggle('hidden', !isLoading);
+        [prev, next].forEach(function(b){
+          if (!b) return;
+          b.disabled = !!isLoading;
+          b.classList.toggle('opacity-50', !!isLoading);
+          b.classList.toggle('cursor-not-allowed', !!isLoading);
+        });
+      } catch (e) {}
+    }
+
+    // Shift the 7-day strip by +/- 7 days.
+    // If the window crosses into a new month, pre-load that month ONCE (instead of re-loading per-day),
+    // then auto-select the first available day in the new window.
+    function shiftMobileDateStrip(deltaDays) {
+      (async function() {
+        if (!isMobileUI()) return;
+        if (!selectedDateStr) return;
+        if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+        if (__mobileWeekNavBusy) return;
+
+        __mobileWeekNavBusy = true;
+        setMobileWeekLoading(true);
+
+        const start = _rnrDateFromStr(__mobileStripStartDateStr);
+        const newStart = _rnrAddDays(start, Number(deltaDays || 0));
+        const newStartStr = toDateStr(newStart);
+
+        // Preload any month(s) covered by this 7-day window (max 2 months)
+        const monthSamples = {};
+        for (let i = 0; i < 7; i++) {
+          const ds = toDateStr(_rnrAddDays(newStart, i));
+          const mk = String(ds).slice(0, 7); // YYYY-MM
+          if (!monthSamples[mk]) monthSamples[mk] = ds;
+        }
+        const months = Object.keys(monthSamples);
+        for (const mk of months) {
+          await ensureAvailabilityMonthForDate(monthSamples[mk]);
+        }
+
+        __mobileStripStartDateStr = newStartStr;
+
+        // Choose first selectable day in this 7-day window; if none, keep newStart
+        const todayStr = toDateStr(new Date());
+        let chosen = null;
+        for (let i = 0; i < 7; i++) {
+          const ds = toDateStr(_rnrAddDays(newStart, i));
+          const slots = (availabilityByDate && availabilityByDate[ds]) ? availabilityByDate[ds] : getSlotsForDateKey(ds);
+          const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+          const isPast = ds < todayStr;
+          const selectable = (!isPast) && hasAnyAvailable && !!selectedServiceKey && !!selectedStandardDuration;
+          if (selectable) { chosen = ds; break; }
+        }
+        if (!chosen) chosen = newStartStr;
+
+        setSelectedDateInOverlay(chosen);
+        renderMobileDateStrip();
+      })().catch(function(e){
+        console.warn('shiftMobileDateStrip error:', e);
+      }).finally(function(){
+        __mobileWeekNavBusy = false;
+        setMobileWeekLoading(false);
+      });
+    }
+
+
+    window.renderMobileDateStrip = renderMobileDateStrip;
+    window.shiftMobileDateStrip = shiftMobileDateStrip;
+    window.isMobileTimesOverlayOpen = isMobileTimesOverlayOpen;
+    window.setSelectedDateInOverlay = setSelectedDateInOverlay;
+
+    // If the user rotates or resizes to desktop, restore the time blocks back under the calendar.
+    function restoreMobileTimeBlocksToPageForDesktop() {
+      try {
+        if (!__mobileTimesMoved) return;
+        if (isMobileUI()) return;
+
+        const content = document.getElementById('mobile-times-content');
+        const anchor = document.getElementById('mobile-times-anchor');
+        if (!content || !anchor) return;
+
+        const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+        let ref = anchor;
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            ref.insertAdjacentElement('afterend', el);
+            ref = el;
+          }
+        });
+        __mobileTimesMoved = false;
+      } catch (e) {}
+    }
+
+    window.addEventListener('resize', function() {
+      try { restoreMobileTimeBlocksToPageForDesktop(); } catch (e) {}
+    }, { passive: true });
+
+
+
+    // Ensure month-wide availability is loaded for the month containing dateStr.
+    async function ensureAvailabilityMonthForDate(dateStr) {
+      try {
+        if (!dateStr || !selectedServiceKey || !selectedStandardDuration) return;
+        const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+        const y = Number(String(key).slice(0,4));
+        const m = Number(String(key).slice(5,7));
+        if (!y || !m) return;
+        const desired = new Date(y, m - 1, 1);
+        if (!calendarCurrent || calendarCurrent.getFullYear() !== desired.getFullYear() || calendarCurrent.getMonth() !== desired.getMonth()) {
+          calendarCurrent = desired;
+          // Update calendar header immediately while we fetch
+          try { renderCalendar(); } catch(e) {}
+          // Fetch month availability (your existing month-wide loader)
+          if (typeof maybeLoadAvailabilityForCurrentMonth === 'function') {
+            await maybeLoadAvailabilityForCurrentMonth();
+          }
+        }
+      } catch (e) {
+        console.warn('ensureAvailabilityMonthForDate error:', e);
+      }
+    }
+
+
+
+    function openMobileTimesOverlay() {
+      if (!isMobileUI()) return;
+      const overlay = document.getElementById('mobile-times-overlay');
+      const content = document.getElementById('mobile-times-content');
+      const anchor = document.getElementById('mobile-times-anchor');
+      if (!overlay || !content || !anchor) return;
+
+      // Move Step 2 DOM blocks (preserves IDs and existing logic)
+      restoreSummaryConfirmPanelToPage();
+      const ids = ['selected-date-info', 'time-slots-container', 'no-slots'];
+      if (!__mobileTimesMoved) {
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) content.appendChild(el);
+        });
+        __mobileTimesMoved = true;
+      }
+
+      overlay.classList.remove('hidden');
+      setMobileOverlayStep('step2');
+      lockBodyScroll();
+      syncMobileConfirmButton();      try {
+        // Ensure the correct month availability is loaded before rendering the strip (matches calendar behavior)
+        (async function(){
+          try { if (selectedDateStr) await ensureAvailabilityMonthForDate(selectedDateStr); } catch(e) {}
+          try {
+            if (selectedDateStr) {
+              if (!__mobileStripStartDateStr) __mobileStripStartDateStr = selectedDateStr;
+            }
+            renderMobileDateStrip();
+          } catch(e) {}
+        })();
+      } catch (e) {}try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function closeMobileTimesOverlay() {
+      const overlay = document.getElementById('mobile-times-overlay');
+      if (!overlay) return;
+
+      overlay.classList.add('hidden');
+      __mobileOverlayStep = 'step2';
+      unlockBodyScroll();
+    }
+
+
+    function syncMobileConfirmButton() {
+      const mainBtn = document.getElementById('confirm-booking-btn');
+      const mobileBtn = document.getElementById('mobile-confirm-btn');
+      if (!mainBtn || !mobileBtn) return;
+      const enabled = !mainBtn.disabled;
+      mobileBtn.disabled = !enabled;
+      mobileBtn.classList.toggle('btn-disabled', !enabled);
+    }
+
+    
+
+    let __mobileOverlayStep = 'step2';
+
+    function setMobileOverlayStep(step) {
+      __mobileOverlayStep = step || 'step2';
+      const stripNav = document.getElementById('mobile-strip-nav');
+      const strip = document.getElementById('mobile-date-strip');
+      const times = document.getElementById('time-slots-container');
+      const noSlots = document.getElementById('no-slots');
+      const panel = document.getElementById('summary-confirm-panel');
+      const title = document.getElementById('mobile-times-title');
+      const subtitle = document.getElementById('mobile-times-subtitle');
+      const contBtn = document.getElementById('mobile-confirm-btn');
+      const backBtn = document.getElementById('mobile-back-btn');
+
+      if (__mobileOverlayStep === 'step3') {
+        if (stripNav) stripNav.classList.add('hidden');
+        if (strip) strip.classList.add('hidden');
+        if (times) times.classList.add('hidden');
+        if (noSlots) noSlots.classList.add('hidden');
+        if (panel) panel.classList.remove('hidden');
+        if (title) title.textContent = 'Confirm';
+        if (subtitle) subtitle.textContent = 'Review your details, then confirm your booking.';
+        if (contBtn) contBtn.classList.add('hidden');
+        if (backBtn) backBtn.textContent = 'Back to Times';
+      } else {
+        // Step 2
+        if (stripNav) stripNav.classList.remove('hidden');
+        if (strip) strip.classList.remove('hidden');
+        if (panel) panel.classList.add('hidden');
+        if (title) title.textContent = 'Select a Time';
+        if (subtitle) subtitle.textContent = 'Pick a day and time. Unavailable days are disabled.';
+        if (contBtn) contBtn.classList.remove('hidden');
+        if (backBtn) backBtn.textContent = 'Back';
+        // Do not force-show times/no-slots here; existing logic controls visibility.
+      }
+    }
+
+    function mobileBackInOverlay() {
+      if (!isMobileUI()) { closeMobileTimesOverlay(); return; }
+      if (__mobileOverlayStep === 'step3') {
+        setMobileOverlayStep('step2');
+        return;
+      }
+      closeMobileTimesOverlay();
+    }
+
+    window.mobileBackInOverlay = mobileBackInOverlay;
+
+function restoreSummaryConfirmPanelToPage() {
+      try {
+        const panel = document.getElementById('summary-confirm-panel');
+        const anchor = document.getElementById('summary-confirm-anchor');
+        if (panel && anchor && !anchor.contains(panel)) {
+          anchor.insertAdjacentElement('afterend', panel);
+        }
+      } catch (e) {}
+    }
+
+    function openMobileConfirmOverlay() {
+      if (!isMobileUI()) return;
+      const timesOverlay = document.getElementById('mobile-times-overlay');
+      const confirmOverlay = document.getElementById('mobile-confirm-overlay');
+      const content = document.getElementById('mobile-confirm-content');
+      if (!confirmOverlay || !content) return;
+
+      // Move the confirm panel into the confirm modal
+      const panel = document.getElementById('summary-confirm-panel');
+      if (panel) content.appendChild(panel);
+
+      // Hide Step 2 overlay (keep scroll lock active)
+      if (timesOverlay) timesOverlay.classList.add('hidden');
+
+      confirmOverlay.classList.remove('hidden');
+      lockBodyScroll(); // bump lock count so background stays locked while confirm is open
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+    }
+
+    function closeMobileConfirmOverlay(backToTimes) {
+      const confirmOverlay = document.getElementById('mobile-confirm-overlay');
+      const timesOverlay = document.getElementById('mobile-times-overlay');
+      if (!confirmOverlay) return;
+
+      confirmOverlay.classList.add('hidden');
+      unlockBodyScroll(); // release one layer of lock
+
+      // Always restore the confirm panel to the page anchor (it stays hidden on mobile)
+      restoreSummaryConfirmPanelToPage();
+
+      if (backToTimes) {
+        if (timesOverlay) timesOverlay.classList.remove('hidden');
+        // Ensure Step 2 view is in a sane state
+        try { setMobileOverlayStep('step2'); } catch(e) {}
+        try { renderMobileDateStrip(); } catch(e) {}
+        try { syncMobileConfirmButton(); } catch(e) {}
+        try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+      } else {
+        // Full close: also close the times overlay (which will unlock the remaining lock)
+        try { closeMobileTimesOverlay(); } catch (e) {}
+      }
+    }
+
+    function mobileFinalConfirm() {
+      const btn = document.getElementById('confirm-booking-btn');
+      if (btn && !btn.disabled) {
+        btn.click();
+      } else {
+        showToast('Select a time', 'Please select a time first.', true, 4500);
+      }
+    }
+
+function mobileConfirmBooking() {
+      // Step 2 -> Confirm overlay
+      const btn = document.getElementById('confirm-booking-btn');
+      if (btn && !btn.disabled) {
+        openMobileConfirmOverlay();
+      } else {
+        showToast('Select a time', 'Please select a time first.', true, 4500);
+      }
+    }
+
+    // Expose for inline onclick handlers
+
+    window.isMobileUI = isMobileUI;
+    window.openMobileTimesOverlay = openMobileTimesOverlay;
+    window.closeMobileTimesOverlay = closeMobileTimesOverlay;
+    window.mobileConfirmBooking = mobileConfirmBooking;
+    window.openMobileConfirmOverlay = openMobileConfirmOverlay;
+    window.closeMobileConfirmOverlay = closeMobileConfirmOverlay;
+    window.mobileFinalConfirm = mobileFinalConfirm;
+    window.setMobileOverlayStep = setMobileOverlayStep;
+
+
     const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
     const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
@@ -700,14 +1389,157 @@
     const CLAIM_POSTAL       = "https://relaxandrenew.ca/postal_code";
     const CLAIM_PHONE        = "https://relaxandrenew.ca/phone";
   </script>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#E0C584" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+  <style>
+    /* Offline banner */
+    .offline-banner {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(224,197,132,0.25);
+      color: #E0C584;
+      padding: 10px 14px;
+      border-radius: 999px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      font-size: 0.85rem;
+    }
+    .offline-banner.show { display: inline-flex; }
+
+    /* Stepper */
+    .stepper-item { display: flex; align-items: center; gap: 10px; opacity: 0.65; }
+    .stepper-item.active { opacity: 1; }
+    .stepper-circle {
+      width: 30px; height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,197,132,0.35);
+      display: flex; align-items: center; justify-content: center;
+      color: #E0C584;
+      background: rgba(224,197,132,0.06);
+      font-weight: 700;
+    }
+    .stepper-item.active .stepper-circle { background: rgba(224,197,132,0.12); }
+    .stepper-label { font-size: 0.85rem; color: rgba(224,197,132,0.9); }
+    .stepper-line { flex: 1; height: 1px; background: rgba(224,197,132,0.18); min-width: 24px; }
+
+    /* Skeleton */
+    .skeleton { position: relative; overflow: hidden; background: rgba(255,255,255,0.06); border-radius: 10px; }
+    .skeleton::after {
+      content: "";
+      position: absolute; top: 0; left: -150px; height: 100%; width: 150px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer { 0% { left: -150px; } 100% { left: 100%; } }
+    .skeleton-avatar { width: 44px; height: 44px; border-radius: 999px; }
+    .skeleton-text { height: 10px; border-radius: 999px; margin-top: 10px; }
+    .skeleton-text-lg { height: 14px; border-radius: 999px; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9998;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      width: min(560px, 94vw);
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(224,197,132,0.22);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .btn-danger {
+      background: rgba(248,113,113,0.15);
+      border: 1px solid rgba(248,113,113,0.35);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.22); transform: translateY(-1px); }
+
+    /* Therapist card */
+    .therapist-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(224,197,132,0.18);
+      background: rgba(224,197,132,0.06);
+    }
+    .therapist-avatar {
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 1px solid rgba(224,197,132,0.25);
+    }
+    .therapist-name { font-weight: 800; color: #E0C584; }
+    .therapist-title { font-size: 0.85rem; color: rgba(224,197,132,0.75); }
+
+    /* Light mode */
+    html.light-mode body { background-color: #f7f5ee !important; color: #111827 !important; }
+    html.light-mode .glass-panel,
+    html.light-mode .card-fancy,
+    html.light-mode .booking-modal-card,
+    html.light-mode .modal-card { background: rgba(255,255,255,0.86) !important; color: #111827 !important; }
+    html.light-mode .muted { color: rgba(17,24,39,0.65) !important; }
+    html.light-mode .pill { color: #111827 !important; border-color: rgba(17,24,39,0.15) !important; }
+  </style>
+
 </head>
 
 <body class="bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900 text-brand-light">
   
-  <!-- =========================================================
+  
+  <div id="offline-banner" class="offline-banner">
+    <i data-lucide="wifi-off" class="w-4 h-4"></i>
+    You're offline — some features may be unavailable
+  </div>
+<!-- =========================================================
        LOGIN OVERLAY (shows on top of portal until authenticated)
        ========================================================= -->
-  <div id="login-overlay">
+<div id="auth-check-overlay">
+    <div class="login-card">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center">
+          <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png"
+               alt="Relax & Renew"
+               class="w-16 h-16 object-contain opacity-95" />
+        </div>
+        <h2 class="text-3xl text-brand-gold mt-5 font-bold">Checking Session…</h2>
+        <p class="text-brand-dim text-sm mt-2">Please wait a moment.</p>
+      </div>
+      <div class="mt-6">
+        <div class="w-full h-1 bg-white/10 overflow-hidden rounded">
+          <div class="h-full w-1/3 bg-brand-gold animate-loading-bar rounded"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="login-overlay" class="hidden">
     <div class="login-card">
       <div class="text-center">
         <div class="mx-auto flex items-center justify-center">
@@ -736,7 +1568,7 @@
 
       <p class="text-xs text-brand-dim mt-6 text-center opacity-70">
         Note: This portal is for returning clients only. New to Relax &amp; Renew?
-        <a href="index.html" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
+        <a href="/" class="text-brand-gold underline hover:text-brand-light">Book your first session here</a>.
       </p>
     </div>
   </div>
@@ -744,7 +1576,7 @@
   <!-- NAV -->
   <nav id="navbar" class="fixed-nav h-20 flex items-center">
     <div class="container mx-auto px-6 flex justify-between items-center h-full">
-      <a href="index.html" class="flex items-center gap-3 no-underline group">
+      <a href="/" class="flex items-center gap-3 no-underline group">
         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
         <div class="hidden md:flex flex-col">
           <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
@@ -825,7 +1657,7 @@
           Add to Home Screen
         </button>
 
-        <a href="index.html" class="nav-link text-lg flex items-center gap-3">
+        <a href="/" class="nav-link text-lg flex items-center gap-3">
           <i data-lucide="arrow-left" class="w-5 h-5"></i>
           Return to Website
         </a>
@@ -834,6 +1666,7 @@
           <i data-lucide="log-out" class="w-5 h-5"></i>
           Sign Out
         </button>
+        <div class="mt-3 text-xs opacity-60">Build: 2026-01-12-v4</div>
       </div>
     </div>
   </div>
@@ -896,7 +1729,12 @@
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
-              <hr class="divider my-3">
+              
+              <button id="theme-toggle-btn" class="sidebar-btn text-left nav-link text-lg flex items-center gap-3" onclick="toggleTheme()">
+                <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-brand-gold"></i>
+                <span id="theme-label">Light Mode</span>
+              </button>
+<hr class="divider my-3">
               <button id="logout-btn" class="sidebar-btn text-red-400 hover:text-red-200 hover:bg-red-900/10 hover:border-red-900/30">
                 <i data-lucide="log-out" class="w-5 h-5"></i>
                 <span>Sign Out</span>
@@ -924,7 +1762,7 @@
             </div>
 
             <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               <div class="card-fancy p-5">
                 <div class="flex items-center gap-3 mb-3">
                   <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
@@ -955,9 +1793,48 @@
                 <div class="text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
                 <div class="muted text-xs mt-1">Service address</div>
               </div>
+            
+              <div class="card-fancy p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                  </div>
+                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Visits</div>
+                </div>
+                <div class="text-3xl font-serif text-brand-light" id="dash-total-visits">0</div>
+                <div class="muted text-xs mt-1">Lifetime completed sessions</div>
+              </div>
+</div>
+
+            
+            <!-- Book Same as Last Time -->
+            <div id="book-same-container" class="hidden mb-6">
+              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="repeat" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-serif text-lg text-brand-light">Book Same as Last Time</div>
+                    <div class="muted text-sm" id="last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                </div>
+              </button>
             </div>
 
-            <!-- Upcoming Appointments Section -->
+            <!-- Next Appointment Countdown -->
+            <div id="next-appt-countdown-card" class="hidden glass-panel p-6 mb-6">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
+                  <i data-lucide="timer" class="w-5 h-5 text-brand-gold"></i>
+                  Next Appointment
+                </h3>
+              </div>
+              <div class="text-2xl font-serif text-brand-light" id="next-appt-countdown">—</div>
+              <div class="muted text-xs mt-2">Countdown to your next session</div>
+            </div>
+<!-- Upcoming Appointments Section -->
             <div class="glass-panel p-6 mb-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
@@ -972,11 +1849,28 @@
 
               <!-- Appointments Loading State -->
               <div id="appointments-loading" class="py-8 text-center">
-                <div class="w-12 h-12 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
-                  <i data-lucide="loader-2" class="w-6 h-6 text-brand-gold animate-spin"></i>
+                <div id="appointments-skeleton" class="space-y-3">
+                  <div class="card-fancy p-4">
+                    <div class="flex items-center gap-4">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="flex-1">
+                        <div class="skeleton skeleton-text-lg w-3/4"></div>
+                        <div class="skeleton skeleton-text w-1/2"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-fancy p-4">
+                    <div class="flex items-center gap-4">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="flex-1">
+                        <div class="skeleton skeleton-text-lg w-2/3"></div>
+                        <div class="skeleton skeleton-text w-1/3"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p class="text-brand-dim text-sm">Loading appointments...</p>
-              </div>
+                <p class="text-brand-dim text-sm mt-4">Loading appointments...</p>
+</div>
 
               <!-- Appointments List -->
               <div id="appointments-list" class="space-y-3 hidden"></div>
@@ -1072,6 +1966,26 @@
                 </div>
               </div>
             </div>
+            <!-- Booking Progress Stepper -->
+            <div id="booking-stepper" class="glass-panel p-6 mb-8">
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="stepper-item" id="step-1">
+                  <div class="stepper-circle">1</div>
+                  <div class="stepper-label">Select Treatment</div>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item" id="step-2">
+                  <div class="stepper-circle">2</div>
+                  <div class="stepper-label">Choose Date</div>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-item" id="step-3">
+                  <div class="stepper-circle">3</div>
+                  <div class="stepper-label">Pick Time</div>
+                </div>
+              </div>
+            </div>
+
 
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
@@ -1144,6 +2058,8 @@
                 </div>
 
                 <!-- Selected Date -->
+                <div id="mobile-times-anchor" class="hidden"></div>
+
                 <div id="selected-date-info" class="mt-8 hidden animate-fade-in-up">
                   <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 2</div>
                   <h3 class="text-2xl font-serif mt-1">Select a Time</h3>
@@ -1156,7 +2072,7 @@
                 <!-- Time slots -->
                 <div id="time-slots-container" class="mt-4 hidden animate-fade-in-up" style="animation-delay:0.1s">
                   <!-- UPDATED GRID: 4 columns on mobile -->
-                  <div id="time-slots-grid" class="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
+                  <div id="time-slots-grid" class="grid grid-cols-5 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
                 </div>
 
                 <div id="no-slots" class="mt-4 hidden card-fancy p-4 border-red-500/20">
@@ -1171,7 +2087,8 @@
               </div>
 
               <!-- Summary + confirm -->
-              <div class="glass-panel p-6">
+              <div id="summary-confirm-anchor" class="hidden"></div>
+              <div id="summary-confirm-panel" class="glass-panel p-6">
                 <div class="text-[0.65rem] tracking-[0.35em] uppercase text-brand-gold font-bold mb-1">Step 3</div>
                 <h3 class="text-2xl font-serif mt-1">Confirm</h3>
                 <p class="muted mt-2 text-sm font-light">We will confirm your booking and send your confirmation automatically.</p>
@@ -1196,7 +2113,17 @@
                     <div class="font-bold text-brand-gold font-serif text-lg" id="summary-travel-fee">$0.00</div>
                     <div class="muted mt-0 text-xs" id="summary-drive-time">—</div>
                   </div>
+                
+              <div class="therapist-card mt-3">
+                <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
+                     alt="Cassandra S." class="therapist-avatar">
+                <div class="therapist-info">
+                  <div class="therapist-name">Cassandra S.</div>
+                  <div class="therapist-title">Registered Massage Therapist</div>
                 </div>
+              </div>
+
+</div>
 
                 <button id="confirm-booking-btn" class="btn-filled w-full mt-8 btn-disabled py-4" disabled>
                   <i data-lucide="check-circle" class="w-5 h-5"></i>
@@ -1222,10 +2149,48 @@
           <!-- History -->
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
             <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
-            <div class="card-fancy p-6">
-              <div class="pill">Coming Soon</div>
-              <p class="muted mt-4">Your session history will appear here.</p>
+
+            <div id="history-loading" class="py-8 text-center">
+              <div id="history-skeleton" class="space-y-3">
+                <div class="card-fancy p-4">
+                  <div class="flex items-center gap-4">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="flex-1">
+                      <div class="skeleton skeleton-text-lg w-3/4"></div>
+                      <div class="skeleton skeleton-text w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-fancy p-4">
+                  <div class="flex items-center gap-4">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="flex-1">
+                      <div class="skeleton skeleton-text-lg w-2/3"></div>
+                      <div class="skeleton skeleton-text w-1/3"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-brand-dim text-sm mt-4">Loading history...</p>
             </div>
+
+            <div id="history-error" class="hidden card-fancy p-6 border-red-500/30">
+              <div class="flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                <div>
+                  <div class="font-bold text-brand-light">Couldn’t load history</div>
+                  <div class="muted mt-1 text-sm">Please try again.</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="history-list" class="space-y-3 hidden"></div>
+
+            <div id="history-empty" class="hidden card-fancy p-6">
+              <div class="pill">No completed sessions yet</div>
+              <p class="muted mt-4">Your completed appointments will appear here.</p>
+            </div>
+
           </div>
 
           <!-- Profile -->
@@ -1240,6 +2205,102 @@
       </div>
     </div>
   </main>
+
+
+  <!-- Mobile Time Picker Overlay (mobile only) -->
+  <div id="mobile-times-overlay" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div class="flex-1">
+          <div id="mobile-times-title" class="font-serif text-xl text-brand-light">Select a Time</div>
+          <div id="mobile-times-subtitle" class="muted text-sm mt-1">Pick a day and time. Unavailable days are disabled.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileTimesOverlay()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-strip-nav" class="flex items-center justify-between gap-3 mb-3">
+        <button id="mobile-week-prev" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(-7)">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <div class="pill border-brand-gold text-brand-gold bg-brand-gold/10 flex-1 justify-center">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span id="mobile-week-loading" class="rnr-spinner-sm hidden" aria-label="Loading"></span>
+          <span id="mobile-strip-range" class="font-bold text-sm">—</span>
+        </div>
+        <button id="mobile-week-next" class="btn-outline px-3 py-2" type="button" onclick="shiftMobileDateStrip(7)">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-times-scroll" class="rnr-modal-scroll">
+        <div id="mobile-date-strip" class="grid grid-cols-7 gap-2 mb-4"></div>
+        <div id="mobile-times-content"></div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mobile-confirm-btn" class="btn-filled flex-1 btn-disabled py-3" disabled onclick="mobileConfirmBooking()">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Next</span>
+        </button>
+        <button class="btn-outline flex-1 py-2 text-xs" id="mobile-back-btn" onclick="mobileBackInOverlay()">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Confirm Overlay (mobile only) -->
+  <div id="mobile-confirm-overlay" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div class="flex-1">
+          <div class="font-serif text-xl text-brand-light">Confirm Booking</div>
+          <div class="muted text-sm mt-1">Review your details, then confirm.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileConfirmOverlay(false)">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="mobile-confirm-scroll" class="rnr-modal-scroll">
+        <div id="mobile-confirm-content"></div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="mobile-final-confirm-btn" class="btn-filled flex-1 py-3" onclick="mobileFinalConfirm()">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Confirm Booking</span>
+        </button>
+        <button class="btn-outline flex-1 py-2 text-xs" onclick="closeMobileConfirmOverlay(true)">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install App Prompt (Chromium/Android/Desktop) -->
+  <div id="install-prompt-modal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Install the app</div>
+          <div class="muted text-sm mt-1">Add Relax & Renew Portal to your Home Screen for faster access.</div>
+        </div>
+        <button class="btn-outline px-3 py-2 text-xs" onclick="closeInstallPromptModal(true)">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-filled flex-1 py-3" onclick="triggerInstallPrompt()">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Install
+        </button>
+        <button class="btn-outline flex-1 py-3" onclick="closeInstallPromptModal(true)">Not now</button>
+      </div>
+
+      <div id="install-prompt-debug" class="hidden muted text-xs mt-4"></div>
+    </div>
+  </div>
+
 
   <!-- Toast -->
   <div id="toast" class="toast fixed left-1/2 bottom-6 -translate-x-1/2 flex items-center gap-3 py-3 px-5 rounded opacity-0 pointer-events-none transition-all z-50">
@@ -1264,6 +2325,12 @@
       </div>
       <div id="booking-modal-status" class="booking-status-text">Preparing your booking...</div>
       <div id="booking-modal-substatus" class="booking-substatus">Please wait</div>
+      <div id="booking-email-preview" class="hidden mt-4 text-sm text-brand-dim"></div>
+      <div id="booking-success-actions" class="hidden mt-5 flex gap-3">
+        <a href="/portal" class="btn-filled flex-1 text-center">To Client Portal</a>
+        <a href="/" class="btn-outline flex-1 text-center">Go Home</a>
+      </div>
+
     </div>
   </div>
 
@@ -1274,15 +2341,12 @@
     let lock = null;
     let portalProfile = null;
 
-    let calendarCurrent = new Date();
+    let calendarCurrent = new Date((new Date()).getFullYear(), (new Date()).getMonth(), 1);
     let selectedDateStr = null;
     let selectedSlot = null;
 
     let availabilityByDate = {};
-    let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
-
-    // Optional: raw Cliniko blocks/appointments per day (used for UI edge-cases like end-of-day blocks)
-    let dayApptsByDate = {};
+    let availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
     const availabilityCache = new Map();
 
@@ -1348,6 +2412,395 @@
       }, d);
     }
 
+    // =============================
+    // Theme Toggle (Feature #16)
+    // =============================
+    function applySavedTheme() {
+      const saved = localStorage.getItem("rnr_theme");
+      const wantLight = saved === "light";
+      document.documentElement.classList.toggle("light-mode", wantLight);
+      updateThemeUI();
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isLight = html.classList.toggle("light-mode");
+      localStorage.setItem("rnr_theme", isLight ? "light" : "dark");
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const isLight = document.documentElement.classList.contains("light-mode");
+      const icon = document.getElementById("theme-icon");
+      const label = document.getElementById("theme-label");
+      if (icon) icon.setAttribute("data-lucide", isLight ? "moon" : "sun");
+      if (label) label.textContent = isLight ? "Dark Mode" : "Light Mode";
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =============================
+    // Offline Banner (Feature #22)
+    // =============================
+    function initOfflineBanner() {
+      const banner = document.getElementById("offline-banner");
+      if (!banner) return;
+      const update = () => {
+        banner.classList.toggle("show", !navigator.onLine);
+      };
+      window.addEventListener("online", update);
+      window.addEventListener("offline", update);
+      update();
+    }
+
+    // =============================
+    // Booking Stepper (Feature #8/#9)
+    // =============================
+    function updateBookingStepper() {
+      const s1 = document.getElementById("step-1");
+      const s2 = document.getElementById("step-2");
+      const s3 = document.getElementById("step-3");
+      if (!s1 || !s2 || !s3) return;
+
+      const hasTreatment = !!selectedServiceKey && !!selectedStandardDuration;
+      const hasDate = !!selectedDateStr;
+      const hasTime = !!selectedSlot;
+
+      s1.classList.toggle("active", hasTreatment);
+      s2.classList.toggle("active", hasTreatment && hasDate);
+      s3.classList.toggle("active", hasTreatment && hasDate && hasTime);
+    }
+
+    // =============================
+    // Cancel Appointment (Feature #5/#6)
+    // =============================
+    let pendingCancel = { appointmentId: null, startsAt: null };
+
+    function initiateCancel(appointmentId, startsAt) {
+      pendingCancel = { appointmentId, startsAt };
+      const dt = startsAt ? new Date(startsAt) : null;
+      document.getElementById("cancel-modal-datetime").textContent = dt
+        ? dt.toLocaleString("en-CA", { timeZone: "America/Toronto" })
+        : "—";
+      document.getElementById("cancel-reason").value = "";
+      document.getElementById("cancel-cutoff-warning").classList.add("hidden");
+      document.getElementById("cancel-modal").classList.remove("hidden");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeCancelModal() {
+      document.getElementById("cancel-modal")?.classList.add("hidden");
+    }
+
+    async function confirmCancelAppointment() {
+      if (!pendingCancel.appointmentId || !portalProfile?.email) return;
+
+      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+
+      const res = await fetch(CANCEL_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentId: pendingCancel.appointmentId,
+          email: String(portalProfile.email).trim().toLowerCase(),
+          reason: reason || "Cancelled by client via portal"
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (data.success) {
+        showToast("Cancelled", "Your appointment was cancelled.");
+        closeCancelModal();
+        await loadUpcomingAppointments();
+        return;
+      }
+
+      if (data.withinCutoff || data.contactRequired) {
+        document.getElementById("cancel-cutoff-warning")?.classList.remove("hidden");
+        showToast("Within 12 hours", "Submit a request or contact us directly.", true, 6500);
+        return;
+      }
+
+      showToast("Cancel failed", data.error || "Please try again.", true, 6500);
+    }
+
+    async function submitUnder12HourCancellationRequest() {
+      if (!pendingCancel.appointmentId || !portalProfile?.email) return;
+
+      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+      const starts = pendingCancel.startsAt ? new Date(pendingCancel.startsAt) : null;
+      const appointmentDate = starts ? starts.toLocaleDateString("en-CA", { timeZone: "America/Toronto" }) : "";
+      const appointmentTime = starts ? starts.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
+
+      const res = await fetch(REQUEST_CANCEL_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentId: pendingCancel.appointmentId,
+          email: String(portalProfile.email).trim().toLowerCase(),
+          firstName: portalProfile.firstName || "",
+          lastName: portalProfile.lastName || "",
+          phone: portalProfile.phone || "",
+          reason: reason || "Client requested cancellation (within 12 hours)",
+          appointmentDate,
+          appointmentTime
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        showToast("Request sent", data.message || "We’ll contact you shortly.");
+        closeCancelModal();
+      } else {
+        showToast("Request failed", data.error || "Please contact us directly.", true, 6500);
+      }
+    }
+
+    // =============================
+    // Waitlist (Feature #10)
+    // =============================
+    let pendingWaitlistDate = null;
+
+    function showWaitlistModal(dateStr) {
+      pendingWaitlistDate = dateStr;
+      document.getElementById("waitlist-date-label").textContent = formatDatePretty(dateStr);
+      document.getElementById("waitlist-notes").value = "";
+      document.getElementById("waitlist-modal").classList.remove("hidden");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeWaitlistModal() {
+      document.getElementById("waitlist-modal")?.classList.add("hidden");
+    }
+
+    async function submitWaitlist() {
+      if (!pendingWaitlistDate || !portalProfile?.email) return;
+
+      const notes = (document.getElementById("waitlist-notes")?.value || "").trim();
+
+      const res = await fetch(WAITLIST_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(portalProfile.email).trim().toLowerCase(),
+          firstName: portalProfile.firstName || "",
+          lastName: portalProfile.lastName || "",
+          phone: portalProfile.phone || "",
+          preferredDate: pendingWaitlistDate,
+          treatmentKey: selectedServiceKey || "",
+          durationMinutes: Number(selectedStandardDuration || 0),
+          notes: notes || ""
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        showToast("Waitlist", data.message || "Added to waitlist.");
+        closeWaitlistModal();
+      } else {
+        showToast("Waitlist failed", data.error || "Please try again.", true, 6500);
+      }
+    }
+
+    // =============================
+    // Invoice / Receipt (Portal - Get Invoice)
+    // =============================
+    async function openInvoice(appointmentId, subtitle) {
+      if (!appointmentId || !portalProfile?.email) return;
+
+      document.getElementById("invoice-modal-subtitle").textContent = subtitle || "";
+      const body = document.getElementById("invoice-modal-body");
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      document.getElementById("invoice-modal").classList.remove("hidden");
+
+      try {
+        const res = await fetch(INVOICE_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            appointmentId,
+            email: String(portalProfile.email).trim().toLowerCase()
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!data.success || !data.invoice) {
+          body.innerHTML = '<div class="muted">No receipt available.</div>';
+          return;
+        }
+
+        const inv = data.invoice;
+        const items = Array.isArray(inv.items) ? inv.items : [];
+        const rows = items.map(it => `
+          <div class="flex justify-between gap-4 py-2 border-b border-brand-gold/10">
+            <div>
+              <div class="text-brand-light font-semibold">${it.description || "Item"}</div>
+              ${it.quantity ? `<div class="muted text-xs">Qty: ${it.quantity}</div>` : ""}
+            </div>
+            <div class="text-brand-light font-semibold">$${Number(it.total || it.amount || 0).toFixed(2)}</div>
+          </div>
+        `).join("");
+
+        body.innerHTML = `
+          <div class="space-y-3">
+            ${inv.receiptNumber ? `<div class="pill">Receipt: ${inv.receiptNumber}</div>` : ""}
+            <div class="card-fancy p-3">
+              ${rows || '<div class="muted">No line items.</div>'}
+              <div class="flex justify-between gap-4 pt-3">
+                <div class="muted">Total</div>
+                <div class="text-brand-light font-bold">$${Number(inv.total || 0).toFixed(2)}</div>
+              </div>
+              ${inv.tax !== undefined ? `
+                <div class="flex justify-between gap-4 pt-1">
+                  <div class="muted">Tax</div>
+                  <div class="text-brand-light">$${Number(inv.tax || 0).toFixed(2)}</div>
+                </div>` : ""}
+              ${inv.paid !== undefined ? `
+                <div class="flex justify-between gap-4 pt-1">
+                  <div class="muted">Paid</div>
+                  <div class="text-brand-light">${inv.paid ? "Yes" : "No"}</div>
+                </div>` : ""}
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        body.innerHTML = '<div class="muted">Unable to load receipt.</div>';
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    function closeInvoiceModal() {
+      document.getElementById("invoice-modal")?.classList.add("hidden");
+    }
+
+    // =============================
+    // Book Same as Last Time (Feature #3/#4)
+    // =============================
+    async function loadLastBookingSummary() {
+      const wrap = document.getElementById("book-same-container");
+      const summary = document.getElementById("last-booking-summary");
+      if (!wrap || !summary) return;
+
+      if (!portalProfile?.email) {
+        wrap.classList.add("hidden");
+        return;
+      }
+
+      summary.textContent = "Loading...";
+      try {
+        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!data.success || !data.lastBooking) {
+          wrap.classList.add("hidden");
+          return;
+        }
+
+        wrap.classList.remove("hidden");
+        const lb = data.lastBooking;
+        summary.textContent = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
+      } catch (e) {
+        wrap.classList.add("hidden");
+      }
+    }
+
+    async function bookSameAsLastTime() {
+      if (!portalProfile?.email) return;
+
+      try {
+        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!data.success || !data.lastBooking) {
+          showToast("No previous booking found", "Please book manually.", true);
+          switchTab("rebook");
+          return;
+        }
+
+        const lb = data.lastBooking;
+        selectedServiceKey = lb.treatment_key || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        switchTab("rebook");
+        updateBookingStepper();
+
+        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Try selecting next matching day-of-week if provided
+        const dow = lb.day_of_week;
+        if (dow && availabilityByDate) {
+          const entries = Object.keys(availabilityByDate).sort();
+          const match = entries.find(d => {
+            const dt = new Date(d + "T12:00:00");
+            const day = dt.getDay(); // 0 Sun
+            const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+            return map[String(dow).toLowerCase()] === day && Array.isArray(availabilityByDate[d]) && availabilityByDate[d].some(isSlotAvailable);
+          });
+          if (match) selectDate(match);
+        }
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
+
+    // =============================
+    // Session Countdown (Feature #19)
+    // =============================
+    let countdownTimer = null;
+
+    function updateCountdown() {
+      const card = document.getElementById("next-appt-countdown-card");
+      const el = document.getElementById("next-appt-countdown");
+      if (!card || !el) return;
+
+      if (!Array.isArray(upcomingAppointments) || upcomingAppointments.length === 0) {
+        card.classList.add("hidden");
+        return;
+      }
+
+      const nextAppt = upcomingAppointments[0];
+      const start = new Date(nextAppt.starts_at);
+      const now = new Date();
+      const diff = start - now;
+
+      card.classList.remove("hidden");
+
+      if (diff <= 0) {
+        el.textContent = "Starting soon!";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+      const parts = [];
+      if (days) parts.push(`${days}d`);
+      parts.push(`${hours}h`);
+      parts.push(`${minutes}m`);
+      el.textContent = parts.join(" ");
+    }
+
+
 
 
 // =========================================================
@@ -1380,7 +2833,7 @@
 
       // Show modal
       overlay.classList.add("active");
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
 
       // Cycle through messages every 2 seconds
       let messageIndex = 0;
@@ -1395,7 +2848,7 @@
       }, 2000);
     }
 
-    function hideBookingModal(success = true, errorMessage = null) {
+    function hideBookingModal(success = true, errorMessage = null, clientEmail = null) {
       // Stop message cycling
       if (bookingMessageInterval) {
         clearInterval(bookingMessageInterval);
@@ -1418,6 +2871,8 @@
         substatusText.textContent = "Your appointment has been scheduled";
       } else {
         errorIcon.classList.remove("hidden");
+        document.getElementById("booking-email-preview")?.classList.add("hidden");
+        document.getElementById("booking-success-actions")?.classList.add("hidden");
         statusText.textContent = "Booking Failed";
         substatusText.textContent = errorMessage || "Please try again or contact support";
       }
@@ -1425,7 +2880,7 @@
       // Hide modal after showing result
       setTimeout(() => {
         overlay.classList.remove("active");
-        document.body.style.overflow = "";
+        unlockBodyScroll();
       }, success ? 2000 : 3000);
     }
 
@@ -1445,7 +2900,7 @@
 
       // Clear availability data (prevents auto-reload of calendar)
       availabilityByDate = {};
-      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
       // Clear all selections
       clearSelectionUI();
@@ -1485,34 +2940,52 @@
     // MOBILE FIX: Normalize date to YYYY-MM-DD format
     function normalizeDateKey(dateInput) {
       if (!dateInput) return null;
-      var str = String(dateInput).trim();
+      const str = String(dateInput).trim();
+
+      // Already YYYY-MM-DD
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-      var isoMatch = str.match(/^(\d{4}-\d{2}-\d{2})/);
+
+      // ISO-like starts with YYYY-MM-DD
+      const isoMatch = str.match(/^(\d{4}-\d{2}-\d{2})/);
       if (isoMatch) return isoMatch[1];
+
+      // Try Date parse
       try {
-        if (str.indexOf('T') >= 0 || str.indexOf('Z') >= 0) {
-          var parts = str.split('T')[0];
-          if (/^\d{4}-\d{2}-\d{2}$/.test(parts)) return parts;
-        }
-        var d = new Date(str);
+        const d = new Date(str);
         if (!isNaN(d.getTime())) {
-          return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+          // Use local date to match toDateStr()
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
         }
-      } catch(e) {}
+      } catch (e) {}
+
       return null;
     }
 
     // MOBILE FIX: Robust slot availability check
+
     function isSlotAvailable(slot) {
-      if (!slot) return false;
+      if (slot == null) return false;
+
+      // If backend ever returns plain strings (time labels), treat as available.
+      if (typeof slot === "string") return true;
+
+      // Common object shapes
       if (typeof slot.available === 'boolean') return slot.available;
       if (typeof slot.available === 'string') return ['true','1','yes'].indexOf(slot.available.toLowerCase().trim()) >= 0;
       if (typeof slot.available === 'number') return slot.available === 1;
+
       if (typeof slot.isAvailable === 'boolean') return slot.isAvailable;
       if (typeof slot.is_available === 'boolean') return slot.is_available;
+
       if (typeof slot.booked === 'boolean') return !slot.booked;
-      if (slot.label && slot.label.toLowerCase().indexOf('(booked)') >= 0) return false;
+      if (slot.label && String(slot.label).toLowerCase().indexOf('(booked)') >= 0) return false;
+
+      // If it has a start time but no availability flag, assume available
       if (slot.start) return true;
+
       return false;
     }
 
@@ -1536,180 +3009,70 @@ function computeMonthRange(date) {
       return "—";
     }
 
-
+    // Mobile: compact 15-min labels (10, 1015, 1030, 1045, 11) to reduce vertical space.
     
-    // UI-ONLY TIME WINDOW (Cassandra current availability display)
-    // - Hide any slots before 11:00 AM
-    // - Hide 6:00 PM and later on all days
-    // - On Sundays, hide anything after 5:00 PM (no 5:15/5:30/5:45/6:00)
-        function parseLabelMinutes(label) {
-          try {
-            let s = String(label || "").toLowerCase();
-            s = s.replace(/\(booked\)/g, "").replace(/est/g, "").replace(/\s+/g, "").replace(/\./g, "");
-            if (!s) return null;
+    // Mobile: 12-hour label parts (bold time + small AM/PM) for compact grid.
+    function formatTimeLabelCompactParts(slot) {
+      if (!slot) return { time: '—', ampm: '' };
 
-            // 24-hour format: HH:MM
-            let m = s.match(/^(\d{1,2}):(\d{2})$/);
+      const start = slot.start || slot.start_time || slot.startTime || slot.begin || null;
+      if (start) {
+        try {
+          const d = new Date(start);
+          if (!isNaN(d.getTime())) {
+            const t = d.toLocaleTimeString('en-CA', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'America/Toronto'
+            });
+            const cleaned = String(t).replace(/\s+/g, ' ').trim();
+            const m = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
             if (m) {
-              const hh = parseInt(m[1], 10);
-              const mm = parseInt(m[2], 10);
-              if (isNaN(hh) || isNaN(mm)) return null;
-              if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
-              return (hh * 60) + mm;
+              const hh = m[1];
+              const mm = m[2] || '';
+              const ampm = String(m[3]).toUpperCase();
+              const time = (mm && mm !== '00') ? `${hh}:${mm}` : hh;
+              return { time, ampm };
             }
-
-            // AM/PM format: H(:MM)?(am|pm)
-            m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)$/);
-            if (m) {
-              let hh = parseInt(m[1], 10);
-              const mm = m[2] ? (parseInt(m[2], 10) || 0) : 0;
-              const ap = m[3];
-              if (isNaN(hh) || isNaN(mm)) return null;
-              if (hh < 1 || hh > 12 || mm < 0 || mm > 59) return null;
-              if (ap === 'am') {
-                if (hh === 12) hh = 0;
-              } else {
-                if (hh !== 12) hh = hh + 12;
-              }
-              return (hh * 60) + mm;
+            // Last-resort: split on space
+            const parts = cleaned.split(' ');
+            if (parts.length >= 2) {
+              return { time: parts[0], ampm: String(parts[1]).toUpperCase() };
             }
-
-            // Fallback: H(am|pm)
-            m = s.match(/^(\d{1,2})(am|pm)$/);
-            if (m) {
-              let hh = parseInt(m[1], 10);
-              const ap = m[2];
-              if (isNaN(hh) || hh < 1 || hh > 12) return null;
-              if (ap === 'am') {
-                if (hh === 12) hh = 0;
-              } else {
-                if (hh !== 12) hh = hh + 12;
-              }
-              return hh * 60;
-            }
-
-            return null;
-          } catch (e) {
-            return null;
+            return { time: cleaned, ampm: '' };
           }
-        }
-
-        function getTorontoMinutesFromSlot(slot) {
-          try {
-            // Prefer slot.start when present (most reliable)
-            if (slot && slot.start) {
-              const d = new Date(slot.start);
-              if (!isNaN(d.getTime())) {
-                const fmt = new Intl.DateTimeFormat('en-CA', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'America/Toronto'
-                });
-
-                if (typeof fmt.formatToParts === 'function') {
-                  const parts = fmt.formatToParts(d);
-                  let hh = 0, mm = 0;
-                  for (const p of parts) {
-                    if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
-                    if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
-                  }
-                  return (hh * 60) + mm;
-                }
-
-                // Fallback if formatToParts is unavailable
-                const s = d.toLocaleTimeString('en-CA', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'America/Toronto'
-                });
-                const m = String(s).match(/^(\d{1,2}):(\d{2})/);
-                if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
-              }
-            }
-
-            // Fallback to label parsing (some payloads may omit start)
-            if (slot && slot.label) return parseLabelMinutes(slot.label);
-
-            return null;
-          } catch (e) {
-            return null;
-          }
-        }
-
-    function isSundayToronto(dateStr) {
-      try {
-        const m = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        if (!m) return false;
-        const y = Number(m[1]);
-        const mo = Number(m[2]) - 1;
-        const d = Number(m[3]);
-        const dt = new Date(Date.UTC(y, mo, d, 12, 0, 0));
-        const wd = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Toronto' }).format(dt);
-        return wd === 'Sun';
-      } catch (e) {
-        return false;
+        } catch (e) {}
       }
+
+      const raw = slot.label || slot.time || slot.startLabel || '';
+      const cleaned = String(raw).replace(/\s+/g, ' ').trim();
+      const m2 = cleaned.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+      if (m2) {
+        const hh = m2[1];
+        const mm = m2[2] || '';
+        const ampm = String(m2[3]).toUpperCase();
+        const time = (mm && mm !== '00') ? `${hh}:${mm}` : hh;
+        return { time, ampm };
+      }
+
+      return { time: String(formatTimeLabel(slot) || '—').replace(/\(booked\)/ig, '').trim(), ampm: '' };
     }
 
-
-
-    // Edge-case handling:
-    // If Cliniko has an unavailable block that starts at/near opening (<= 11:00 AM) and ends exactly at
-    // the day’s final bookable start time (8:00 PM on non-Sundays, 5:00 PM on Sundays), then treat that
-    // end as inclusive for start-time eligibility and hide the boundary start time in the UI.
-    // This prevents a full-day block (e.g., 11am–8pm) from still showing an 8pm start.
-    function hasClosingUnavailableBlock(dateStr) {
-      try {
-        const appts = dayApptsByDate && dayApptsByDate[dateStr];
-        if (!Array.isArray(appts) || appts.length === 0) return false;
-
-        const OPEN_MIN = 11 * 60;
-        const CLOSE_NON_SUN_MIN = 20 * 60;
-        const CLOSE_SUN_MIN = 17 * 60;
-        const closeMin = isSundayToronto(dateStr) ? CLOSE_SUN_MIN : CLOSE_NON_SUN_MIN;
-
-        for (const a of appts) {
-          if (!a) continue;
-          const kind = String(a.kind || a.type || a.category || '').toLowerCase();
-          if (!(kind.includes('unavailable') || kind.includes('block'))) continue;
-
-          const startIso = a.start || a.starts_at || a.startsAt || a.begin || a.begins_at || a.beginsAt || null;
-          const endIso   = a.end   || a.ends_at   || a.endsAt   || a.finish || a.finishes_at || a.finishesAt || null;
-
-          const startMin = startIso ? getTorontoMinutesFromSlot({ start: startIso }) : null;
-          const endMin   = endIso   ? getTorontoMinutesFromSlot({ start: endIso })   : null;
-
-          if (startMin === null || endMin === null) continue;
-          if (startMin <= OPEN_MIN && endMin === closeMin) return true;
-        }
-      } catch (e) {}
-      return false;
+    function formatTimeLabelCompact(slot) {
+      const parts = formatTimeLabelCompactParts(slot);
+      return parts.ampm ? `${parts.time} ${parts.ampm}` : parts.time;
     }
 
-    function slotPassesUiWindow(dateStr, slot) {
-      const mins = getTorontoMinutesFromSlot(slot);
-      // If we cannot parse, do not hide (display-only rule).
-      if (mins === null) return true;
-
-      const START_MIN = 11 * 60;   // 11:00
-      const END_NON_SUN = 20 * 60; // 20:00 (cap non-Sunday to 8:00 PM)
-      const END_SUN = 17 * 60;     // 17:00 (cap Sunday to 5:00 PM)
-
-      if (mins < START_MIN) return false;
-
-      const isSun = isSundayToronto(dateStr);
-      const dayEnd = isSun ? END_SUN : END_NON_SUN;
-
-      // Special-case: if Cliniko shows a full-day unavailable block ending at the final start time,
-      // hide that boundary start time so the day correctly appears fully blocked.
-      if (mins === dayEnd && hasClosingUnavailableBlock(dateStr)) return false;
-
-      if (isSun) return mins <= END_SUN;
-      return mins <= END_NON_SUN;
+    function getSlotStartMs(slot) {
+      const start = slot && (slot.start || slot.start_time || slot.startTime || slot.begin);
+      if (!start) return 0;
+      const d = new Date(start);
+      const ms = d.getTime();
+      return isNaN(ms) ? 0 : ms;
     }
-function formatDatePretty(dateStr) {
+
+    function formatDatePretty(dateStr) {
       const [y,m,d] = dateStr.split("-").map(Number);
       const dt = new Date(y, m-1, d);
       return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
@@ -1787,16 +3150,32 @@ if (selectedSlot && driveTime > 0) {
 }
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+
+      try {
+        const overlay = document.getElementById("mobile-times-overlay");
+        if (overlay && !overlay.classList.contains("hidden")) {
+          syncMobileConfirmButton();
+        }
+      } catch (e) {}
+
     }
 
     function updateAvailabilityStatus(body, loaded) {
       document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
       document.getElementById("availability-status-body").textContent = body || "";
+
       const metaEl = document.getElementById("availability-meta");
       const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
       const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
-      metaEl.textContent = (loaded && (buffer || maxDrive))
-        ? `Travel buffer applied: ${buffer} min • Max drive time used: ${maxDrive} min`
+      const baseDrive = availabilityMeta.baseToClientDriveTimeMinutes || 0;
+
+      const show = loaded && (
+        (maxDrive > 0 && baseDrive > maxDrive) ||
+        (baseDrive >= TRAVEL_FEE_THRESHOLD_MINUTES)
+      );
+
+      metaEl.textContent = show
+        ? `Travel time from base: ${baseDrive} min${buffer ? ` • Buffer applied: ${buffer} min` : ""}`
         : "";
     }
 
@@ -1815,87 +3194,69 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     // LOGIN OVERLAY CONTROL
     // =========================================================
+    function showAuthCheckOverlay() {
+      const el = document.getElementById("auth-check-overlay");
+      if (!el) return;
+      el.classList.remove("hidden");
+      lockBodyScroll();
+      try { window.scrollTo(0, 0); } catch (e) {}
+    }
+
+    function hideAuthCheckOverlay() {
+      const el = document.getElementById("auth-check-overlay");
+      if (!el) return;
+      el.classList.add("hidden");
+      unlockBodyScroll();
+    }
+
     function showLoginOverlay() {
+      try { hideAuthCheckOverlay(); } catch (e) {}
       document.getElementById("login-overlay").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
+      try { window.scrollTo(0, 0); } catch (e) {}
     }
 
     function hideLoginOverlay() {
       document.getElementById("login-overlay").classList.add("hidden");
-      document.body.style.overflow = "";
+      unlockBodyScroll();
     }
+
     // =========================================================
-    // STATE PERSISTENCE (survive refresh / accidental close)
+    // STATE PERSISTENCE (DISABLED)
     // =========================================================
+    // Per latest requirements: always default to the current month, and do not persist
+    // selected date/service/duration/month across refreshes. We also clear any legacy
+    // saved state so old months (e.g., May) cannot force the UI.
     const PORTAL_STATE_KEY = "rnr_portal_state_v1";
 
-    function savePortalState() {
-      try {
-        const state = {
-          selectedServiceKey,
-          selectedStandardDuration,
-          selectedDateStr,
-          // Prefer a stable identifier for the selected slot
-          selectedSlotStart: selectedSlot?.start || selectedSlot?.label || null,
-          // Preserve the month user is browsing
-          calendarMonth: `${calendarCurrent.getFullYear()}-${String(calendarCurrent.getMonth()+1).padStart(2,"0")}`
-        };
-        localStorage.setItem(PORTAL_STATE_KEY, JSON.stringify(state));
-      } catch (e) {}
-    }
+    function savePortalState() { /* disabled */ }
 
-    function loadPortalState() {
-      try {
-        const raw = localStorage.getItem(PORTAL_STATE_KEY);
-        if (!raw) return null;
-        const s = JSON.parse(raw);
-        return s && typeof s === "object" ? s : null;
-      } catch (e) { return null; }
-    }
+    function loadPortalState() { return null; }
 
     function clearPortalState() {
       try { localStorage.removeItem(PORTAL_STATE_KEY); } catch (e) {}
     }
 
     async function restorePortalStateIfPossible() {
-      const s = loadPortalState();
-      if (!s) return;
-
-      // Restore calendar month first (pure UI)
-      if (s.calendarMonth && /^\d{4}-\d{2}$/.test(String(s.calendarMonth))) {
-        const parts = String(s.calendarMonth).split("-");
-        const y = Number(parts[0]);
-        const m = Number(parts[1]) - 1;
-        if (!isNaN(y) && !isNaN(m)) calendarCurrent = new Date(y, m, 1);
-      }
-
-      // Restore treatment + duration selections
-      if (s.selectedServiceKey && TREATMENT_RULES[s.selectedServiceKey]) {
-        selectedServiceKey = s.selectedServiceKey;
-        if (treatmentSelect) treatmentSelect.value = selectedServiceKey;
-        rebuildDurationOptions();
-      }
-
-      if (s.selectedStandardDuration && !isNaN(Number(s.selectedStandardDuration))) {
-        selectedStandardDuration = Number(s.selectedStandardDuration);
-        if (durationSelect) durationSelect.value = String(selectedStandardDuration);
-      }
-
-      // If we have enough to fetch availability, load it
-      if (portalProfile && selectedServiceKey && selectedStandardDuration) {
-        await maybeLoadAvailabilityForCurrentMonth();
-      }
-
-      // After availability exists, restore date selection if that date has any data
-      if (s.selectedDateStr && availabilityByDate && availabilityByDate[s.selectedDateStr]) {
-        selectDate(s.selectedDateStr);
-        // Slot restoration happens inside loadTimeSlots via maybeAutoSelectRestoredSlot()
-      }
+      // Always clear legacy persisted state and reset the calendar to the current month.
+      clearPortalState();
+      const now = new Date();
+      calendarCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+      // Do not restore any selections.
+      return;
     }
 
     function maybeAutoSelectRestoredSlot(dateStr) {
       const s = loadPortalState();
       if (!s || !s.selectedSlotStart || !dateStr) return;
+
+      // Do not auto-select stale saved slots.
+      try {
+        const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+        const savedAt = Number(s.savedAt || 0);
+        const isFresh = !!(savedAt && (Date.now() - savedAt) < TTL_MS);
+        if (!isFresh) return;
+      } catch (e) { return; }
       const target = String(s.selectedSlotStart);
 
       // Find the button corresponding to the stored slot id
@@ -2090,15 +3451,18 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function renderAppointmentCard(appt, isCancelled = false, isHistory = false) {
       const start = appt?.starts_at ? new Date(appt.starts_at) : null;
-      const dateStr = start ? start.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
+      const dateStr = start ? start.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
       const timeStr = start ? start.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
       const treatment = appt?.appointment_type?.name || appt?.treatment_type || "Massage";
-      const duration = appt?.duration || 60;
-      
+      const duration = Number(appt?.duration || 60);
+
       const statusClass = isCancelled ? "text-red-400" : (isHistory ? "text-brand-dim" : "text-green-400");
       const statusText = isCancelled ? "Cancelled" : (isHistory ? "Completed" : "Confirmed");
       const statusIcon = isCancelled ? "x-circle" : (isHistory ? "check-circle" : "calendar-check");
-      
+
+      const canCancel = (!isCancelled && !isHistory);
+      const canReceipt = (isHistory && !isCancelled);
+
       return `
         <div class="card-fancy p-4 ${isCancelled ? 'opacity-60' : ''}">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -2112,6 +3476,28 @@ if (selectedSlot && driveTime > 0) {
                 </span>
                 <span class="text-xs text-brand-dim">${duration} min</span>
               </div>
+
+              ${canCancel ? `
+                <div class="text-xs text-brand-dim mt-3">
+                  Free cancellation until 12 hours before. After that, contact us directly.
+                </div>
+                <button class="btn-danger text-xs mt-3" onclick="initiateCancel('${appt?.id || ""}', '${appt?.starts_at || ""}')">
+                  <i data-lucide="x" class="w-3 h-3"></i>
+                  Cancel
+                </button>
+              ` : ''}
+
+              ${canReceipt ? `
+                <div class="mt-3 p-2 bg-brand-gold/5 border border-brand-gold/10 rounded">
+                  <div class="text-xs text-brand-gold uppercase tracking-wider mb-1">Session Notes</div>
+                  <div class="pill text-xs">Coming Soon</div>
+                </div>
+                <button class="btn-outline text-xs mt-3" onclick="openInvoice('${appt?.id || ""}', '${dateStr} ${timeStr}')">
+                  <i data-lucide="receipt" class="w-3 h-3"></i>
+                  View Receipt
+                </button>
+              ` : ''}
+
             </div>
           </div>
         </div>
@@ -2152,6 +3538,7 @@ if (selectedSlot && driveTime > 0) {
         
         const dashUpcoming = document.getElementById("dash-upcoming-count");
         const dashCompleted = document.getElementById("dash-completed-count");
+      const dashTotal = document.getElementById("dash-total-visits");
         if (dashUpcoming) dashUpcoming.textContent = "0";
         if (dashCompleted) dashCompleted.textContent = "0";
       }, 10000);
@@ -2216,6 +3603,11 @@ if (selectedSlot && driveTime > 0) {
 
         renderAppointments();
         renderHistory();
+        updateCountdown();
+        if (countdownTimer) clearInterval(countdownTimer);
+        countdownTimer = setInterval(updateCountdown, 60000);
+        loadLastBookingSummary();
+
 
       } catch (e) {
         clearTimeout(loadingTimeout);
@@ -2384,8 +3776,19 @@ if (selectedSlot && driveTime > 0) {
           const cacheKey = getRequestCacheKey(payload);
           availabilityCache.set(cacheKey, data);
           parseAvailabilityResponse(data);
+
+          // If backend returned no usable dates, do not claim "loaded"
+          const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+          if (!hasDates) {
+            availabilityPreloaded = false;
+            renderCalendar();
+            updateAvailabilityStatus("Availability returned no dates for this month. Try a different duration or verify your address in Profile.", false);
+            showToast("No availability", "No open slots were returned. Try another duration or month.", true, 6500);
+            return;
+          }
+
           availabilityPreloaded = true;
-          
+
           renderCalendar();
           setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
@@ -2405,8 +3808,12 @@ if (selectedSlot && driveTime > 0) {
     // AUTH CHECK ON LOAD
     // =========================================================
     async function checkExistingAuth() {
+      // Prevent Auth0 flash: show a neutral session-check overlay first
+      try { hideLoginOverlay(); } catch (e) {}
+      try { showAuthCheckOverlay(); } catch (e) {}
+
       const { idToken, accessToken } = getStoredLockTokens();
-      
+
       if (idToken) {
         const payload = decodeJwtPayload(idToken);
         if (payload && !isJwtExpired(payload)) {
@@ -2432,25 +3839,28 @@ if (selectedSlot && driveTime > 0) {
           } catch (e) {
             console.error("Error building profile:", e);
           }
-          
-          // ALWAYS hide login overlay if we have a valid token
-          hideLoginOverlay();
+
+          // Hide overlays immediately now that we know the session is valid
+          try { hideAuthCheckOverlay(); } catch (e) {}
+          try { hideLoginOverlay(); } catch (e) {}
+
           hydrateProfileUI();
           renderCalendar();
-          
+
           // Load appointments and preload availability
           loadUpcomingAppointments();
           if (!availabilityPreloaded) preloadAvailabilityInBackground();
-          
+
           return true;
         } else {
           // Token expired - clear it
-          localStorage.removeItem("rnr_id_token");
-          localStorage.removeItem("rnr_auth_token");
+          try { localStorage.removeItem("rnr_id_token"); } catch (e) {}
+          try { localStorage.removeItem("rnr_auth_token"); } catch (e) {}
         }
       }
-      
+
       // No valid auth - show login overlay and initialize Lock
+      try { hideAuthCheckOverlay(); } catch (e) {}
       showLoginOverlay();
       initAuth0Lock();
       return false;
@@ -2460,6 +3870,29 @@ if (selectedSlot && driveTime > 0) {
     // AUTH0 LOCK INITIALIZATION
     // =========================================================
     function initAuth0Lock() {
+      const containerEl = document.getElementById('auth0-lock-container');
+      // If a lock instance exists but the container was cleared (e.g., after logout),
+      // force a full re-init so the embed can render again.
+      if (lock) {
+        try {
+          const hasWidget = containerEl && containerEl.querySelector('.auth0-lock');
+          if (!hasWidget) {
+            try { lock.hide(); } catch (e) {}
+            lock = null;
+          } else {
+            lock.show();
+            return;
+          }
+        } catch (e) {
+          lock = null;
+        }
+      }
+      if (typeof Auth0Lock === 'undefined') {
+        showAuthError('Auth0 failed to load. Please disable ad-blockers for this site or refresh.');
+        console.error('Auth0Lock is undefined — lock.min.js did not load.');
+        return;
+      }
+
       lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
         container: 'auth0-lock-container',
         allowSignUp: false,
@@ -2617,7 +4050,9 @@ if (selectedSlot && driveTime > 0) {
       if (lock) {
         try { lock.hide(); } catch(e) {}
       }
-      
+      // Destroy lock instance so embedded container is re-bound correctly
+      lock = null;
+
       // Clear the container and reinitialize
       document.getElementById("auth0-lock-container").innerHTML = "";
       initAuth0Lock();
@@ -2633,6 +4068,10 @@ if (selectedSlot && driveTime > 0) {
         console.error("durationSelect not found");
         return;
       }
+
+      // Preserve any previously selected duration if it is still valid for the chosen treatment.
+      const prevDuration = Number(selectedStandardDuration) || null;
+
       durationSelect.innerHTML = "";
 
       const rule = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
@@ -2660,7 +4099,16 @@ if (selectedSlot && driveTime > 0) {
       });
 
       durationSelect.disabled = false;
-      selectedStandardDuration = null;
+
+      // If a duration was already selected (e.g., preloading), keep it if it remains valid.
+      if (prevDuration && rule.durations.includes(prevDuration)) {
+        selectedStandardDuration = prevDuration;
+        durationSelect.value = String(prevDuration);
+      } else {
+        selectedStandardDuration = null;
+        durationSelect.value = "";
+      }
+
       updateSummary();
     }
 
@@ -2712,12 +4160,17 @@ if (selectedSlot && driveTime > 0) {
 
         function parseAvailabilityResponse(data) {
       availabilityByDate = {};
-      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
-      dayApptsByDate = {};
+      availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0, baseToClientDriveTimeMinutes: 0 };
 
       if (!data) return;
 
-      // MOBILE FIX: Check multiple possible field names for metadata
+      // Unwrap common webhook wrappers if present
+      if (data && typeof data === "object") {
+        if (data.success === true && data.data && typeof data.data === "object") data = data.data;
+        if (data.body && typeof data.body === "object") data = data.body;
+      }
+
+// MOBILE FIX: Check multiple possible field names for metadata
       availabilityMeta.maxDriveTimeMinutes = Number(
         data.maxDriveTimeMinutes || data.max_drive_time_minutes ||
         data.driveTimeMinutes || data.drive_time_minutes || 0
@@ -2725,6 +4178,11 @@ if (selectedSlot && driveTime > 0) {
       availabilityMeta.effective_travel_buffer_minutes = Number(
         data.effective_travel_buffer_minutes || data.effectiveTravelBufferMinutes ||
         data.travel_buffer_minutes || data.travelBufferMinutes || 0
+      );
+
+      availabilityMeta.baseToClientDriveTimeMinutes = Number(
+        data.baseToClientDriveTimeMinutes || data.base_to_client_drive_time_minutes ||
+        data.baseToClientDriveTime || data.base_to_client_drive_time || 0
       );
 
       // Find dates array in response
@@ -2747,10 +4205,6 @@ if (selectedSlot && driveTime > 0) {
 
         var slots = day.slots || day.timeSlots || day.times || [];
         if (!Array.isArray(slots)) return;
-
-        // Preserve any per-day blocks/appointments if present (backend may include Cliniko unavailable blocks here)
-        var appts = day.appts || day.appointments || day.blocks || day.unavailableBlocks || day.unavailable_blocks || day.unavailable || [];
-        if (Array.isArray(appts)) dayApptsByDate[normalizedDate] = appts;
 
         availabilityByDate[normalizedDate] = slots;
       });
@@ -2776,12 +4230,13 @@ if (selectedSlot && driveTime > 0) {
           const cached = availabilityCache.get(cacheKey);
           parseAvailabilityResponse(cached);
           renderCalendar();
+          try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
           setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus("Availability loaded from cache for this month.", true);
           savePortalState();
           // Restore date selection (if any) after availability is loaded
           const s = loadPortalState();
-          if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr);
+          if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr, { userInitiated: false });
           return;
         }
 
@@ -2799,8 +4254,8 @@ if (selectedSlot && driveTime > 0) {
         const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
-
         renderCalendar();
+        try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
         setTimeout(ensureCalendarClickableAfterPreload, 60);
         updateAvailabilityStatus("Live availability loaded for this month.", true);
 
@@ -2819,8 +4274,12 @@ if (selectedSlot && driveTime > 0) {
     function renderCalendar() {
       const monthLabelEl = document.getElementById("calendar-month-label");
       const daysContainer = document.getElementById("calendar-days");
-
-      const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
+      if (!monthLabelEl || !daysContainer) {
+        // DOM not ready yet; try again next frame
+        requestAnimationFrame(() => renderCalendar());
+        return;
+      }
+const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", year: "numeric" });
       monthLabelEl.textContent = monthName;
 
       const year = calendarCurrent.getFullYear();
@@ -2846,7 +4305,7 @@ if (selectedSlot && driveTime > 0) {
         const dateStr = toDateStr(dayDate);
 
         const slots = availabilityByDate[dateStr] || [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); });
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
 
         const isPast = dateStr < todayStr;
         const isSelected = selectedDateStr === dateStr;
@@ -2863,7 +4322,7 @@ if (selectedSlot && driveTime > 0) {
           cell.classList.add("calendar-day-available");
           if (isToday) cell.classList.add("calendar-day-today");
           if (isSelected) cell.classList.add("calendar-day-selected");
-          cell.addEventListener("click", () => selectDate(dateStr));
+          cell.addEventListener("click", () => selectDate(dateStr, { userInitiated: true }));
         }
 
         cell.textContent = String(day);
@@ -2904,18 +4363,35 @@ if (selectedSlot && driveTime > 0) {
       }
     }
 
-    function selectDate(dateStr) {
-      selectedDateStr = dateStr;
+    function selectDate(dateStr, opts) {
+      const options = opts && typeof opts === 'object' ? opts : {};
+      const userInitiated = options.userInitiated !== false; // default true
+
+      const norm = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      selectedDateStr = norm;
       selectedSlot = null;
+
+      const mobile = (typeof isMobileUI === 'function' && isMobileUI());
+
+      // On mobile: only open the picker + render times when the user explicitly clicks a date.
+      if (mobile && userInitiated) {
+        try { openMobileTimesOverlay(); } catch (e) {}
+      }
+
       renderCalendar();
       updateSummary();
+      updateBookingStepper();
       savePortalState();
 
-      document.getElementById("selected-date-info").classList.remove("hidden");
-      document.getElementById("selected-date-display").textContent = formatDatePretty(dateStr);
+      // Do not auto-expand the time list / modal from restored state or programmatic selection.
+      if (!userInitiated) return;
 
-      loadTimeSlots(dateStr);
+      document.getElementById("selected-date-info").classList.remove("hidden");
+      document.getElementById("selected-date-display").textContent = formatDatePretty(norm);
+
+      loadTimeSlots(norm);
     }
+
 
     function loadTimeSlots(dateStr) {
       const container = document.getElementById("time-slots-container");
@@ -2925,29 +4401,21 @@ if (selectedSlot && driveTime > 0) {
       container.classList.remove("hidden");
       grid.innerHTML = "";
 
-      const slots = availabilityByDate[dateStr] || [];
+      const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      const slots = availabilityByDate[key] || [];
       const usable = Array.isArray(slots) ? slots : [];
 
-      // UI-only: constrain visible slots to the current operating window
-      const filtered = usable.filter(s => slotPassesUiWindow(dateStr, s));
-
-      if (!filtered.length) {
+      if (!usable.length) {
         noSlots.classList.remove("hidden");
         container.classList.add("hidden");
         return;
       }
 
-      filtered.sort((a,b) => {
-        const am = getTorontoMinutesFromSlot(a);
-        const bm = getTorontoMinutesFromSlot(b);
-        const ak = (am === null ? 99999 : am);
-        const bk = (bm === null ? 99999 : bm);
-        return ak - bk;
-      });
+      usable.sort((a,b) => getSlotStartMs(a) - getSlotStartMs(b));
 
       let anyAvailable = false;
 
-      filtered.forEach(slot => {
+      usable.forEach(slot => {
         const btn = document.createElement("button");
         // Persistable slot identifiers for refresh recovery
         try {
@@ -2956,28 +4424,62 @@ if (selectedSlot && driveTime > 0) {
         } catch (e) {}
         btn.type = "button";
         // Base class: we add 'time-slot-btn' and specific styles for available/booked below
-        btn.className = "time-slot-btn px-1 py-2 flex items-center justify-center w-full rounded-lg border";
+        btn.className = "time-slot-btn w-full rounded-lg border";
         
-        // Clean label: strip EST, (Booked)
-        const labelRaw = formatTimeLabel(slot); 
-        // formatTimeLabel returns lower case.
-        const labelClean = labelRaw.replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+        // Mobile gets compact numeric labels; desktop keeps existing label normalization.
+        let labelClean = "—";
+        if (typeof isMobileUI === 'function' && isMobileUI()) {
+          labelClean = formatTimeLabelCompact(slot);
+        } else {
+          const labelRaw = formatTimeLabel(slot);
+          labelClean = String(labelRaw).replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+        }
 
         if (isSlotAvailable(slot)) {
           btn.classList.add("border-brand-gold/30", "bg-black/40", "text-brand-light", "hover:bg-brand-gold/15", "hover:border-brand-gold");
+          if (typeof isMobileUI === 'function' && isMobileUI()) {
+          const p = formatTimeLabelCompactParts(slot);
+          btn.innerHTML = `<span class="time-main whitespace-nowrap">${p.time}</span>` + (p.ampm ? `<span class="time-ampm uppercase whitespace-nowrap">${p.ampm}</span>` : '');
+        } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap">${labelClean}</span>`;
+        }
           anyAvailable = true;
           btn.addEventListener("click", () => selectTimeSlot(slot, btn));
         } else {
           btn.classList.add("border-white/5", "bg-white/5", "text-white/30", "cursor-not-allowed", "opacity-50");
+          if (typeof isMobileUI === 'function' && isMobileUI()) {
+          const p = formatTimeLabelCompactParts(slot);
+          const inner = `<span class="time-main whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${p.time}</span>` + (p.ampm ? `<span class="time-ampm uppercase whitespace-nowrap">${p.ampm}</span>` : '');
+          btn.innerHTML = inner;
+        } else {
           btn.innerHTML = `<span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${labelClean}</span>`;
+        }
           btn.disabled = true;
         }
 
         grid.appendChild(btn);
       });
 
-      noSlots.classList.toggle("hidden", anyAvailable);
+      if (!anyAvailable) {
+        noSlots.classList.remove("hidden");
+        noSlots.innerHTML = `
+          <div class="flex items-start gap-3">
+            <i data-lucide="calendar-x" class="w-5 h-5 text-amber-400 mt-0.5"></i>
+            <div class="flex-1">
+              <div class="font-bold text-brand-light">Fully Booked</div>
+              <div class="muted mt-1 text-sm">This day has no available slots.</div>
+              <button onclick="showWaitlistModal('${dateStr}')" class="btn-outline text-xs mt-3">
+                <i data-lucide="bell" class="w-3 h-3"></i>
+                Join Waitlist
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        noSlots.classList.add("hidden");
+        noSlots.innerHTML = "";
+      }
+
       container.classList.toggle("hidden", !anyAvailable);
 
       if (typeof lucide !== "undefined") lucide.createIcons();
@@ -2990,6 +4492,8 @@ if (selectedSlot && driveTime > 0) {
       btnElement.classList.add("time-slot-selected");
 
       updateSummary();
+      updateBookingStepper();
+      savePortalState();
     }
 
     function prevMonth() {
@@ -3008,6 +4512,7 @@ if (selectedSlot && driveTime > 0) {
     // BOOKING CONFIRMATION
     // =========================================================
     async function confirmBooking() {
+      try { closeMobileTimesOverlay(); } catch (e) {}
       if (!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot)) {
         showToast("Missing info", "Please select a treatment, duration, date, and time.", true);
         return;
@@ -3065,7 +4570,7 @@ if (selectedSlot && driveTime > 0) {
         const result = await res.json().catch(() => ({}));
 
         // Show success in modal
-        hideBookingModal(true);
+        hideBookingModal(true, null, portalProfile?.email || null);
 
         console.log("Booking confirmed:", result);
 
@@ -3116,6 +4621,9 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
+
+      applySavedTheme();
+      initOfflineBanner();
 
       // Mobile menu (portal navigation)
       const mm = document.getElementById("mobile-menu");
@@ -3180,7 +4688,64 @@ if (selectedSlot && driveTime > 0) {
         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
         (window.navigator && window.navigator.standalone === true);
 
-      const refreshInstallButtons = () => {
+      // Install prompt modal helpers
+      function maybeShowInstallPromptModal(force) {
+        try {
+          if (isStandalone()) return;
+          if (!deferredInstallPrompt) return;
+
+          const key = "rnr_install_prompt_dismissed_at";
+          const last = Number(localStorage.getItem(key) || 0);
+          const now = Date.now();
+          const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+          if (!force && last && (now - last) < sevenDays) return;
+
+          const modal = document.getElementById("install-prompt-modal");
+          if (!modal) return;
+          modal.classList.remove("hidden");
+          lockBodyScroll();
+          try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+        } catch (e) {}
+      }
+
+      function closeInstallPromptModal(setCooldown) {
+        const modal = document.getElementById("install-prompt-modal");
+        if (!modal) return;
+        modal.classList.add("hidden");
+        unlockBodyScroll();
+        if (setCooldown) {
+          try { localStorage.setItem("rnr_install_prompt_dismissed_at", String(Date.now())); } catch (e) {}
+        }
+      }
+
+      async function triggerInstallPrompt() {
+        try {
+          if (isStandalone()) return;
+          if (!deferredInstallPrompt) {
+            const dbg = document.getElementById("install-prompt-debug");
+            if (dbg) {
+              dbg.classList.remove("hidden");
+              dbg.textContent = (!window.isSecureContext)
+                ? "Install requires HTTPS. Open this page using https:// and refresh."
+                : "Install isn’t available yet. Ensure /manifest.json and /sw.js are deployed and refresh.";
+            } else {
+              showToast("Install not available", (!window.isSecureContext) ? "Use https:// then refresh." : "Ensure manifest + service worker are deployed, then refresh.", true, 6500);
+            }
+            return;
+          }
+
+          deferredInstallPrompt.prompt();
+          try { await deferredInstallPrompt.userChoice; } catch (e) {}
+          deferredInstallPrompt = null;
+          refreshInstallButtons();
+          closeInstallPromptModal(true);
+        } catch (e) {
+          closeInstallPromptModal(true);
+        }
+      }
+
+const refreshInstallButtons = () => {
         // If already installed as an app, hide install UI
         if (isStandalone()) {
           installBtn?.classList.add("hidden");
@@ -3202,6 +4767,8 @@ if (selectedSlot && driveTime > 0) {
         try { e.preventDefault(); } catch (err) {}
         deferredInstallPrompt = e;
         refreshInstallButtons();
+        // Show our own in-app prompt (browser prompt requires a user gesture)
+        setTimeout(() => maybeShowInstallPromptModal(false), 800);
       });
 
       // Initial state
@@ -3210,6 +4777,11 @@ if (selectedSlot && driveTime > 0) {
       installBtn?.addEventListener("click", async () => {
         try {
           if (isStandalone()) return;
+
+          if (!window.isSecureContext) {
+            showToast("Install requires HTTPS", "Open this page using https:// and refresh.", true, 6500);
+            return;
+          }
 
           if (deferredInstallPrompt) {
             deferredInstallPrompt.prompt();
@@ -3253,6 +4825,7 @@ if (selectedSlot && driveTime > 0) {
       // Treatment selection
       treatmentSelect.addEventListener("change", () => {
         selectedServiceKey = treatmentSelect.value || null;
+        selectedStandardDuration = null;
         rebuildDurationOptions();
 
         availabilityByDate = {};
@@ -3306,5 +4879,125 @@ if (selectedSlot && driveTime > 0) {
     // Run on DOM ready
     document.addEventListener("DOMContentLoaded", init);
   </script>
+  <!-- Cancel Appointment Modal -->
+  <div id="cancel-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Cancel appointment</div>
+          <div class="muted text-sm mt-1" id="cancel-modal-datetime">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeCancelModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="muted text-sm mb-4">
+        Free cancellation until 12 hours before your appointment.
+      </div>
+
+      <textarea id="cancel-reason" class="input w-full" rows="3" placeholder="Optional: reason for cancelling"></textarea>
+
+      <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
+        <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
+        <div class="muted text-sm">
+          You can’t cancel instantly in the portal. Submit a request and we’ll contact you shortly.
+        </div>
+        <button class="btn-outline text-xs mt-3" onclick="submitUnder12HourCancellationRequest()">
+          <i data-lucide="send" class="w-3 h-3"></i>
+          Request cancellation
+        </button>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-danger flex-1" onclick="confirmCancelAppointment()">Confirm cancel</button>
+        <button class="btn-outline flex-1" onclick="closeCancelModal()">Keep appointment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waitlist Modal -->
+  <div id="waitlist-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Join the waitlist</div>
+          <div class="muted text-sm mt-1" id="waitlist-date-label">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeWaitlistModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="muted text-sm mb-4">
+        If a spot opens up, we’ll notify you.
+      </div>
+
+      <textarea id="waitlist-notes" class="input w-full" rows="3" placeholder="Optional: preferences (time of day, notes)"></textarea>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-filled flex-1" onclick="submitWaitlist()">Join Waitlist</button>
+        <button class="btn-outline flex-1" onclick="closeWaitlistModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt / Invoice Modal -->
+  <div id="invoice-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div class="font-serif text-xl text-brand-light">Receipt</div>
+          <div class="muted text-sm mt-1" id="invoice-modal-subtitle">—</div>
+        </div>
+        <button class="btn-outline px-3 py-2" onclick="closeInvoiceModal()">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="invoice-modal-body" class="text-sm">
+        <div class="muted">Loading…</div>
+      </div>
+
+      <div class="flex gap-3 mt-5">
+        <button class="btn-outline flex-1" onclick="closeInvoiceModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PWA SW registration (v4)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+
+          // If there's a waiting worker, trigger it to activate immediately
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            if (!sw) return;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version installed; activate ASAP
+                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // Reload once to get the latest HTML/JS
+            window.location.reload();
+          });
+        } catch (e) {
+          console.warn('Service worker registration failed:', e);
+        }
+      });
+    }
+  </script>
+
 </body>
 </html>
