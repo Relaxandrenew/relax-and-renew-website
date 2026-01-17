@@ -3197,28 +3197,54 @@ function computeMonthRange(date) {
 
     function hasClosingUnavailableBlock(dateStr) {
       try {
-        const appts = dayApptsByDate && dayApptsByDate[dateStr];
-        if (!Array.isArray(appts) || appts.length === 0) return false;
-
         const OPEN_MIN = 11 * 60;
         const CLOSE_NON_SUN_MIN = 20 * 60;
         const CLOSE_SUN_MIN = 17 * 60;
         const closeMin = isSundayToronto(dateStr) ? CLOSE_SUN_MIN : CLOSE_NON_SUN_MIN;
 
-        for (const a of appts) {
-          if (!a) continue;
-          const kind = String(a.kind || a.type || a.category || '').toLowerCase();
-          if (!(kind.includes('unavailable') || kind.includes('block'))) continue;
+        // Primary: use raw Cliniko unavailable blocks/appointments if present in the availability response.
+        const appts = dayApptsByDate && dayApptsByDate[dateStr];
+        if (Array.isArray(appts) && appts.length) {
+          for (const a of appts) {
+            if (!a) continue;
+            const kind = String(a.kind || a.type || a.category || '').toLowerCase();
+            if (!(kind.includes('unavailable') || kind.includes('block'))) continue;
 
-          const startIso = a.start || a.starts_at || a.startsAt || a.begin || a.begins_at || a.beginsAt || null;
-          const endIso   = a.end   || a.ends_at   || a.endsAt   || a.finish || a.finishes_at || a.finishesAt || null;
+            const startIso = a.start || a.starts_at || a.startsAt || a.begin || a.begins_at || a.beginsAt || null;
+            const endIso   = a.end   || a.ends_at   || a.endsAt   || a.finish || a.finishes_at || a.finishesAt || null;
 
-          const startMin = startIso ? getTorontoMinutesFromSlot({ start: startIso }) : null;
-          const endMin   = endIso   ? getTorontoMinutesFromSlot({ start: endIso })   : null;
+            const startMin = startIso ? getTorontoMinutesFromSlot({ start: startIso }) : null;
+            const endMin   = endIso   ? getTorontoMinutesFromSlot({ start: endIso })   : null;
 
-          if (startMin === null || endMin === null) continue;
-          if (startMin <= OPEN_MIN && endMin === closeMin) return true;
+            if (startMin === null || endMin === null) continue;
+            if (startMin <= OPEN_MIN && endMin === closeMin) return true;
+          }
+          return false;
         }
+
+        // Fallback (defensive): if blocks are not provided, infer a "blocked-through-close" day from slots.
+        // This only triggers when the final start-time slot exists and is available, but essentially every
+        // other slot from opening up to (close - interval) is unavailable/booked.
+        const slots = availabilityByDate && availabilityByDate[dateStr];
+        if (!Array.isArray(slots) || !slots.length) return false;
+
+        const inWindow = slots.filter(s => {
+          const m = getTorontoMinutesFromSlot(s);
+          return (m !== null) && (m >= OPEN_MIN) && (m <= closeMin);
+        });
+        if (!inWindow.length) return false;
+
+        // Find boundary slot (at closeMin)
+        const boundary = inWindow.find(s => getTorontoMinutesFromSlot(s) === closeMin);
+        if (!boundary) return false;
+        if (!isSlotAvailable(boundary)) return false;
+
+        const nonBoundary = inWindow.filter(s => getTorontoMinutesFromSlot(s) !== closeMin);
+        // Require a meaningful sample size to reduce false positives.
+        if (nonBoundary.length < 12) return false;
+
+        const allBlocked = nonBoundary.every(s => !isSlotAvailable(s));
+        return allBlocked;
       } catch (e) {}
       return false;
     }
