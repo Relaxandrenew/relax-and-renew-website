@@ -1979,8 +1979,15 @@ function fillAddressFromPlace(place) {
             const d = new Date(slot.start);
             if (isNaN(d.getTime())) return true;
             const h = d.getHours();
+            const min = d.getMinutes();
+            const dow = d.getDay();
             // Hide 10:00 AM hour and anything earlier (start time is 11:00 AM)
             if (h < 11) return false;
+            // Sundays: cap display at 5:00 PM (do not show 5:15, 5:30, 5:45, or 6:00)
+            if (dow === 0) {
+                if (h > 17) return false;
+                if (h === 17 && min > 0) return false;
+            }
             // Hide 6:00 PM hour entirely
             if (h === 18) return false;
             return true;

@@ -1533,7 +1533,63 @@ function computeMonthRange(date) {
       return "—";
     }
 
-    function formatDatePretty(dateStr) {
+
+    
+    // UI-ONLY TIME WINDOW (Cassandra current availability display)
+    // - Hide any slots before 11:00 AM
+    // - Hide 6:00 PM and later on all days
+    // - On Sundays, hide anything after 5:00 PM (no 5:15/5:30/5:45/6:00)
+    function getTorontoMinutesFromSlot(slot) {
+      try {
+        if (!slot || !slot.start) return null;
+        const d = new Date(slot.start);
+        if (isNaN(d.getTime())) return null;
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Toronto'
+        }).formatToParts(d);
+        let hh = 0, mm = 0;
+        for (const p of parts) {
+          if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
+          if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
+        }
+        return (hh * 60) + mm;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function isSundayToronto(dateStr) {
+      try {
+        const m = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return false;
+        const y = Number(m[1]);
+        const mo = Number(m[2]) - 1;
+        const d = Number(m[3]);
+        const dt = new Date(Date.UTC(y, mo, d, 12, 0, 0));
+        const wd = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/Toronto' }).format(dt);
+        return wd === 'Sun';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function slotPassesUiWindow(dateStr, slot) {
+      const mins = getTorontoMinutesFromSlot(slot);
+      // If we cannot parse, do not hide (display-only rule).
+      if (mins === null) return true;
+
+      const START_MIN = 11 * 60;   // 11:00
+      const END_NON_SUN = 18 * 60; // 18:00 (do not show 6:00 PM or later)
+      const END_SUN = 17 * 60;     // 17:00 (cap Sunday to 5:00 PM)
+
+      if (mins < START_MIN) return false;
+      if (isSundayToronto(dateStr)) return mins <= END_SUN;
+      return mins < END_NON_SUN;
+    }
+function formatDatePretty(dateStr) {
       const [y,m,d] = dateStr.split("-").map(Number);
       const dt = new Date(y, m-1, d);
       return dt.toLocaleDateString("en-CA", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
@@ -2665,7 +2721,7 @@ if (selectedSlot && driveTime > 0) {
         const dateStr = toDateStr(dayDate);
 
         const slots = availabilityByDate[dateStr] || [];
-        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s); });
+        const hasAnyAvailable = Array.isArray(slots) && slots.some(function(s) { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); });
 
         const isPast = dateStr < todayStr;
         const isSelected = selectedDateStr === dateStr;
@@ -2747,17 +2803,20 @@ if (selectedSlot && driveTime > 0) {
       const slots = availabilityByDate[dateStr] || [];
       const usable = Array.isArray(slots) ? slots : [];
 
-      if (!usable.length) {
+      // UI-only: constrain visible slots to the current operating window
+      const filtered = usable.filter(s => slotPassesUiWindow(dateStr, s));
+
+      if (!filtered.length) {
         noSlots.classList.remove("hidden");
         container.classList.add("hidden");
         return;
       }
 
-      usable.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      filtered.sort((a,b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
       let anyAvailable = false;
 
-      usable.forEach(slot => {
+      filtered.forEach(slot => {
         const btn = document.createElement("button");
         // Persistable slot identifiers for refresh recovery
         try {
