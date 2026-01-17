@@ -1972,15 +1972,31 @@ function fillAddressFromPlace(place) {
             console.error('❌ Could not parse availability data structure');
         }
 
+        function isSlotVisible(slot) {
+            // UI-only filter: Cassandra start time is 11:00 AM; do not show 6:00 PM at all.
+            // This does NOT alter backend logic; it only controls what the UI displays/enables.
+            if (!slot || !slot.start) return true;
+            const d = new Date(slot.start);
+            if (isNaN(d.getTime())) return true;
+            const h = d.getHours();
+            // Hide 10:00 AM hour and anything earlier (start time is 11:00 AM)
+            if (h < 11) return false;
+            // Hide 6:00 PM hour entirely
+            if (h === 18) return false;
+            return true;
+        }
+
         function hasSlots(dateStr) {
-            return Array.isArray(availabilityByDate[dateStr]) && availabilityByDate[dateStr].length > 0;
+            const slots = availabilityByDate[dateStr];
+            if (!Array.isArray(slots) || slots.length === 0) return false;
+            return slots.some(s => isSlotVisible(s));
         }
 
         // True when at least one slot is actually bookable (available !== false)
         function hasAnyAvailableSlot(dateStr) {
             const slots = availabilityByDate[dateStr];
             if (!Array.isArray(slots) || slots.length === 0) return false;
-            return slots.some(s => s && s.available !== false);
+            return slots.some(s => isSlotVisible(s) && s && s.available !== false);
         }
 
         function updateAvailabilityStatus(message, isError = false) {
@@ -2136,7 +2152,7 @@ function fillAddressFromPlace(place) {
                 ? `<span class="text-base">${treat.label} • ${selectedStandardDuration} min</span> • <span class="text-brand-gold font-bold text-lg">$${price.base}+HST</span> <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`
                 : '';
 
-            const daySlots = availabilityByDate[dateStr] || [];
+            const daySlots = (availabilityByDate[dateStr] || []).filter(isSlotVisible);
             container.innerHTML = '';
 
             // Show therapist badge if the day has any slots (even if all are booked)
@@ -2155,7 +2171,7 @@ function fillAddressFromPlace(place) {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
 
-                if (hour >= 10 && hour < 12) timeGroups.morning.slots.push(slot);
+                if (hour >= 11 && hour < 12) timeGroups.morning.slots.push(slot);
                 else if (hour >= 12 && hour < 16) timeGroups.afternoon.slots.push(slot);
                 else if (hour >= 16 && hour <= 20) timeGroups.evening.slots.push(slot);
             });
