@@ -1364,8 +1364,24 @@ function mobileConfirmBooking() {
     window.mobileFinalConfirm = mobileFinalConfirm;
     window.setMobileOverlayStep = setMobileOverlayStep;
 
+    // Therapist configuration (future-proofed for multiple practitioners)
+    // Add new therapists here as you hire them.
+    // IMPORTANT: 'id' must be the Cliniko Practitioner ID used by your n8n workflows.
+    const THERAPISTS = [
+      {
+        key: "cassandra",
+        id: "1834304626376050851",
+        shortName: "Cassandra S.",
+        fullName: "Cassandra Simpson",
+        title: "Registered Massage Therapist",
+        avatarUrl: "https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg",
+        active: true,
+      },
+      // Example:
+      // { key: "newtherapist", id: "CLINIKO_PRACTITIONER_ID", shortName: "First L.", fullName: "First Last", title: "Registered Massage Therapist", avatarUrl: "/path/to/photo.jpg", active: true },
+    ];
 
-    const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
+    const DEFAULT_PRACTITIONER_ID = THERAPISTS[0]?.id || "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
     const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
     
@@ -1998,6 +2014,10 @@ function mobileConfirmBooking() {
                     <p class="muted mt-2 text-sm">Choose a treatment and duration to load availability.</p>
                   </div>
                   <div class="flex flex-col gap-3 w-full md:w-72">
+                    <select id="therapist-select" class="input w-full">
+                      <option value="">Select therapist…</option>
+                    </select>
+
                     <select id="treatment-select" class="input w-full">
                       <option value="">Select treatment…</option>
                       <option value="relaxation">Relaxation Massage</option>
@@ -2114,12 +2134,11 @@ function mobileConfirmBooking() {
                     <div class="muted mt-0 text-xs" id="summary-drive-time">—</div>
                   </div>
                 
-              <div class="therapist-card mt-3">
-                <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
-                     alt="Cassandra S." class="therapist-avatar">
+              <div class="therapist-card mt-3" id="therapist-card">
+                <img id="therapist-avatar" src="" alt="Therapist" class="therapist-avatar">
                 <div class="therapist-info">
-                  <div class="therapist-name">Cassandra S.</div>
-                  <div class="therapist-title">Registered Massage Therapist</div>
+                  <div class="therapist-name" id="therapist-name">—</div>
+                  <div class="therapist-title" id="therapist-title">—</div>
                 </div>
               </div>
 
@@ -2356,6 +2375,15 @@ function mobileConfirmBooking() {
 
     let treatmentSelect = null;
     let durationSelect = null;
+    let therapistSelect = null;
+
+    // Selected practitioner (therapist) for availability + booking
+    let selectedPractitionerId = DEFAULT_PRACTITIONER_ID;
+    let selectedTherapistKey = THERAPISTS[0]?.key || null;
+
+    function getSelectedPractitionerId() {
+      return selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
+    }
 
     let selectedServiceKey = null;
     let selectedStandardDuration = null;
@@ -3295,11 +3323,38 @@ function computeMonthRange(date) {
       btn.classList.toggle("btn-disabled", !enabled);
     }
 
-    function updateSummary() {
+    function getSelectedTherapistMeta() {
+      try {
+        const list = Array.isArray(THERAPISTS) ? THERAPISTS : [];
+        const active = list.filter(t => t && t.active);
+        const id = selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
+        return active.find(t => t.id === id) || list.find(t => t.id === id) || active[0] || list[0] || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function updateTherapistCard() {
+      const meta = getSelectedTherapistMeta();
+      const img = document.getElementById('therapist-avatar');
+      const name = document.getElementById('therapist-name');
+      const title = document.getElementById('therapist-title');
+      if (img) {
+        img.src = meta?.avatarUrl || "";
+        img.alt = meta?.shortName || meta?.fullName || "Therapist";
+      }
+      if (name) name.textContent = meta?.shortName || meta?.fullName || "—";
+      if (title) title.textContent = meta?.title || "—";
+    }
+
+function updateSummary() {
       document.getElementById("summary-client").textContent = portalProfile
         ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() || "—"
         : "—";
       document.getElementById("summary-email").textContent = portalProfile?.email || "—";
+
+      // Keep therapist card in sync
+      try { updateTherapistCard(); } catch (e) {}
 
       const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
       if (treat && selectedStandardDuration) {
@@ -3990,7 +4045,7 @@ if (selectedSlot && driveTime > 0) {
         standardDurationMinutes: preloadDuration,
         blockDurationMinutes: blockMinutes,
         slotIntervalMinutes: 15,
-        practitionerId: DEFAULT_PRACTITIONER_ID,
+        practitionerId: getSelectedPractitionerId(),
         travel_time_buffer_minutes: 0
       };
 
@@ -4381,7 +4436,7 @@ if (selectedSlot && driveTime > 0) {
         standardDurationMinutes: Number(selectedStandardDuration),
         blockDurationMinutes: Number(blockMinutes),
         slotIntervalMinutes: 15,
-        practitionerId: DEFAULT_PRACTITIONER_ID,
+        practitionerId: getSelectedPractitionerId(),
         travel_time_buffer_minutes: 0
       };
     }
@@ -4787,6 +4842,9 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         standardDurationMinutes: Number(selectedStandardDuration),
         participants: 1,
         participant_count: 1,
+        practitionerId: getSelectedPractitionerId(),
+        therapist_key: (getSelectedTherapistMeta()?.key || selectedTherapistKey || null),
+        therapist_name: (getSelectedTherapistMeta()?.name || getSelectedTherapistMeta()?.fullName || null),
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
         date: selectedDateStr,
@@ -5057,6 +5115,33 @@ const refreshInstallButtons = () => {
 // Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
+      therapistSelect = document.getElementById("therapist-select");
+
+      // Populate therapist selection (future-proof for multiple therapists)
+      try {
+        if (therapistSelect) {
+          therapistSelect.innerHTML = '';
+          const activeTherapists = (Array.isArray(THERAPISTS) ? THERAPISTS.filter(t => t && t.active) : []);
+          if (!activeTherapists.length) {
+            const opt = document.createElement('option');
+            opt.value = DEFAULT_PRACTITIONER_ID;
+            opt.textContent = 'Default';
+            therapistSelect.appendChild(opt);
+          } else {
+            for (const t of activeTherapists) {
+              const opt = document.createElement('option');
+              opt.value = t.id;
+              opt.textContent = t.fullName || t.shortName || t.id;
+              therapistSelect.appendChild(opt);
+            }
+          }
+          // Default selection
+          therapistSelect.value = selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
+        }
+      } catch (e) { console.warn('therapistSelect init error', e); }
+
+      // Initial therapist card render
+      try { updateTherapistCard(); } catch (e) {}
 
       // Tabs
       document.querySelectorAll(".sidebar-btn").forEach(btn => {
@@ -5109,6 +5194,31 @@ const refreshInstallButtons = () => {
         updateSummary();
         savePortalState();
       });
+
+
+      // Therapist selection
+      if (therapistSelect) {
+        therapistSelect.addEventListener("change", () => {
+          selectedPractitionerId = therapistSelect.value || DEFAULT_PRACTITIONER_ID;
+          const meta = getSelectedTherapistMeta();
+          selectedTherapistKey = meta?.key || null;
+
+          // Reset availability + selection, then reload if treatment + duration are already chosen
+          availabilityByDate = {};
+          availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
+          availabilityPreloaded = false;
+          clearSelectionUI();
+          renderCalendar();
+          updateTherapistCard();
+          updateSummary();
+
+          if (selectedServiceKey && selectedStandardDuration) {
+            maybeLoadAvailabilityForCurrentMonth();
+          } else {
+            updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+          }
+        });
+      }
 
       // Confirm booking
       document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
