@@ -831,7 +831,15 @@
     // CONFIG
     // =========================================================
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
-    const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
+    // Availability endpoints
+// - New (Workflows Part 1/2): shared schedule cache API
+// - Old: legacy availability+travel gate
+const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
+const AVAILABILITY_GATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
+
+// Default: use the NEW schedule-cache API first, then fall back to the legacy gate if needed.
+const PREFER_SCHEDULE_CACHE = true;
+
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
     const CANCEL_WEBHOOK_URL        = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
@@ -1364,24 +1372,8 @@ function mobileConfirmBooking() {
     window.mobileFinalConfirm = mobileFinalConfirm;
     window.setMobileOverlayStep = setMobileOverlayStep;
 
-    // Therapist configuration (future-proofed for multiple practitioners)
-    // Add new therapists here as you hire them.
-    // IMPORTANT: 'id' must be the Cliniko Practitioner ID used by your n8n workflows.
-    const THERAPISTS = [
-      {
-        key: "cassandra",
-        id: "1834304626376050851",
-        shortName: "Cassandra S.",
-        fullName: "Cassandra Simpson",
-        title: "Registered Massage Therapist",
-        avatarUrl: "https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg",
-        active: true,
-      },
-      // Example:
-      // { key: "newtherapist", id: "CLINIKO_PRACTITIONER_ID", shortName: "First L.", fullName: "First Last", title: "Registered Massage Therapist", avatarUrl: "/path/to/photo.jpg", active: true },
-    ];
 
-    const DEFAULT_PRACTITIONER_ID = THERAPISTS[0]?.id || "1834304626376050851";
+    const DEFAULT_PRACTITIONER_ID  = "1834304626376050851";
     const STATIC_SETUP_MINUTES = 25;
     const TRAVEL_FEE_THRESHOLD_MINUTES = 36; // Fee applies when drive time meets or exceeds this
     
@@ -2014,10 +2006,6 @@ function mobileConfirmBooking() {
                     <p class="muted mt-2 text-sm">Choose a treatment and duration to load availability.</p>
                   </div>
                   <div class="flex flex-col gap-3 w-full md:w-72">
-                    <select id="therapist-select" class="input w-full">
-                      <option value="">Select therapist…</option>
-                    </select>
-
                     <select id="treatment-select" class="input w-full">
                       <option value="">Select treatment…</option>
                       <option value="relaxation">Relaxation Massage</option>
@@ -2134,11 +2122,12 @@ function mobileConfirmBooking() {
                     <div class="muted mt-0 text-xs" id="summary-drive-time">—</div>
                   </div>
                 
-              <div class="therapist-card mt-3" id="therapist-card">
-                <img id="therapist-avatar" src="" alt="Therapist" class="therapist-avatar">
+              <div class="therapist-card mt-3">
+                <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
+                     alt="Cassandra S." class="therapist-avatar">
                 <div class="therapist-info">
-                  <div class="therapist-name" id="therapist-name">—</div>
-                  <div class="therapist-title" id="therapist-title">—</div>
+                  <div class="therapist-name">Cassandra S.</div>
+                  <div class="therapist-title">Registered Massage Therapist</div>
                 </div>
               </div>
 
@@ -2375,15 +2364,6 @@ function mobileConfirmBooking() {
 
     let treatmentSelect = null;
     let durationSelect = null;
-    let therapistSelect = null;
-
-    // Selected practitioner (therapist) for availability + booking
-    let selectedPractitionerId = DEFAULT_PRACTITIONER_ID;
-    let selectedTherapistKey = THERAPISTS[0]?.key || null;
-
-    function getSelectedPractitionerId() {
-      return selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
-    }
 
     let selectedServiceKey = null;
     let selectedStandardDuration = null;
@@ -3323,38 +3303,11 @@ function computeMonthRange(date) {
       btn.classList.toggle("btn-disabled", !enabled);
     }
 
-    function getSelectedTherapistMeta() {
-      try {
-        const list = Array.isArray(THERAPISTS) ? THERAPISTS : [];
-        const active = list.filter(t => t && t.active);
-        const id = selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
-        return active.find(t => t.id === id) || list.find(t => t.id === id) || active[0] || list[0] || null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function updateTherapistCard() {
-      const meta = getSelectedTherapistMeta();
-      const img = document.getElementById('therapist-avatar');
-      const name = document.getElementById('therapist-name');
-      const title = document.getElementById('therapist-title');
-      if (img) {
-        img.src = meta?.avatarUrl || "";
-        img.alt = meta?.shortName || meta?.fullName || "Therapist";
-      }
-      if (name) name.textContent = meta?.shortName || meta?.fullName || "—";
-      if (title) title.textContent = meta?.title || "—";
-    }
-
-function updateSummary() {
+    function updateSummary() {
       document.getElementById("summary-client").textContent = portalProfile
         ? `${portalProfile.firstName || ""} ${portalProfile.lastName || ""}`.trim() || "—"
         : "—";
       document.getElementById("summary-email").textContent = portalProfile?.email || "—";
-
-      // Keep therapist card in sync
-      try { updateTherapistCard(); } catch (e) {}
 
       const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
       if (treat && selectedStandardDuration) {
@@ -4045,7 +3998,7 @@ if (selectedSlot && driveTime > 0) {
         standardDurationMinutes: preloadDuration,
         blockDurationMinutes: blockMinutes,
         slotIntervalMinutes: 15,
-        practitionerId: getSelectedPractitionerId(),
+        practitionerId: DEFAULT_PRACTITIONER_ID,
         travel_time_buffer_minutes: 0
       };
 
@@ -4053,41 +4006,21 @@ if (selectedSlot && driveTime > 0) {
       // Ensure the calendar loading bar appears for the initial preload as well.
       // (Previously it only showed for month nav / duration change.)
       try { setCalendarLoading(true); } catch (e) {}
-
       try {
-        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        const data = await fetchAvailabilityGateway(payload, { preferScheduleCache: true });
 
-        if (res.ok) {
-          const data = await res.json();
-          const cacheKey = getRequestCacheKey(payload);
-          availabilityCache.set(cacheKey, data);
-          parseAvailabilityResponse(data);
+        const cacheKey = getRequestCacheKey(payload);
+        availabilityCache.set(cacheKey, data);
+        parseAvailabilityResponse(data);
 
-          // If backend returned no usable dates, do not claim "loaded"
-          const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
-          if (!hasDates) {
-            availabilityPreloaded = false;
-            renderCalendar();
-            updateAvailabilityStatus("Availability returned no dates for this month. Try a different duration or verify your address in Profile.", false);
-            showToast("No availability", "No open slots were returned. Try another duration or month.", true, 6500);
-            return;
-          }
-
-          availabilityPreloaded = true;
-
-          renderCalendar();
-          setTimeout(ensureCalendarClickableAfterPreload, 60);
-          updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
-          updateSummary();
-          console.log("Availability preloaded successfully");
-        } else {
-          console.warn("Preload failed:", res.status);
-          updateAvailabilityStatus("Select treatment and duration to load availability.", false);
+        // Determine if this actually produced usable availability.
+        const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+        if (!hasDates) {
+          console.warn('[Availability] Preload did not produce any availability dates.');
         }
+
+        availabilityPreloaded = true;
+        console.log('[Availability] Preloaded successfully');
       } catch (e) {
         console.warn("Preload error:", e);
         updateAvailabilityStatus("Select treatment and duration to load availability.", false);
@@ -4436,7 +4369,7 @@ if (selectedSlot && driveTime > 0) {
         standardDurationMinutes: Number(selectedStandardDuration),
         blockDurationMinutes: Number(blockMinutes),
         slotIntervalMinutes: 15,
-        practitionerId: getSelectedPractitionerId(),
+        practitionerId: DEFAULT_PRACTITIONER_ID,
         travel_time_buffer_minutes: 0
       };
     }
@@ -4448,6 +4381,255 @@ if (selectedSlot && driveTime > 0) {
         payload.practitionerId,
         payload.address, payload.city, payload.postal_code
       ].join("|");
+    }
+
+
+    // =========================================================
+    // NEW WORKFLOW INTEGRATION (Part 1/2)
+    // =========================================================
+
+    function buildScheduleCacheQuery(payload, opts) {
+      const maxAgeSeconds = (opts && Number.isFinite(opts.maxAgeSeconds)) ? opts.maxAgeSeconds : 300;
+      const autoRefresh = (opts && typeof opts.autoRefresh === 'boolean') ? opts.autoRefresh : true;
+      const force = (opts && typeof opts.force === 'boolean') ? opts.force : false;
+
+      // IMPORTANT: the schedule-cache API is keyed by practitionerId + date range.
+      // We still generate slots client-side using blockDurationMinutes + slotIntervalMinutes.
+      const params = new URLSearchParams({
+        practitionerId: String(payload.practitionerId),
+        from: String(payload.from),
+        to: String(payload.to),
+        rangeLabel: payload.rangeLabel ? String(payload.rangeLabel) : "month_current",
+        maxAgeSeconds: String(maxAgeSeconds),
+        autoRefresh: autoRefresh ? "true" : "false",
+        force: force ? "true" : "false",
+      });
+      return params.toString();
+    }
+
+    function torontoDateKeyFromIso(isoStr) {
+      try {
+        return new Date(isoStr).toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function torontoMinutesFromIso(isoStr) {
+      try {
+        const d = new Date(isoStr);
+        const parts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Toronto",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }).formatToParts(d);
+        let hh = 0, mm = 0;
+        for (const p of parts) {
+          if (p.type === "hour") hh = parseInt(p.value, 10);
+          if (p.type === "minute") mm = parseInt(p.value, 10);
+        }
+        return hh * 60 + mm;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function addBusyInterval(map, dateKey, startMin, endMin) {
+      if (!dateKey) return;
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push([startMin, endMin]);
+    }
+
+    function buildBusyIntervalsByDate(appts) {
+      const busy = {};
+      if (!Array.isArray(appts)) return busy;
+
+      for (const a of appts) {
+        if (!a || !a.start || !a.end) continue;
+
+        const startKey = torontoDateKeyFromIso(a.start);
+        const endKey = torontoDateKeyFromIso(a.end);
+        const startMin = torontoMinutesFromIso(a.start);
+        const endMin = torontoMinutesFromIso(a.end);
+        if (!startKey || !endKey || startMin === null || endMin === null) continue;
+
+        if (startKey === endKey) {
+          addBusyInterval(busy, startKey, startMin, endMin);
+          continue;
+        }
+
+        // Spans midnight (or more): split across days.
+        addBusyInterval(busy, startKey, startMin, 1440);
+
+        // Iterate intermediate days (rare, but safe)
+        try {
+          let cur = new Date(a.start);
+          // advance to next day (Toronto key), by stepping 24h until we hit endKey
+          for (let i = 0; i < 7; i++) {
+            cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
+            const k = cur.toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+            if (!k) break;
+            if (k === endKey) {
+              addBusyInterval(busy, endKey, 0, endMin);
+              break;
+            }
+            addBusyInterval(busy, k, 0, 1440);
+          }
+        } catch (e) {
+          // if anything goes sideways, at least mark start day busy until midnight
+        }
+      }
+
+      // Sort intervals by start time
+      Object.keys(busy).forEach(k => busy[k].sort((x, y) => x[0] - y[0]));
+      return busy;
+    }
+
+    function dateRangeKeysInclusive(fromKey, toKey) {
+      // fromKey/toKey are in YYYY-MM-DD (en-CA) format.
+      const out = [];
+      try {
+        const start = new Date(fromKey + "T00:00:00");
+        const end = new Date(toKey + "T00:00:00");
+        // Walk in local time; keys are created explicitly in Toronto elsewhere.
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          out.push(toDateStr(d));
+        }
+      } catch (e) {}
+      return out;
+    }
+
+    function makeSlotObject(dateKey, startMin, blockMinutes) {
+      // Store ISO-ish anchor: we keep "start_minutes" for all comparisons, and keep "start" for display.
+      const hh = String(Math.floor(startMin / 60)).padStart(2, "0");
+      const mm = String(startMin % 60).padStart(2, "0");
+      return {
+        start: `${dateKey}T${hh}:${mm}:00`,
+        start_minutes: startMin,
+        end_minutes: startMin + blockMinutes,
+        available: true,
+        driveTimeMinutes: 0,
+        driveTimeText: "—",
+        travelCharge: 0,
+      };
+    }
+
+    function slotOverlapsAny(busyIntervals, slotStartMin, slotEndMin) {
+      if (!Array.isArray(busyIntervals) || busyIntervals.length === 0) return false;
+      for (const [bs, be] of busyIntervals) {
+        // overlap if slotStart < blockEnd && slotEnd > blockStart
+        if (slotStartMin < be && slotEndMin > bs) return true;
+      }
+      return false;
+    }
+
+    function generateAvailabilityFromScheduleCache(payload, schedulePayload) {
+      const appts = (schedulePayload && Array.isArray(schedulePayload.appts)) ? schedulePayload.appts : [];
+      const busyByDate = buildBusyIntervalsByDate(appts);
+
+      // Also preserve appts by date so the existing UI logic (closing unavailable blocks) continues to work.
+      const apptsByDate = {};
+      for (const a of appts) {
+        const k = torontoDateKeyFromIso(a.start);
+        if (!k) continue;
+        if (!apptsByDate[k]) apptsByDate[k] = [];
+        apptsByDate[k].push(a);
+      }
+
+      const fromKey = normalizeDateKey(payload.from);
+      const toKey = normalizeDateKey(payload.to);
+      const allDays = dateRangeKeysInclusive(fromKey, toKey);
+
+      const blockMinutes = Number(payload.blockDurationMinutes || (Number(payload.standardDurationMinutes || 0) + Number(STATIC_SETUP_MINUTES)));
+      const intervalMinutes = Number(payload.slotIntervalMinutes || 15);
+
+      const dates = [];
+
+      for (const dateKey of allDays) {
+        const isSunday = (new Date(dateKey + "T12:00:00").getDay() === 0);
+        const openMin = 11 * 60;
+        const closeMin = isSunday ? (17 * 60) : (20 * 60);
+
+        const slots = [];
+        for (let m = openMin; m <= closeMin; m += intervalMinutes) {
+          const slot = makeSlotObject(dateKey, m, blockMinutes);
+
+          // Mark unavailable if it overlaps any appointment/unavailable/group block.
+          if (slotOverlapsAny(busyByDate[dateKey], slot.start_minutes, slot.end_minutes)) {
+            slot.available = false;
+          }
+
+          slots.push(slot);
+        }
+
+        dates.push({
+          date: dateKey,
+          day_of_week: new Date(dateKey + "T12:00:00").getDay(),
+          slots,
+          appts: apptsByDate[dateKey] || [],
+        });
+      }
+
+      return {
+        ok: true,
+        source: "schedule_cache_generated",
+        // Legacy parser expects these fields
+        dates,
+        maxDriveTimeMinutes: 0,
+        effective_travel_buffer_minutes: 0,
+        baseToClientDriveTimeMinutes: 0,
+        // Keep raw schedule in case you want to debug in console
+        schedule: schedulePayload || null,
+      };
+    }
+
+    async function fetchAvailabilityGateway(payload, opts) {
+      // Strategy:
+      // 1) Prefer the NEW schedule-cache API (Workflows Part 1/2). If it returns a schedule payload, generate slots.
+      // 2) If the response already looks like the legacy availability gate (has dates array), just return it.
+      // 3) Fall back to the legacy availability gate endpoint.
+
+      const preferScheduleCache = (opts && typeof opts.preferScheduleCache === "boolean") ? opts.preferScheduleCache : PREFER_SCHEDULE_CACHE;
+
+      if (preferScheduleCache) {
+        try {
+          const qs = buildScheduleCacheQuery(payload, { maxAgeSeconds: 300, autoRefresh: true, force: false });
+          const url = `${SCHEDULE_CACHE_WEBHOOK_URL}?${qs}`;
+
+          const res = await fetch(url, { method: "GET" });
+          if (res.ok) {
+            const data = await res.json();
+
+            // If the new workflow returns the schedule payload, generate availability.
+            if (data && typeof data === "object" && data.payload && Array.isArray(data.payload.appts)) {
+              return generateAvailabilityFromScheduleCache(payload, data.payload);
+            }
+
+            // If it already matches the legacy shape (dates array), use it directly.
+            if (data && typeof data === "object" && Array.isArray(data.dates)) {
+              return data;
+            }
+          }
+        } catch (e) {
+          // silent; we fall back below
+          console.warn("Schedule-cache availability attempt failed; falling back to legacy gate.", e);
+        }
+      }
+
+      // Legacy gate
+      const res = await fetch(AVAILABILITY_GATE_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error("Availability error (" + res.status + "): " + (text || res.statusText));
+      }
+
+      return await res.json();
     }
 
         function parseAvailabilityResponse(data) {
@@ -4536,19 +4718,7 @@ if (selectedSlot && driveTime > 0) {
           if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr, { userInitiated: false });
           return;
         }
-
-        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error("Availability error (" + res.status + "): " + (text || res.statusText));
-        }
-
-        const data = await res.json();
+        const data = await fetchAvailabilityGateway(payload, { preferScheduleCache: true });
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
         renderCalendar();
@@ -4842,9 +5012,6 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         standardDurationMinutes: Number(selectedStandardDuration),
         participants: 1,
         participant_count: 1,
-        practitionerId: getSelectedPractitionerId(),
-        therapist_key: (getSelectedTherapistMeta()?.key || selectedTherapistKey || null),
-        therapist_name: (getSelectedTherapistMeta()?.name || getSelectedTherapistMeta()?.fullName || null),
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
         date: selectedDateStr,
@@ -5115,33 +5282,6 @@ const refreshInstallButtons = () => {
 // Get form elements
       treatmentSelect = document.getElementById("treatment-select");
       durationSelect = document.getElementById("duration-select");
-      therapistSelect = document.getElementById("therapist-select");
-
-      // Populate therapist selection (future-proof for multiple therapists)
-      try {
-        if (therapistSelect) {
-          therapistSelect.innerHTML = '';
-          const activeTherapists = (Array.isArray(THERAPISTS) ? THERAPISTS.filter(t => t && t.active) : []);
-          if (!activeTherapists.length) {
-            const opt = document.createElement('option');
-            opt.value = DEFAULT_PRACTITIONER_ID;
-            opt.textContent = 'Default';
-            therapistSelect.appendChild(opt);
-          } else {
-            for (const t of activeTherapists) {
-              const opt = document.createElement('option');
-              opt.value = t.id;
-              opt.textContent = t.fullName || t.shortName || t.id;
-              therapistSelect.appendChild(opt);
-            }
-          }
-          // Default selection
-          therapistSelect.value = selectedPractitionerId || DEFAULT_PRACTITIONER_ID;
-        }
-      } catch (e) { console.warn('therapistSelect init error', e); }
-
-      // Initial therapist card render
-      try { updateTherapistCard(); } catch (e) {}
 
       // Tabs
       document.querySelectorAll(".sidebar-btn").forEach(btn => {
@@ -5194,31 +5334,6 @@ const refreshInstallButtons = () => {
         updateSummary();
         savePortalState();
       });
-
-
-      // Therapist selection
-      if (therapistSelect) {
-        therapistSelect.addEventListener("change", () => {
-          selectedPractitionerId = therapistSelect.value || DEFAULT_PRACTITIONER_ID;
-          const meta = getSelectedTherapistMeta();
-          selectedTherapistKey = meta?.key || null;
-
-          // Reset availability + selection, then reload if treatment + duration are already chosen
-          availabilityByDate = {};
-          availabilityMeta = { maxDriveTimeMinutes: 0, effective_travel_buffer_minutes: 0 };
-          availabilityPreloaded = false;
-          clearSelectionUI();
-          renderCalendar();
-          updateTherapistCard();
-          updateSummary();
-
-          if (selectedServiceKey && selectedStandardDuration) {
-            maybeLoadAvailabilityForCurrentMonth();
-          } else {
-            updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-          }
-        });
-      }
 
       // Confirm booking
       document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
