@@ -834,6 +834,7 @@
     // Availability endpoints
 // - New (Workflows Part 1/2): shared schedule cache API
 const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
+const AVAILABILITY_GATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
 // Availability endpoint (Workflows Part 1/2): shared schedule cache API
 
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
@@ -4381,7 +4382,7 @@ if (selectedSlot && driveTime > 0) {
 
 
     // =========================================================
-    // NEW WORKFLOW INTEGRATION (Part 1/2)
+    // AVAILABILITY (uses backend Gate v2 + schedule cache)
     // =========================================================
 
     function buildScheduleCacheQuery(payload, opts) {
@@ -4578,51 +4579,56 @@ if (selectedSlot && driveTime > 0) {
       };
     }
     async function fetchAvailabilityGateway(payload, opts) {
-      // NEW WORKFLOWS ONLY (Part 1/2): schedule-cache API
-      // - Calls the schedule-cache endpoint
-      // - Generates slot availability locally from returned appointments/unavailable blocks
+      // Availability Gate (v2 backend):
+      // - Returns the legacy shape the calendar expects: { dates: [{date, slots}], ...meta }
+      // - Backend handles travel time rules + schedule-cache integration.
 
-      const maxAgeSeconds = (opts && typeof opts.maxAgeSeconds === 'number') ? opts.maxAgeSeconds : 300;
-      const autoRefresh   = (opts && typeof opts.autoRefresh === 'boolean') ? opts.autoRefresh : true;
-      const force         = (opts && typeof opts.force === 'boolean') ? opts.force : false;
+      const force = (opts && typeof opts.force === 'boolean') ? opts.force : false;
 
-      const qs = buildScheduleCacheQuery(payload, { maxAgeSeconds, autoRefresh, force });
-      const url = `${SCHEDULE_CACHE_WEBHOOK_URL}?${qs}`;
+      const body = {
+        address: payload.address,
+        city: payload.city,
+        postal_code: payload.postal_code,
+        from: payload.from,
+        to: payload.to,
+        practitionerId: payload.practitionerId,
+        standardDurationMinutes: payload.standardDurationMinutes,
+        blockDurationMinutes: payload.blockDurationMinutes,
+        slotIntervalMinutes: payload.slotIntervalMinutes || 15,
+        travel_time_buffer_minutes: payload.travel_time_buffer_minutes || 0,
+      };
+      if (payload.rangeLabel) body.rangeLabel = payload.rangeLabel;
+      if (force) body.force = true;
 
-      const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const res = await fetch(AVAILABILITY_GATE_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
       const rawText = await res.text().catch(() => '');
 
       if (!res.ok) {
-        throw new Error(`Schedule-cache error (${res.status}): ${rawText || res.statusText}`);
+        throw new Error(`Availability Gate error (${res.status}): ${rawText || res.statusText}`);
       }
 
       let data;
       try {
         data = rawText ? JSON.parse(rawText) : null;
       } catch (e) {
-        throw new Error('Schedule-cache returned non-JSON response.');
+        throw new Error('Availability Gate returned non-JSON response.');
       }
 
-      // If it already matches the legacy shape (dates array), use it directly.
-      if (data && typeof data === 'object' && Array.isArray(data.dates)) {
-        return data;
+      // Unwrap common webhook wrappers if present
+      if (data && typeof data === 'object') {
+        if (data.success === true && data.data && typeof data.data === 'object') data = data.data;
+        if (data.body && typeof data.body === 'object') data = data.body;
       }
 
-      // Expected new-workflow shape: { ok, payload: { appts: [...] } }
-      if (data && typeof data === 'object' && data.payload && Array.isArray(data.payload.appts)) {
-        return generateAvailabilityFromScheduleCache(payload, data.payload);
-      }
-
-      // If we got here, the cache endpoint did not return a schedule payload.
-      // Surface raw response to help debugging.
-      return {
-        ok: false,
-        source: 'schedule_cache_no_payload',
-        request: (data && data.request) ? data.request : payload,
-        cache: (data && data.cache) ? data.cache : null,
-        raw: data || null,
-        payload: null,
-      };
+      return data;
     }
 
         function parseAvailabilityResponse(data) {
