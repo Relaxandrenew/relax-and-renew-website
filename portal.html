@@ -833,8 +833,9 @@
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     // Availability endpoints
 // - New (Workflows Part 1/2): shared schedule cache API
-const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
 const AVAILABILITY_GATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
+    // (Reverted) schedule-cache no longer used by the portal calendar
+    const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
 // Availability endpoint (Workflows Part 1/2): shared schedule cache API
 
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
@@ -4361,12 +4362,18 @@ if (selectedSlot && driveTime > 0) {
         address: portalProfile.address,
         city: portalProfile.city,
         postal_code: portalProfile.postal_code,
+        // Original Gate accepts from/to OR month_start/month_end; send both for maximum compatibility.
         from,
         to,
+        month_start: from,
+        month_end: to,
+        // Duration fields: Gate accepts duration_minutes and/or standardDurationMinutes + blockDurationMinutes.
+        duration_minutes: Number(selectedStandardDuration),
         standardDurationMinutes: Number(selectedStandardDuration),
         blockDurationMinutes: Number(blockMinutes),
         slotIntervalMinutes: 15,
         practitionerId: DEFAULT_PRACTITIONER_ID,
+        practitioner_id: DEFAULT_PRACTITIONER_ID,
         travel_time_buffer_minutes: 0
       };
     }
@@ -4382,7 +4389,7 @@ if (selectedSlot && driveTime > 0) {
 
 
     // =========================================================
-    // AVAILABILITY (uses backend Gate v2 + schedule cache)
+    // NEW WORKFLOW INTEGRATION (Part 1/2)
     // =========================================================
 
     function buildScheduleCacheQuery(payload, opts) {
@@ -4578,39 +4585,20 @@ if (selectedSlot && driveTime > 0) {
         schedule: schedulePayload || null,
       };
     }
-    async function fetchAvailabilityGateway(payload, opts) {
-      // Availability Gate (v2 backend):
-      // - Returns the legacy shape the calendar expects: { dates: [{date, slots}], ...meta }
-      // - Backend handles travel time rules + schedule-cache integration.
+    async function fetchAvailabilityGateway(payload) {
+      // Reverted: call the ORIGINAL Gate workflow only (POST /portal-availability-gate)
+      const url = AVAILABILITY_GATE_WEBHOOK_URL;
 
-      const force = (opts && typeof opts.force === 'boolean') ? opts.force : false;
-
-      const body = {
-        address: payload.address,
-        city: payload.city,
-        postal_code: payload.postal_code,
-        from: payload.from,
-        to: payload.to,
-        practitionerId: payload.practitionerId,
-        standardDurationMinutes: payload.standardDurationMinutes,
-        blockDurationMinutes: payload.blockDurationMinutes,
-        slotIntervalMinutes: payload.slotIntervalMinutes || 15,
-        travel_time_buffer_minutes: payload.travel_time_buffer_minutes || 0,
-      };
-      if (payload.rangeLabel) body.rangeLabel = payload.rangeLabel;
-      if (force) body.force = true;
-
-      const res = await fetch(AVAILABILITY_GATE_WEBHOOK_URL, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload || {}),
       });
 
       const rawText = await res.text().catch(() => '');
-
       if (!res.ok) {
         throw new Error(`Availability Gate error (${res.status}): ${rawText || res.statusText}`);
       }
@@ -4620,12 +4608,6 @@ if (selectedSlot && driveTime > 0) {
         data = rawText ? JSON.parse(rawText) : null;
       } catch (e) {
         throw new Error('Availability Gate returned non-JSON response.');
-      }
-
-      // Unwrap common webhook wrappers if present
-      if (data && typeof data === 'object') {
-        if (data.success === true && data.data && typeof data.data === 'object') data = data.data;
-        if (data.body && typeof data.body === 'object') data = data.body;
       }
 
       return data;
