@@ -831,13 +831,7 @@
     // CONFIG
     // =========================================================
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
-    // Availability endpoints
-// - New (Workflows Part 1/2): shared schedule cache API
-const AVAILABILITY_GATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
-    // (Reverted) schedule-cache no longer used by the portal calendar
-    const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
-// Availability endpoint (Workflows Part 1/2): shared schedule cache API
-
+    const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
     const CANCEL_WEBHOOK_URL        = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
@@ -4004,21 +3998,41 @@ if (selectedSlot && driveTime > 0) {
       // Ensure the calendar loading bar appears for the initial preload as well.
       // (Previously it only showed for month nav / duration change.)
       try { setCalendarLoading(true); } catch (e) {}
+
       try {
-        const data = await fetchAvailabilityGateway(payload, { preferScheduleCache: true });
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-        const cacheKey = getRequestCacheKey(payload);
-        availabilityCache.set(cacheKey, data);
-        parseAvailabilityResponse(data);
+        if (res.ok) {
+          const data = await res.json();
+          const cacheKey = getRequestCacheKey(payload);
+          availabilityCache.set(cacheKey, data);
+          parseAvailabilityResponse(data);
 
-        // Determine if this actually produced usable availability.
-        const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
-        if (!hasDates) {
-          console.warn('[Availability] Preload did not produce any availability dates.');
+          // If backend returned no usable dates, do not claim "loaded"
+          const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+          if (!hasDates) {
+            availabilityPreloaded = false;
+            renderCalendar();
+            updateAvailabilityStatus("Availability returned no dates for this month. Try a different duration or verify your address in Profile.", false);
+            showToast("No availability", "No open slots were returned. Try another duration or month.", true, 6500);
+            return;
+          }
+
+          availabilityPreloaded = true;
+
+          renderCalendar();
+          setTimeout(ensureCalendarClickableAfterPreload, 60);
+          updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
+          updateSummary();
+          console.log("Availability preloaded successfully");
+        } else {
+          console.warn("Preload failed:", res.status);
+          updateAvailabilityStatus("Select treatment and duration to load availability.", false);
         }
-
-        availabilityPreloaded = true;
-        console.log('[Availability] Preloaded successfully');
       } catch (e) {
         console.warn("Preload error:", e);
         updateAvailabilityStatus("Select treatment and duration to load availability.", false);
@@ -4362,18 +4376,12 @@ if (selectedSlot && driveTime > 0) {
         address: portalProfile.address,
         city: portalProfile.city,
         postal_code: portalProfile.postal_code,
-        // Original Gate accepts from/to OR month_start/month_end; send both for maximum compatibility.
         from,
         to,
-        month_start: from,
-        month_end: to,
-        // Duration fields: Gate accepts duration_minutes and/or standardDurationMinutes + blockDurationMinutes.
-        duration_minutes: Number(selectedStandardDuration),
         standardDurationMinutes: Number(selectedStandardDuration),
         blockDurationMinutes: Number(blockMinutes),
         slotIntervalMinutes: 15,
         practitionerId: DEFAULT_PRACTITIONER_ID,
-        practitioner_id: DEFAULT_PRACTITIONER_ID,
         travel_time_buffer_minutes: 0
       };
     }
@@ -4385,232 +4393,6 @@ if (selectedSlot && driveTime > 0) {
         payload.practitionerId,
         payload.address, payload.city, payload.postal_code
       ].join("|");
-    }
-
-
-    // =========================================================
-    // NEW WORKFLOW INTEGRATION (Part 1/2)
-    // =========================================================
-
-    function buildScheduleCacheQuery(payload, opts) {
-      const maxAgeSeconds = (opts && Number.isFinite(opts.maxAgeSeconds)) ? opts.maxAgeSeconds : 300;
-      const autoRefresh = (opts && typeof opts.autoRefresh === 'boolean') ? opts.autoRefresh : true;
-      const force = (opts && typeof opts.force === 'boolean') ? opts.force : false;
-
-      // IMPORTANT: the schedule-cache API is keyed by practitionerId + date range.
-      // We still generate slots client-side using blockDurationMinutes + slotIntervalMinutes.
-      const params = new URLSearchParams({
-        practitionerId: String(payload.practitionerId),
-        from: String(payload.from),
-        to: String(payload.to),
-        rangeLabel: payload.rangeLabel ? String(payload.rangeLabel) : "month_current",
-        maxAgeSeconds: String(maxAgeSeconds),
-        autoRefresh: autoRefresh ? "true" : "false",
-        force: force ? "true" : "false",
-      });
-      return params.toString();
-    }
-
-    function torontoDateKeyFromIso(isoStr) {
-      try {
-        return new Date(isoStr).toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function torontoMinutesFromIso(isoStr) {
-      try {
-        const d = new Date(isoStr);
-        const parts = new Intl.DateTimeFormat("en-CA", {
-          timeZone: "America/Toronto",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).formatToParts(d);
-        let hh = 0, mm = 0;
-        for (const p of parts) {
-          if (p.type === "hour") hh = parseInt(p.value, 10);
-          if (p.type === "minute") mm = parseInt(p.value, 10);
-        }
-        return hh * 60 + mm;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function addBusyInterval(map, dateKey, startMin, endMin) {
-      if (!dateKey) return;
-      if (!map[dateKey]) map[dateKey] = [];
-      map[dateKey].push([startMin, endMin]);
-    }
-
-    function buildBusyIntervalsByDate(appts) {
-      const busy = {};
-      if (!Array.isArray(appts)) return busy;
-
-      for (const a of appts) {
-        if (!a || !a.start || !a.end) continue;
-
-        const startKey = torontoDateKeyFromIso(a.start);
-        const endKey = torontoDateKeyFromIso(a.end);
-        const startMin = torontoMinutesFromIso(a.start);
-        const endMin = torontoMinutesFromIso(a.end);
-        if (!startKey || !endKey || startMin === null || endMin === null) continue;
-
-        if (startKey === endKey) {
-          addBusyInterval(busy, startKey, startMin, endMin);
-          continue;
-        }
-
-        // Spans midnight (or more): split across days.
-        addBusyInterval(busy, startKey, startMin, 1440);
-
-        // Iterate intermediate days (rare, but safe)
-        try {
-          let cur = new Date(a.start);
-          // advance to next day (Toronto key), by stepping 24h until we hit endKey
-          for (let i = 0; i < 7; i++) {
-            cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
-            const k = cur.toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
-            if (!k) break;
-            if (k === endKey) {
-              addBusyInterval(busy, endKey, 0, endMin);
-              break;
-            }
-            addBusyInterval(busy, k, 0, 1440);
-          }
-        } catch (e) {
-          // if anything goes sideways, at least mark start day busy until midnight
-        }
-      }
-
-      // Sort intervals by start time
-      Object.keys(busy).forEach(k => busy[k].sort((x, y) => x[0] - y[0]));
-      return busy;
-    }
-
-    function dateRangeKeysInclusive(fromKey, toKey) {
-      // fromKey/toKey are in YYYY-MM-DD (en-CA) format.
-      const out = [];
-      try {
-        const start = new Date(fromKey + "T00:00:00");
-        const end = new Date(toKey + "T00:00:00");
-        // Walk in local time; keys are created explicitly in Toronto elsewhere.
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          out.push(toDateStr(d));
-        }
-      } catch (e) {}
-      return out;
-    }
-
-    function makeSlotObject(dateKey, startMin, blockMinutes) {
-      // Store ISO-ish anchor: we keep "start_minutes" for all comparisons, and keep "start" for display.
-      const hh = String(Math.floor(startMin / 60)).padStart(2, "0");
-      const mm = String(startMin % 60).padStart(2, "0");
-      return {
-        start: `${dateKey}T${hh}:${mm}:00`,
-        start_minutes: startMin,
-        end_minutes: startMin + blockMinutes,
-        available: true,
-        driveTimeMinutes: 0,
-        driveTimeText: "—",
-        travelCharge: 0,
-      };
-    }
-
-    function slotOverlapsAny(busyIntervals, slotStartMin, slotEndMin) {
-      if (!Array.isArray(busyIntervals) || busyIntervals.length === 0) return false;
-      for (const [bs, be] of busyIntervals) {
-        // overlap if slotStart < blockEnd && slotEnd > blockStart
-        if (slotStartMin < be && slotEndMin > bs) return true;
-      }
-      return false;
-    }
-
-    function generateAvailabilityFromScheduleCache(payload, schedulePayload) {
-      const appts = (schedulePayload && Array.isArray(schedulePayload.appts)) ? schedulePayload.appts : [];
-      const busyByDate = buildBusyIntervalsByDate(appts);
-
-      // Also preserve appts by date so the existing UI logic (closing unavailable blocks) continues to work.
-      const apptsByDate = {};
-      for (const a of appts) {
-        const k = torontoDateKeyFromIso(a.start);
-        if (!k) continue;
-        if (!apptsByDate[k]) apptsByDate[k] = [];
-        apptsByDate[k].push(a);
-      }
-
-      const fromKey = normalizeDateKey(payload.from);
-      const toKey = normalizeDateKey(payload.to);
-      const allDays = dateRangeKeysInclusive(fromKey, toKey);
-
-      const blockMinutes = Number(payload.blockDurationMinutes || (Number(payload.standardDurationMinutes || 0) + Number(STATIC_SETUP_MINUTES)));
-      const intervalMinutes = Number(payload.slotIntervalMinutes || 15);
-
-      const dates = [];
-
-      for (const dateKey of allDays) {
-        const isSunday = (new Date(dateKey + "T12:00:00").getDay() === 0);
-        const openMin = 11 * 60;
-        const closeMin = isSunday ? (17 * 60) : (20 * 60);
-
-        const slots = [];
-        for (let m = openMin; m <= closeMin; m += intervalMinutes) {
-          const slot = makeSlotObject(dateKey, m, blockMinutes);
-
-          // Only return AVAILABLE slots. The UI treats a slot as available when slot.start exists.
-          if (slotOverlapsAny(busyByDate[dateKey], slot.start_minutes, slot.end_minutes)) continue;
-
-          slots.push(slot);
-        }
-
-        dates.push({
-          date: dateKey,
-          day_of_week: new Date(dateKey + "T12:00:00").getDay(),
-          slots,
-          appts: apptsByDate[dateKey] || [],
-        });
-      }
-
-      return {
-        ok: true,
-        source: "schedule_cache_generated",
-        // Legacy parser expects these fields
-        dates,
-        maxDriveTimeMinutes: 0,
-        effective_travel_buffer_minutes: 0,
-        baseToClientDriveTimeMinutes: 0,
-        // Keep raw schedule in case you want to debug in console
-        schedule: schedulePayload || null,
-      };
-    }
-    async function fetchAvailabilityGateway(payload) {
-      // Reverted: call the ORIGINAL Gate workflow only (POST /portal-availability-gate)
-      const url = AVAILABILITY_GATE_WEBHOOK_URL;
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload || {}),
-      });
-
-      const rawText = await res.text().catch(() => '');
-      if (!res.ok) {
-        throw new Error(`Availability Gate error (${res.status}): ${rawText || res.statusText}`);
-      }
-
-      let data;
-      try {
-        data = rawText ? JSON.parse(rawText) : null;
-      } catch (e) {
-        throw new Error('Availability Gate returned non-JSON response.');
-      }
-
-      return data;
     }
 
         function parseAvailabilityResponse(data) {
@@ -4699,7 +4481,19 @@ if (selectedSlot && driveTime > 0) {
           if (s?.selectedDateStr && availabilityByDate?.[s.selectedDateStr]) selectDate(s.selectedDateStr, { userInitiated: false });
           return;
         }
-        const data = await fetchAvailabilityGateway(payload, { preferScheduleCache: true });
+
+        const res = await fetch(AVAILABILITY_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error("Availability error (" + res.status + "): " + (text || res.statusText));
+        }
+
+        const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
         renderCalendar();
