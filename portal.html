@@ -833,12 +833,8 @@
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
     // Availability endpoints
 // - New (Workflows Part 1/2): shared schedule cache API
-// - Old: legacy availability+travel gate
 const SCHEDULE_CACHE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/cliniko/schedule-cache`;
-const AVAILABILITY_GATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
-
-// Default: use the NEW schedule-cache API first, then fall back to the legacy gate if needed.
-const PREFER_SCHEDULE_CACHE = true;
+// Availability endpoint (Workflows Part 1/2): shared schedule cache API
 
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
@@ -4555,10 +4551,8 @@ if (selectedSlot && driveTime > 0) {
         for (let m = openMin; m <= closeMin; m += intervalMinutes) {
           const slot = makeSlotObject(dateKey, m, blockMinutes);
 
-          // Mark unavailable if it overlaps any appointment/unavailable/group block.
-          if (slotOverlapsAny(busyByDate[dateKey], slot.start_minutes, slot.end_minutes)) {
-            slot.available = false;
-          }
+          // Only return AVAILABLE slots. The UI treats a slot as available when slot.start exists.
+          if (slotOverlapsAny(busyByDate[dateKey], slot.start_minutes, slot.end_minutes)) continue;
 
           slots.push(slot);
         }
@@ -4583,53 +4577,52 @@ if (selectedSlot && driveTime > 0) {
         schedule: schedulePayload || null,
       };
     }
-
     async function fetchAvailabilityGateway(payload, opts) {
-      // Strategy:
-      // 1) Prefer the NEW schedule-cache API (Workflows Part 1/2). If it returns a schedule payload, generate slots.
-      // 2) If the response already looks like the legacy availability gate (has dates array), just return it.
-      // 3) Fall back to the legacy availability gate endpoint.
+      // NEW WORKFLOWS ONLY (Part 1/2): schedule-cache API
+      // - Calls the schedule-cache endpoint
+      // - Generates slot availability locally from returned appointments/unavailable blocks
 
-      const preferScheduleCache = (opts && typeof opts.preferScheduleCache === "boolean") ? opts.preferScheduleCache : PREFER_SCHEDULE_CACHE;
+      const maxAgeSeconds = (opts && typeof opts.maxAgeSeconds === 'number') ? opts.maxAgeSeconds : 300;
+      const autoRefresh   = (opts && typeof opts.autoRefresh === 'boolean') ? opts.autoRefresh : true;
+      const force         = (opts && typeof opts.force === 'boolean') ? opts.force : false;
 
-      if (preferScheduleCache) {
-        try {
-          const qs = buildScheduleCacheQuery(payload, { maxAgeSeconds: 300, autoRefresh: true, force: false });
-          const url = `${SCHEDULE_CACHE_WEBHOOK_URL}?${qs}`;
+      const qs = buildScheduleCacheQuery(payload, { maxAgeSeconds, autoRefresh, force });
+      const url = `${SCHEDULE_CACHE_WEBHOOK_URL}?${qs}`;
 
-          const res = await fetch(url, { method: "GET" });
-          if (res.ok) {
-            const data = await res.json();
-
-            // If the new workflow returns the schedule payload, generate availability.
-            if (data && typeof data === "object" && data.payload && Array.isArray(data.payload.appts)) {
-              return generateAvailabilityFromScheduleCache(payload, data.payload);
-            }
-
-            // If it already matches the legacy shape (dates array), use it directly.
-            if (data && typeof data === "object" && Array.isArray(data.dates)) {
-              return data;
-            }
-          }
-        } catch (e) {
-          // silent; we fall back below
-          console.warn("Schedule-cache availability attempt failed; falling back to legacy gate.", e);
-        }
-      }
-
-      // Legacy gate
-      const res = await fetch(AVAILABILITY_GATE_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const rawText = await res.text().catch(() => '');
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error("Availability error (" + res.status + "): " + (text || res.statusText));
+        throw new Error(`Schedule-cache error (${res.status}): ${rawText || res.statusText}`);
       }
 
-      return await res.json();
+      let data;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch (e) {
+        throw new Error('Schedule-cache returned non-JSON response.');
+      }
+
+      // If it already matches the legacy shape (dates array), use it directly.
+      if (data && typeof data === 'object' && Array.isArray(data.dates)) {
+        return data;
+      }
+
+      // Expected new-workflow shape: { ok, payload: { appts: [...] } }
+      if (data && typeof data === 'object' && data.payload && Array.isArray(data.payload.appts)) {
+        return generateAvailabilityFromScheduleCache(payload, data.payload);
+      }
+
+      // If we got here, the cache endpoint did not return a schedule payload.
+      // Surface raw response to help debugging.
+      return {
+        ok: false,
+        source: 'schedule_cache_no_payload',
+        request: (data && data.request) ? data.request : payload,
+        cache: (data && data.cache) ? data.cache : null,
+        raw: data || null,
+        payload: null,
+      };
     }
 
         function parseAvailabilityResponse(data) {
