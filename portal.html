@@ -2484,6 +2484,23 @@ function mobileConfirmBooking() {
     // =============================
     let pendingCancel = { appointmentId: null, startsAt: null };
 
+    function getCancellationCutoffMessage(diffMs) {
+      // diffMs: milliseconds until appointment start (startsAt - now).
+      // Returns the appropriate fee policy message (12h = 50%, 6h = 100%).
+      const base = 'This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
+      try {
+        if (typeof diffMs === 'number' && Number.isFinite(diffMs) && diffMs > 0) {
+          const sixHoursMs = 6 * 60 * 60 * 1000;
+          if (diffMs <= sixHoursMs) {
+            return 'This is under 6 hours. To cancel, you will be charged a fee of 100% of the treatment. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
+          }
+          return base;
+        }
+      } catch (e) {}
+      return base;
+    }
+
+
     function setCancelModalState(state, message = '') {
       const statusWrap = document.getElementById('cancel-status-wrap');
       const spinner = document.getElementById('cancel-status-spinner');
@@ -2554,7 +2571,7 @@ function mobileConfirmBooking() {
         statusWrap?.classList.remove('hidden');
         x?.classList.remove('hidden');
         if (statusText) statusText.textContent = 'Instant cancellation unavailable';
-        if (statusSub) statusSub.textContent = message || 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064';
+        if (statusSub) statusSub.textContent = message || 'This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
 
         if (confirmBtn) {
           confirmBtn.classList.add('hidden');
@@ -2608,7 +2625,7 @@ function mobileConfirmBooking() {
           const diffMs = startsMs - nowMs;
           const twelveHoursMs = 12 * 60 * 60 * 1000;
           if (Number.isFinite(diffMs) && diffMs > 0 && diffMs <= twelveHoursMs) {
-            setCancelModalState('cutoff', 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064');
+            setCancelModalState('cutoff', getCancellationCutoffMessage(diffMs));
             return;
           }
         }
@@ -2632,11 +2649,13 @@ function mobileConfirmBooking() {
         const data = await res.json().catch(() => ({}));
 
         if (data?.withinCutoff || data?.contactRequired) {
-          setCancelModalState('cutoff', 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064');
+          setCancelModalState('cutoff', getCancellationCutoffMessage((pendingCancel?.startsAt ? (new Date(pendingCancel.startsAt).getTime() - Date.now()) : null)));
           return;
         }
 
-        if (res.ok && data?.success) {
+        const emptyBody = data && typeof data === 'object' && Object.keys(data).length === 0;
+        const okSuccess = (data?.success === true) || emptyBody;
+        if (res.ok && okSuccess) {
           setCancelModalState('success');
           // Refresh and close after a brief success state
           setTimeout(async () => {
@@ -5300,7 +5319,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          It is under 12 hours, please contact us at <span class="text-brand-light font-semibold">info@relaxandrenew.ca</span> / <span class="text-brand-light font-semibold">226 337 9064</span>.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.
         </div>
       </div>
 
