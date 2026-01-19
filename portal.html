@@ -1511,13 +1511,85 @@ function mobileConfirmBooking() {
     .therapist-title { font-size: 0.85rem; color: rgba(224,197,132,0.75); }
 
     /* Light mode */
-    html.light-mode body { background-color: #f7f5ee !important; color: #111827 !important; }
+    html.light-mode body {
+      background-color: #f3f4f6 !important; /* soft gray (not stark white) */
+      color: #111827 !important;
+    }
+
+    /* Make panels/cards feel "light" without going pure white */
     html.light-mode .glass-panel,
-    html.light-mode .card-fancy,
+    html.light-mode .card-fancy {
+      background: rgba(229,231,235,0.92) !important; /* gray-200 */
+      color: #111827 !important;
+      border-color: rgba(17,24,39,0.12) !important;
+    }
+
+    /* Modal cards were too bright in light mode */
     html.light-mode .booking-modal-card,
-    html.light-mode .modal-card { background: rgba(255,255,255,0.86) !important; color: #111827 !important; }
-    html.light-mode .muted { color: rgba(17,24,39,0.65) !important; }
-    html.light-mode .pill { color: #111827 !important; border-color: rgba(17,24,39,0.15) !important; }
+    html.light-mode .modal-card {
+      background: rgba(229,231,235,0.96) !important;
+      color: #111827 !important;
+      border-color: rgba(17,24,39,0.16) !important;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.20) !important;
+    }
+
+    /* Keep the overlay/backdrop tasteful (not harsh) */
+    html.light-mode #booking-modal-overlay { background: rgba(0,0,0,0.55) !important; }
+    html.light-mode .modal-overlay { background: rgba(0,0,0,0.45) !important; }
+    html.light-mode .mobile-menu-backdrop { background: rgba(0,0,0,0.35) !important; }
+
+    /* Navigation + mobile menu readability */
+    html.light-mode .fixed-nav {
+      background: rgba(243,244,246,0.92) !important;
+      border-bottom-color: rgba(17,24,39,0.10) !important;
+    }
+    html.light-mode .nav-link { color: #111827 !important; }
+    html.light-mode .nav-link::after { background: rgba(17,24,39,0.65) !important; }
+
+    html.light-mode .mobile-menu {
+      background: rgba(243,244,246,0.98) !important;
+      border-left-color: rgba(17,24,39,0.14) !important;
+    }
+
+    /* In mobile menu, the "PORTAL" label and close/menu button text should not remain gold */
+    html.light-mode #mobile-menu-btn,
+    html.light-mode #mobile-menu-close,
+    html.light-mode #mobile-menu .text-brand-gold {
+      color: #111827 !important;
+    }
+
+    html.light-mode .divider { border-color: rgba(17,24,39,0.14) !important; }
+    html.light-mode .muted { color: rgba(17,24,39,0.70) !important; }
+    html.light-mode .pill { color: #111827 !important; border-color: rgba(17,24,39,0.18) !important; background: rgba(17,24,39,0.04) !important; }
+
+    /* Keep subtle "top bar" highlight animation visible in light mode */
+    html.light-mode .card-fancy::before,
+    html.light-mode .glass-panel::before { background: linear-gradient(90deg, transparent, rgba(17,24,39,0.65), transparent) !important; }
+
+    /* Skeleton shimmer needs contrast in light mode */
+    html.light-mode .skeleton { background: rgba(17,24,39,0.08) !important; }
+    html.light-mode .skeleton::after {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent) !important;
+      opacity: 1 !important;
+    }
+
+    /* Therapist card colors in light mode */
+    html.light-mode .therapist-card { background: rgba(17,24,39,0.04) !important; border-color: rgba(17,24,39,0.12) !important; }
+    html.light-mode .therapist-name { color: #111827 !important; }
+    html.light-mode .therapist-title { color: rgba(17,24,39,0.70) !important; }
+
+    /* Buttons should feel animated/interactive in light mode too */
+    html.light-mode .btn-outline {
+      border-color: rgba(17,24,39,0.35) !important;
+      color: #111827 !important;
+    }
+    html.light-mode .btn-outline:hover {
+      background: rgba(17,24,39,0.06) !important;
+      color: #111827 !important;
+      border-color: rgba(17,24,39,0.45) !important;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.14) !important;
+      transform: translateY(-1px);
+    }
   </style>
 
 </head>
