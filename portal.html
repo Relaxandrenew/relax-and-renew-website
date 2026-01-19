@@ -2483,17 +2483,19 @@ function mobileConfirmBooking() {
     // Cancel Appointment (Feature #5/#6)
     // =============================
     let pendingCancel = { appointmentId: null, startsAt: null };
+    let cancelAutoCloseTimer = null;
 
     function getCancellationCutoffMessage(diffMs) {
-      // diffMs: milliseconds until appointment start (startsAt - now).
-      // Returns the appropriate fee policy message (12h = 50%, 6h = 100%).
-      const base = 'This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
       try {
-        if (typeof diffMs === 'number' && Number.isFinite(diffMs) && diffMs > 0) {
-          const sixHoursMs = 6 * 60 * 60 * 1000;
-          if (diffMs <= sixHoursMs) {
-            return 'This is under 6 hours. To cancel, you will be charged a fee of 100% of the treatment. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
-          }
+        const ms = Number(diffMs);
+        const sixHoursMs = 6 * 60 * 60 * 1000;
+        const underSix = Number.isFinite(ms) && ms > 0 && ms <= sixHoursMs;
+        if (underSix) {
+          return 'This is under 6 hours. To cancel, you will be charged a fee of 100% of the treatment. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
+        }
+      } catch (e) {}
+      return 'This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
+    }
           return base;
         }
       } catch (e) {}
@@ -2512,7 +2514,7 @@ function mobileConfirmBooking() {
       const confirmBtn = document.getElementById('cancel-confirm-btn');
       const keepBtn = document.getElementById('cancel-keep-btn');
       const closeBtn = document.getElementById('cancel-close-btn');
-
+      const reasonWrap = document.getElementById('cancel-reason-wrap');
       const cutoffBox = document.getElementById('cancel-cutoff-warning');
 
       // Reset visuals
@@ -2524,6 +2526,10 @@ function mobileConfirmBooking() {
       if (statusText) statusText.textContent = '';
       if (statusSub) statusSub.textContent = '';
 
+      // Reset content visibility
+      reasonWrap?.classList.remove('hidden');
+      if (cutoffBox) cutoffBox.classList.add('hidden');
+
       // Reset buttons
       if (confirmBtn) {
         confirmBtn.disabled = false;
@@ -2534,58 +2540,70 @@ function mobileConfirmBooking() {
         keepBtn.disabled = false;
         keepBtn.classList.remove('hidden');
       }
-      if (closeBtn) closeBtn.classList.add('hidden');
-
-      // Hide cutoff box unless explicitly requested
-      if (cutoffBox) cutoffBox.classList.add('hidden');
+      if (closeBtn) {
+        closeBtn.disabled = false;
+        closeBtn.classList.add('hidden');
+        closeBtn.textContent = 'Done';
+      }
 
       if (state === 'idle') return;
 
       if (state === 'loading') {
+        // Smooth transition to a dedicated in-progress state
+        reasonWrap?.classList.add('hidden');
+        if (confirmBtn) confirmBtn.classList.add('hidden');
+        if (keepBtn) keepBtn.classList.add('hidden');
+        if (closeBtn) closeBtn.classList.add('hidden');
+
         statusWrap?.classList.remove('hidden');
         spinner?.classList.remove('hidden');
         if (statusText) statusText.textContent = 'Canceling…';
         if (statusSub) statusSub.textContent = message || 'Please wait';
-        if (confirmBtn) {
-          confirmBtn.disabled = true;
-          confirmBtn.textContent = 'Canceling…';
-        }
-        if (keepBtn) keepBtn.disabled = true;
         return;
       }
 
       if (state === 'success') {
+        // Completed state with a manual close button
+        reasonWrap?.classList.add('hidden');
+        if (confirmBtn) confirmBtn.classList.add('hidden');
+        if (keepBtn) keepBtn.classList.add('hidden');
+
         statusWrap?.classList.remove('hidden');
         check?.classList.remove('hidden');
-        if (statusText) statusText.textContent = 'Cancellation successful';
+        if (statusText) statusText.textContent = 'Completed';
         if (statusSub) statusSub.textContent = message || 'Your appointment has been cancelled.';
-        if (confirmBtn) confirmBtn.disabled = true;
-        if (keepBtn) keepBtn.disabled = true;
+
+        if (closeBtn) {
+          closeBtn.classList.remove('hidden');
+          closeBtn.disabled = false;
+          closeBtn.textContent = 'Done';
+        }
         return;
       }
 
       if (state === 'cutoff') {
-        // Under 12 hours: show contact message, hide confirm button
+        // Under 12 hours: show policy message and a Done button
+        reasonWrap?.classList.add('hidden');
         if (cutoffBox) cutoffBox.classList.remove('hidden');
+
+        if (confirmBtn) confirmBtn.classList.add('hidden');
+        if (keepBtn) keepBtn.classList.add('hidden');
 
         statusWrap?.classList.remove('hidden');
         x?.classList.remove('hidden');
         if (statusText) statusText.textContent = 'Instant cancellation unavailable';
         if (statusSub) statusSub.textContent = message || 'This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.';
 
-        if (confirmBtn) {
-          confirmBtn.classList.add('hidden');
-          confirmBtn.disabled = true;
-        }
-        if (keepBtn) keepBtn.classList.add('hidden');
         if (closeBtn) {
           closeBtn.classList.remove('hidden');
           closeBtn.disabled = false;
+          closeBtn.textContent = 'Done';
         }
         return;
       }
 
       if (state === 'error') {
+        // Keep the textarea visible so they can retry with a note if needed
         statusWrap?.classList.remove('hidden');
         x?.classList.remove('hidden');
         if (statusText) statusText.textContent = 'Cancel failed';
@@ -2596,6 +2614,7 @@ function mobileConfirmBooking() {
 
     function initiateCancel(appointmentId, startsAt) {
       pendingCancel = { appointmentId, startsAt };
+      if (cancelAutoCloseTimer) { clearTimeout(cancelAutoCloseTimer); cancelAutoCloseTimer = null; }
       const dt = startsAt ? new Date(startsAt) : null;
       document.getElementById('cancel-modal-datetime').textContent = dt
         ? dt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })
@@ -2608,6 +2627,7 @@ function mobileConfirmBooking() {
 
     function closeCancelModal() {
       document.getElementById('cancel-modal')?.classList.add('hidden');
+      if (cancelAutoCloseTimer) { clearTimeout(cancelAutoCloseTimer); cancelAutoCloseTimer = null; }
       setCancelModalState('idle');
     }
 
@@ -2657,11 +2677,12 @@ function mobileConfirmBooking() {
         const okSuccess = (data?.success === true) || emptyBody;
         if (res.ok && okSuccess) {
           setCancelModalState('success');
-          // Refresh and close after a brief success state
-          setTimeout(async () => {
-            try { await loadUpcomingAppointments(); } catch (e) {}
-            closeCancelModal();
-          }, 1200);
+          // Refresh list immediately; do not auto-close quickly (allow manual close).
+          try { await loadUpcomingAppointments(); } catch (e) {}
+          if (cancelAutoCloseTimer) { clearTimeout(cancelAutoCloseTimer); }
+          cancelAutoCloseTimer = setTimeout(() => {
+            try { closeCancelModal(); } catch (e) {}
+          }, 15000);
           return;
         }
 
@@ -5314,7 +5335,9 @@ const refreshInstallButtons = () => {
         Free cancellation until 12 hours before your appointment.
       </div>
 
+      <div id="cancel-reason-wrap">
       <textarea id="cancel-reason" class="input w-full" rows="3" placeholder="Optional: reason for cancelling"></textarea>
+      </div>
 
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
@@ -5326,7 +5349,7 @@ const refreshInstallButtons = () => {
       <div class="flex gap-3 mt-5">
         <button id="cancel-confirm-btn" class="btn-danger flex-1" onclick="confirmCancelAppointment()">Confirm cancel</button>
         <button id="cancel-keep-btn" class="btn-outline flex-1" onclick="closeCancelModal()">Keep appointment</button>
-        <button id="cancel-close-btn" class="btn-outline flex-1 hidden" onclick="closeCancelModal()">Close</button>
+        <button id="cancel-close-btn" class="btn-outline flex-1 hidden" onclick="closeCancelModal()">Done</button>
       </div>
     </div>
   </div>
