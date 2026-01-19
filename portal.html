@@ -2479,73 +2479,177 @@ function mobileConfirmBooking() {
     // =============================
     let pendingCancel = { appointmentId: null, startsAt: null };
 
+    function setCancelModalState(state, message = '') {
+      const statusWrap = document.getElementById('cancel-status-wrap');
+      const spinner = document.getElementById('cancel-status-spinner');
+      const check = document.getElementById('cancel-status-check');
+      const x = document.getElementById('cancel-status-x');
+      const statusText = document.getElementById('cancel-status-text');
+      const statusSub = document.getElementById('cancel-status-subtext');
+
+      const confirmBtn = document.getElementById('cancel-confirm-btn');
+      const keepBtn = document.getElementById('cancel-keep-btn');
+      const closeBtn = document.getElementById('cancel-close-btn');
+
+      const cutoffBox = document.getElementById('cancel-cutoff-warning');
+
+      // Reset visuals
+      statusWrap?.classList.add('hidden');
+      spinner?.classList.add('hidden');
+      check?.classList.add('hidden');
+      x?.classList.add('hidden');
+
+      if (statusText) statusText.textContent = '';
+      if (statusSub) statusSub.textContent = '';
+
+      // Reset buttons
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('hidden');
+        confirmBtn.textContent = 'Confirm cancel';
+      }
+      if (keepBtn) {
+        keepBtn.disabled = false;
+        keepBtn.classList.remove('hidden');
+      }
+      if (closeBtn) closeBtn.classList.add('hidden');
+
+      // Hide cutoff box unless explicitly requested
+      if (cutoffBox) cutoffBox.classList.add('hidden');
+
+      if (state === 'idle') return;
+
+      if (state === 'loading') {
+        statusWrap?.classList.remove('hidden');
+        spinner?.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'Canceling…';
+        if (statusSub) statusSub.textContent = message || 'Please wait';
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Canceling…';
+        }
+        if (keepBtn) keepBtn.disabled = true;
+        return;
+      }
+
+      if (state === 'success') {
+        statusWrap?.classList.remove('hidden');
+        check?.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'Cancellation successful';
+        if (statusSub) statusSub.textContent = message || 'Your appointment has been cancelled.';
+        if (confirmBtn) confirmBtn.disabled = true;
+        if (keepBtn) keepBtn.disabled = true;
+        return;
+      }
+
+      if (state === 'cutoff') {
+        // Under 12 hours: show contact message, hide confirm button
+        if (cutoffBox) cutoffBox.classList.remove('hidden');
+
+        statusWrap?.classList.remove('hidden');
+        x?.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'Instant cancellation unavailable';
+        if (statusSub) statusSub.textContent = message || 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064';
+
+        if (confirmBtn) {
+          confirmBtn.classList.add('hidden');
+          confirmBtn.disabled = true;
+        }
+        if (keepBtn) keepBtn.classList.add('hidden');
+        if (closeBtn) {
+          closeBtn.classList.remove('hidden');
+          closeBtn.disabled = false;
+        }
+        return;
+      }
+
+      if (state === 'error') {
+        statusWrap?.classList.remove('hidden');
+        x?.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'Cancel failed';
+        if (statusSub) statusSub.textContent = message || 'Please try again.';
+        return;
+      }
+    }
+
     function initiateCancel(appointmentId, startsAt) {
       pendingCancel = { appointmentId, startsAt };
       const dt = startsAt ? new Date(startsAt) : null;
-      document.getElementById("cancel-modal-datetime").textContent = dt
-        ? dt.toLocaleString("en-CA", { timeZone: "America/Toronto" })
-        : "—";
-      document.getElementById("cancel-reason").value = "";
-      document.getElementById("cancel-cutoff-warning").classList.add("hidden");
-      document.getElementById("cancel-modal").classList.remove("hidden");
-      if (typeof lucide !== "undefined") lucide.createIcons();
+      document.getElementById('cancel-modal-datetime').textContent = dt
+        ? dt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })
+        : '—';
+      document.getElementById('cancel-reason').value = '';
+      setCancelModalState('idle');
+      document.getElementById('cancel-modal').classList.remove('hidden');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function closeCancelModal() {
-      document.getElementById("cancel-modal")?.classList.add("hidden");
+      document.getElementById('cancel-modal')?.classList.add('hidden');
+      setCancelModalState('idle');
     }
 
     async function confirmCancelAppointment() {
       if (!pendingCancel.appointmentId || !portalProfile?.email) return;
 
-      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+      const reason = (document.getElementById('cancel-reason')?.value || '').trim();
 
-      const res = await fetch(CANCEL_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          appointmentId: pendingCancel.appointmentId,
-          email: String(portalProfile.email).trim().toLowerCase(),
-          reason: reason || "Cancelled by client via portal"
-        })
-      });
+      setCancelModalState('loading');
 
-      const data = await res.json().catch(() => ({}));
+      try {
+        const res = await fetch(CANCEL_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: pendingCancel.appointmentId,
+            email: String(portalProfile.email).trim().toLowerCase(),
+            reason: reason || 'Cancelled by client via portal'
+          })
+        });
 
-      if (data.success) {
-        showToast("Cancelled", "Your appointment was cancelled.");
-        closeCancelModal();
-        await loadUpcomingAppointments();
-        return;
+        const data = await res.json().catch(() => ({}));
+
+        if (data?.withinCutoff || data?.contactRequired) {
+          setCancelModalState('cutoff', 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064');
+          return;
+        }
+
+        if (res.ok && data?.success) {
+          setCancelModalState('success');
+          // Refresh and close after a brief success state
+          setTimeout(async () => {
+            try { await loadUpcomingAppointments(); } catch (e) {}
+            closeCancelModal();
+          }, 1200);
+          return;
+        }
+
+        setCancelModalState('error', data?.error || data?.message || 'Please try again.');
+
+      } catch (e) {
+        setCancelModalState('error', e?.message || 'Please try again.');
       }
-
-      if (data.withinCutoff || data.contactRequired) {
-        document.getElementById("cancel-cutoff-warning")?.classList.remove("hidden");
-        showToast("Within 12 hours", "Submit a request or contact us directly.", true, 6500);
-        return;
-      }
-
-      showToast("Cancel failed", data.error || "Please try again.", true, 6500);
     }
 
+    // Left in place for future use (currently not shown to clients)
     async function submitUnder12HourCancellationRequest() {
       if (!pendingCancel.appointmentId || !portalProfile?.email) return;
 
-      const reason = (document.getElementById("cancel-reason")?.value || "").trim();
+      const reason = (document.getElementById('cancel-reason')?.value || '').trim();
       const starts = pendingCancel.startsAt ? new Date(pendingCancel.startsAt) : null;
-      const appointmentDate = starts ? starts.toLocaleDateString("en-CA", { timeZone: "America/Toronto" }) : "";
-      const appointmentTime = starts ? starts.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
+      const appointmentDate = starts ? starts.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }) : '';
+      const appointmentTime = starts ? starts.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Toronto' }) : '';
 
       const res = await fetch(REQUEST_CANCEL_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointmentId: pendingCancel.appointmentId,
           email: String(portalProfile.email).trim().toLowerCase(),
-          firstName: portalProfile.firstName || "",
-          lastName: portalProfile.lastName || "",
-          phone: portalProfile.phone || "",
-          reason: reason || "Client requested cancellation (within 12 hours)",
+          firstName: portalProfile.firstName || '',
+          lastName: portalProfile.lastName || '',
+          phone: portalProfile.phone || '',
+          reason: reason || 'Client requested cancellation (within 12 hours)',
           appointmentDate,
           appointmentTime
         })
@@ -2553,10 +2657,10 @@ function mobileConfirmBooking() {
 
       const data = await res.json().catch(() => ({}));
       if (data.success) {
-        showToast("Request sent", data.message || "We’ll contact you shortly.");
+        showToast('Request sent', data.message || 'We’ll contact you shortly.');
         closeCancelModal();
       } else {
-        showToast("Request failed", data.error || "Please contact us directly.", true, 6500);
+        showToast('Request failed', data.error || 'Please contact us directly.', true, 6500);
       }
     }
 
@@ -5143,6 +5247,28 @@ const refreshInstallButtons = () => {
         </button>
       </div>
 
+      <!-- Status (loading / success / error) -->
+      <div id="cancel-status-wrap" class="hidden mt-2 mb-4">
+        <div class="flex items-start gap-3 p-3 border border-brand-gold/20 bg-brand-gold/5 rounded">
+          <div id="cancel-status-spinner" class="booking-spinner hidden" style="width:28px;height:28px;"></div>
+          <div id="cancel-status-check" class="hidden" style="width:28px;height:28px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div id="cancel-status-x" class="hidden" style="width:28px;height:28px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div id="cancel-status-text" class="text-sm text-brand-light font-semibold">—</div>
+            <div id="cancel-status-subtext" class="muted text-xs mt-0.5">—</div>
+          </div>
+        </div>
+      </div>
+
       <div class="muted text-sm mb-4">
         Free cancellation until 12 hours before your appointment.
       </div>
@@ -5152,17 +5278,14 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          You can’t cancel instantly in the portal. Submit a request and we’ll contact you shortly.
+          It is under 12 hours, please contact us at <span class="text-brand-light font-semibold">info@relaxandrenew.ca</span> / <span class="text-brand-light font-semibold">226 337 9064</span>.
         </div>
-        <button class="btn-outline text-xs mt-3" onclick="submitUnder12HourCancellationRequest()">
-          <i data-lucide="send" class="w-3 h-3"></i>
-          Request cancellation
-        </button>
       </div>
 
       <div class="flex gap-3 mt-5">
-        <button class="btn-danger flex-1" onclick="confirmCancelAppointment()">Confirm cancel</button>
-        <button class="btn-outline flex-1" onclick="closeCancelModal()">Keep appointment</button>
+        <button id="cancel-confirm-btn" class="btn-danger flex-1" onclick="confirmCancelAppointment()">Confirm cancel</button>
+        <button id="cancel-keep-btn" class="btn-outline flex-1" onclick="closeCancelModal()">Keep appointment</button>
+        <button id="cancel-close-btn" class="btn-outline flex-1 hidden" onclick="closeCancelModal()">Close</button>
       </div>
     </div>
   </div>
