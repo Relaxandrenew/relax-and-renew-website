@@ -1546,6 +1546,19 @@ function mobileConfirmBooking() {
     html.light-mode .nav-link { color: #111827 !important; }
     html.light-mode .nav-link::after { background: rgba(17,24,39,0.65) !important; }
 
+    /* Light mode: sidebar/menu typography should be dark */
+    html.light-mode .sidebar-btn { color: rgba(17,24,39,0.78) !important; }
+    html.light-mode .sidebar-btn:hover { background: rgba(17,24,39,0.06) !important; color: #111827 !important; }
+    html.light-mode .sidebar-btn.active { background: rgba(17,24,39,0.10) !important; border-color: rgba(17,24,39,0.28) !important; color: #111827 !important; }
+    html.light-mode .sidebar-btn i,
+    html.light-mode .sidebar-btn svg { color: #111827 !important; stroke: #111827 !important; }
+
+    /* Light mode: reverse button styling (black fill + gold text) */
+    html.light-mode .btn-filled { background: #111111 !important; border-color: #111111 !important; color: #E0C584 !important; }
+    html.light-mode .btn-filled:hover { background: #000000 !important; border-color: #000000 !important; box-shadow: 0 6px 18px rgba(0,0,0,0.22) !important; }
+    html.light-mode .btn-outline { border-color: rgba(0,0,0,0.55) !important; color: #111111 !important; }
+    html.light-mode .btn-outline:hover { background: rgba(0,0,0,0.06) !important; color: #111111 !important; border-color: rgba(0,0,0,0.75) !important; box-shadow: none !important; }
+
     html.light-mode .mobile-menu {
       background: rgba(243,244,246,0.98) !important;
       border-left-color: rgba(17,24,39,0.14) !important;
