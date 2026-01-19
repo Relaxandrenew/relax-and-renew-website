@@ -569,6 +569,11 @@
   margin: 0 auto 1.5rem;
 }
 
+/* Inline/row usage: remove the bottom margin so the spinner centers correctly */
+#cancel-status-spinner.booking-spinner {
+  margin: 0;
+}
+
 /* Small spinner for mobile weekly navigation (month re-fetch) */
 .rnr-spinner-sm {
   width: 14px;
@@ -2593,6 +2598,23 @@ function mobileConfirmBooking() {
       if (!pendingCancel.appointmentId || !portalProfile?.email) return;
 
       const reason = (document.getElementById('cancel-reason')?.value || '').trim();
+
+      // Client-side 12-hour cutoff check (avoid hitting the workflow when instant cancellation is not allowed)
+      // startsAt is ISO (UTC) from Cliniko; comparing epoch ms is timezone-safe.
+      try {
+        if (pendingCancel.startsAt) {
+          const startsMs = new Date(pendingCancel.startsAt).getTime();
+          const nowMs = Date.now();
+          const diffMs = startsMs - nowMs;
+          const twelveHoursMs = 12 * 60 * 60 * 1000;
+          if (Number.isFinite(diffMs) && diffMs > 0 && diffMs <= twelveHoursMs) {
+            setCancelModalState('cutoff', 'It is under 12 hours, please contact us at info@relaxandrenew.ca / 226 337 9064');
+            return;
+          }
+        }
+      } catch (e) {
+        // If parsing fails, fall through to server-side logic.
+      }
 
       setCancelModalState('loading');
 
@@ -5249,14 +5271,14 @@ const refreshInstallButtons = () => {
 
       <!-- Status (loading / success / error) -->
       <div id="cancel-status-wrap" class="hidden mt-2 mb-4">
-        <div class="flex items-start gap-3 p-3 border border-brand-gold/20 bg-brand-gold/5 rounded">
-          <div id="cancel-status-spinner" class="booking-spinner hidden" style="width:28px;height:28px;"></div>
-          <div id="cancel-status-check" class="hidden" style="width:28px;height:28px;">
+        <div class="flex items-center gap-3 p-3 border border-brand-gold/20 bg-brand-gold/5 rounded">
+          <div id="cancel-status-spinner" class="booking-spinner hidden shrink-0" style="width:28px;height:28px;"></div>
+          <div id="cancel-status-check" class="hidden shrink-0" style="width:28px;height:28px;">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <div id="cancel-status-x" class="hidden" style="width:28px;height:28px;">
+          <div id="cancel-status-x" class="hidden shrink-0" style="width:28px;height:28px;">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
