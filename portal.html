@@ -4629,7 +4629,9 @@ if (selectedSlot && driveTime > 0) {
     // AUTH0 LOCK INITIALIZATION
     // =========================================================
     function initAuth0Lock() {
-      const rememberedEmail = (getRememberEmailPref && getRememberEmailPref()) ? (getRememberedEmail ? getRememberedEmail() : '') : '';
+      const rememberedEmail = (typeof getRememberEmailPref === 'function' && getRememberEmailPref())
+        ? (typeof getRememberedEmail === 'function' ? getRememberedEmail() : '')
+        : '';
       const containerEl = document.getElementById('auth0-lock-container');
       // If a lock instance exists but the container was cleared (e.g., after logout),
       // force a full re-init so the embed can render again.
@@ -4665,7 +4667,7 @@ if (selectedSlot && driveTime > 0) {
           emailInputPlaceholder: "Email", 
           passwordInputPlaceholder: "Password" 
         },
-        prefill: { email: rememberedEmail || undefined },
+                prefill: { email: (rememberedEmail && rememberedEmail.length ? rememberedEmail : undefined) },
         auth: {
           redirect: false,
           responseType: 'token id_token',
