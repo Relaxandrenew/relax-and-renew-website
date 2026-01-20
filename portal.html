@@ -1609,6 +1609,10 @@ function mobileConfirmBooking() {
       box-shadow: 0 10px 22px rgba(0,0,0,0.14) !important;
       transform: translateY(-1px);
     }
+
+    /* Review prompt QR: prevent huge SVG from forcing modal size */
+    #review-prompt-qr svg { width: 100% !important; height: auto !important; max-width: 240px; display: block; }
+
   </style>
 
 </head>
