@@ -3745,7 +3745,22 @@ if (selectedSlot && driveTime > 0) {
       // Dashboard location
       const dashLoc = document.getElementById("dash-location");
       if (dashLoc) {
-        dashLoc.textContent = portalProfile?.city || portalProfile?.address?.split(",")[0] || "—";
+        // Prefer full service address (street) so the dashboard doesn't only show the town.
+        const addr = (portalProfile && portalProfile.address) ? String(portalProfile.address).trim() : "";
+        const city = (portalProfile && portalProfile.city) ? String(portalProfile.city).trim() : "";
+        let loc = "—";
+        if (addr) {
+          const addrLower = addr.toLowerCase();
+          const cityLower = city.toLowerCase();
+          // If city isn't already in the address, append it for clarity.
+          loc = (city && cityLower && addrLower.indexOf(cityLower) === -1)
+            ? `${addr}, ${city}`
+            : addr;
+          loc = String(loc).replace(/\s+/g, " ").trim();
+        } else if (city) {
+          loc = String(city).replace(/\s+/g, " ").trim();
+        }
+        dashLoc.textContent = loc;
       }
 
       const missing = !(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code && portalProfile.email);
