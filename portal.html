@@ -1859,47 +1859,48 @@ function mobileConfirmBooking() {
             </div>
 
             <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div class="card-fancy p-5">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+            <!-- Mobile: 2x2 compact tiles; Desktop: 4 across -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+              <div class="card-fancy p-3 sm:p-5">
+                <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="calendar-check" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Upcoming</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Upcoming</div>
                 </div>
-                <div class="text-3xl font-serif text-brand-light" id="dash-upcoming-count">0</div>
-                <div class="muted text-xs mt-1">Scheduled appointments</div>
+                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-upcoming-count">0</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Scheduled appointments</div>
               </div>
-              <div class="card-fancy p-5">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="history" class="w-5 h-5"></i>
+              <div class="card-fancy p-3 sm:p-5">
+                <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="history" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Completed</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Completed</div>
                 </div>
-                <div class="text-3xl font-serif text-brand-light" id="dash-completed-count">0</div>
-                <div class="muted text-xs mt-1">Past sessions</div>
+                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-completed-count">0</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Past sessions</div>
               </div>
-              <div class="card-fancy p-5">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+              <div class="card-fancy p-3 sm:p-5">
+                <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Location</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Location</div>
                 </div>
-                <div class="text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
-                <div class="muted text-xs mt-1">Service address</div>
+                <div class="text-base sm:text-lg font-serif text-brand-light truncate" id="dash-location">—</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Service address</div>
               </div>
             
-              <div class="card-fancy p-5">
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+              <div class="card-fancy p-3 sm:p-5">
+                <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Visits</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Visits</div>
                 </div>
-                <div class="text-3xl font-serif text-brand-light" id="dash-total-visits">0</div>
-                <div class="muted text-xs mt-1">Lifetime completed sessions</div>
+                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-total-visits">0</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Lifetime completed sessions</div>
               </div>
 </div>
 
