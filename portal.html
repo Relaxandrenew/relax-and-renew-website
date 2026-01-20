@@ -3932,7 +3932,10 @@ if (selectedSlot && driveTime > 0) {
         const idToken = localStorage.getItem("rnr_id_token") || "";
         const accessToken = localStorage.getItem("rnr_auth_token") || "";
         return { idToken, accessToken };
+      } catch (e) {
+        return { idToken: "", accessToken: "" };
       }
+    }
 
     function getRememberEmailPref() {
       try {
@@ -3960,11 +3963,6 @@ if (selectedSlot && driveTime > 0) {
     function clearRememberedEmail() {
       try { localStorage.removeItem("rnr_remembered_email"); } catch (e) {}
     }
- catch (e) {
-        return { idToken: "", accessToken: "" };
-      }
-    }
-
     async function tryEnrichProfileFromUserInfo(accessToken, currentProfile) {
       if (!accessToken) return currentProfile;
       try {
