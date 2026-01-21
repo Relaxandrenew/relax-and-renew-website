@@ -1562,6 +1562,10 @@ function mobileConfirmBooking() {
 
       <div class="mt-6">
         <div id="auth0-lock-container"></div>
+            <label class="mt-4 flex items-center gap-3 text-sm select-none">
+              <input id="remember-email" type="checkbox" class="h-4 w-4 accent-[rgba(224,197,132,0.9)]" checked />
+              <span class="text-brand-dim">Remember my email on this device</span>
+            </label>
       </div>
 
       <p class="text-[11px] text-brand-dim leading-snug mt-4 text-center opacity-80">
@@ -3798,6 +3802,53 @@ if (selectedSlot && driveTime > 0) {
       }
     }
 
+    // Remember-email (does not modify Auth0 Lock init; purely optional UX)
+    function _rnrGetRememberEmailPref() {
+      try {
+        const v = localStorage.getItem("rnr_remember_email");
+        return (v === null) ? true : (String(v) === "true");
+      } catch (e) { return true; }
+    }
+
+    function _rnrSetRememberEmailPref(v) {
+      try { localStorage.setItem("rnr_remember_email", v ? "true" : "false"); } catch (e) {}
+    }
+
+    function _rnrGetRememberedEmail() {
+      try { return localStorage.getItem("rnr_remembered_email") || ""; } catch (e) { return ""; }
+    }
+
+    function _rnrSetRememberedEmail(email) {
+      try {
+        const e = String(email || "").trim();
+        if (!e) return;
+        localStorage.setItem("rnr_remembered_email", e);
+      } catch (e) {}
+    }
+
+    function _rnrClearRememberedEmail() {
+      try { localStorage.removeItem("rnr_remembered_email"); } catch (e) {}
+    }
+
+    function _rnrTryPrefillLockEmail() {
+      try {
+        if (!_rnrGetRememberEmailPref()) return;
+        const remembered = _rnrGetRememberedEmail();
+        if (!remembered) return;
+        const host = document.getElementById("auth0-lock-container");
+        if (!host) return;
+        // Auth0 Lock renders an email input; set its value without touching Lock init.
+        const emailInput = host.querySelector('input[type="email"], input[name="email"]');
+        if (!emailInput) return;
+        if (String(emailInput.value || "").trim()) return;
+        emailInput.value = remembered;
+        // trigger input events so Lock recognizes it
+        emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+        emailInput.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch (e) {}
+    }
+
+
     async function tryEnrichProfileFromUserInfo(accessToken, currentProfile) {
       if (!accessToken) return currentProfile;
       try {
@@ -4289,6 +4340,18 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     function initAuth0Lock() {
       const containerEl = document.getElementById('auth0-lock-container');
+      // Remember-email checkbox (no changes to Auth0 Lock init)
+      try {
+        const cb = document.getElementById('remember-email');
+        if (cb) {
+          cb.checked = !!_rnrGetRememberEmailPref();
+          cb.addEventListener('change', () => {
+            _rnrSetRememberEmailPref(!!cb.checked);
+            if (!cb.checked) _rnrClearRememberedEmail();
+          });
+        }
+      } catch (e) {}
+
       // If a lock instance exists but the container was cleared (e.g., after logout),
       // force a full re-init so the embed can render again.
       if (lock) {
@@ -4299,6 +4362,7 @@ if (selectedSlot && driveTime > 0) {
             lock = null;
           } else {
             lock.show();
+        try { setTimeout(() => { try { _rnrTryPrefillLockEmail(); } catch (e) {} }, 50); } catch (e) {}
             return;
           }
         } catch (e) {
@@ -4337,7 +4401,9 @@ if (selectedSlot && driveTime > 0) {
         closable: false
       });
 
-      // Show the Lock widget
+      
+      try { lock.on('show', function() { try { _rnrTryPrefillLockEmail(); } catch (e) {} }); } catch (e) {}
+// Show the Lock widget
       lock.show();
 
       // Handle successful authentication
