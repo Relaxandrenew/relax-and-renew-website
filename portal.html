@@ -5568,43 +5568,127 @@ const refreshInstallButtons = () => {
         return false;
       } catch (e) { return false; }
     }
-
-    function _rnrGetCompletedApptKey(a) {
-      try {
-        return String(a.id || a.appointment_id || a.appointmentId || (a.starts_at || a.startsAt || "")) || "";
-      } catch (e) { return ""; }
+function _rnrGetApptStartMs(a) {
+  try {
+    if (!a) return 0;
+    const candidates = [
+      a.starts_at, a.startsAt, a.start_time, a.startTime, a.start, a.start_at, a.startAt,
+      a.start_datetime, a.startDateTime, a.start_date_time, a.startDate, a.date,
+      a?.appointment?.starts_at, a?.appointment?.startsAt, a?.appointment?.start_time, a?.appointment?.startTime, a?.appointment?.start, a?.appointment?.start_at,
+    ].filter(v => v !== undefined && v !== null && String(v).trim() !== "");
+    if (!candidates.length) return 0;
+    const v = candidates[0];
+    if (typeof v === "number") return v > 1e12 ? v : v * 1000;
+    const s = String(v).trim();
+    if (/^\d+$/.test(s)) {
+      const n = Number(s);
+      return n > 1e12 ? n : n * 1000;
     }
+    const t = new Date(s).getTime();
+    return isNaN(t) ? 0 : t;
+  } catch (e) { return 0; }
+}
 
-    function _rnrFormatDatePrettyFromIso(iso) {
-      try {
-        const d = iso ? new Date(iso) : null;
-        if (!d || isNaN(d.getTime())) return "";
-        return d.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Toronto" });
-      } catch (e) { return ""; }
+function _rnrGetApptEndMs(a) {
+  try {
+    if (!a) return 0;
+    const candidates = [
+      a.ends_at, a.endsAt, a.end_time, a.endTime, a.end, a.end_at, a.endAt,
+      a.end_datetime, a.endDateTime, a.end_date_time,
+      a?.appointment?.ends_at, a?.appointment?.endsAt, a?.appointment?.end_time, a?.appointment?.endTime, a?.appointment?.end, a?.appointment?.end_at,
+    ].filter(v => v !== undefined && v !== null && String(v).trim() !== "");
+    if (!candidates.length) return 0;
+    const v = candidates[0];
+    if (typeof v === "number") return v > 1e12 ? v : v * 1000;
+    const s = String(v).trim();
+    if (/^\d+$/.test(s)) {
+      const n = Number(s);
+      return n > 1e12 ? n : n * 1000;
     }
+    const t = new Date(s).getTime();
+    return isNaN(t) ? 0 : t;
+  } catch (e) { return 0; }
+}
 
-    function _rnrGetLatestEligibleCompletedAppt() {
-      try {
-        const arrA = Array.isArray(window.completedAppointments) ? window.completedAppointments : (Array.isArray(completedAppointments) ? completedAppointments : []);
-        const arrB = Array.isArray(window.historyAppointments) ? window.historyAppointments : (Array.isArray(historyAppointments) ? historyAppointments : []);
-        const combined = arrA.concat(arrB);
-        const now = Date.now();
-        const filtered = combined.filter(a => {
-          if (!a) return false;
-          if (_rnrIsCancelledAppt(a)) return false;
-          const t = new Date(a.starts_at || a.startsAt || 0).getTime() || 0;
-          if (!t) return false;
-          return t <= now;
-        });
-        if (!filtered.length) return null;
-        filtered.sort((a,b) => {
-          const tb = new Date(b.starts_at || b.startsAt || 0).getTime() || 0;
-          const ta = new Date(a.starts_at || a.startsAt || 0).getTime() || 0;
-          return tb - ta;
-        });
-        return filtered[0] || null;
-      } catch (e) { return null; }
+function _rnrHashString(str) {
+  // Deterministic hash (djb2) for stable per-appointment keys when no ID is present.
+  try {
+    let h = 5381;
+    const s = String(str || "");
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i);
+    return (h >>> 0).toString(36);
+  } catch (e) { return "0"; }
+}
+
+function _rnrGetCompletedApptKey(a) {
+  try {
+    if (!a) return "";
+    const id =
+      a.appointmentId ?? a.appointment_id ?? a.appointmentID ??
+      a.id ?? a._id ?? a.uuid ?? a.uid ??
+      a.booking_id ?? a.bookingId ?? a.bookingID ??
+      a.cliniko_id ?? a.clinikoId ?? a.clinikoID;
+
+    if (id !== undefined && id !== null && String(id).trim() !== "") return String(id).trim();
+
+    const starts = a.starts_at ?? a.startsAt ?? a.start ?? a.start_time ?? a.startTime ?? a.start_at ?? a.startAt ?? "";
+    const ends   = a.ends_at ?? a.endsAt ?? a.end ?? a.end_time ?? a.endTime ?? a.end_at ?? a.endAt ?? "";
+    const startMs = _rnrGetApptStartMs(a) || 0;
+    const endMs   = _rnrGetApptEndMs(a) || 0;
+
+    const type   = a.treatment_label ?? a.treatmentLabel ?? a.appointment_type ?? a.appointmentType ?? a.type ?? a.service ?? "";
+    const prac   =
+      a.practitioner_id ?? a.practitionerId ?? a.practitionerID ??
+      (a.practitioner && (a.practitioner.id ?? a.practitioner.name)) ??
+      a.practitioner ?? "";
+
+    const sig = ["starts", starts, "ends", ends, "startMs", startMs, "endMs", endMs, "type", type, "prac", prac].join("|");
+    return "sig_" + _rnrHashString(sig);
+  } catch (e) { return ""; }
+}
+
+function _rnrGetAllEligibleCompletedAppts() {
+  try {
+    const arrA = Array.isArray(window.completedAppointments) ? window.completedAppointments
+      : (Array.isArray(completedAppointments) ? completedAppointments : []);
+    const arrB = Array.isArray(window.historyAppointments) ? window.historyAppointments
+      : (Array.isArray(historyAppointments) ? historyAppointments : []);
+    const combined = arrA.concat(arrB);
+    const now = Date.now();
+    const filtered = combined.filter(a => {
+      if (!a) return false;
+      if (_rnrIsCancelledAppt(a)) return false;
+      const t = _rnrGetApptStartMs(a);
+      if (!t) return false;
+      return t <= now;
+    });
+    if (!filtered.length) return [];
+    filtered.sort((a,b) => (_rnrGetApptStartMs(b)||0) - (_rnrGetApptStartMs(a)||0));
+    return filtered;
+  } catch (e) { return []; }
+}
+
+function _rnrPickReviewCandidate() {
+  try {
+    if (_rnrGetReviewPromptDisabledGlobal()) return null;
+    const all = _rnrGetAllEligibleCompletedAppts();
+    if (!all.length) return null;
+    for (const appt of all) {
+      const key = _rnrGetCompletedApptKey(appt);
+      if (!key) continue;
+      if (_rnrHasSeenReviewKey(key)) continue;
+      return appt;
     }
+    return null;
+  } catch (e) { return null; }
+}
+
+function _rnrGetLatestEligibleCompletedAppt() {
+  const all = _rnrGetAllEligibleCompletedAppts();
+  return (all && all.length) ? all[0] : null;
+}
+
+
 
     function _rnrShouldShowReviewPromptFor(key) {
       if (!key) return false;
@@ -5628,60 +5712,11 @@ const refreshInstallButtons = () => {
       if (link) link.href = GOOGLE_REVIEW_URL;
 
       const subtitle = document.getElementById("review-prompt-subtitle");
-      const dateStr = _rnrFormatDatePrettyFromIso(appt?.starts_at || appt?.startsAt || "");
-      if (subtitle) subtitle.textContent = dateStr ? `Your session on ${dateStr}` : "Your session on —";
-
-      // Enforce close only via X or Dismiss
-      modal.addEventListener("click", (e) => { e.stopPropagation(); }, { once: true });
-
-      const x = document.getElementById("review-prompt-x");
-      const dismiss = document.getElementById("review-prompt-dismiss");
-      const cb = document.getElementById("review-prompt-disable");
-
-      const key = _rnrGetCompletedApptKey(appt);
-
-      const doClose = () => {
-        try {
-          const disable = !!(cb && cb.checked);
-          if (disable) {
-            _rnrSetReviewPromptDisabledGlobal(true);
-            try { const hw = document.getElementById("history-review"); if (hw) hw.classList.add("hidden"); } catch (e) {}
-          }
-          _rnrMarkSeenReviewKey(key);
-        } catch (e) {}
-        closeReviewPromptModal();
-      };
-
-      if (x) x.onclick = doClose;
-      if (dismiss) dismiss.onclick = doClose;
-
-      modal.classList.remove("hidden");
-      modal.setAttribute("aria-hidden", "false");
-      try { lucide && lucide.createIcons && lucide.createIcons(); } catch(e) {}
-    }
-
-    function maybeShowReviewPromptOncePerCompletedAppt() {
-      try {
-        const histWrap = document.getElementById("history-review");
-        const histText = document.getElementById("history-review-text");
-        const histLink = document.getElementById("history-review-link");
-
-        if (histLink) histLink.href = GOOGLE_REVIEW_URL;
-
-        if (_rnrGetReviewPromptDisabledGlobal()) {
-          if (histWrap) histWrap.classList.add("hidden");
-          return;
         }
 
-        const latest = _rnrGetLatestEligibleCompletedAppt();
-        if (!latest) {
-          if (histWrap) histWrap.classList.add("hidden");
-          return;
-        }
-
-        const key = _rnrGetCompletedApptKey(latest);
-
-        // History inline prompt is allowed only if not globally disabled
+        // Popup should show once per eligible completed appointment that has not been dismissed yet
+        const key = candidate ? _rnrGetCompletedApptKey(candidate) : "";
+// History inline prompt is allowed only if not globally disabled
         if (histText) {
           const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || "");
           histText.textContent = dateStr
@@ -5690,8 +5725,8 @@ const refreshInstallButtons = () => {
         }
         if (histWrap) histWrap.classList.remove("hidden");
 
-        if (_rnrShouldShowReviewPromptFor(key)) {
-          openReviewPromptModal(latest);
+        if (candidate && _rnrShouldShowReviewPromptFor(key)) {
+          openReviewPromptModal(candidate);
         }
       } catch (e) {}
     }
