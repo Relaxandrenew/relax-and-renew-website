@@ -842,7 +842,7 @@
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
     const CANCEL_WEBHOOK_URL        = `${N8N_WEBHOOK_BASE}/portal-cancel-appointment`;
-    const LAST_BOOKING_WEBHOOK_URL  = `${N8N_WEBHOOK_BASE}/portal-get-last-booking`;
+    const LAST_BOOKING_WEBHOOK_URL  = APPOINTMENTS_WEBHOOK_URL; // legacy (compute last booking client-side)
     const WAITLIST_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-join-waitlist`;
     const INVOICE_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-get-invoice`;
     const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
@@ -2876,6 +2876,39 @@ function mobileConfirmBooking() {
         return;
       }
 
+      // Client-side: use already-fetched appointments (no extra webhook needed)
+      try {
+        const all = Array.isArray(historyAppointments) ? historyAppointments : [];
+        const nowMs = Date.now();
+
+        const completed = all
+          .filter(a => a && !_rnrIsCancelledAppt(a))
+          .filter(a => {
+            const t = _rnrGetApptStartMs(a) || 0;
+            return t > 0 && t <= nowMs;
+          })
+          .sort((a,b) => (_rnrGetApptStartMs(b)||0) - (_rnrGetApptStartMs(a)||0));
+
+        if (!completed.length) {
+          wrap.classList.add("hidden");
+          return;
+        }
+
+        const lb = completed[0];
+        const label =
+          lb.appointment_type_display ||
+          (lb.appointment_type && (lb.appointment_type.name || lb.appointment_type_display)) ||
+          lb.treatment_label || lb.treatmentLabel || lb.treatment || "Massage";
+
+        const mins = Number(lb.duration || lb.durationMinutes || lb.duration_minutes || lb.minutes || 60);
+
+        wrap.classList.remove("hidden");
+        summary.textContent = `${label} • ${mins} min`;
+      } catch (e) {
+        wrap.classList.add("hidden");
+      }
+    }
+
       summary.textContent = "Loading...";
       try {
         const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
@@ -2902,18 +2935,44 @@ function mobileConfirmBooking() {
       if (!portalProfile?.email) return;
 
       try {
-        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-        });
+        const all = Array.isArray(historyAppointments) ? historyAppointments : [];
+        const nowMs = Date.now();
 
-        const data = await res.json().catch(() => ({}));
-        if (!data.success || !data.lastBooking) {
+        const completed = all
+          .filter(a => a && !_rnrIsCancelledAppt(a))
+          .filter(a => {
+            const t = _rnrGetApptStartMs(a) || 0;
+            return t > 0 && t <= nowMs;
+          })
+          .sort((a,b) => (_rnrGetApptStartMs(b)||0) - (_rnrGetApptStartMs(a)||0));
+
+        if (!completed.length) {
           showToast("No previous booking found", "Please book manually.", true);
           switchTab("rebook");
           return;
         }
+
+        const lb = completed[0];
+
+        // Best-effort: map last booking into current booking selectors
+        selectedServiceKey = lb.treatment_key || lb.treatmentKey || lb.service_key || lb.serviceKey || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || lb.duration_minutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel && selectedServiceKey) tSel.value = String(selectedServiceKey);
+        if (dSel && selectedStandardDuration) dSel.value = String(selectedStandardDuration);
+
+        // Move user to booking flow
+        switchTab("rebook");
+        try { updateProgressStepper(); } catch (e) {}
+        showToast("Loaded last booking", "Please choose a date & time to confirm.", false);
+      } catch (e) {
+        showToast("Couldn’t load last booking", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
 
         const lb = data.lastBooking;
         selectedServiceKey = lb.treatment_key || selectedServiceKey;
