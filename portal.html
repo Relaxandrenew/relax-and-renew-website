@@ -4086,24 +4086,19 @@ function _rnrGetCompletedApptKey(appt) {
       lockBodyScroll();
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
-
-            if (dashText) {
-          dashText.textContent = dateStr
-            ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
-            : `If you have a moment, we’d really appreciate your feedback.`;
-        }
-        if (dashWrap) dashWrap.classList.remove('hidden');
-
-        const histWrap = document.getElementById('history-review-prompt');
-        const histText = document.getElementById('history-review-text');
-        if (histText) {
-          histText.textContent = dateStr
-            ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
-            : `We’d really appreciate a quick review — it helps a lot.`;
-        }
-        if (histWrap) histWrap.classList.remove('hidden');
-
-        // Show modal prompt
+        // Only show the inline History prompt if review prompts are not disabled
+        const _rnrReviewDisabled = (() => { try { return localStorage.getItem(LS_REVIEW_DISABLED) === '1'; } catch (e) { return false; } })();
+        
+                const histWrap = document.getElementById('history-review-prompt');
+                const histText = document.getElementById('history-review-text');
+                if (histText) {
+                  histText.textContent = dateStr
+                    ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
+                    : `We’d really appreciate a quick review — it helps a lot.`;
+                }
+                if (histWrap && !_rnrReviewDisabled) histWrap.classList.remove('hidden');
+        
+                // Show modal prompt
         openReviewPromptModal(latest);
 
         // Wire close controls (X + Dismiss only)
@@ -4119,7 +4114,7 @@ function _rnrGetCompletedApptKey(appt) {
           if (cb && cb.checked) {
               try {
                 // Hide the inline History prompt immediately
-                const hw = document.getElementById('history-review');
+                const hw = document.getElementById('history-review-prompt');
                 if (hw) hw.classList.add('hidden');
               } catch (e) {}
             try { localStorage.setItem(LS_REVIEW_DISABLED, '1'); } catch (e) {}
