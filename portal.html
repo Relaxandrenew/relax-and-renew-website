@@ -5367,12 +5367,28 @@ const refreshInstallButtons = () => {
 
     function _rnrGetLatestEligibleCompletedAppt() {
       try {
-        const arr = Array.isArray(completedAppointments) ? completedAppointments : [];
-        const filtered = arr.filter(a => !_rnrIsCancelledAppt(a));
+        const arrA = Array.isArray(completedAppointments) ? completedAppointments : [];
+        const arrB = Array.isArray(historyAppointments) ? historyAppointments : [];
+        // Combine and filter to past, non-cancelled sessions
+        const combined = arrA.concat(arrB);
+        const now = Date.now();
+        const filtered = combined.filter(a => {
+          if (!a) return false;
+          if (_rnrIsCancelledAppt(a)) return false;
+          const t = new Date(a?.starts_at || a?.startsAt || 0).getTime() || 0;
+          if (!t) return false;
+          // must be in the past to be eligible for a post-session review prompt
+          return t <= now;
+        });
         if (!filtered.length) return null;
-        filtered.sort((a,b) => (new Date(b?.starts_at || b?.startsAt || 0).getTime()||0) - (new Date(a?.starts_at || a?.startsAt || 0).getTime()||0));
+        filtered.sort((a,b) => {
+          const tb = new Date(b?.starts_at || b?.startsAt || 0).getTime() || 0;
+          const ta = new Date(a?.starts_at || a?.startsAt || 0).getTime() || 0;
+          return tb - ta;
+        });
         return filtered[0] || null;
       } catch (e) { return null; }
+    } catch (e) { return null; }
     }
 
     function closeReviewPromptModal() {
