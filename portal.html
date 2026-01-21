@@ -5564,9 +5564,37 @@ const refreshInstallButtons = () => {
       } catch (e) { return false; }
     }
 
+    function _rnrHashString(str) {
+      // Deterministic hash (djb2) for stable per-appointment keys when no ID is present.
+      try {
+        let h = 5381;
+        const s = String(str || "");
+        for (let i = 0; i < s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i);
+        return (h >>> 0).toString(36);
+      } catch (e) { return "0"; }
+    }
+
     function _rnrGetCompletedApptKey(a) {
       try {
-        return String(a.id || a.appointment_id || a.appointmentId || (a.starts_at || a.startsAt || "")) || "";
+        if (!a) return "";
+        const id =
+          a.appointmentId ?? a.appointment_id ?? a.appointmentID ??
+          a.id ?? a._id ?? a.uuid ?? a.uid ??
+          a.booking_id ?? a.bookingId ?? a.bookingID ??
+          a.cliniko_id ?? a.clinikoId ?? a.clinikoID;
+
+        if (id !== undefined && id !== null && String(id).trim() !== "") return String(id).trim();
+
+        const starts = a.starts_at ?? a.startsAt ?? a.start ?? a.start_time ?? a.startTime ?? "";
+        const ends   = a.ends_at ?? a.endsAt ?? a.end ?? a.end_time ?? a.endTime ?? "";
+        const type   = a.treatment_label ?? a.treatmentLabel ?? a.appointment_type ?? a.appointmentType ?? a.type ?? a.service ?? "";
+        const prac   =
+          a.practitioner_id ?? a.practitionerId ?? a.practitionerID ??
+          (a.practitioner && (a.practitioner.id ?? a.practitioner.name)) ??
+          a.practitioner ?? "";
+
+        const sig = ["starts", starts, "ends", ends, "type", type, "prac", prac].join("|");
+        return "sig_" + _rnrHashString(sig);
       } catch (e) { return ""; }
     }
 
@@ -5578,10 +5606,14 @@ const refreshInstallButtons = () => {
       } catch (e) { return ""; }
     }
 
-    function _rnrGetLatestEligibleCompletedAppt() {
+        const RNR_REVIEW_DEBUG = false; // set true temporarily to debug review popup selection
+
+    function _rnrGetAllEligibleCompletedAppts() {
       try {
-        const arrA = Array.isArray(window.completedAppointments) ? window.completedAppointments : (Array.isArray(completedAppointments) ? completedAppointments : []);
-        const arrB = Array.isArray(window.historyAppointments) ? window.historyAppointments : (Array.isArray(historyAppointments) ? historyAppointments : []);
+        const arrA = Array.isArray(window.completedAppointments) ? window.completedAppointments
+          : (Array.isArray(completedAppointments) ? completedAppointments : []);
+        const arrB = Array.isArray(window.historyAppointments) ? window.historyAppointments
+          : (Array.isArray(historyAppointments) ? historyAppointments : []);
         const combined = arrA.concat(arrB);
         const now = Date.now();
         const filtered = combined.filter(a => {
@@ -5591,15 +5623,39 @@ const refreshInstallButtons = () => {
           if (!t) return false;
           return t <= now;
         });
-        if (!filtered.length) return null;
+        if (!filtered.length) return [];
         filtered.sort((a,b) => {
           const tb = new Date(b.starts_at || b.startsAt || 0).getTime() || 0;
           const ta = new Date(a.starts_at || a.startsAt || 0).getTime() || 0;
           return tb - ta;
         });
-        return filtered[0] || null;
+        return filtered;
+      } catch (e) { return []; }
+    }
+
+    function _rnrPickReviewCandidate() {
+      try {
+        const all = _rnrGetAllEligibleCompletedAppts();
+        if (RNR_REVIEW_DEBUG) console.log("[RNR Review] Eligible completed count:", all.length);
+        if (!all.length) { if (RNR_REVIEW_DEBUG) console.log("[RNR Review] No eligible completed appointments."); return null; }
+        // Prefer the most recent eligible appointment that has NOT been dismissed/seen yet.
+        for (const appt of all) {
+          const key = _rnrGetCompletedApptKey(appt);
+          if (!key) continue;
+          if (_rnrGetReviewPromptDisabledGlobal()) return null;
+          if (_rnrHasSeenReviewKey(key)) { if (RNR_REVIEW_DEBUG) console.log("[RNR Review] Skip seen:", key); continue; }
+          if (RNR_REVIEW_DEBUG) console.log("[RNR Review] Picked candidate key:", key);
+          return appt;
+        }
+        return null;
       } catch (e) { return null; }
     }
+
+    function _rnrGetLatestEligibleCompletedAppt() {
+      // Backwards-compatible wrapper (some code calls this name)
+      return _rnrPickReviewCandidate();
+    }
+}
 
     function _rnrShouldShowReviewPromptFor(key) {
       if (!key) return false;
@@ -5678,17 +5734,17 @@ const refreshInstallButtons = () => {
 
         // History inline prompt is allowed only if not globally disabled
         if (histText) {
-          const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || "");
+          const dateStr = _rnrFormatDatePrettyFromIso(((latest || latestAny)?.starts_at) || ((latest || latestAny)?.startsAt) || "");
           histText.textContent = dateStr
             ? `We hope your massage left you feeling better. If you’re comfortable sharing, we’d love to hear how your experience was.`
             : `If you’re comfortable sharing, we’d love to hear how your experience was.`;
         }
         if (histWrap) histWrap.classList.remove("hidden");
 
-        if (_rnrShouldShowReviewPromptFor(key)) {
+        if (latest && key && _rnrShouldShowReviewPromptFor(key)) {
           openReviewPromptModal(latest);
         }
-      } catch (e) {}
+} catch (e) {}
     }
 
 </script>
