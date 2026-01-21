@@ -2909,27 +2909,8 @@ function mobileConfirmBooking() {
       }
     }
 
-      summary.textContent = "Loading...";
-      try {
-        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-        });
-        const data = await res.json().catch(() => ({}));
+      
 
-        if (!data.success || !data.lastBooking) {
-          wrap.classList.add("hidden");
-          return;
-        }
-
-        wrap.classList.remove("hidden");
-        const lb = data.lastBooking;
-        summary.textContent = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
-      } catch (e) {
-        wrap.classList.add("hidden");
-      }
-    }
 
     async function bookSameAsLastTime() {
       if (!portalProfile?.email) return;
