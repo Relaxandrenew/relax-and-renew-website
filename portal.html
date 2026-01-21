@@ -1917,23 +1917,7 @@ function mobileConfirmBooking() {
                 <div class="muted text-[0.7rem] sm:text-xs mt-1">Lifetime completed sessions</div>
               </div>
 </div>
-
-            
-
-            <!-- Post-session feedback prompt (Dashboard) -->
-            <div id="dash-review-prompt" class="hidden mb-6">
-              <div class="card-fancy p-4 sm:p-5">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                      <i data-lucide="star" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                      <div class="font-serif text-lg text-brand-light">How was your last massage?</div>
-                      <div class="muted text-sm" id="dash-review-text">If you have a moment, we’d really appreciate your feedback.</div>
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
+<div class="flex gap-2">
                     <a class="btn-filled text-sm py-2 px-4" target="_blank" rel="noopener" href="https://g.page/r/CVMjbVYTDMv3EAE/review">Leave a Google Review</a>
                   </div>
                 </div>
@@ -4009,7 +3993,22 @@ if (selectedSlot && driveTime > 0) {
       } catch (e) { return ''; }
     }
 
-    function _rnrGetCompletedApptKey(appt) {
+    
+    function _rnrIsCancelledAppt(a) {
+      try {
+        if (!a) return false;
+        const s = String(a.status || a.state || a.appointment_status || a.appointmentStatus || '').toLowerCase();
+        if (s.includes('cancel')) return true;
+        // Some payloads use flags
+        if (a.cancelled === true || a.canceled === true || a.isCancelled === true || a.isCanceled === true) return true;
+        // Some cancelled items appear in the cancelledAppointments array reference shape
+        const kind = String(a.kind || a.type || '').toLowerCase();
+        if (kind.includes('cancel')) return true;
+        return false;
+      } catch (e) { return false; }
+    }
+
+function _rnrGetCompletedApptKey(appt) {
       try {
         return String(
           appt?.id || appt?.appointment_id || appt?.appointmentId || appt?.cliniko_id || appt?.starts_at || appt?.startsAt || ''
@@ -4024,7 +4023,9 @@ if (selectedSlot && driveTime > 0) {
         const arr = Array.isArray(completedAppointments) ? completedAppointments : (Array.isArray(historyAppointments) ? historyAppointments : []);
         if (!arr.length) return null;
         // Prefer those that clearly look like completed sessions
-        const sorted = arr.slice().sort((a,b) => {
+        const filtered = arr.filter(a => !_rnrIsCancelledAppt(a));
+        if (!filtered.length) return null;
+        const sorted = filtered.slice().sort((a,b) => {
           const da = new Date(a?.starts_at || a?.startsAt || 0).getTime() || 0;
           const db = new Date(b?.starts_at || b?.startsAt || 0).getTime() || 0;
           return db - da;
@@ -4086,19 +4087,7 @@ if (selectedSlot && driveTime > 0) {
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
 
-    function maybeShowReviewPromptOncePerCompletedAppt() {
-      try {
-        const latest = _rnrGetLatestCompletedAppt();
-        if (!latest) return;
-
-        const key = _rnrGetCompletedApptKey(latest);
-        if (!_rnrShouldShowReviewPromptFor(key)) return;
-
-        // Update inline prompts on dashboard/history as well
-        const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || '');
-        const dashWrap = document.getElementById('dash-review-prompt');
-        const dashText = document.getElementById('dash-review-text');
-        if (dashText) {
+            if (dashText) {
           dashText.textContent = dateStr
             ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
             : `If you have a moment, we’d really appreciate your feedback.`;
@@ -4128,6 +4117,11 @@ if (selectedSlot && driveTime > 0) {
           _rnrMarkReviewPrompted(key);
           // If they opted out, disable forever
           if (cb && cb.checked) {
+              try {
+                // Hide the inline History prompt immediately
+                const hw = document.getElementById('history-review');
+                if (hw) hw.classList.add('hidden');
+              } catch (e) {}
             try { localStorage.setItem(LS_REVIEW_DISABLED, '1'); } catch (e) {}
           }
           closeReviewPromptModal();
