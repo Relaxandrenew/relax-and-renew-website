@@ -830,10 +830,8 @@
     }
 
 
-    /* Review QR SVG should not force modal sizing */
-    #review-prompt-qr svg { width: 100% !important; height: auto !important; max-width: 240px; display:block; }
-
-  </style>
+    #review-prompt-qr svg { width: 100% !important; height: auto !important; max-width: 240px; display: block; }
+</style>
 
   <script>
     // =========================================================
@@ -2159,27 +2157,6 @@ function mobileConfirmBooking() {
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
             <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
 
-
-            <!-- Post-session feedback prompt (History) -->
-            <div id="history-review" class="hidden mb-6">
-              <div class="card-fancy p-4 sm:p-5">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                      <i data-lucide="star" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                      <div class="font-serif text-lg text-brand-light">Share your experience</div>
-                      <div class="muted text-sm" id="history-review-text">If you have a moment, we’d really appreciate your feedback.</div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <a id="history-review-link" class="btn-filled px-4 py-2 text-sm" href="https://g.page/r/CVMjbVYTDMv3EAE/review" target="_blank" rel="noopener">Leave a Google Review</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div id="history-loading" class="py-8 text-center">
               <div id="history-skeleton" class="space-y-3">
                 <div class="card-fancy p-4">
@@ -2214,7 +2191,26 @@ function mobileConfirmBooking() {
               </div>
             </div>
 
-            <div id="history-list" class="space-y-3 hidden"></div>
+            <div id="history-list" class="space-y-3 hidden">
+              <!-- Post-session feedback prompt (History) -->
+              <div id="history-review" class="hidden mb-6">
+                <div class="card-fancy p-4 sm:p-5">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                      <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                        <i data-lucide="star" class="w-5 h-5"></i>
+                      </div>
+                      <div>
+                        <div class="font-serif text-lg text-brand-light">Leave a Google Review</div>
+                        <div class="muted text-sm" id="history-review-text">If you have a moment, we’d really appreciate your feedback.</div>
+                      </div>
+                    </div>
+                    <a id="history-review-link" class="btn-filled px-4 py-2 whitespace-nowrap" href="#" target="_blank" rel="noopener">Leave a Review</a>
+                  </div>
+                </div>
+              </div>
+
+</div>
 
             <div id="history-empty" class="hidden card-fancy p-6">
               <div class="pill">No completed sessions yet</div>
@@ -4020,8 +4016,6 @@ if (selectedSlot && driveTime > 0) {
 
         renderAppointments();
         renderHistory();
-        try { maybeShowReviewPromptOncePerCompletedAppt(); } catch (e) {}
-
         updateCountdown();
         if (countdownTimer) clearInterval(countdownTimer);
         countdownTimer = setInterval(updateCountdown, 60000);
@@ -5315,177 +5309,7 @@ const refreshInstallButtons = () => {
     }
 
     // Run on DOM ready
-    
-    // =========================================================
-    // POST-SESSION REVIEW PROMPT (Popup + History only)
-    // =========================================================
-    const GOOGLE_REVIEW_URL = "https://g.page/r/CVMjbVYTDMv3EAE/review";
-    const LS_REVIEW_DISABLED = "rnr_review_disabled_global";
-    const LS_REVIEW_SHOWN_PREFIX = "rnr_review_shown_";
-
-    function _rnrIsCancelledAppt(a) {
-      try {
-        if (!a) return false;
-        const s = String(a.status || a.state || a.appointment_status || a.appointmentStatus || '').toLowerCase();
-        if (s.includes("cancel")) return true;
-        if (a.cancelled === true || a.canceled === true || a.isCancelled === true || a.isCanceled === true) return true;
-        return false;
-      } catch (e) { return false; }
-    }
-
-    function _rnrGetReviewPromptDisabledGlobal() {
-      try { return localStorage.getItem(LS_REVIEW_DISABLED) === "1"; } catch (e) { return false; }
-    }
-
-    function _rnrSetReviewPromptDisabledGlobal(v) {
-      try { localStorage.setItem(LS_REVIEW_DISABLED, v ? "1" : "0"); } catch (e) {}
-    }
-
-    function _rnrGetCompletedApptKey(appt) {
-      try {
-        return String(appt?.id || appt?.appointment_id || appt?.appointmentId || appt?.starts_at || appt?.startsAt || "");
-      } catch (e) { return ""; }
-    }
-
-    function _rnrShouldShowReviewPromptFor(key) {
-      if (!key) return false;
-      if (_rnrGetReviewPromptDisabledGlobal()) return false;
-      try { return localStorage.getItem(LS_REVIEW_SHOWN_PREFIX + key) !== "1"; } catch (e) { return true; }
-    }
-
-    function _rnrMarkReviewPromptShown(key) {
-      try { localStorage.setItem(LS_REVIEW_SHOWN_PREFIX + key, "1"); } catch (e) {}
-    }
-
-    function _rnrFormatDatePrettyFromIso(iso) {
-      try {
-        const d = iso ? new Date(iso) : null;
-        if (!d || isNaN(d.getTime())) return "";
-        return d.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Toronto" });
-      } catch (e) { return ""; }
-    }
-
-    function _rnrGetLatestEligibleCompletedAppt() {
-      try {
-        const arrA = Array.isArray(completedAppointments) ? completedAppointments : [];
-        const arrB = Array.isArray(historyAppointments) ? historyAppointments : [];
-        // Combine and filter to past, non-cancelled sessions
-        const combined = arrA.concat(arrB);
-        const now = Date.now();
-        const filtered = combined.filter(a => {
-          if (!a) return false;
-          if (_rnrIsCancelledAppt(a)) return false;
-          const t = new Date(a?.starts_at || a?.startsAt || 0).getTime() || 0;
-          if (!t) return false;
-          // must be in the past to be eligible for a post-session review prompt
-          return t <= now;
-        });
-        if (!filtered.length) return null;
-        filtered.sort((a,b) => {
-          const tb = new Date(b?.starts_at || b?.startsAt || 0).getTime() || 0;
-          const ta = new Date(a?.starts_at || a?.startsAt || 0).getTime() || 0;
-          return tb - ta;
-        });
-        return filtered[0] || null;
-      } catch (e) { return null; }
-    } catch (e) { return null; }
-    }
-
-    function closeReviewPromptModal() {
-      const modal = document.getElementById("review-prompt-modal");
-      if (!modal) return;
-      modal.classList.add("hidden");
-      modal.setAttribute("aria-hidden", "true");
-      try { unlockBodyScroll(); } catch (e) {}
-    }
-
-    function openReviewPromptModal(appt) {
-      const modal = document.getElementById("review-prompt-modal");
-      if (!modal) return;
-
-      const dateStr = _rnrFormatDatePrettyFromIso(appt?.starts_at || appt?.startsAt || "");
-      const subtitle = document.getElementById("review-prompt-subtitle");
-      if (subtitle) subtitle.textContent = dateStr ? `Your session on ${dateStr}` : "Your session on —";
-
-      const link = document.getElementById("review-prompt-link");
-      if (link) link.href = GOOGLE_REVIEW_URL;
-
-      const cb = document.getElementById("review-prompt-disable");
-      if (cb) cb.checked = false;
-
-      modal.classList.remove("hidden");
-      modal.setAttribute("aria-hidden", "false");
-      try { lockBodyScroll(); } catch (e) {}
-      try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
-
-      // Only allow closing via X or Dismiss (no backdrop click, no ESC)
-      const x = document.getElementById("review-prompt-x");
-      const dismiss = document.getElementById("review-prompt-dismiss");
-
-      const closeHandler = () => {
-        try {
-          const latestKey = _rnrGetCompletedApptKey(appt);
-          if (latestKey) _rnrMarkReviewPromptShown(latestKey);
-
-          if (cb && cb.checked) {
-            _rnrSetReviewPromptDisabledGlobal(true);
-            // Hide History prompt immediately
-            const hw = document.getElementById("history-review");
-            if (hw) hw.classList.add("hidden");
-          }
-        } catch (e) {}
-        closeReviewPromptModal();
-      };
-
-      if (x && !x.__rnr_bound) { x.addEventListener("click", closeHandler); x.__rnr_bound = true; }
-      if (dismiss && !dismiss.__rnr_bound) { dismiss.addEventListener("click", closeHandler); dismiss.__rnr_bound = true; }
-
-      if (!modal.__rnr_bound) {
-        modal.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); });
-        modal.__rnr_bound = true;
-      }
-      // Do not bind keydown (ESC) on purpose
-    }
-
-    function maybeShowReviewPromptOncePerCompletedAppt() {
-      try {
-        const latest = _rnrGetLatestEligibleCompletedAppt();
-        const histWrap = document.getElementById("history-review");
-        const histText = document.getElementById("history-review-text");
-        const histLink = document.getElementById("history-review-link");
-
-        if (_rnrGetReviewPromptDisabledGlobal()) {
-          if (histWrap) histWrap.classList.add("hidden");
-          return;
-        }
-
-        if (histLink) histLink.href = GOOGLE_REVIEW_URL;
-
-        if (latest && histText) {
-          const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || "");
-          histText.textContent = dateStr
-            ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
-            : `If you have a moment, we’d really appreciate your feedback.`;
-        }
-
-        // Show inline History prompt if we have at least one eligible completed appt
-        if (histWrap) {
-          const hasEligible = !!_rnrGetLatestEligibleCompletedAppt();
-          if (hasEligible) histWrap.classList.remove("hidden");
-          else histWrap.classList.add("hidden");
-        }
-
-        if (!latest) return;
-        const key = _rnrGetCompletedApptKey(latest);
-        if (!_rnrShouldShowReviewPromptFor(key)) return;
-
-        // Show modal once per completed appointment
-        openReviewPromptModal(latest);
-      } catch (e) {}
-    }
-
-
-document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", init);
   </script>
   <!-- Cancel Appointment Modal -->
   <div id="cancel-modal" class="modal-overlay hidden">
@@ -5626,37 +5450,212 @@ document.addEventListener("DOMContentLoaded", init);
         }
       });
     }
-  </script>
+  
+
+    // ============================================================
+    // POST-SESSION REVIEW PROMPT (Popup + History only)
+    // ============================================================
+    const GOOGLE_REVIEW_URL = "https://g.page/r/CVMjbVYTDMv3EAE/review";
+    const RNR_REVIEW_DISABLED_KEY = "rnr_review_prompt_disabled_global";
+    const RNR_REVIEW_SEEN_KEY = "rnr_review_prompt_seen_keys_v1";
+
+    function _rnrGetReviewPromptDisabledGlobal() {
+      try { return localStorage.getItem(RNR_REVIEW_DISABLED_KEY) === "true"; } catch (e) { return false; }
+    }
+    function _rnrSetReviewPromptDisabledGlobal(v) {
+      try { localStorage.setItem(RNR_REVIEW_DISABLED_KEY, v ? "true" : "false"); } catch (e) {}
+    }
+    function _rnrGetSeenReviewKeys() {
+      try {
+        const raw = localStorage.getItem(RNR_REVIEW_SEEN_KEY);
+        if (!raw) return {};
+        const obj = JSON.parse(raw);
+        return (obj && typeof obj === "object") ? obj : {};
+      } catch (e) { return {}; }
+    }
+    function _rnrSetSeenReviewKeys(obj) {
+      try { localStorage.setItem(RNR_REVIEW_SEEN_KEY, JSON.stringify(obj || {})); } catch (e) {}
+    }
+    function _rnrMarkSeenReviewKey(key) {
+      if (!key) return;
+      const obj = _rnrGetSeenReviewKeys();
+      obj[String(key)] = true;
+      _rnrSetSeenReviewKeys(obj);
+    }
+    function _rnrHasSeenReviewKey(key) {
+      if (!key) return true;
+      const obj = _rnrGetSeenReviewKeys();
+      return !!obj[String(key)];
+    }
+
+    function _rnrIsCancelledAppt(a) {
+      try {
+        if (!a) return false;
+        const s = String(a.status || a.state || a.appointment_status || a.appointmentStatus || "").toLowerCase();
+        if (s.includes("cancel")) return true;
+        if (a.cancelled === true || a.canceled === true || a.isCancelled === true || a.isCanceled === true) return true;
+        return false;
+      } catch (e) { return false; }
+    }
+
+    function _rnrGetCompletedApptKey(a) {
+      try {
+        return String(a.id || a.appointment_id || a.appointmentId || (a.starts_at || a.startsAt || "")) || "";
+      } catch (e) { return ""; }
+    }
+
+    function _rnrFormatDatePrettyFromIso(iso) {
+      try {
+        const d = iso ? new Date(iso) : null;
+        if (!d || isNaN(d.getTime())) return "";
+        return d.toLocaleDateString("en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Toronto" });
+      } catch (e) { return ""; }
+    }
+
+    function _rnrGetLatestEligibleCompletedAppt() {
+      try {
+        const arrA = Array.isArray(window.completedAppointments) ? window.completedAppointments : (Array.isArray(completedAppointments) ? completedAppointments : []);
+        const arrB = Array.isArray(window.historyAppointments) ? window.historyAppointments : (Array.isArray(historyAppointments) ? historyAppointments : []);
+        const combined = arrA.concat(arrB);
+        const now = Date.now();
+        const filtered = combined.filter(a => {
+          if (!a) return false;
+          if (_rnrIsCancelledAppt(a)) return false;
+          const t = new Date(a.starts_at || a.startsAt || 0).getTime() || 0;
+          if (!t) return false;
+          return t <= now;
+        });
+        if (!filtered.length) return null;
+        filtered.sort((a,b) => {
+          const tb = new Date(b.starts_at || b.startsAt || 0).getTime() || 0;
+          const ta = new Date(a.starts_at || a.startsAt || 0).getTime() || 0;
+          return tb - ta;
+        });
+        return filtered[0] || null;
+      } catch (e) { return null; }
+    }
+
+    function _rnrShouldShowReviewPromptFor(key) {
+      if (!key) return false;
+      if (_rnrGetReviewPromptDisabledGlobal()) return false;
+      if (_rnrHasSeenReviewKey(key)) return false;
+      return true;
+    }
+
+    function closeReviewPromptModal() {
+      const modal = document.getElementById("review-prompt-modal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function openReviewPromptModal(appt) {
+      const modal = document.getElementById("review-prompt-modal");
+      if (!modal) return;
+
+      const link = document.getElementById("review-prompt-link");
+      if (link) link.href = GOOGLE_REVIEW_URL;
+
+      const subtitle = document.getElementById("review-prompt-subtitle");
+      const dateStr = _rnrFormatDatePrettyFromIso(appt?.starts_at || appt?.startsAt || "");
+      if (subtitle) subtitle.textContent = dateStr ? `Your session on ${dateStr}` : "Your session on —";
+
+      // Enforce close only via X or Dismiss
+      modal.addEventListener("click", (e) => { e.stopPropagation(); }, { once: true });
+
+      const x = document.getElementById("review-prompt-x");
+      const dismiss = document.getElementById("review-prompt-dismiss");
+      const cb = document.getElementById("review-prompt-disable");
+
+      const key = _rnrGetCompletedApptKey(appt);
+
+      const doClose = () => {
+        try {
+          const disable = !!(cb && cb.checked);
+          if (disable) {
+            _rnrSetReviewPromptDisabledGlobal(true);
+            try { const hw = document.getElementById("history-review"); if (hw) hw.classList.add("hidden"); } catch (e) {}
+          }
+          _rnrMarkSeenReviewKey(key);
+        } catch (e) {}
+        closeReviewPromptModal();
+      };
+
+      if (x) x.onclick = doClose;
+      if (dismiss) dismiss.onclick = doClose;
+
+      modal.classList.remove("hidden");
+      modal.setAttribute("aria-hidden", "false");
+      try { lucide && lucide.createIcons && lucide.createIcons(); } catch(e) {}
+    }
+
+    function maybeShowReviewPromptOncePerCompletedAppt() {
+      try {
+        const histWrap = document.getElementById("history-review");
+        const histText = document.getElementById("history-review-text");
+        const histLink = document.getElementById("history-review-link");
+
+        if (histLink) histLink.href = GOOGLE_REVIEW_URL;
+
+        if (_rnrGetReviewPromptDisabledGlobal()) {
+          if (histWrap) histWrap.classList.add("hidden");
+          return;
+        }
+
+        const latest = _rnrGetLatestEligibleCompletedAppt();
+        if (!latest) {
+          if (histWrap) histWrap.classList.add("hidden");
+          return;
+        }
+
+        const key = _rnrGetCompletedApptKey(latest);
+
+        // History inline prompt is allowed only if not globally disabled
+        if (histText) {
+          const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || "");
+          histText.textContent = dateStr
+            ? `We hope your massage left you feeling better. If you’re comfortable sharing, we’d love to hear how your experience was.`
+            : `If you’re comfortable sharing, we’d love to hear how your experience was.`;
+        }
+        if (histWrap) histWrap.classList.remove("hidden");
+
+        if (_rnrShouldShowReviewPromptFor(key)) {
+          openReviewPromptModal(latest);
+        }
+      } catch (e) {}
+    }
+
+</script>
 
 
-  <!-- Review Prompt Modal -->
-  <div id="review-prompt-modal" class="modal-overlay hidden" aria-hidden="true">
-    <div class="modal-card booking-modal-card max-w-xl w-[92vw]">
-      <div class="modal-top-line"></div>
-      <button id="review-prompt-x" class="modal-x" type="button" aria-label="Close">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
+    <!-- Review Prompt Modal (post-session) -->
+    <div id="review-prompt-modal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card w-full max-w-xl relative">
+        <button id="review-prompt-x" class="btn-outline px-3 py-2 absolute top-3 right-3" type="button" aria-label="Close">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
 
-      <div class="p-5 sm:p-6">
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3 pr-10">
           <div class="w-10 h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
             <i data-lucide="star" class="w-5 h-5"></i>
           </div>
           <div>
-            <div id="review-prompt-title" class="font-serif text-2xl text-brand-light leading-tight">Thank you for choosing Relax &amp; Renew</div>
-            <div id="review-prompt-subtitle" class="muted text-sm mt-1">Your session on —</div>
+            <div id="review-prompt-title" class="font-serif text-2xl text-brand-light">Thank you for choosing Relax &amp; Renew</div>
+            <div id="review-prompt-subtitle" class="muted mt-1">Your session on —</div>
           </div>
         </div>
 
-        <p id="review-prompt-body" class="muted mt-4">
+        <div id="review-prompt-body" class="muted mt-4">
           We hope your massage left you feeling better. If you’re comfortable sharing, we’d love to hear how your experience was. Your feedback helps us continue providing thoughtful, quality care.
-        </p>
+        </div>
 
-        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-          <div class="card-fancy p-4">
-            <div class="font-serif text-lg text-brand-light mb-2">Scan to review</div>
-            <div id="review-prompt-qr" class="flex justify-center">
-              <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+        <div class="mt-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+          <a id="review-prompt-link" class="btn-filled px-4 py-2 text-center" href="#" target="_blank" rel="noopener">Leave a Google Review</a>
+
+          <div id="review-prompt-qr" class="flex items-center justify-center sm:justify-end">
+            <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 0 2277 2277" xml:space="preserve">
 <rect x="0" y="0" width="2277" height="2277" fill="rgb(0,0,0)" /><g transform="translate(138,138)"><g><defs>
     <linearGradient gradientTransform="rotate(90)" id="grad">
@@ -6726,27 +6725,20 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
 	c-0.617,0.621-1.206,1.284-1.752,1.96c-3.883,4.767-6.21,10.903-6.21,17.561L0.05,99.979h72.694
 	c14.971,0,27.138-12.397,27.138-27.63V27.625v-0.014l0.168-27.617C100.05-0.006,82.107-0.021,72.744-0.021z"/>
 </g></g></g></mask></defs></g><rect x="0" y="0" width="2001" height="2001" fill="url(#grad)" mask="url(#gmask)" /></g></svg>
-            </div>
-          </div>
-
-          <div class="card-fancy p-4">
-            <div class="font-serif text-lg text-brand-light mb-2">Leave a review</div>
-            <a id="review-prompt-link" class="btn-filled w-full justify-center py-3" href="https://g.page/r/CVMjbVYTDMv3EAE/review" target="_blank" rel="noopener">
-              Leave a Google Review
-            </a>
-            <label class="mt-4 flex items-start gap-3 text-sm select-none">
-              <input id="review-prompt-disable" type="checkbox" class="mt-1 h-4 w-4 accent-[rgba(224,197,132,0.9)]" />
-              <span class="text-brand-dim">Stop this from popping up in the future</span>
-            </label>
           </div>
         </div>
 
-        <div class="mt-6 flex items-center justify-end">
+        <label class="mt-5 flex items-center gap-3 text-sm select-none">
+          <input id="review-prompt-disable" type="checkbox" class="h-4 w-4 accent-[rgba(224,197,132,0.9)]" />
+          <span class="text-brand-dim">Stop this from popping up in the future</span>
+        </label>
+
+        <div class="mt-5 flex justify-end">
           <button id="review-prompt-dismiss" class="btn-outline px-4 py-2" type="button">Dismiss</button>
         </div>
       </div>
     </div>
-  </div>
+
 
 </body>
 </html>
