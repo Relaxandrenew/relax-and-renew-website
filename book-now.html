@@ -673,6 +673,35 @@
         #client-details-modal .client-modal-header { position: static !important; }
         #client-details-modal button#client-modal-close { cursor: pointer; }
 
+
+/* Public-facing hard stop (blocklist) */
+#blocked-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 350;
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#blocked-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.blocked-modal-card {
+  background: linear-gradient(145deg, rgba(20,20,20,0.98), rgba(10,10,10,0.99));
+  border: 1px solid rgba(224, 197, 132, 0.3);
+  padding: 2.5rem 2.25rem;
+  max-width: 560px;
+  width: 92%;
+  text-align: center;
+  position: relative;
+}
+
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -845,16 +874,6 @@ function fillAddressFromPlace(place) {
                 }
                 
                 window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
-
-                // Blocklist check at the address step (as early as possible)
-                // Best-effort: if the block-check endpoint is unavailable, we do not block.
-                enforceBlockOrContinue({ address: street }, { stage: 'address' }).then((ok) => {
-                    if (!ok) {
-                        try { document.getElementById('address-input-initial').value = ''; } catch (_) {}
-                        window.__selectedAddress = null;
-                    }
-                });
-
             } catch (e) {
                 console.warn("fillAddressFromPlace error", e);
             }
@@ -1638,144 +1657,6 @@ function fillAddressFromPlace(place) {
             group:       { label: "Group Massage", durations: [45, 60] },
             event:       { label: "Event Massage", durations: [45, 60] },
         };
-
-        // ---------------- BLOCKLIST ENFORCEMENT (minimal + non-invasive) ----------------
-        // n8n webhook: GET /webhook/block-check
-        // Expected response: { blocked: true/false, message?: string }
-        const BLOCK_CHECK_URL = 'https://primary-production-efcf.up.railway.app/webhook/block-check';
-
-        // Small in-memory cache to reduce redundant calls during the same session
-        const __blockCheckCache = new Map(); // key -> { ts:number, blocked:boolean, message?:string }
-        const __blockCheckTtlMs = 5 * 60 * 1000;
-
-        function __normStr(v) {
-            return String(v || '').trim();
-        }
-        function __normEmail(v) {
-            return __normStr(v).toLowerCase();
-        }
-        function __normPhone(v) {
-            const d = __normStr(v).replace(/\D+/g, '');
-            if (!d) return '';
-            // If they entered 10 digits, assume +1 for Canada/US
-            if (d.length === 10) return '+1' + d;
-            if (d.length === 11 && d.startsWith('1')) return '+'.concat(d);
-            return d.startsWith('+') ? d : '+' + d;
-        }
-        function __normName(v) {
-            return __normStr(v).toLowerCase().replace(/\s+/g, ' ');
-        }
-        function __normAddress(v) {
-            return __normStr(v).toLowerCase().replace(/[\.,#]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function __buildBlockKey(payload) {
-            // Only include fields we actually have at that step
-            const keyObj = {
-                email: payload.email ? __normEmail(payload.email) : '',
-                phone: payload.phone ? __normPhone(payload.phone) : '',
-                name: payload.name ? __normName(payload.name) : '',
-                address: payload.address ? __normAddress(payload.address) : ''
-            };
-            return JSON.stringify(keyObj);
-        }
-
-        function showServiceUnavailableOverlay(message) {
-            const msg = message || "We’re sorry, but services are not available for you at this time. We appreciate your understanding and hope you find another provider that’s a better fit.";
-            let el = document.getElementById('service-unavailable-overlay');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = 'service-unavailable-overlay';
-                el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.82);padding:20px;';
-                el.innerHTML = `
-                    <div style="max-width:640px;width:100%;background:rgba(0,0,0,0.92);border:1px solid rgba(224,197,132,0.9);border-radius:16px;padding:22px;color:#E0C584;font-family:'Cormorant Garamond',serif;font-size:1.125rem;line-height:1.7;box-shadow:0 12px 40px rgba(0,0,0,0.55);">
-                        <div style="font-size:1.6rem;font-weight:700;margin-bottom:10px;">Booking Unavailable</div>
-                        <div id="service-unavailable-message" style="opacity:0.95;margin-bottom:18px;"></div>
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button id="service-unavailable-close" style="border:1px solid rgba(224,197,132,0.75);background:transparent;color:#E0C584;padding:10px 14px;border-radius:12px;cursor:pointer;">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(el);
-                const closeBtn = el.querySelector('#service-unavailable-close');
-                if (closeBtn) closeBtn.addEventListener('click', () => { try { el.remove(); } catch (_) {} });
-            }
-            const msgEl = el.querySelector('#service-unavailable-message');
-            if (msgEl) msgEl.textContent = msg;
-        }
-
-        async function checkClientBlocked(payload) {
-            try {
-                const p = payload || {};
-                const normalized = {
-                    email: p.email ? __normEmail(p.email) : '',
-                    phone: p.phone ? __normPhone(p.phone) : '',
-                    name: p.name ? __normName(p.name) : '',
-                    address: p.address ? __normAddress(p.address) : ''
-                };
-
-                // Do not call if we have literally nothing to check
-                if (!normalized.email && !normalized.phone && !normalized.name && !normalized.address) {
-                    return { blocked: false };
-                }
-
-                const cacheKey = __buildBlockKey(normalized);
-                const cached = __blockCheckCache.get(cacheKey);
-                if (cached && (Date.now() - cached.ts) < __blockCheckTtlMs) {
-                    return { blocked: !!cached.blocked, message: cached.message };
-                }
-
-                const qs = new URLSearchParams();
-                if (normalized.email) qs.set('email', normalized.email);
-                if (normalized.phone) qs.set('phone', normalized.phone);
-                if (normalized.name) qs.set('name', normalized.name);
-                if (normalized.address) qs.set('address', normalized.address);
-
-                const url = BLOCK_CHECK_URL + '?' + qs.toString();
-                const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-
-                // If the block-check endpoint is down, fail open (do not block legitimate clients).
-                if (!res.ok) {
-                    return { blocked: false };
-                }
-
-                const data = await res.json();
-                const blocked = !!(data && (data.blocked === true || data.isBlocked === true));
-                const message = (data && (data.message || data.reason)) ? String(data.message || data.reason) : null;
-
-                __blockCheckCache.set(cacheKey, { ts: Date.now(), blocked, message });
-
-                return { blocked, message };
-            } catch (e) {
-                // Network / parsing errors: fail open
-                return { blocked: false };
-            }
-        }
-
-        async function enforceBlockOrContinue(payload, opts) {
-            const result = await checkClientBlocked(payload);
-            if (result && result.blocked) {
-                // Disable primary progression buttons if present
-                try {
-                    const b1 = document.getElementById('address-continue-btn');
-                    if (b1) b1.disabled = true;
-                    const b2 = document.getElementById('continue-to-booking-btn');
-                    if (b2) b2.disabled = true;
-                    const b3 = document.getElementById('submit-booking-btn');
-                    if (b3) b3.disabled = true;
-                } catch (_) {}
-
-                // Hide any booking UI overlay if visible (best effort)
-                try { hideBookingModal(false); } catch (_) {}
-
-                showServiceUnavailableOverlay(result.message);
-                return false;
-            }
-            return true;
-        }
-
 
         // ---------------- STATE ----------------
         let availabilityByDate = {};
@@ -2694,11 +2575,11 @@ container.appendChild(groupRow);
             const addrObj = window.__selectedAddress;
             if (!addrObj || !addrObj.address) {
                 updateAvailabilityStatus("Enter your address to load live availability.", false);
-                return;
+                return { status: 'error' };
             }
             if (!selectedServiceKey || !selectedStandardDuration) {
                 updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-                return;
+                return { status: 'error' };
             }
 
             try {
@@ -2754,14 +2635,31 @@ container.appendChild(groupRow);
                 document.getElementById('calendar-content').classList.remove('hidden');
 
                 if (!res.ok) {
-                    const errorText = await res.text();
+                    // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
+                    // Do NOT surface internal fields/reasons.
+                    let payload = null;
+                    try { payload = await res.json(); } catch (e) { payload = null; }
+                    const blockedData = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});
+                    const isBlocked = (res.status === 403) || (blockedData && blockedData.blocked === true);
+
+                    
+                    if (isBlocked) {
+                        // Do NOT surface internal fields/reasons. Keep the Address modal open and show only the public message.
+                        document.getElementById('availability-loading').classList.add('hidden');
+                        document.getElementById('calendar-content').classList.add('hidden');
+                        window.showBlockedInAddressModal && window.showBlockedInAddressModal();
+                        return { status: 'blocked' };
+                    }
+
+
+                    const errorText = payload ? JSON.stringify(payload) : await res.text();
                     console.error('❌ Availability API Error');
                     console.error('  Status:', res.status);
                     console.error('  Response:', errorText);
                     setAvailabilityFromResponse(null);
                     renderCalendar();
                     updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
-                    return;
+                    return { status: 'error' };
                 }
 
                 const raw = await res.json();
@@ -2827,6 +2725,7 @@ container.appendChild(groupRow);
                 }
 
                 renderCalendar();
+                return { status: 'ok' };
             } catch (e) {
                 // Hide loader on error
                 document.getElementById('availability-loading').classList.add('hidden');
@@ -2834,6 +2733,7 @@ container.appendChild(groupRow);
                 
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
+                return { status: 'error' };
             }
         }
 
@@ -2903,6 +2803,51 @@ container.appendChild(groupRow);
         }
 
         // ============= END STRIPE INTEGRATION =============
+
+        
+
+        // ===== Public blocked booking message in Address modal (no internal details) =====
+        window.showBlockedInAddressModal = function() {
+            const PUBLIC_BLOCKED_MESSAGE = "We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.";
+            try {
+                const modal = document.getElementById('address-modal');
+                if (modal) modal.classList.remove('hidden');
+
+                const errorEl = document.getElementById('address-error');
+                if (errorEl) {
+                    errorEl.classList.remove('hidden');
+                    // Replace the content with the public-facing message only
+                    errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>${PUBLIC_BLOCKED_MESSAGE}`;
+                }
+
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } catch (e) {
+                if (window.showBlockedPopup) window.showBlockedPopup();
+            }
+        };
+        // ==============================================================
+
+        // ===== Public blocked booking popup (no internal details) =====
+        const BLOCKED_PUBLIC_MESSAGE = "We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.";
+
+        window.showBlockedPopup = function() {
+            const overlay = document.getElementById('blocked-modal-overlay');
+            const msgEl = document.getElementById('blocked-modal-message');
+            if (msgEl) msgEl.textContent = BLOCKED_PUBLIC_MESSAGE;
+            if (overlay) {
+                overlay.classList.add('active');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+        };
+
+        window.hideBlockedPopup = function() {
+            const overlay = document.getElementById('blocked-modal-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+        };
+        // ==============================================================
 
         function initializeApp() {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -3018,17 +2963,14 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     return;
                 }
 
-                // Blocklist enforcement: address step (hard stop)
-                const __addrOk = await enforceBlockOrContinue({ address: addr.address }, { stage: 'address' });
-                if (!__addrOk) return;
-
                 errorEl.classList.add('hidden');
                 const price = getPrice();
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
-                closeAddressModal();
-                updateProgress(2);
 
-                // ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
+                // Keep the Address modal open until availability returns successfully.
+                // If blocked, we show the hard-stop message inside the Address modal (no step transition).
+
+// ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
                 try {
                     if (typeof gtag === 'function') {
                         gtag('event', 'booking_intent', {
@@ -3045,8 +2987,14 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     console.warn('GA booking_intent event failed:', e);
                 }
                 // ========== END BOOKING INTENT EVENT ==========
-
-                await loadAvailabilityForCurrentMonth();
+                const availabilityResult = await loadAvailabilityForCurrentMonth();
+                if (availabilityResult && availabilityResult.status === 'ok') {
+                    closeAddressModal();
+                    updateProgress(2);
+                } else {
+                    // Stay on the Address modal (blocked or error)
+                    updateProgress(1);
+                }
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
@@ -3378,17 +3326,6 @@ function getTravelCanonicalFromSlot(slot) {
                     return;
                 }
 
-                // Blocklist enforcement: final confirmation step (email/phone/name + address if available)
-                const fullName = `${firstName} ${lastName}`.trim();
-                const addrObj = (window.__selectedAddress && window.__selectedAddress.address) ? window.__selectedAddress : null;
-                const addrStr = addrObj ? (addrObj.address || '') : '';
-                const __finalOk = await enforceBlockOrContinue({ email, phone, name: fullName, address: addrStr }, { stage: 'final' });
-                if (!__finalOk) {
-                    // Restore button state (best effort)
-                    try { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; } catch (_) {}
-                    return;
-                }
-
                 // Travel (canonical from backend slot data; do not compute client-side)
                 const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
                 const driveTimeMinutes = (travelInfo.minutes ?? travelInfo.driveMins ?? travelInfo.driveTimeMinutes ?? null);
@@ -3677,5 +3614,29 @@ if (result.success) {
 
     <!-- Google Maps Places API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+
+    <!-- Blocked Booking Popup (public message only) -->
+    <div id="blocked-modal-overlay" aria-hidden="true">
+        <button type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50"
+            aria-label="Close" onclick="window.hideBlockedPopup && window.hideBlockedPopup()"
+            style="position:absolute; top: 18px; right: 18px; z-index: 1;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="blocked-modal-card">
+            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.75rem;">Booking Unavailable</div>
+            <div id="blocked-modal-message" class="text-brand-gold/90">
+                We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.
+            </div>
+            <button type="button"
+                class="btn-gold mt-6 w-full"
+                onclick="window.hideBlockedPopup && window.hideBlockedPopup()">
+                Close
+            </button>
+        </div>
+    </div>
+
 </body>
 </html>
