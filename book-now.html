@@ -845,6 +845,16 @@ function fillAddressFromPlace(place) {
                 }
                 
                 window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
+
+                // Blocklist check at the address step (as early as possible)
+                // Best-effort: if the block-check endpoint is unavailable, we do not block.
+                enforceBlockOrContinue({ address: street }, { stage: 'address' }).then((ok) => {
+                    if (!ok) {
+                        try { document.getElementById('address-input-initial').value = ''; } catch (_) {}
+                        window.__selectedAddress = null;
+                    }
+                });
+
             } catch (e) {
                 console.warn("fillAddressFromPlace error", e);
             }
@@ -1628,6 +1638,144 @@ function fillAddressFromPlace(place) {
             group:       { label: "Group Massage", durations: [45, 60] },
             event:       { label: "Event Massage", durations: [45, 60] },
         };
+
+        // ---------------- BLOCKLIST ENFORCEMENT (minimal + non-invasive) ----------------
+        // n8n webhook: GET /webhook/block-check
+        // Expected response: { blocked: true/false, message?: string }
+        const BLOCK_CHECK_URL = 'https://primary-production-efcf.up.railway.app/webhook/block-check';
+
+        // Small in-memory cache to reduce redundant calls during the same session
+        const __blockCheckCache = new Map(); // key -> { ts:number, blocked:boolean, message?:string }
+        const __blockCheckTtlMs = 5 * 60 * 1000;
+
+        function __normStr(v) {
+            return String(v || '').trim();
+        }
+        function __normEmail(v) {
+            return __normStr(v).toLowerCase();
+        }
+        function __normPhone(v) {
+            const d = __normStr(v).replace(/\D+/g, '');
+            if (!d) return '';
+            // If they entered 10 digits, assume +1 for Canada/US
+            if (d.length === 10) return '+1' + d;
+            if (d.length === 11 && d.startsWith('1')) return '+'.concat(d);
+            return d.startsWith('+') ? d : '+' + d;
+        }
+        function __normName(v) {
+            return __normStr(v).toLowerCase().replace(/\s+/g, ' ');
+        }
+        function __normAddress(v) {
+            return __normStr(v).toLowerCase().replace(/[\.,#]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function __buildBlockKey(payload) {
+            // Only include fields we actually have at that step
+            const keyObj = {
+                email: payload.email ? __normEmail(payload.email) : '',
+                phone: payload.phone ? __normPhone(payload.phone) : '',
+                name: payload.name ? __normName(payload.name) : '',
+                address: payload.address ? __normAddress(payload.address) : ''
+            };
+            return JSON.stringify(keyObj);
+        }
+
+        function showServiceUnavailableOverlay(message) {
+            const msg = message || "We’re sorry, but services are not available for you at this time. We appreciate your understanding and hope you find another provider that’s a better fit.";
+            let el = document.getElementById('service-unavailable-overlay');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'service-unavailable-overlay';
+                el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.82);padding:20px;';
+                el.innerHTML = `
+                    <div style="max-width:640px;width:100%;background:rgba(0,0,0,0.92);border:1px solid rgba(224,197,132,0.9);border-radius:16px;padding:22px;color:#E0C584;font-family:'Cormorant Garamond',serif;font-size:1.125rem;line-height:1.7;box-shadow:0 12px 40px rgba(0,0,0,0.55);">
+                        <div style="font-size:1.6rem;font-weight:700;margin-bottom:10px;">Booking Unavailable</div>
+                        <div id="service-unavailable-message" style="opacity:0.95;margin-bottom:18px;"></div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button id="service-unavailable-close" style="border:1px solid rgba(224,197,132,0.75);background:transparent;color:#E0C584;padding:10px 14px;border-radius:12px;cursor:pointer;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(el);
+                const closeBtn = el.querySelector('#service-unavailable-close');
+                if (closeBtn) closeBtn.addEventListener('click', () => { try { el.remove(); } catch (_) {} });
+            }
+            const msgEl = el.querySelector('#service-unavailable-message');
+            if (msgEl) msgEl.textContent = msg;
+        }
+
+        async function checkClientBlocked(payload) {
+            try {
+                const p = payload || {};
+                const normalized = {
+                    email: p.email ? __normEmail(p.email) : '',
+                    phone: p.phone ? __normPhone(p.phone) : '',
+                    name: p.name ? __normName(p.name) : '',
+                    address: p.address ? __normAddress(p.address) : ''
+                };
+
+                // Do not call if we have literally nothing to check
+                if (!normalized.email && !normalized.phone && !normalized.name && !normalized.address) {
+                    return { blocked: false };
+                }
+
+                const cacheKey = __buildBlockKey(normalized);
+                const cached = __blockCheckCache.get(cacheKey);
+                if (cached && (Date.now() - cached.ts) < __blockCheckTtlMs) {
+                    return { blocked: !!cached.blocked, message: cached.message };
+                }
+
+                const qs = new URLSearchParams();
+                if (normalized.email) qs.set('email', normalized.email);
+                if (normalized.phone) qs.set('phone', normalized.phone);
+                if (normalized.name) qs.set('name', normalized.name);
+                if (normalized.address) qs.set('address', normalized.address);
+
+                const url = BLOCK_CHECK_URL + '?' + qs.toString();
+                const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+
+                // If the block-check endpoint is down, fail open (do not block legitimate clients).
+                if (!res.ok) {
+                    return { blocked: false };
+                }
+
+                const data = await res.json();
+                const blocked = !!(data && (data.blocked === true || data.isBlocked === true));
+                const message = (data && (data.message || data.reason)) ? String(data.message || data.reason) : null;
+
+                __blockCheckCache.set(cacheKey, { ts: Date.now(), blocked, message });
+
+                return { blocked, message };
+            } catch (e) {
+                // Network / parsing errors: fail open
+                return { blocked: false };
+            }
+        }
+
+        async function enforceBlockOrContinue(payload, opts) {
+            const result = await checkClientBlocked(payload);
+            if (result && result.blocked) {
+                // Disable primary progression buttons if present
+                try {
+                    const b1 = document.getElementById('address-continue-btn');
+                    if (b1) b1.disabled = true;
+                    const b2 = document.getElementById('continue-to-booking-btn');
+                    if (b2) b2.disabled = true;
+                    const b3 = document.getElementById('submit-booking-btn');
+                    if (b3) b3.disabled = true;
+                } catch (_) {}
+
+                // Hide any booking UI overlay if visible (best effort)
+                try { hideBookingModal(false); } catch (_) {}
+
+                showServiceUnavailableOverlay(result.message);
+                return false;
+            }
+            return true;
+        }
+
 
         // ---------------- STATE ----------------
         let availabilityByDate = {};
@@ -2870,6 +3018,10 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     return;
                 }
 
+                // Blocklist enforcement: address step (hard stop)
+                const __addrOk = await enforceBlockOrContinue({ address: addr.address }, { stage: 'address' });
+                if (!__addrOk) return;
+
                 errorEl.classList.add('hidden');
                 const price = getPrice();
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
@@ -3223,6 +3375,17 @@ function getTravelCanonicalFromSlot(slot) {
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>That time is already booked. Please choose another.';
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+
+                // Blocklist enforcement: final confirmation step (email/phone/name + address if available)
+                const fullName = `${firstName} ${lastName}`.trim();
+                const addrObj = (window.__selectedAddress && window.__selectedAddress.address) ? window.__selectedAddress : null;
+                const addrStr = addrObj ? (addrObj.address || '') : '';
+                const __finalOk = await enforceBlockOrContinue({ email, phone, name: fullName, address: addrStr }, { stage: 'final' });
+                if (!__finalOk) {
+                    // Restore button state (best effort)
+                    try { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; } catch (_) {}
                     return;
                 }
 
