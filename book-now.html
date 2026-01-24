@@ -673,6 +673,35 @@
         #client-details-modal .client-modal-header { position: static !important; }
         #client-details-modal button#client-modal-close { cursor: pointer; }
 
+
+/* Public-facing hard stop (blocklist) */
+#blocked-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 350;
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(15px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#blocked-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.blocked-modal-card {
+  background: linear-gradient(145deg, rgba(20,20,20,0.98), rgba(10,10,10,0.99));
+  border: 1px solid rgba(224, 197, 132, 0.3);
+  padding: 2.5rem 2.25rem;
+  max-width: 560px;
+  width: 92%;
+  text-align: center;
+  position: relative;
+}
+
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -2606,7 +2635,22 @@ container.appendChild(groupRow);
                 document.getElementById('calendar-content').classList.remove('hidden');
 
                 if (!res.ok) {
-                    const errorText = await res.text();
+                    // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
+                    // Do NOT surface internal fields/reasons.
+                    let payload = null;
+                    try { payload = await res.json(); } catch (e) { payload = null; }
+                    const blockedData = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});
+                    const isBlocked = (res.status === 403) || (blockedData && blockedData.blocked === true);
+
+                    if (isBlocked) {
+                        // Ensure loaders/containers are in a sane state, then show the hard-stop popup.
+                        document.getElementById('availability-loading').classList.add('hidden');
+                        document.getElementById('calendar-content').classList.add('hidden');
+                        window.showBlockedPopup && window.showBlockedPopup();
+                        return;
+                    }
+
+                    const errorText = payload ? JSON.stringify(payload) : await res.text();
                     console.error('❌ Availability API Error');
                     console.error('  Status:', res.status);
                     console.error('  Response:', errorText);
@@ -2755,6 +2799,29 @@ container.appendChild(groupRow);
         }
 
         // ============= END STRIPE INTEGRATION =============
+
+        
+        // ===== Public blocked booking popup (no internal details) =====
+        const BLOCKED_PUBLIC_MESSAGE = "We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.";
+
+        window.showBlockedPopup = function() {
+            const overlay = document.getElementById('blocked-modal-overlay');
+            const msgEl = document.getElementById('blocked-modal-message');
+            if (msgEl) msgEl.textContent = BLOCKED_PUBLIC_MESSAGE;
+            if (overlay) {
+                overlay.classList.add('active');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+        };
+
+        window.hideBlockedPopup = function() {
+            const overlay = document.getElementById('blocked-modal-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+        };
+        // ==============================================================
 
         function initializeApp() {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -3514,5 +3581,29 @@ if (result.success) {
 
     <!-- Google Maps Places API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAllAutocompletes" async defer></script>
+
+    <!-- Blocked Booking Popup (public message only) -->
+    <div id="blocked-modal-overlay" aria-hidden="true">
+        <button type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50"
+            aria-label="Close" onclick="window.hideBlockedPopup && window.hideBlockedPopup()"
+            style="position:absolute; top: 18px; right: 18px; z-index: 1;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="blocked-modal-card">
+            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.75rem;">Booking Unavailable</div>
+            <div id="blocked-modal-message" class="text-brand-gold/90">
+                We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.
+            </div>
+            <button type="button"
+                class="btn-gold mt-6 w-full"
+                onclick="window.hideBlockedPopup && window.hideBlockedPopup()">
+                Close
+            </button>
+        </div>
+    </div>
+
 </body>
 </html>
