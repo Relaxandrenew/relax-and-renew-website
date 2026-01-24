@@ -2575,11 +2575,11 @@ container.appendChild(groupRow);
             const addrObj = window.__selectedAddress;
             if (!addrObj || !addrObj.address) {
                 updateAvailabilityStatus("Enter your address to load live availability.", false);
-                return { status: 'error' };
+                return;
             }
             if (!selectedServiceKey || !selectedStandardDuration) {
                 updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-                return { status: 'error' };
+                return;
             }
 
             try {
@@ -2642,15 +2642,13 @@ container.appendChild(groupRow);
                     const blockedData = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});
                     const isBlocked = (res.status === 403) || (blockedData && blockedData.blocked === true);
 
-                    
                     if (isBlocked) {
-                        // Do NOT surface internal fields/reasons. Keep the Address modal open and show only the public message.
+                        // Ensure loaders/containers are in a sane state, then show the hard-stop popup.
                         document.getElementById('availability-loading').classList.add('hidden');
                         document.getElementById('calendar-content').classList.add('hidden');
-                        window.showBlockedInAddressModal && window.showBlockedInAddressModal();
-                        return { status: 'blocked' };
+                        window.showBlockedPopup && window.showBlockedPopup();
+                        return;
                     }
-
 
                     const errorText = payload ? JSON.stringify(payload) : await res.text();
                     console.error('❌ Availability API Error');
@@ -2659,7 +2657,7 @@ container.appendChild(groupRow);
                     setAvailabilityFromResponse(null);
                     renderCalendar();
                     updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
-                    return { status: 'error' };
+                    return;
                 }
 
                 const raw = await res.json();
@@ -2725,7 +2723,6 @@ container.appendChild(groupRow);
                 }
 
                 renderCalendar();
-                return { status: 'ok' };
             } catch (e) {
                 // Hide loader on error
                 document.getElementById('availability-loading').classList.add('hidden');
@@ -2733,7 +2730,6 @@ container.appendChild(groupRow);
                 
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
-                return { status: 'error' };
             }
         }
 
@@ -2805,28 +2801,6 @@ container.appendChild(groupRow);
         // ============= END STRIPE INTEGRATION =============
 
         
-
-        // ===== Public blocked booking message in Address modal (no internal details) =====
-        window.showBlockedInAddressModal = function() {
-            const PUBLIC_BLOCKED_MESSAGE = "We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.";
-            try {
-                const modal = document.getElementById('address-modal');
-                if (modal) modal.classList.remove('hidden');
-
-                const errorEl = document.getElementById('address-error');
-                if (errorEl) {
-                    errorEl.classList.remove('hidden');
-                    // Replace the content with the public-facing message only
-                    errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>${PUBLIC_BLOCKED_MESSAGE}`;
-                }
-
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch (e) {
-                if (window.showBlockedPopup) window.showBlockedPopup();
-            }
-        };
-        // ==============================================================
-
         // ===== Public blocked booking popup (no internal details) =====
         const BLOCKED_PUBLIC_MESSAGE = "We’re sorry, but services are not available for you. We appreciate your understanding and hope you find another suitable provider.";
 
@@ -2966,11 +2940,10 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 errorEl.classList.add('hidden');
                 const price = getPrice();
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                closeAddressModal();
+                updateProgress(2);
 
-                // Keep the Address modal open until availability returns successfully.
-                // If blocked, we show the hard-stop message inside the Address modal (no step transition).
-
-// ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
+                // ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
                 try {
                     if (typeof gtag === 'function') {
                         gtag('event', 'booking_intent', {
@@ -2987,14 +2960,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     console.warn('GA booking_intent event failed:', e);
                 }
                 // ========== END BOOKING INTENT EVENT ==========
-                const availabilityResult = await loadAvailabilityForCurrentMonth();
-                if (availabilityResult && availabilityResult.status === 'ok') {
-                    closeAddressModal();
-                    updateProgress(2);
-                } else {
-                    // Stay on the Address modal (blocked or error)
-                    updateProgress(1);
-                }
+
+                await loadAvailabilityForCurrentMonth();
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
