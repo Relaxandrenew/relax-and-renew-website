@@ -843,6 +843,11 @@
     // CONFIG
     // =========================================================
     const N8N_WEBHOOK_BASE = "https://primary-production-efcf.up.railway.app/webhook";
+
+    // Review preference (server-side) via n8n Data Table
+    const REVIEW_FLAG_GET_URL      = `${N8N_WEBHOOK_BASE}/review-flag-get`;
+    const REVIEW_FLAG_SET_URL      = `${N8N_WEBHOOK_BASE}/review-flag-set`;
+
     const AVAILABILITY_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-availability-gate`;
     const BOOKING_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-booking-confirmed`;
     const APPOINTMENTS_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/portal-get-appointments`;
@@ -1921,17 +1926,7 @@ function mobileConfirmBooking() {
             
 
             <!-- Post-session feedback prompt (Dashboard) -->
-<div>
-                      <div class="font-serif text-lg text-brand-light">How was your last massage?</div>
-                      <div class="muted text-sm" id="dash-review-text">If you have a moment, we’d really appreciate your feedback.</div>
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
-                    <a class="btn-filled text-sm py-2 px-4" target="_blank" rel="noopener" href="https://g.page/r/CVMjbVYTDMv3EAE/review">Leave a Google Review</a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
 
             <!-- Book Same as Last Time -->
             <div id="book-same-container" class="hidden mb-6">
@@ -3989,69 +3984,104 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     // REVIEW PROMPT (POST-SESSION FEEDBACK)
     // =========================================================
-    // Server-side "Don't ever show again" flag (persists across browsers/devices)
-// Uses n8n webhook: REVIEW_PREF_WEBHOOK
-let _rnrReviewPrefPromise = null;
-let _rnrReviewDismissForeverServer = false;
 
-function _rnrGetReviewPrefKey() {
-  try {
-    const email = (portalProfile && portalProfile.email) ? String(portalProfile.email).trim().toLowerCase() : "";
-    if (!email) return "";
-    return `reviewpref:${email}`;
-  } catch (e) { return ""; }
-}
+    // Server-side "Don't ever show this again" (persists across devices/browsers)
+    let _rnrReviewDismissForever = null; // null=unknown, boolean once fetched
+    let _rnrReviewPrefInitPromise = null;
 
-async function _rnrEnsureReviewPrefLoaded() {
-  if (_rnrReviewPrefPromise) return _rnrReviewPrefPromise;
-  _rnrReviewPrefPromise = (async () => {
-    try {
-      const key = _rnrGetReviewPrefKey();
-      if (!key) return { success: false, dismissForever: false };
-
-      const res = await fetch(REVIEW_PREF_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "get", key })
-      });
-
-      const data = await res.json().catch(() => null);
-      _rnrReviewDismissForeverServer = !!(data && data.dismissForever === true);
-      return data || { success: false, dismissForever: false };
-    } catch (e) {
-      return { success: false, dismissForever: false };
+    function _rnrBuildReviewPrefKey(email) {
+      const e = String(email || "").trim().toLowerCase();
+      return e ? `reviewpref:${e}` : "";
     }
-  })();
-  return _rnrReviewPrefPromise;
-}
 
-async function _rnrSetReviewDismissForeverServer() {
-  try {
-    const key = _rnrGetReviewPrefKey();
-    if (!key) return { success: false };
+    function _rnrHideReviewInlinePrompts() {
+      try { document.getElementById('dash-review-prompt')?.classList.add('hidden'); } catch (e) {}
+      try { document.getElementById('history-review-prompt')?.classList.add('hidden'); } catch (e) {}
+    }
 
-    const res = await fetch(REVIEW_PREF_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "set", key, dismissForever: true })
-    });
+    async function _rnrFetchJsonWithTimeout(url, options = {}, timeoutMs = 8000) {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { ...(options || {}), signal: controller.signal });
+        const data = await res.json().catch(() => ({}));
+        return { ok: res.ok, status: res.status, data };
+      } finally {
+        clearTimeout(t);
+      }
+    }
 
-    const data = await res.json().catch(() => null);
-    _rnrReviewDismissForeverServer = true;
-    return data || { success: true, dismissForever: true };
-  } catch (e) {
-    return { success: false };
-  }
-}
+    async function _rnrGetReviewPrefDismissForever(email) {
+      const key = _rnrBuildReviewPrefKey(email);
+      if (!key) return false;
 
-function _rnrHideReviewPromptsEverywhere() {
-  try {
-    const dashWrap = document.getElementById('dash-review-prompt');
-    if (dashWrap) dashWrap.classList.add('hidden');
-    const histWrap = document.getElementById('history-review-prompt');
-    if (histWrap) histWrap.classList.add('hidden');
-  } catch (e) {}
-}
+      // Try GET with query-string first (most common pattern for GET webhooks)
+      try {
+        const r1 = await _rnrFetchJsonWithTimeout(`${REVIEW_FLAG_GET_URL}?key=${encodeURIComponent(key)}`, { method: 'GET' });
+        const d1 = r1?.data || {};
+        const v1 = (typeof d1.dismissForever === 'boolean') ? d1.dismissForever
+                 : (typeof d1?.data?.dismissForever === 'boolean') ? d1.data.dismissForever
+                 : (typeof d1?.value?.dismissForever === 'boolean') ? d1.value.dismissForever
+                 : null;
+        if (typeof v1 === 'boolean') return v1;
+      } catch (e) {}
+
+      // Fallback: POST JSON body (in case the webhook is POST-only)
+      try {
+        const r2 = await _rnrFetchJsonWithTimeout(REVIEW_FLAG_GET_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+        const d2 = r2?.data || {};
+        const v2 = (typeof d2.dismissForever === 'boolean') ? d2.dismissForever
+                 : (typeof d2?.data?.dismissForever === 'boolean') ? d2.data.dismissForever
+                 : (typeof d2?.value?.dismissForever === 'boolean') ? d2.value.dismissForever
+                 : null;
+        if (typeof v2 === 'boolean') return v2;
+      } catch (e) {}
+
+      return false;
+    }
+
+    async function _rnrSetReviewPrefDismissForever(email, dismissForever) {
+      const key = _rnrBuildReviewPrefKey(email);
+      if (!key) return { ok: false, message: 'Missing email/key' };
+
+      try {
+        const r = await _rnrFetchJsonWithTimeout(REVIEW_FLAG_SET_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, dismissForever: !!dismissForever })
+        });
+        const d = r?.data || {};
+        const ok = (r.ok && (d.ok === true || d.success === true || typeof d.dismissForever === 'boolean'));
+        return { ok, data: d, status: r.status };
+      } catch (e) {
+        return { ok: false, message: String(e || 'Request failed') };
+      }
+    }
+
+    async function _rnrInitReviewPrefFromServerOnce() {
+      try {
+        if (_rnrReviewPrefInitPromise) return _rnrReviewPrefInitPromise;
+        _rnrReviewPrefInitPromise = (async () => {
+          if (!portalProfile?.email) { _rnrReviewDismissForever = false; return false; }
+          const v = await _rnrGetReviewPrefDismissForever(portalProfile.email);
+          _rnrReviewDismissForever = !!v;
+          if (_rnrReviewDismissForever) {
+            // Keep local fallback in sync (helps if the backend is temporarily unreachable later)
+            try { localStorage.setItem(LS_REVIEW_DISABLED, '1'); } catch (e) {}
+            _rnrHideReviewInlinePrompts();
+          }
+          return _rnrReviewDismissForever;
+        })();
+        return _rnrReviewPrefInitPromise;
+      } catch (e) {
+        _rnrReviewDismissForever = false;
+        return false;
+      }
+    }
 
     function _rnrSafeJsonParse(str, fallback) {
       try { return JSON.parse(str); } catch (e) { return fallback; }
@@ -4095,9 +4125,8 @@ function _rnrHideReviewPromptsEverywhere() {
     function _rnrShouldShowReviewPromptFor(apptKey) {
       try {
         if (!apptKey) return false;
-        const disabledLocal = localStorage.getItem(LS_REVIEW_DISABLED) === '1';
-        if (disabledLocal) return false;
-        if (_rnrReviewDismissForeverServer === true) return false;
+        const disabled = (localStorage.getItem(LS_REVIEW_DISABLED) === '1') || (_rnrReviewDismissForever === true);
+        if (disabled) return false;
         const prompted = _rnrSafeJsonParse(localStorage.getItem(LS_REVIEW_PROMPTED) || '[]', []);
         return !(Array.isArray(prompted) && prompted.includes(apptKey));
       } catch (e) {
@@ -4144,18 +4173,28 @@ function _rnrHideReviewPromptsEverywhere() {
       try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
     }
 
-    async function maybeShowReviewPromptOncePerCompletedAppt() {
+    function maybeShowReviewPromptOncePerCompletedAppt() {
       try {
-        // Delay review UI until server-side dismiss check completes
-        await _rnrEnsureReviewPrefLoaded();
-        if (_rnrReviewDismissForeverServer === true) { _rnrHideReviewPromptsEverywhere(); return; }
-
+        // Best-effort: ensure server-side review preference is loaded before we decide to show anything
+        try { if (_rnrReviewDismissForever === null) { /* fire and forget */ _rnrInitReviewPrefFromServerOnce(); } } catch (e) {}
+        if (_rnrReviewDismissForever === true) { _rnrHideReviewInlinePrompts(); return; }
         const latest = _rnrGetLatestCompletedAppt();
         if (!latest) return;
 
         const key = _rnrGetCompletedApptKey(latest);
         if (!_rnrShouldShowReviewPromptFor(key)) return;
-        // Update inline prompt in History only
+
+        // Update inline prompts on dashboard/history as well
+        const dateStr = _rnrFormatDatePrettyFromIso(latest?.starts_at || latest?.startsAt || '');
+        const dashWrap = document.getElementById('dash-review-prompt');
+        const dashText = document.getElementById('dash-review-text');
+        if (dashText) {
+          dashText.textContent = dateStr
+            ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
+            : `If you have a moment, we’d really appreciate your feedback.`;
+        }
+        if (dashWrap) dashWrap.classList.remove('hidden');
+
         const histWrap = document.getElementById('history-review-prompt');
         const histText = document.getElementById('history-review-text');
         if (histText) {
@@ -4163,7 +4202,7 @@ function _rnrHideReviewPromptsEverywhere() {
             ? `We hope you enjoyed your massage on ${dateStr}. If you have a moment, we’d really appreciate your feedback.`
             : `We’d really appreciate a quick review — it helps a lot.`;
         }
-        if (histWrap) histWrap.classList.remove('hidden');
+        if (_rnrReviewDismissForever === true) { if (histWrap) histWrap.classList.add('hidden'); } else { if (histWrap) histWrap.classList.remove('hidden'); }
 
         // Show modal prompt
         openReviewPromptModal(latest);
@@ -4174,15 +4213,20 @@ function _rnrHideReviewPromptsEverywhere() {
         const modal = document.getElementById('review-prompt-modal');
         const cb = document.getElementById('review-prompt-disable');
 
-        const closeHandler = () => {
-          // Mark prompted for this completed appointment
+        const closeHandler = async () => {
+          // Mark prompted for this completed appointment (local, per-appt)
           _rnrMarkReviewPrompted(key);
-          // If they opted out, disable forever
+
+          // If they opted out, persist forever (server-side + local fallback)
           if (cb && cb.checked) {
             try { localStorage.setItem(LS_REVIEW_DISABLED, '1'); } catch (e) {}
-            _rnrHideReviewPromptsEverywhere();
-            _rnrSetReviewDismissForeverServer();
+            _rnrReviewDismissForever = true;
+            _rnrHideReviewInlinePrompts();
+
+            // Best-effort write to server (do not block the UI)
+            try { await _rnrSetReviewPrefDismissForever(portalProfile?.email, true); } catch (e) {}
           }
+
           closeReviewPromptModal();
         };
 
@@ -4406,7 +4450,8 @@ function _rnrHideReviewPromptsEverywhere() {
         }
 
         renderAppointments();
-          try { maybeShowReviewPromptOncePerCompletedAppt().catch(()=>{}); } catch (e) {}
+        try { await _rnrInitReviewPrefFromServerOnce(); } catch (e) {}
+        try { maybeShowReviewPromptOncePerCompletedAppt(); } catch (e) {}
         renderHistory();
         updateCountdown();
         if (countdownTimer) clearInterval(countdownTimer);
