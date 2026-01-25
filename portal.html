@@ -2114,22 +2114,6 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
-            <!-- Book Same as Last Time (Rebook) -->
-            <div id="rebook-book-same-container" class="hidden mb-6">
-              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-brand-light font-bold text-lg">Book Same as Last Time</div>
-                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                  </div>
-                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
-                </div>
-              </button>
-            </div>
-
             <!-- Booking Progress Stepper -->
             <div id="booking-stepper" class="glass-panel p-6 mb-8">
               <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -2150,6 +2134,22 @@ function mobileConfirmBooking() {
               </div>
             </div>
 
+
+            <!-- Book Same as Last Time (Rebook) -->
+            <div id="rebook-book-same-container" class="hidden mb-6">
+              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
+                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-brand-light font-bold text-lg">Book Same as Last Time</div>
+                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
+                </div>
+              </button>
+            </div>
 
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
@@ -3154,6 +3154,81 @@ function mobileConfirmBooking() {
         return null;
       }
 
+      function setCalendarToMonth(dateStr) {
+        try {
+          const dt = new Date(String(dateStr) + "T12:00:00");
+          if (isNaN(dt.getTime())) return;
+          calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
+          renderCalendar();
+        } catch (e) {}
+      }
+
+      function findNextMatch(targetDowNum, targetMinutes) {
+        const todayStr = toDateStr(new Date());
+        const entries = Object.keys(availabilityByDate || {}).sort();
+        if (!entries.length) return null;
+
+        // Pick the earliest FUTURE date that matches the weekday and has at least one available slot.
+        // Within that date, pick the closest slot to the target time.
+        for (const d of entries) {
+          if (d < todayStr) continue;
+
+          const dt = new Date(d + "T12:00:00");
+          if (dt.getDay() !== targetDowNum) continue;
+
+          const slots = (availabilityByDate[d] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
+          if (!slots.length) continue;
+
+          let bestSlot = slots[0];
+          if (typeof targetMinutes === "number" && isFinite(targetMinutes)) {
+            let bestDiff = Infinity;
+            for (const sl of slots) {
+              const mins = getTorontoMinutesFromSlot(sl);
+              if (mins === null || mins === undefined) continue;
+              const diff = Math.abs(mins - targetMinutes);
+              if (diff < bestDiff) {
+                bestDiff = diff;
+                bestSlot = sl;
+              }
+            }
+          }
+
+          return { dateStr: d, slot: bestSlot };
+        }
+
+        return null;
+      }
+
+      async function ensureAvailabilityCovers(dateStr) {
+        try {
+          if (!dateStr) return;
+          const payload = buildAvailabilityPayload();
+          if (payload?.error) return;
+
+          // If we already loaded a range that covers the requested date for the current context, do nothing.
+          if (typeof __availabilityLoadedContextKey !== "undefined" && typeof __availabilityLoadedRange !== "undefined") {
+            const contextKey = [
+              payload.standardDurationMinutes,
+              payload.blockDurationMinutes,
+              payload.practitionerId,
+              payload.address, payload.city, payload.postal_code
+            ].join("|");
+
+            if (__availabilityLoadedContextKey === contextKey &&
+                __availabilityLoadedRange &&
+                __availabilityLoadedRange.from <= dateStr &&
+                __availabilityLoadedRange.to >= dateStr) {
+              return;
+            }
+          }
+        } catch (e) {}
+
+        // Otherwise, load (or pull from cache) for whatever month is currently visible.
+        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+      }
+
       try {
         let lb = cached;
         if (!lb) {
@@ -3174,7 +3249,6 @@ function mobileConfirmBooking() {
           lastBookingCache = lb;
         }
 
-
         selectedServiceKey = lb.treatment_key || selectedServiceKey;
         selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
 
@@ -3188,64 +3262,64 @@ function mobileConfirmBooking() {
         switchTab("rebook");
         updateBookingStepper();
 
-        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
-          await maybeLoadAvailabilityForCurrentMonth();
-        }
+        // Always start searching from the current real month (not a previously browsed month like January).
+        const now = new Date();
+        calendarCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const dow = lb.day_of_week;
+        // Load availability only if needed; do not "reload" every time if already covered/cached.
+        await ensureAvailabilityCovers(toDateStr(new Date())); // today is always within the first 2-month preload if loaded
+
+        const dow = (lb.day_of_week || "").toString().toLowerCase();
+        const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+        const dowNum = map[dow];
+
         const targetMinutes =
           minutesFromLabel(lb.start_time_local || lb.start_time || lb.time || lb.starts_at || lb.start || lb.start_at);
 
-        if (dow && availabilityByDate) {
-          const entries = Object.keys(availabilityByDate).sort();
-          const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-          const dowNum = map[String(dow).toLowerCase()];
-
-          const match = entries.find(d => {
-            const dt = new Date(d + "T12:00:00");
-            const day = dt.getDay();
-            return dowNum === day &&
-              Array.isArray(availabilityByDate[d]) &&
-              availabilityByDate[d].some(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
-          });
-
-          if (match) {
-            selectDate(match, { userInitiated: true });
-
-            if (typeof targetMinutes === "number" && isFinite(targetMinutes)) {
-              setTimeout(() => {
-                try {
-                  const slots = (availabilityByDate[match] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(match, s));
-                  if (!slots.length) return;
-
-                  let bestSlot = null;
-                  let bestDiff = Infinity;
-
-                  for (const sl of slots) {
-                    const mins = getTorontoMinutesFromSlot(sl);
-                    if (mins === null || mins === undefined) continue;
-                    const diff = Math.abs(mins - targetMinutes);
-                    if (diff < bestDiff) {
-                      bestDiff = diff;
-                      bestSlot = sl;
-                    }
-                  }
-
-                  if (!bestSlot) return;
-
-                  const grid = document.getElementById("time-slots-grid");
-                  if (!grid) return;
-
-                  const bestId = String(bestSlot.start || bestSlot.label || "");
-                  const btn = Array.from(grid.querySelectorAll("button.time-slot-btn"))
-                    .find(b => String(b.getAttribute("data-slot-id") || "") === bestId);
-
-                  if (btn) selectTimeSlot(bestSlot, btn);
-                } catch (e) {}
-              }, 160);
-            }
-          }
+        if (!Number.isInteger(dowNum)) {
+          showToast("Unable to rebook", "Please book manually.", true);
+          return;
         }
+
+        // Search forward for the earliest matching weekday with availability.
+        // If not found in the currently loaded 2-month window, advance month-by-month (cached) until found.
+        let found = null;
+        for (let i = 0; i < 8; i++) { // up to ~8 months of attempts
+          found = findNextMatch(dowNum, targetMinutes);
+          if (found) break;
+
+          // Move forward one month and ensure that month's (and next month's) availability is loaded/cached.
+          calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+          renderCalendar();
+          await ensureAvailabilityCovers(toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 15)));
+        }
+
+        if (!found) {
+          showToast("No matching availability found", "Please select a date manually.", true);
+          return;
+        }
+
+        // Jump the calendar to the month containing the found date, then select date + closest time.
+        setCalendarToMonth(found.dateStr);
+        selectDate(found.dateStr, { userInitiated: true });
+
+        // Select the best slot in the UI after the slot grid has rendered.
+        setTimeout(() => {
+          try {
+            const bestSlot = found.slot;
+            if (!bestSlot) return;
+
+            const grid = document.getElementById("time-slots-grid");
+            if (!grid) return;
+
+            const bestId = String(bestSlot.start || bestSlot.label || "");
+            const btn = Array.from(grid.querySelectorAll("button.time-slot-btn"))
+              .find(b => String(b.getAttribute("data-slot-id") || "") === bestId);
+
+            if (btn) selectTimeSlot(bestSlot, btn);
+          } catch (e) {}
+        }, 180);
+
       } catch (e) {
         showToast("Unable to rebook", "Please book manually.", true);
         switchTab("rebook");
