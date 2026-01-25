@@ -2573,6 +2573,9 @@ function mobileConfirmBooking() {
     let __availabilityLoadedContextKey = null;
     let __availabilityLoadedRange = null;
 
+
+    // Availability lock: preload two months once and keep range anchored until treatment/duration changes
+    let availabilityAnchorMonth = null;
     let treatmentSelect = null;
     let durationSelect = null;
 
@@ -3141,7 +3144,10 @@ function mobileConfirmBooking() {
               treatment_key: tKey || undefined
             };
 
-            const label = `Last: ${dow.charAt(0).toUpperCase() + dow.slice(1)} at ${timeLabel}`;
+            const treatmentLabel = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "Massage").toString().trim();
+            const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
+            const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
+            const label = `${treatmentLabel} • ${dur} min • ${dayLabel} • ${timeLabel}`;
             try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
             try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
             if (dashSummary) dashSummary.textContent = label;
@@ -3174,7 +3180,26 @@ function mobileConfirmBooking() {
 
         const lb = data.lastBooking;
         lastBookingCache = lb;
-        const label = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
+        const tLabel = (lb.treatment_label || lb.treatment || lb.treatment_key || "Massage").toString().trim();
+        const dur = Number(lb.duration || lb.durationMinutes || 60) || 60;
+
+        let dayPart = "";
+        let timePart = "";
+        try {
+          if (lb.day_of_week) dayPart = String(lb.day_of_week).trim();
+          if (lb.start_time_local) timePart = String(lb.start_time_local).trim();
+        } catch (e) {}
+
+        if ((!dayPart || !timePart) && lb.starts_at) {
+          try {
+            const dt = new Date(lb.starts_at);
+            if (!dayPart) dayPart = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dt.getDay()];
+            if (!timePart) timePart = dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
+          } catch (e) {}
+        }
+
+        if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
+        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
 
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
@@ -4978,7 +5003,8 @@ if (selectedSlot && driveTime > 0) {
       if (durationSelect) durationSelect.value = String(preloadDuration);
 
       // Build request
-      const { from, to } = computeTwoMonthRange(calendarCurrent);
+      const baseMonth = availabilityAnchorMonth || calendarCurrent;
+      const { from, to } = computeTwoMonthRange(baseMonth);
       const blockMinutes = preloadDuration + STATIC_SETUP_MINUTES;
 
       const payload = {
@@ -5486,6 +5512,10 @@ if (selectedSlot && driveTime > 0) {
 
     async function maybeLoadAvailabilityForCurrentMonth() {
       const payload = buildAvailabilityPayload();
+      // Anchor the 2-month preload window on first load; keep it fixed until treatment/duration changes.
+      try {
+        if (!availabilityAnchorMonth) availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+      } catch (e) {}
       if (payload.error) {
         updateAvailabilityStatus(payload.error, false);
         availabilityByDate = {};
@@ -5505,7 +5535,8 @@ if (selectedSlot && driveTime > 0) {
       ].join("|");
 
       try {
-        const monthRange = computeTwoMonthRange(calendarCurrent); // visible month + next month
+        const baseMonth = availabilityAnchorMonth || calendarCurrent;
+        const monthRange = computeTwoMonthRange(baseMonth); // locked two-month window anchored to initial load
         if (__availabilityLoadedContextKey === contextKey &&
             __availabilityLoadedRange &&
             __availabilityLoadedRange.from <= monthRange.from &&
@@ -5810,14 +5841,16 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     function prevMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
-      maybeLoadAvailabilityForCurrentMonth();
-    }
+      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      savePortalState();
+}
 
     function nextMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
       renderCalendar();
-      maybeLoadAvailabilityForCurrentMonth();
-    }
+      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      savePortalState();
+}
 
     // =========================================================
     // BOOKING CONFIRMATION
@@ -6145,6 +6178,10 @@ const refreshInstallButtons = () => {
         clearSelectionUI();
         renderCalendar();
 
+        // Reset the locked preload window when treatment changes
+        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+        __availabilityLoadedContextKey = null;
+        __availabilityLoadedRange = null;
         if (!selectedServiceKey) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
         } else {
@@ -6162,6 +6199,11 @@ const refreshInstallButtons = () => {
         availabilityPreloaded = false;
         clearSelectionUI();
         renderCalendar();
+
+        // Reset the locked preload window when duration changes
+        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+        __availabilityLoadedContextKey = null;
+        __availabilityLoadedRange = null;
 
         if (selectedStandardDuration) {
           maybeLoadAvailabilityForCurrentMonth();
