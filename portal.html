@@ -3826,9 +3826,29 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        // Prefer slot.start when present (most reliable)
-        if (slot && slot.start) {
-          const d = new Date(slot.start);
+        if (slot == null) return null;
+
+        // Plain strings sometimes returned (e.g., "1:00 PM")
+        if (typeof slot === "string") return parseLabelMinutes(String(slot));
+
+        // Try a range of common datetime/time fields
+        const raw =
+          slot.start ||
+          slot.starts_at ||
+          slot.startsAt ||
+          slot.start_time ||
+          slot.startTime ||
+          slot.start_at ||
+          slot.startAt ||
+          slot.time ||
+          slot.datetime ||
+          slot.begins_at ||
+          slot.beginsAt ||
+          null;
+
+        // If raw looks like a full datetime, convert to Toronto time
+        if (raw) {
+          const d = new Date(raw);
           if (!isNaN(d.getTime())) {
             const fmt = new Intl.DateTimeFormat('en-CA', {
               hour: '2-digit',
@@ -3844,6 +3864,32 @@ function computeMonthRange(date) {
                 if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
                 if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
               }
+              return (hh * 60) + mm;
+            }
+
+            const s = d.toLocaleTimeString('en-CA', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Toronto'
+            });
+            const m = String(s).match(/^(\d{1,2}):(\d{2})/);
+            if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
+          }
+
+          // If it's not a parseable Date, attempt to parse as a time label
+          const m2 = parseLabelMinutes(String(raw));
+          if (m2 != null) return m2;
+        }
+
+        // Fallback to label parsing
+        if (slot && slot.label) return parseLabelMinutes(String(slot.label));
+
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
               return (hh * 60) + mm;
             }
 
