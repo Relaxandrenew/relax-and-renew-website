@@ -2084,7 +2084,24 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
-            <!-- Booking Progress Stepper -->
+            
+            <!-- Book Same as Last Time (Rebook) -->
+            <div id="rebook-book-same-container" class="hidden mb-6">
+              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="repeat" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-serif text-lg text-brand-light">Book Same as Last Time</div>
+                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                </div>
+              </button>
+            </div>
+
+<!-- Booking Progress Stepper -->
             <div id="booking-stepper" class="glass-panel p-6 mb-8">
               <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div class="stepper-item" id="step-1">
@@ -2488,6 +2505,12 @@ function mobileConfirmBooking() {
     let dayApptsByDate = {};
 
     const availabilityCache = new Map();
+
+    // Month preloading: track the currently-loaded availability context and date range
+    // so navigating to the next month does not re-fetch if it's already covered.
+    let __availabilityLoadedContextKey = null; // excludes from/to
+    let __availabilityLoadedRange = null;      // { from:'YYYY-MM-DD', to:'YYYY-MM-DD' }
+
 
     let treatmentSelect = null;
     let durationSelect = null;
@@ -2972,14 +2995,62 @@ function mobileConfirmBooking() {
     // Book Same as Last Time (Feature #3/#4)
     // =============================
     async function loadLastBookingSummary() {
-      const wrap = document.getElementById("book-same-container");
-      const summary = document.getElementById("last-booking-summary");
-      if (!wrap || !summary) return;
+      const targets = [
+        { wrapId: "book-same-container", summaryId: "last-booking-summary" },
+        { wrapId: "rebook-book-same-container", summaryId: "rebook-last-booking-summary" }
+      ].map(t => ({
+        wrap: document.getElementById(t.wrapId),
+        summary: document.getElementById(t.summaryId)
+      })).filter(t => t.wrap && t.summary);
+
+      if (!targets.length) return;
 
       if (!portalProfile?.email) {
-        wrap.classList.add("hidden");
+        targets.forEach(t => t.wrap.classList.add("hidden"));
         return;
       }
+
+      targets.forEach(t => {
+        t.wrap.classList.remove("hidden");
+        t.summary.textContent = "Loading...";
+      });
+
+      try {
+        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!data.success || !data.lastBooking) {
+          targets.forEach(t => t.wrap.classList.add("hidden"));
+          return;
+        }
+
+        const lb = data.lastBooking;
+
+        // Prefer a human-readable time label if provided; otherwise fall back to parsed slot_start.
+        let timeLabel = lb.time_label || lb.timeLabel || lb.time || "";
+        if (!timeLabel && (lb.slot_start || lb.slotStart)) {
+          const mins = getTorontoMinutesFromSlot({ start: lb.slot_start || lb.slotStart });
+          if (mins !== null) {
+            const hh = Math.floor(mins / 60);
+            const mm = String(mins % 60).padStart(2, "0");
+            timeLabel = `${hh}:${mm}`;
+          }
+        }
+
+        const nice = `${lb.treatment_label || lb.treatmentLabel || "Last treatment"} • ${lb.day_of_week || lb.dayOfWeek || "—"}${timeLabel ? " • " + timeLabel : ""}`;
+        targets.forEach(t => {
+          t.wrap.classList.remove("hidden");
+          t.summary.textContent = nice;
+        });
+
+      } catch (e) {
+        targets.forEach(t => t.wrap.classList.add("hidden"));
+      }
+    }
 
       summary.textContent = "Loading...";
       try {
@@ -3019,6 +3090,123 @@ function mobileConfirmBooking() {
           switchTab("rebook");
           return;
         }
+
+        const lb = data.lastBooking;
+
+        // Apply last service + duration (fallback to current selection)
+        selectedServiceKey = lb.treatment_key || lb.treatmentKey || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        switchTab("rebook");
+        updateBookingStepper();
+
+        // Ensure availability is loaded for the current view/month.
+        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Preferred day-of-week + time (Toronto)
+        const dow = lb.day_of_week || lb.dayOfWeek || null;
+
+        let preferredMin = null;
+        try {
+          // Prefer ISO slot_start if present (most accurate)
+          const iso = lb.slot_start || lb.slotStart || lb.start || lb.starts_at || lb.startsAt || null;
+          if (iso) preferredMin = getTorontoMinutesFromSlot({ start: iso });
+          if (preferredMin === null && (lb.time_label || lb.timeLabel || lb.time)) {
+            preferredMin = parseLabelMinutes(String(lb.time_label || lb.timeLabel || lb.time));
+          }
+        } catch (e) {}
+
+        // Pick the closest upcoming date matching DOW (or first available).
+        let match = null;
+        if (availabilityByDate) {
+          const entries = Object.keys(availabilityByDate).sort();
+          const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+          const targetDow = dow ? map[String(dow).toLowerCase()] : null;
+
+          const todayStr = toDateStr(new Date());
+          match = entries.find(d => {
+            if (d < todayStr) return false;
+            const slots = Array.isArray(availabilityByDate[d]) ? availabilityByDate[d] : [];
+            const hasAny = slots.some(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
+            if (!hasAny) return false;
+            if (targetDow === null || targetDow === undefined) return true;
+            const dt = new Date(d + "T12:00:00");
+            return dt.getDay() === targetDow;
+          });
+
+          // If no future match, fall back to any available date
+          if (!match) {
+            match = entries.find(d => {
+              const slots = Array.isArray(availabilityByDate[d]) ? availabilityByDate[d] : [];
+              return slots.some(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
+            }) || null;
+          }
+        }
+
+        if (!match) {
+          showToast("No availability", "Please choose a date manually.", true);
+          return;
+        }
+
+        // Select the date and then auto-pick the closest slot to the last time.
+        selectDate(match);
+
+        setTimeout(() => {
+          try {
+            const key = (typeof normalizeDateKey === "function" ? (normalizeDateKey(match) || match) : match);
+            const raw = Array.isArray(availabilityByDate?.[key]) ? availabilityByDate[key] : [];
+            const filtered = raw.filter(s => isSlotAvailable(s) && slotPassesUiWindow(key, s));
+
+            if (!filtered.length) return;
+
+            // Choose best slot relative to preferredMin
+            let best = filtered[0];
+            if (preferredMin !== null) {
+              best = filtered.reduce((acc, s) => {
+                const am = getTorontoMinutesFromSlot(acc);
+                const sm = getTorontoMinutesFromSlot(s);
+                const ad = (am === null ? 999999 : Math.abs(am - preferredMin));
+                const sd = (sm === null ? 999999 : Math.abs(sm - preferredMin));
+                if (sd < ad) return s;
+                if (sd > ad) return acc;
+                // Tie-break: prefer same/after the preferred time, then earlier
+                const aAfter = (am !== null && am >= preferredMin) ? 1 : 0;
+                const sAfter = (sm !== null && sm >= preferredMin) ? 1 : 0;
+                if (sAfter !== aAfter) return sAfter ? s : acc;
+                return (sm !== null && am !== null && sm < am) ? s : acc;
+              }, filtered[0]);
+            }
+
+            const slotId = String(best.start || best.label || "");
+            const esc = (window.CSS && typeof window.CSS.escape === "function") ? window.CSS.escape(slotId) : slotId.replace(/"/g, '\"');
+            const btn = document.querySelector(`.time-slot-btn[data-slot-id="${esc}"]`);
+
+            if (btn && typeof btn.click === "function") {
+              btn.click();
+            } else {
+              // Fallback: set selection without visual highlight
+              selectedSlot = best;
+              updateSummary();
+              updateBookingStepper();
+              savePortalState();
+            }
+          } catch (e) {}
+        }, 60);
+
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
 
         const lb = data.lastBooking;
         selectedServiceKey = lb.treatment_key || selectedServiceKey;
@@ -3287,6 +3475,13 @@ function mobileConfirmBooking() {
 function computeMonthRange(date) {
       const first = new Date(date.getFullYear(), date.getMonth(), 1);
       const last  = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      return { from: toDateStr(first), to: toDateStr(last) };
+    }
+
+    // Preload availability for two months at a time (current month + following month)
+    function computeTwoMonthRange(date) {
+      const first = new Date(date.getFullYear(), date.getMonth(), 1);
+      const last  = new Date(date.getFullYear(), date.getMonth() + 2, 0); // day 0 => last day of next month
       return { from: toDateStr(first), to: toDateStr(last) };
     }
 
@@ -4604,7 +4799,7 @@ if (selectedSlot && driveTime > 0) {
       if (durationSelect) durationSelect.value = String(preloadDuration);
 
       // Build request
-      const { from, to } = computeMonthRange(calendarCurrent);
+      const { from, to } = computeTwoMonthRange(calendarCurrent);
       const blockMinutes = preloadDuration + STATIC_SETUP_MINUTES;
 
       const payload = {
@@ -5014,7 +5209,7 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const { from, to } = computeMonthRange(calendarCurrent);
+      const { from, to } = computeTwoMonthRange(calendarCurrent);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -5105,21 +5300,49 @@ if (selectedSlot && driveTime > 0) {
         renderCalendar();
         clearSelectionUI();
         return;
+
+      // Two-month prefetch optimization:
+      // If we already have availability loaded for this month (and the next month) for the same
+      // address + treatment + duration context, do not re-fetch when the user browses forward.
+      const contextKey = [
+        payload.standardDurationMinutes,
+        payload.blockDurationMinutes,
+        payload.practitionerId,
+        payload.address, payload.city, payload.postal_code
+      ].join("|");
+
+      try {
+        const monthRange = computeMonthRange(calendarCurrent); // exact visible month
+        if (__availabilityLoadedContextKey === contextKey &&
+            __availabilityLoadedRange &&
+            __availabilityLoadedRange.from <= monthRange.from &&
+            __availabilityLoadedRange.to >= monthRange.to) {
+
+          clearSelectionUI();
+          renderCalendar();
+          try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
+          updateAvailabilityStatus("Availability already loaded for this month (next month preloaded).", true);
+          savePortalState();
+          return;
+        }
+      } catch (e) {}
       }
 
       const cacheKey = getRequestCacheKey(payload);
       clearSelectionUI();
       setCalendarLoading(true);
-      updateAvailabilityStatus("Checking live availability for this month…", false);
+      updateAvailabilityStatus("Checking live availability for this month (and next)…", false);
 
       try {
         if (availabilityCache.has(cacheKey)) {
           const cached = availabilityCache.get(cacheKey);
           parseAvailabilityResponse(cached);
+          __availabilityLoadedContextKey = contextKey;
+          __availabilityLoadedRange = { from: payload.from, to: payload.to };
           renderCalendar();
           try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
           setTimeout(ensureCalendarClickableAfterPreload, 60);
-          updateAvailabilityStatus("Availability loaded from cache for this month.", true);
+          updateAvailabilityStatus("Availability loaded from cache for this month (next month preloaded).", true);
           savePortalState();
           // Restore date selection (if any) after availability is loaded
           const s = loadPortalState();
@@ -5141,10 +5364,12 @@ if (selectedSlot && driveTime > 0) {
         const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
+        __availabilityLoadedContextKey = contextKey;
+        __availabilityLoadedRange = { from: payload.from, to: payload.to };
         renderCalendar();
         try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
         setTimeout(ensureCalendarClickableAfterPreload, 60);
-        updateAvailabilityStatus("Live availability loaded for this month.", true);
+        updateAvailabilityStatus("Live availability loaded for this month (next month preloaded).", true);
 
       } catch (e) {
         console.error(e);
