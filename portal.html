@@ -3826,59 +3826,16 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        if (slot == null) return null;
-
-        // Normalize: accept multiple potential start keys.
-        let startVal = null;
-        if (typeof slot === "string") startVal = slot;
-        else startVal = slot.start || slot.starts_at || slot.start_time || slot.startsAt || slot.startAt || slot.time || slot.datetime || slot.begins_at || null;
-
-        // If startVal looks like a full datetime, parse it and convert to Toronto time.
-        if (startVal) {
-          const raw = String(startVal).trim();
-
-          const dt = new Date(raw);
-          if (!isNaN(dt.getTime())) {
+        // Prefer slot.start when present (most reliable)
+        if (slot && slot.start) {
+          const d = new Date(slot.start);
+          if (!isNaN(d.getTime())) {
             const fmt = new Intl.DateTimeFormat('en-CA', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false,
               timeZone: 'America/Toronto'
             });
-
-            if (typeof fmt.formatToParts === 'function') {
-              const parts = fmt.formatToParts(dt);
-              let hh = 0, mm = 0;
-              for (const p of parts) {
-                if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
-                if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
-              }
-              return (hh * 60) + mm;
-            }
-
-            const s = dt.toLocaleTimeString('en-CA', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false,
-              timeZone: 'America/Toronto'
-            });
-            const m = String(s).match(/^(\d{1,2}):(\d{2})/);
-            if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
-          }
-
-          // If it's already a time-only string (e.g., "13:00" or "1:00 PM"), parse directly.
-          const mins = parseLabelMinutes(raw);
-          if (typeof mins === "number" && isFinite(mins)) return mins;
-        }
-
-        // Fallback to label parsing (some payloads may omit start)
-        if (slot && slot.label) return parseLabelMinutes(slot.label);
-
-        return null;
-      } catch (e) {
-        return null;
-      }
-    });
 
             if (typeof fmt.formatToParts === 'function') {
               const parts = fmt.formatToParts(d);
@@ -3908,6 +3865,8 @@ function computeMonthRange(date) {
       } catch (e) {
         return null;
       }
+
+    
     }
 
     function isSundayToronto(dateStr) {
