@@ -3276,32 +3276,31 @@ function mobileConfirmBooking() {
         } catch (e) {}
       }
 
-      function pickBestSlotOnDate(dateStr, targetMinutes) {
+      function pickExactSlotOnDate(dateStr, targetMinutes) {
         const slots = (availabilityByDate?.[dateStr] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
-        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return slots[0];
+        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
-        let best = null;
-        let bestDiff = Infinity;
         for (const s of slots) {
           const m = getTorontoMinutesFromSlot(s);
           if (m === null || m === undefined) continue;
-          const diff = Math.abs(m - targetMinutes);
-          if (diff < bestDiff) {
-            bestDiff = diff;
-            best = s;
-          }
+          if (m === targetMinutes) return s;
+        }
+        return null;
+      }
         }
         return best || slots[0];
       }
 
-      function findNextAvailableMatch(targetDowNum, targetMinutes) {
+      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
         const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
         const rangeTo = __availabilityLoadedRange?.to || null;
 
         const dates = Object.keys(availabilityByDate || {}).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
         for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
           if (d < todayStr) continue;
           if (rangeTo && d > rangeTo) break;
 
@@ -3310,7 +3309,13 @@ function mobileConfirmBooking() {
             if (dt.getDay() !== targetDowNum) continue;
           }
 
-          const bestSlot = pickBestSlotOnDate(d, targetMinutes);
+          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
+          if (exactSlot) return { dateStr: d, slot: exactSlot };
+        }
+        return null;
+      }
+
+          const bestSlot = pickExactSlotOnDate(d, targetMinutes);
           if (bestSlot) return { dateStr: d, slot: bestSlot };
         }
         return null;
@@ -3378,10 +3383,10 @@ function mobileConfirmBooking() {
         const { dowNum, minutes } = deriveDowAndMinutes(lb);
 
         // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
-        const found = findNextAvailableMatch(dowNum, minutes);
+        const found = findNextAvailableExactMatch(dowNum, minutes);
 
         if (!found) {
-          showToast("No matching availability found", "Please select a date manually.", true);
+          showToast("Time not available", "Time not available in the next 2 months, please choose manually.", true);
           return;
         }
 
@@ -3399,8 +3404,8 @@ function mobileConfirmBooking() {
         // Select the best slot in the UI after the slot grid has rendered.
         setTimeout(() => {
           try {
-            const bestSlot = found.slot;
-            if (!bestSlot) return;
+            const exactSlot = found.slot;
+            if (!exactSlot) return;
 
             const grid = document.getElementById("time-slots-grid");
             if (!grid) return;
@@ -3408,13 +3413,11 @@ function mobileConfirmBooking() {
             const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
             if (!buttons.length) return;
 
-            const desiredId = String(bestSlot.start || bestSlot.label || "");
+            const desiredId = String(exactSlot.start || exactSlot.label || "");
             let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
 
-            // Fallback: pick closest by minutes if IDs don't match perfectly
+            // Fallback: strict minutes match (EXACT time only)
             if (!btn && typeof minutes === "number" && isFinite(minutes)) {
-              let best = null;
-              let bestDiff = Infinity;
               for (const b of buttons) {
                 const raw = b.getAttribute("data-slot-raw");
                 if (!raw) continue;
@@ -3423,17 +3426,14 @@ function mobileConfirmBooking() {
                 if (!slotObj) continue;
                 const m = getTorontoMinutesFromSlot(slotObj);
                 if (m === null || m === undefined) continue;
-                const diff = Math.abs(m - minutes);
-                if (diff < bestDiff) { bestDiff = diff; best = { b, slotObj }; }
-              }
-              if (best) {
-                btn = best.b;
-                selectTimeSlot(best.slotObj, btn);
-                return;
+                if (m === minutes) { btn = b; exactSlot.__uiSlotObj = slotObj; break; }
               }
             }
 
-            if (btn) selectTimeSlot(bestSlot, btn);
+            if (btn) {
+              const slotObj = (exactSlot && exactSlot.__uiSlotObj) ? exactSlot.__uiSlotObj : exactSlot;
+              selectTimeSlot(slotObj, btn);
+            }
           } catch (e) {}
         }, 120);
 
@@ -5838,19 +5838,54 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       savePortalState();
     }
 
-    function prevMonth() {
+    async function prevMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
-      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
+      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
       savePortalState();
 }
 
-    function nextMonth() {
+    async function nextMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
       renderCalendar();
-      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
+      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
       savePortalState();
 }
+
+    async function ensureAvailabilityForNavigatedMonth() {
+      try {
+        if (!(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code)) return;
+        if (!selectedServiceKey || !selectedStandardDuration) return;
+
+        const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
+        const contextKey = [
+          Number(selectedStandardDuration),
+          Number(blockMinutes),
+          DEFAULT_PRACTITIONER_ID,
+          portalProfile.address, portalProfile.city, portalProfile.postal_code
+        ].join("|");
+
+        const monthRange = computeTwoMonthRange(calendarCurrent);
+
+        if (__availabilityLoadedContextKey === contextKey &&
+            __availabilityLoadedRange &&
+            __availabilityLoadedRange.from <= monthRange.from &&
+            __availabilityLoadedRange.to >= monthRange.to) {
+          return;
+        }
+
+        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+        __availabilityLoadedContextKey = null;
+        __availabilityLoadedRange = null;
+
+        await maybeLoadAvailabilityForCurrentMonth();
+      } catch (e) {
+        console.warn("ensureAvailabilityForNavigatedMonth error:", e);
+      }
+    }
+
 
     // =========================================================
     // BOOKING CONFIRMATION
