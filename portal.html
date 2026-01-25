@@ -465,16 +465,35 @@
     #auth0-lock-container .auth0-lock .auth0-lock-submit button {
       background: #E0C584 !important;
       border: 1px solid #E0C584 !important;
-      color: #000 !important;
+      color: #000000 !important;
+
+      /* Keep the same thin button, but ensure perfect centering */
+      height: 34px !important;
+      min-height: 34px !important;
+      padding: 0 14px !important;
+      box-sizing: border-box !important;
+
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
       text-transform: uppercase !important;
       letter-spacing: 0.12em !important;
       font-weight: 800 !important;
-      padding: 14px 16px !important;
+      font-size: 0.95rem !important;
+      line-height: 1 !important;
+
+      border-radius: 0px !important;
+      box-shadow: 0 0 0 rgba(224,197,132,0) !important;
+      transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease !important;
     }
     #auth0-lock-container .auth0-lock button.auth0-lock-submit:hover,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button:hover {
       background: #F0D594 !important;
       border-color: #F0D594 !important;
+      color: #000000 !important;
+      box-shadow: 0 0 0 3px rgba(224,197,132,0.18) !important;
+      transform: translateY(-1px) !important;
     }
     #auth0-lock-container .auth0-lock .auth0-lock-separator span {
       background: #050505 !important;
@@ -840,11 +859,12 @@
     /* RNR: smaller/thinner Auth0 buttons (requested) */
     #auth0-lock-container .auth0-lock button.auth0-lock-submit,
     #auth0-lock-container .auth0-lock .auth0-lock-submit button {
-      padding: 10px 14px !important;
-      min-height: 38px !important;
-      font-size: 0.95rem !important;
-      border-radius: 10px !important;
-    }
+      padding: 0 14px !important;
+      height: 34px !important;
+      min-height: 34px !important;
+      line-height: 1 !important;
+      border-radius: 0px !important;
+}
 
 </style>
 
@@ -3048,29 +3068,6 @@ function mobileConfirmBooking() {
       }
     }
 
-
-      summary.textContent = "Loading...";
-      try {
-        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-        });
-        const data = await res.json().catch(() => ({}));
-
-        if (!data.success || !data.lastBooking) {
-          wrap.classList.add("hidden");
-          return;
-        }
-
-        wrap.classList.remove("hidden");
-        const lb = data.lastBooking;
-        summary.textContent = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
-      } catch (e) {
-        wrap.classList.add("hidden");
-      }
-    }
-
     async function bookSameAsLastTime() {
       if (!portalProfile?.email) return;
 
@@ -3190,43 +3187,6 @@ function mobileConfirmBooking() {
               }, 160);
             }
           }
-        }
-      } catch (e) {
-        showToast("Unable to rebook", "Please book manually.", true);
-        switchTab("rebook");
-      }
-    }
-
-
-        const lb = data.lastBooking;
-        selectedServiceKey = lb.treatment_key || selectedServiceKey;
-        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
-
-        const tSel = document.getElementById("treatment-select");
-        const dSel = document.getElementById("duration-select");
-
-        if (tSel) tSel.value = selectedServiceKey;
-        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
-        if (dSel) dSel.value = String(selectedStandardDuration);
-
-        switchTab("rebook");
-        updateBookingStepper();
-
-        if (typeof maybeLoadAvailabilityForCurrentMonth === "function") {
-          await maybeLoadAvailabilityForCurrentMonth();
-        }
-
-        // Try selecting next matching day-of-week if provided
-        const dow = lb.day_of_week;
-        if (dow && availabilityByDate) {
-          const entries = Object.keys(availabilityByDate).sort();
-          const match = entries.find(d => {
-            const dt = new Date(d + "T12:00:00");
-            const day = dt.getDay(); // 0 Sun
-            const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-            return map[String(dow).toLowerCase()] === day && Array.isArray(availabilityByDate[d]) && availabilityByDate[d].some(s => isSlotAvailable(s) && slotPassesUiWindow(d, s));
-          });
-          if (match) selectDate(match);
         }
       } catch (e) {
         showToast("Unable to rebook", "Please book manually.", true);
