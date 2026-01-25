@@ -5420,7 +5420,8 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const { from, to } = computeTwoMonthRange(calendarCurrent);
+      const baseMonthForRange = availabilityAnchorMonth || calendarCurrent;
+      const { from, to } = computeTwoMonthRange(baseMonthForRange);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -5852,6 +5853,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         if (!(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code)) return;
         if (!selectedServiceKey || !selectedStandardDuration) return;
 
+        // If the navigated month is already covered by the currently-loaded range for the same context,
+        // do not re-fetch. (Example: Jan+Feb preloaded; browsing Jan <-> Feb must NOT reload.)
         const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
         const contextKey = [
           Number(selectedStandardDuration),
@@ -5860,14 +5863,17 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           portalProfile.address, portalProfile.city, portalProfile.postal_code
         ].join("|");
 
-        const monthRange = computeTwoMonthRange(calendarCurrent);
+        const monthStart = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1));
+        const monthEnd   = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 0));
 
         if (__availabilityLoadedContextKey === contextKey &&
             __availabilityLoadedRange &&
-            __availabilityLoadedRange.from <= monthRange.from &&
-            __availabilityLoadedRange.to >= monthRange.to) {
+            __availabilityLoadedRange.from <= monthStart &&
+            __availabilityLoadedRange.to   >= monthEnd) {
           return;
         }
+
+        // Outside the loaded window: advance the 2-month window anchor to the navigated month
 
         availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
         __availabilityLoadedContextKey = null;
