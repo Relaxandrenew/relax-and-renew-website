@@ -3289,9 +3289,7 @@ function mobileConfirmBooking() {
         }
         return null;
       }
-        }
-        return best || slots[0];
-      }
+
 
       function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
         const todayStr = toDateStr(new Date());
@@ -3315,11 +3313,6 @@ function mobileConfirmBooking() {
         return null;
       }
 
-          const bestSlot = pickExactSlotOnDate(d, targetMinutes);
-          if (bestSlot) return { dateStr: d, slot: bestSlot };
-        }
-        return null;
-      }
 
       try {
         // Use cached last booking (from locally loaded appointments or prior webhook call) when available
