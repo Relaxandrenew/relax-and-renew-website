@@ -3349,21 +3349,30 @@ function mobileConfirmBooking() {
         switchTab("rebook");
         updateBookingStepper();
 
-        // If the initial background preload is still running and we're using the same duration, wait briefly
+        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
         const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
+
         const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
           ? (Number(preloadedDuration) !== Number(desiredDuration))
           : false;
 
-        if (availabilityPreloadInFlight && !durationChangedFromPreload) {
+        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
+          ? (String(preloadedTreatment) !== String(desiredTreatment))
+          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
+
+        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
           const startedAt = Date.now();
           while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
             await new Promise(r => setTimeout(r, 120));
           }
         }
 
-        // Only load availability if the last booking duration differs from the preloaded/default duration
-        if (!availabilityPreloaded || durationChangedFromPreload) {
+        // Load availability only when needed:
+        // - not preloaded yet, or
+        // - treatment changed, or
+        // - duration changed
+        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
           await maybeLoadAvailabilityForCurrentMonth();
         }
 
@@ -3659,8 +3668,8 @@ function mobileConfirmBooking() {
       if (typeof slot.booked === 'boolean') return !slot.booked;
       if (slot.label && String(slot.label).toLowerCase().indexOf('(booked)') >= 0) return false;
 
-      // If it has a start time but no availability flag, assume available
-      if (slot.start) return true;
+      // If it has any recognizable time field but no explicit availability flag, assume available.
+      if (slot.start || slot.starts_at || slot.start_time || slot.startsAt || slot.startAt || slot.time || slot.datetime || slot.begins_at) return true;
 
       return false;
     }
@@ -3817,16 +3826,59 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        // Prefer slot.start when present (most reliable)
-        if (slot && slot.start) {
-          const d = new Date(slot.start);
-          if (!isNaN(d.getTime())) {
+        if (slot == null) return null;
+
+        // Normalize: accept multiple potential start keys.
+        let startVal = null;
+        if (typeof slot === "string") startVal = slot;
+        else startVal = slot.start || slot.starts_at || slot.start_time || slot.startsAt || slot.startAt || slot.time || slot.datetime || slot.begins_at || null;
+
+        // If startVal looks like a full datetime, parse it and convert to Toronto time.
+        if (startVal) {
+          const raw = String(startVal).trim();
+
+          const dt = new Date(raw);
+          if (!isNaN(dt.getTime())) {
             const fmt = new Intl.DateTimeFormat('en-CA', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false,
               timeZone: 'America/Toronto'
             });
+
+            if (typeof fmt.formatToParts === 'function') {
+              const parts = fmt.formatToParts(dt);
+              let hh = 0, mm = 0;
+              for (const p of parts) {
+                if (p.type === 'hour') hh = parseInt(p.value, 10) || 0;
+                if (p.type === 'minute') mm = parseInt(p.value, 10) || 0;
+              }
+              return (hh * 60) + mm;
+            }
+
+            const s = dt.toLocaleTimeString('en-CA', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Toronto'
+            });
+            const m = String(s).match(/^(\d{1,2}):(\d{2})/);
+            if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
+          }
+
+          // If it's already a time-only string (e.g., "13:00" or "1:00 PM"), parse directly.
+          const mins = parseLabelMinutes(raw);
+          if (typeof mins === "number" && isFinite(mins)) return mins;
+        }
+
+        // Fallback to label parsing (some payloads may omit start)
+        if (slot && slot.label) return parseLabelMinutes(slot.label);
+
+        return null;
+      } catch (e) {
+        return null;
+      }
+    });
 
             if (typeof fmt.formatToParts === 'function') {
               const parts = fmt.formatToParts(d);
