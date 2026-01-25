@@ -3265,9 +3265,7 @@ function mobileConfirmBooking() {
         // Always start searching from the current real month (not a previously browsed month like January).
         const now = new Date();
         calendarCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        // Load availability only if needed; do not "reload" every time if already covered/cached.
-        await ensureAvailabilityCovers(toDateStr(new Date())); // today is always within the first 2-month preload if loaded
+        renderCalendar();
 
         const dow = (lb.day_of_week || "").toString().toLowerCase();
         const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
@@ -3281,18 +3279,21 @@ function mobileConfirmBooking() {
           return;
         }
 
-        // Search forward for the earliest matching weekday with availability.
-        // If not found in the currently loaded 2-month window, advance month-by-month (cached) until found.
-        let found = null;
-        for (let i = 0; i < 8; i++) { // up to ~8 months of attempts
-          found = findNextMatch(dowNum, targetMinutes);
-          if (found) break;
+        // Only load availability if:
+        // - Availability has not been preloaded yet, OR
+        // - The last-booking duration differs from the preloaded/default duration.
+        const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
+          ? (Number(preloadedDuration) !== Number(desiredDuration))
+          : false;
 
-          // Move forward one month and ensure that month's (and next month's) availability is loaded/cached.
-          calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
-          renderCalendar();
-          await ensureAvailabilityCovers(toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 15)));
+        if (!availabilityPreloaded || durationChangedFromPreload) {
+          // Do NOT loop month-by-month. We only preload the next 2 months for the active selection.
+          await maybeLoadAvailabilityForCurrentMonth();
         }
+
+        // Search ONLY within the already-loaded 2-month window.
+        const found = findNextMatch(dowNum, targetMinutes);
 
         if (!found) {
           showToast("No matching availability found", "Please select a date manually.", true);
@@ -4914,8 +4915,15 @@ if (selectedSlot && driveTime > 0) {
           const cacheKey = getRequestCacheKey(payload);
           availabilityCache.set(cacheKey, data);
           parseAvailabilityResponse(data);
-        __availabilityLoadedContextKey = contextKey;
-        __availabilityLoadedRange = { from: payload.from, to: payload.to };
+          // Track the loaded context + range so we can avoid re-fetching when browsing months
+          const contextKey = [
+            payload.standardDurationMinutes,
+            payload.blockDurationMinutes,
+            payload.practitionerId,
+            payload.address, payload.city, payload.postal_code
+          ].join("|");
+          __availabilityLoadedContextKey = contextKey;
+          __availabilityLoadedRange = { from: payload.from, to: payload.to };
 
           // If backend returned no usable dates, do not claim "loaded"
           const hasDates = availabilityByDate && Object.keys(availabilityByDate).length > 0;
@@ -5293,7 +5301,7 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const { from, to } = computeMonthRange(calendarCurrent);
+      const { from, to } = computeTwoMonthRange(calendarCurrent);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -5397,7 +5405,7 @@ if (selectedSlot && driveTime > 0) {
       ].join("|");
 
       try {
-        const monthRange = computeMonthRange(calendarCurrent); // visible month only
+        const monthRange = computeTwoMonthRange(calendarCurrent); // visible month + next month
         if (__availabilityLoadedContextKey === contextKey &&
             __availabilityLoadedRange &&
             __availabilityLoadedRange.from <= monthRange.from &&
