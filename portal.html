@@ -2548,6 +2548,7 @@ function mobileConfirmBooking() {
     let cancelledAppointments = [];
     let completedAppointments = [];
     let historyAppointments = [];
+    let lastBookingCache = null; // cache for Quick Rebook (avoids extra fetch)
     
     // Preload state
     let availabilityPreloaded = false;
@@ -3033,6 +3034,54 @@ function mobileConfirmBooking() {
         try { rebookWrap && rebookWrap.classList.add("hidden"); } catch(e) {}
       }
 
+      // Prefer locally loaded completed appointments (faster + avoids dependency on last-booking webhook)
+      try {
+        const pool = Array.isArray(completedAppointments) ? completedAppointments.slice() : [];
+        if (pool.length) {
+          const last = pool
+            .filter(a => a && a.starts_at && !a.cancelled_at)
+            .sort((a,b) => new Date(b.starts_at) - new Date(a.starts_at))[0];
+
+          if (last && last.starts_at) {
+            const dt = new Date(last.starts_at);
+            const dowNames = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+            const dow = dowNames[dt.getDay()];
+            const timeLabel = dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
+
+            // Best-effort mapping from appointment type label -> treatment-select key
+            const name = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "").toString().toLowerCase();
+            const map = [
+              ["relaxation", "relaxation"], ["swedish", "relaxation"],
+              ["deep", "deep-tissue"], ["tissue", "deep-tissue"],
+              ["sports", "sports"],
+              ["senior", "senior"],
+              ["hot stone", "hot-stone"], ["stone", "hot-stone"],
+              ["cupping", "cupping"],
+              ["prenatal", "prenatal"],
+              ["pediatric", "pediatric"], ["paediatric", "pediatric"],
+              ["infant", "infant"]
+            ];
+            let tKey = "";
+            for (const [needle, key] of map) { if (name.includes(needle)) { tKey = key; break; } }
+
+            lastBookingCache = {
+              day_of_week: dow,
+              start_time_local: timeLabel,
+              starts_at: last.starts_at,
+              duration: last.duration || last.duration_minutes || last.durationMinutes || 60,
+              treatment_key: tKey || undefined
+            };
+
+            const label = `Last: ${dow.charAt(0).toUpperCase() + dow.slice(1)} at ${timeLabel}`;
+            try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
+            try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
+            if (dashSummary) dashSummary.textContent = label;
+            if (rebookSummary) rebookSummary.textContent = label;
+            return;
+          }
+        }
+      } catch (e) {}
+
       if (!portalProfile?.email) {
         hideBoth();
         return;
@@ -3055,6 +3104,7 @@ function mobileConfirmBooking() {
         }
 
         const lb = data.lastBooking;
+        lastBookingCache = lb;
         const label = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
 
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
@@ -3070,6 +3120,9 @@ function mobileConfirmBooking() {
 
     async function bookSameAsLastTime() {
       if (!portalProfile?.email) return;
+
+      // Use cached last booking (from locally loaded appointments or prior webhook call) when available
+      let cached = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
 
       function minutesFromLabel(label) {
         if (!label) return null;
@@ -3102,20 +3155,25 @@ function mobileConfirmBooking() {
       }
 
       try {
-        const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-        });
+        let lb = cached;
+        if (!lb) {
+          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+          });
 
-        const data = await res.json().catch(() => ({}));
-        if (!data.success || !data.lastBooking) {
-          showToast("No previous booking found", "Please book manually.", true);
-          switchTab("rebook");
-          return;
+          const data = await res.json().catch(() => ({}));
+          if (!data.success || !data.lastBooking) {
+            showToast("No previous booking found", "Please book manually.", true);
+            switchTab("rebook");
+            return;
+          }
+
+          lb = data.lastBooking;
+          lastBookingCache = lb;
         }
 
-        const lb = data.lastBooking;
 
         selectedServiceKey = lb.treatment_key || selectedServiceKey;
         selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
