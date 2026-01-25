@@ -866,6 +866,19 @@
       border-radius: 0px !important;
 }
 
+
+    /* Quick Rebook disabled state */
+    .quickrebook-disabled,
+    button.card-fancy[disabled] {
+      opacity: 0.45 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+    }
+    button.card-fancy[disabled]:hover {
+      border-color: rgba(224,197,132,0.20) !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
 </style>
 
   <script>
@@ -1957,7 +1970,7 @@ function mobileConfirmBooking() {
 
             <!-- Book Same as Last Time -->
             <div id="book-same-container" class="hidden mb-6">
-              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
                 <div class="flex items-center gap-4">
                   <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
                     <i data-lucide="repeat" class="w-6 h-6"></i>
@@ -2137,7 +2150,7 @@ function mobileConfirmBooking() {
 
             <!-- Book Same as Last Time (Rebook) -->
             <div id="rebook-book-same-container" class="hidden mb-6">
-              <button onclick="bookSameAsLastTime()" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
                 <div class="flex items-center gap-4">
                   <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
                     <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
@@ -2552,6 +2565,39 @@ function mobileConfirmBooking() {
     
     // Preload state
     let availabilityPreloaded = false;
+    let availabilityPreloadInFlight = false;
+
+    // Disable/enable Quick Rebook buttons until availability is fully preloaded
+    function setQuickRebookEnabled(enabled) {
+      const btnSelectors = [
+        '#book-same-container button',
+        '#rebook-book-same-container button'
+      ];
+      const summaryIds = ['last-booking-summary', 'rebook-last-booking-summary'];
+
+      btnSelectors.forEach((sel) => {
+        const btn = document.querySelector(sel);
+        if (!btn) return;
+        btn.disabled = !enabled;
+        btn.setAttribute('aria-disabled', (!enabled).toString());
+        if (!enabled) btn.classList.add('quickrebook-disabled');
+        else btn.classList.remove('quickrebook-disabled');
+      });
+
+      // If we're disabling, hint that availability is still loading
+      if (!enabled) {
+        summaryIds.forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const t = (el.textContent || '').trim();
+          if (!t || t.toLowerCase() === 'loading...') {
+            el.textContent = 'Loading availability...';
+          }
+        });
+      }
+    }
+
+
     let preloadedTreatment = null;
     let preloadedDuration = null;
 
@@ -3118,7 +3164,9 @@ function mobileConfirmBooking() {
       }
     }
 
-    async function bookSameAsLastTime() {
+    async function bookSameAsLastTime(ev) {
+      try { if (ev && typeof ev.preventDefault === "function") ev.preventDefault(); } catch(e) {}
+      try { if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation(); } catch(e) {}
       if (!portalProfile?.email) return;
 
       // Use cached last booking (from locally loaded appointments or prior webhook call) when available
@@ -3286,6 +3334,14 @@ function mobileConfirmBooking() {
         const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
           ? (Number(preloadedDuration) !== Number(desiredDuration))
           : false;
+        // If the initial background preload is still running and we're using the same duration,
+        // wait for it rather than firing a second request.
+        if (availabilityPreloadInFlight && !durationChangedFromPreload) {
+          const startedAt = Date.now();
+          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
+            await new Promise(r => setTimeout(r, 120));
+          }
+        }
 
         if (!availabilityPreloaded || durationChangedFromPreload) {
           // Do NOT loop month-by-month. We only preload the next 2 months for the active selection.
@@ -4826,11 +4882,13 @@ if (selectedSlot && driveTime > 0) {
       const addrOk = portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code;
       if (!addrOk) {
         console.log("Cannot preload: missing address info");
+        setQuickRebookEnabled(false);
         return;
       }
 
       if (availabilityPreloaded && !forceReload) {
         console.log("Already preloaded, skipping");
+        setQuickRebookEnabled(true);
         return;
       }
 
@@ -4862,6 +4920,8 @@ if (selectedSlot && driveTime > 0) {
       }
 
       console.log("Preloading:", preloadTreatment, preloadDuration + "min");
+      setQuickRebookEnabled(false);
+      availabilityPreloadInFlight = true;
 
       const treatRule = TREATMENT_RULES[preloadTreatment];
       if (!treatRule) return;
@@ -4937,6 +4997,7 @@ if (selectedSlot && driveTime > 0) {
 
           availabilityPreloaded = true;
 
+          setQuickRebookEnabled(true);
           renderCalendar();
           setTimeout(ensureCalendarClickableAfterPreload, 60);
           updateAvailabilityStatus(`Showing ${treatRule.label} (${preloadDuration} min). Select a date.`, true);
@@ -4952,6 +5013,9 @@ if (selectedSlot && driveTime > 0) {
       } finally {
         try { setCalendarLoading(false); } catch (e) {}
       }
+
+      availabilityPreloadInFlight = false;
+    setQuickRebookEnabled(!!availabilityPreloaded);
     }
 
     // =========================================================
