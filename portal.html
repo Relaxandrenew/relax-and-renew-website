@@ -3368,10 +3368,14 @@ function mobileConfirmBooking() {
             if (dt.getDay() !== targetDowNum) continue;
           }
 
-          const slots = getSlotsForDateKey(d) || [];
+          // IMPORTANT: Use the same availability criteria as the calendar day cells.
+          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
+          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
+          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
           const anyAvail = slots.some(s => {
-            try { return isSlotAvailable(s) && getTorontoMinutesFromSlot(s) !== null; } catch(e) { return false; }
+            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
           });
+
           if (anyAvail) return d;
         }
         return null;
