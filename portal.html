@@ -3281,16 +3281,33 @@ function mobileConfirmBooking() {
         // IMPORTANT: Use the same slot-accessor the calendar uses, so Rebook reads availability
         // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
         const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
-        const slots = (Array.isArray(slotsRaw) ? slotsRaw : []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
+        const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
+        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
         if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
+        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
+        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
+        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+        if (targetLabel && typeof formatTimeLabel === "function") {
+          const tNorm = norm(targetLabel);
+          for (const s of slots) {
+            const lab = String(formatTimeLabel(s) || "").replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+            if (norm(lab) === tNorm) return s;
+          }
+        }
+
+        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
         for (const s of slots) {
           const m = getTorontoMinutesFromSlot(s);
           if (m === null || m === undefined) continue;
           if (m === targetMinutes) return s;
         }
+        return null;
+      }
+
         return null;
       }
 
@@ -3501,9 +3518,19 @@ function mobileConfirmBooking() {
             if (!buttons.length) return;
 
             const desiredId = String(exactSlot.start || exactSlot.label || "");
+
+            const targetLabel = (typeof minutesToAmPmLabel === "function" && typeof minutes === "number" && isFinite(minutes)) ? minutesToAmPmLabel(minutes) : null;
+            const normLabel = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+
             let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
 
-            // Fallback: strict minutes match (EXACT time only)
+                        // Fallback: exact label match against rendered button text
+            if (!btn && targetLabel) {
+              const tNorm = normLabel(targetLabel);
+              btn = buttons.find(b => normLabel(b.textContent) === tNorm) || null;
+            }
+
+// Fallback: strict minutes match (EXACT time only)
             if (!btn && typeof minutes === "number" && isFinite(minutes)) {
               for (const b of buttons) {
                 const raw = b.getAttribute("data-slot-raw");
@@ -3857,6 +3884,21 @@ function computeMonthRange(date) {
     // - Special edge-case: if an unavailable block runs from <=11:00 AM to the
     //   day's final allowed start time, hide that boundary start time.
     // =========================================================
+    function minutesToAmPmLabel(totalMinutes) {
+      try {
+        const m = Number(totalMinutes);
+        if (!isFinite(m)) return null;
+        const mins = ((m % 1440) + 1440) % 1440;
+        const h24 = Math.floor(mins / 60);
+        const mm = mins % 60;
+        const ampm = h24 >= 12 ? "PM" : "AM";
+        let h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+        const mm2 = String(mm).padStart(2, "0");
+        return `${h12}:${mm2} ${ampm}`;
+      } catch(e) { return null; }
+    }
+
     function parseLabelMinutes(label) {
       try {
         let s = String(label || "").toLowerCase();
