@@ -3826,27 +3826,10 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        if (slot == null) return null;
+        if (!slot) return null;
 
-        // Plain strings sometimes returned (e.g., "1:00 PM")
-        if (typeof slot === "string") return parseLabelMinutes(String(slot));
+        const raw = slot.start || slot.starts_at || slot.start_time || slot.startAt || slot.datetime || slot.time || slot.begins_at || slot.beginsAt || null;
 
-        // Try a range of common datetime/time fields
-        const raw =
-          slot.start ||
-          slot.starts_at ||
-          slot.startsAt ||
-          slot.start_time ||
-          slot.startTime ||
-          slot.start_at ||
-          slot.startAt ||
-          slot.time ||
-          slot.datetime ||
-          slot.begins_at ||
-          slot.beginsAt ||
-          null;
-
-        // If raw looks like a full datetime, convert to Toronto time
         if (raw) {
           const d = new Date(raw);
           if (!isNaN(d.getTime())) {
@@ -3883,36 +3866,12 @@ function computeMonthRange(date) {
         }
 
         // Fallback to label parsing
-        if (slot && slot.label) return parseLabelMinutes(String(slot.label));
+        if (slot.label) return parseLabelMinutes(String(slot.label));
 
         return null;
       } catch (e) {
         return null;
       }
-    }
-              return (hh * 60) + mm;
-            }
-
-            // Fallback if formatToParts is unavailable
-            const s = d.toLocaleTimeString('en-CA', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false,
-              timeZone: 'America/Toronto'
-            });
-            const m = String(s).match(/^(\d{1,2}):(\d{2})/);
-            if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
-          }
-        }
-
-        // Fallback to label parsing (some payloads may omit start)
-        if (slot && slot.label) return parseLabelMinutes(slot.label);
-        return null;
-      } catch (e) {
-        return null;
-      }
-
-    
     }
 
     function isSundayToronto(dateStr) {
