@@ -3276,8 +3276,12 @@ function mobileConfirmBooking() {
         } catch (e) {}
       }
 
+      
       function pickExactSlotOnDate(dateStr, targetMinutes) {
-        const slots = (availabilityByDate?.[dateStr] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
+        // IMPORTANT: Use the same slot-accessor the calendar uses, so Rebook reads availability
+        // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
+        const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
+        const slots = (Array.isArray(slotsRaw) ? slotsRaw : []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
         if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
@@ -3290,13 +3294,45 @@ function mobileConfirmBooking() {
         return null;
       }
 
+      function _rnrKeyToDateStr(key) {
+        try {
+          if (!key) return null;
+          const k = String(key).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
+
+          if (typeof normalizeDateKey === "function") {
+            const nk = normalizeDateKey(k);
+            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
+          }
+
+          const dt = new Date(k);
+          if (!isNaN(dt.getTime())) {
+            if (typeof toDateStr === "function") return toDateStr(dt);
+            return dt.toISOString().slice(0, 10);
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function _rnrLoadedDateList() {
+        const set = new Set();
+        try {
+          for (const k of Object.keys(availabilityByDate || {})) {
+            const ds = _rnrKeyToDateStr(k);
+            if (ds) set.add(ds);
+          }
+        } catch (e) {}
+        return Array.from(set).sort();
+      }
 
       function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
         const todayStr = toDateStr(new Date());
         const rangeFrom = __availabilityLoadedRange?.from || null;
         const rangeTo = __availabilityLoadedRange?.to || null;
 
-        const dates = Object.keys(availabilityByDate || {}).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+        // IMPORTANT: derive dates from the same normalized keys the calendar uses
+        const dates = _rnrLoadedDateList();
+
         for (const d of dates) {
           if (rangeFrom && d < rangeFrom) continue;
           if (d < todayStr) continue;
@@ -3309,6 +3345,34 @@ function mobileConfirmBooking() {
 
           const exactSlot = pickExactSlotOnDate(d, targetMinutes);
           if (exactSlot) return { dateStr: d, slot: exactSlot };
+        }
+        return null;
+      }
+
+
+      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
+      // and has ANY availability. Used as a fallback when the exact time isn’t available.
+      function findNextAvailableAnyTime(targetDowNum) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          const slots = getSlotsForDateKey(d) || [];
+          const anyAvail = slots.some(s => {
+            try { return isSlotAvailable(s) && getTorontoMinutesFromSlot(s) !== null; } catch(e) { return false; }
+          });
+          if (anyAvail) return d;
         }
         return null;
       }
@@ -3388,7 +3452,24 @@ function mobileConfirmBooking() {
         const found = findNextAvailableExactMatch(dowNum, minutes);
 
         if (!found) {
-          showToast("Time not available", "Time not available in the next 2 months, please choose manually.", true);
+          // Exact time isn’t available within the loaded 2-month window.
+          // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
+          const nextDayWithAny = findNextAvailableAnyTime(dowNum);
+          if (nextDayWithAny) {
+            showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
+            switchTab("rebook");
+            setCalendarToMonth(nextDayWithAny);
+            try {
+              document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch(e) {}
+            // Highlight the day and load its times, but do NOT auto-select a slot.
+            selectDate(nextDayWithAny, { userInitiated: true });
+            return;
+          }
+
+          // Nothing available at all (for that weekday) inside the loaded 2-month window.
+          // Do not jump beyond the loaded availability.
+          showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
           return;
         }
 
