@@ -3288,13 +3288,13 @@ function mobileConfirmBooking() {
         if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
         // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
-        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
         const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
 
+        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
         if (targetLabel && typeof formatTimeLabel === "function") {
           const tNorm = norm(targetLabel);
           for (const s of slots) {
-            const lab = String(formatTimeLabel(s) || "").replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+            const lab = String(formatTimeLabel(s) || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
             if (norm(lab) === tNorm) return s;
           }
         }
@@ -3308,8 +3308,241 @@ function mobileConfirmBooking() {
         return null;
       }
 
+      function _rnrKeyToDateStr(key) {
+        try {
+          if (!key) return null;
+          const k = String(key).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
+
+          if (typeof normalizeDateKey === "function") {
+            const nk = normalizeDateKey(k);
+            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
+          }
+
+          const dt = new Date(k);
+          if (!isNaN(dt.getTime())) {
+            if (typeof toDateStr === "function") return toDateStr(dt);
+            return dt.toISOString().slice(0, 10);
+          }
+        } catch (e) {}
         return null;
       }
+
+      function _rnrLoadedDateList() {
+        const set = new Set();
+        try {
+          for (const k of Object.keys(availabilityByDate || {})) {
+            const ds = _rnrKeyToDateStr(k);
+            if (ds) set.add(ds);
+          }
+        } catch (e) {}
+        return Array.from(set).sort();
+      }
+
+      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+
+        // IMPORTANT: derive dates from the same normalized keys the calendar uses
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
+          if (exactSlot) return { dateStr: d, slot: exactSlot };
+        }
+        return null;
+      }
+
+
+      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
+      // and has ANY availability. Used as a fallback when the exact time isn’t available.
+      function findNextAvailableAnyTime(targetDowNum) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          // IMPORTANT: Use the same availability criteria as the calendar day cells.
+          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
+          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
+          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
+          const anyAvail = slots.some(s => {
+            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
+          });
+
+          if (anyAvail) return d;
+        }
+        return null;
+      }
+
+
+      try {
+        // Use cached last booking (from locally loaded appointments or prior webhook call) when available
+        let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
+
+        if (!lb) {
+          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!data.success || !data.lastBooking) {
+            showToast("No previous booking found", "Please book manually.", true);
+            switchTab("rebook");
+            return;
+          }
+          lb = data.lastBooking;
+          lastBookingCache = lb;
+        }
+
+        // Apply treatment + duration
+        selectedServiceKey = lb.treatment_key || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        // Move to Rebook tab
+        switchTab("rebook");
+        updateBookingStepper();
+
+        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
+        const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
+
+        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
+          ? (Number(preloadedDuration) !== Number(desiredDuration))
+          : false;
+
+        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
+          ? (String(preloadedTreatment) !== String(desiredTreatment))
+          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
+
+        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
+          const startedAt = Date.now();
+          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
+            await new Promise(r => setTimeout(r, 120));
+          }
+        }
+
+        // Load availability only when needed:
+        // - not preloaded yet, or
+        // - treatment changed, or
+        // - duration changed
+        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Must have a loaded range and dates
+        if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
+          showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
+          return;
+        }
+
+        const { dowNum, minutes } = deriveDowAndMinutes(lb);
+
+        // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
+        const found = findNextAvailableExactMatch(dowNum, minutes);
+
+        if (!found) {
+          // Exact time isn’t available within the loaded 2-month window.
+          // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
+          const nextDayWithAny = findNextAvailableAnyTime(dowNum);
+          if (nextDayWithAny) {
+            showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
+            switchTab("rebook");
+            setCalendarToMonth(nextDayWithAny);
+            try {
+              document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch(e) {}
+            // Highlight the day and load its times, but do NOT auto-select a slot.
+            selectDate(nextDayWithAny, { userInitiated: true });
+            return;
+          }
+
+          // Nothing available at all (for that weekday) inside the loaded 2-month window.
+          // Do not jump beyond the loaded availability.
+          showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+          return;
+        }
+
+        // Jump the calendar to the month containing the found date, then select date + closest time.
+        setCalendarToMonth(found.dateStr);
+
+        // Ensure the calendar is in view (especially if clicked from dashboard)
+        try {
+          document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch(e) {}
+
+        // Select the date (user initiated so it loads times)
+        selectDate(found.dateStr, { userInitiated: true });
+
+        // Select the best slot in the UI after the slot grid has rendered.
+        setTimeout(() => {
+          try {
+            const exactSlot = found.slot;
+            if (!exactSlot) return;
+
+            const grid = document.getElementById("time-slots-grid");
+            if (!grid) return;
+
+            const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
+            if (!buttons.length) return;
+
+            const desiredId = String(exactSlot.start || exactSlot.label || "");
+            let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
+
+            // Fallback: strict minutes match (EXACT time only)
+            if (!btn && typeof minutes === "number" && isFinite(minutes)) {
+              for (const b of buttons) {
+                const raw = b.getAttribute("data-slot-raw");
+                if (!raw) continue;
+                let slotObj = null;
+                try { slotObj = JSON.parse(raw); } catch(e) {}
+                if (!slotObj) continue;
+                const m = getTorontoMinutesFromSlot(slotObj);
+                if (m === null || m === undefined) continue;
+                if (m === minutes) { btn = b; exactSlot.__uiSlotObj = slotObj; break; }
+              }
+            }
+
+            if (btn) {
+              const slotObj = (exactSlot && exactSlot.__uiSlotObj) ? exactSlot.__uiSlotObj : exactSlot;
+              selectTimeSlot(slotObj, btn);
+            }
+          } catch (e) {}
+        }, 120);
+
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
 
       function _rnrKeyToDateStr(key) {
         try {
