@@ -3978,6 +3978,11 @@ function computeMonthRange(date) {
       const btn = document.getElementById("confirm-booking-btn");
       btn.disabled = !enabled;
       btn.classList.toggle("btn-disabled", !enabled);
+      
+      // Also sync the mobile confirm button
+      try {
+        syncMobileConfirmButton();
+      } catch (e) {}
     }
 
     function updateSummary() {
@@ -6278,7 +6283,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="056c6b636a45776069647d646b6177606b60722b6664">[email&#160;protected]</a> / 226 337 9064.
         </div>
       </div>
 
@@ -7453,7 +7458,7 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
     </div>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // PWA SW registration (v4)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
@@ -7477,15 +7482,4 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
           });
 
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // Reload once to get the latest HTML/JS
-            window.location.reload();
-          });
-        } catch (e) {
-          console.warn('Service worker registration failed:', e);
-        }
-      });
-    }
-  </script>
-
-</body>
-</html>
+            // R
