@@ -3349,21 +3349,30 @@ function mobileConfirmBooking() {
         switchTab("rebook");
         updateBookingStepper();
 
-        // If the initial background preload is still running and we're using the same duration, wait briefly
+        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
         const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
+
         const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
           ? (Number(preloadedDuration) !== Number(desiredDuration))
           : false;
 
-        if (availabilityPreloadInFlight && !durationChangedFromPreload) {
+        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
+          ? (String(preloadedTreatment) !== String(desiredTreatment))
+          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
+
+        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
           const startedAt = Date.now();
           while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
             await new Promise(r => setTimeout(r, 120));
           }
         }
 
-        // Only load availability if the last booking duration differs from the preloaded/default duration
-        if (!availabilityPreloaded || durationChangedFromPreload) {
+        // Load availability only when needed:
+        // - not preloaded yet, or
+        // - treatment changed, or
+        // - duration changed
+        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
           await maybeLoadAvailabilityForCurrentMonth();
         }
 
@@ -3659,8 +3668,8 @@ function mobileConfirmBooking() {
       if (typeof slot.booked === 'boolean') return !slot.booked;
       if (slot.label && String(slot.label).toLowerCase().indexOf('(booked)') >= 0) return false;
 
-      // If it has a start time but no availability flag, assume available
-      if (slot.start) return true;
+      // If it has any recognizable time field but no explicit availability flag, assume available.
+      if (slot.start || slot.starts_at || slot.start_time || slot.startsAt || slot.startAt || slot.time || slot.datetime || slot.begins_at) return true;
 
       return false;
     }
@@ -3817,9 +3826,12 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        // Prefer slot.start when present (most reliable)
-        if (slot && slot.start) {
-          const d = new Date(slot.start);
+        if (!slot) return null;
+
+        const raw = slot.start || slot.starts_at || slot.start_time || slot.startAt || slot.datetime || slot.time || slot.begins_at || slot.beginsAt || null;
+
+        if (raw) {
+          const d = new Date(raw);
           if (!isNaN(d.getTime())) {
             const fmt = new Intl.DateTimeFormat('en-CA', {
               hour: '2-digit',
@@ -3838,7 +3850,6 @@ function computeMonthRange(date) {
               return (hh * 60) + mm;
             }
 
-            // Fallback if formatToParts is unavailable
             const s = d.toLocaleTimeString('en-CA', {
               hour: '2-digit',
               minute: '2-digit',
@@ -3848,10 +3859,15 @@ function computeMonthRange(date) {
             const m = String(s).match(/^(\d{1,2}):(\d{2})/);
             if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
           }
+
+          // If it's not a parseable Date, attempt to parse as a time label
+          const m2 = parseLabelMinutes(String(raw));
+          if (m2 != null) return m2;
         }
 
-        // Fallback to label parsing (some payloads may omit start)
-        if (slot && slot.label) return parseLabelMinutes(slot.label);
+        // Fallback to label parsing
+        if (slot.label) return parseLabelMinutes(String(slot.label));
+
         return null;
       } catch (e) {
         return null;
@@ -5420,7 +5436,8 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const { from, to } = computeTwoMonthRange(calendarCurrent);
+      const baseMonthForRange = availabilityAnchorMonth || calendarCurrent;
+      const { from, to } = computeTwoMonthRange(baseMonthForRange);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -5852,6 +5869,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         if (!(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code)) return;
         if (!selectedServiceKey || !selectedStandardDuration) return;
 
+        // If the navigated month is already covered by the currently-loaded range for the same context,
+        // do not re-fetch. (Example: Jan+Feb preloaded; browsing Jan <-> Feb must NOT reload.)
         const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
         const contextKey = [
           Number(selectedStandardDuration),
@@ -5860,14 +5879,17 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           portalProfile.address, portalProfile.city, portalProfile.postal_code
         ].join("|");
 
-        const monthRange = computeTwoMonthRange(calendarCurrent);
+        const monthStart = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1));
+        const monthEnd   = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 0));
 
         if (__availabilityLoadedContextKey === contextKey &&
             __availabilityLoadedRange &&
-            __availabilityLoadedRange.from <= monthRange.from &&
-            __availabilityLoadedRange.to >= monthRange.to) {
+            __availabilityLoadedRange.from <= monthStart &&
+            __availabilityLoadedRange.to   >= monthEnd) {
           return;
         }
+
+        // Outside the loaded window: advance the 2-month window anchor to the navigated month
 
         availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
         __availabilityLoadedContextKey = null;
