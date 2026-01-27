@@ -1,4 +1,4 @@
-<!-- Portal Version: v1.3 | Profile edit wired to n8n /profile-update webhook -->
+<!-- Portal Version: v1.5 | Include cliniko_patient_id + auth0_sub in profile-update payload -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
@@ -1477,7 +1477,8 @@ function mobileConfirmBooking() {
     const CLAIM_POSTAL       = "https://relaxandrenew.ca/postal_code";
     const CLAIM_PHONE        = "https://relaxandrenew.ca/phone";
 
-    // Google Review Prompt
+        const CLAIM_CLINIKO_PATIENT_ID = "https://relaxandrenew.ca/cliniko_patient_id";
+// Google Review Prompt
     const GOOGLE_REVIEW_URL = 'https://g.page/r/CVMjbVYTDMv3EAE/review';
     const LS_REVIEW_DISABLED = 'rnr_review_prompt_disabled';
     const LS_REVIEW_PROMPTED = 'rnr_review_prompted_keys';
@@ -4595,6 +4596,7 @@ if (selectedSlot && driveTime > 0) {
         event: "profile_update",
         ts: new Date().toISOString(),
         auth0_sub: portalProfile?.auth0_sub || before?.auth0_sub || "",
+                cliniko_patient_id: portalProfile?.cliniko_patient_id || before?.cliniko_patient_id || "",
         email_before: (before?.email || "").trim().toLowerCase(),
         email: (portalProfile?.email || "").trim().toLowerCase(),
         changes,
@@ -4605,7 +4607,8 @@ if (selectedSlot && driveTime > 0) {
           phone: portalProfile?.phone || "",
           address: portalProfile?.address || "",
           city: portalProfile?.city || "",
-          postal_code: portalProfile?.postal_code || ""
+          postal_code: portalProfile?.postal_code || "",
+          cliniko_patient_id: portalProfile?.cliniko_patient_id || ""
         }
       };
 
@@ -4625,7 +4628,9 @@ if (selectedSlot && driveTime > 0) {
           phone:     p.phone || p.phone_number || "",
           address:   p.address || "",
           city:      p.city || "",
-          postal_code: p.postal_code || p.postal || ""
+          postal_code: p.postal_code || p.postal || "",
+          auth0_sub: p.auth0_sub || p.sub || p.user_id || "",
+          cliniko_patient_id: p.cliniko_patient_id || ""
         };
       } catch (e) {
         return null;
@@ -4702,6 +4707,7 @@ if (selectedSlot && driveTime > 0) {
 
       return {
         auth0_sub: payload.sub || payload.user_id || "",
+                cliniko_patient_id: String((claimObj && (claimObj.cliniko_patient_id || claimObj.clinikoPatientId || claimObj.cliniko_id)) || payload[CLAIM_CLINIKO_PATIENT_ID] || payload.cliniko_patient_id || payload.clinikoPatientId || "").trim(),
         firstName,
         lastName,
         email,
@@ -4768,7 +4774,25 @@ if (selectedSlot && driveTime > 0) {
         const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || u[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
         const phone   = (claimObj && claimObj.phone) || u[CLAIM_PHONE] || u.phone_number || "";
 
-        const p2 = { auth0_sub: u.sub || u.user_id || (currentProfile && currentProfile.auth0_sub) || "", firstName, lastName, email: u.email || "", phone, address, city, postal_code: postal };
+        const clinikoId =
+          (claimObj && (claimObj.cliniko_patient_id || claimObj.clinikoPatientId || claimObj.cliniko_id)) ||
+          u[CLAIM_CLINIKO_PATIENT_ID] ||
+          u.cliniko_patient_id ||
+          u.clinikoPatientId ||
+          (currentProfile && currentProfile.cliniko_patient_id) ||
+          "";
+
+        const p2 = {
+          auth0_sub: u.sub || u.user_id || (currentProfile && currentProfile.auth0_sub) || "",
+          cliniko_patient_id: String(clinikoId || "").trim(),
+          firstName,
+          lastName,
+          email: u.email || "",
+          phone,
+          address,
+          city,
+          postal_code: postal
+        };
         return { ...(currentProfile || {}), ...p2 };
       } catch (e) {
         return currentProfile;
