@@ -3495,13 +3495,60 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
 
               const { dowNum, minutes } = deriveDowAndMinutes(lb);
 
-              // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
-              const found = findNextAvailableExactMatch(dowNum, minutes);
+              // UI-truth scan: within the already-loaded 2-month window, iterate matching weekdays
+              // and attempt to click the EXACT time button from the rendered calendar UI.
+              // This avoids false negatives caused by slot payload shape/timezone/label mismatches.
+              const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(minutes) : null;
 
-              if (!found) {
-                // Exact time isn’t available within the loaded 2-month window.
-                // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
+              let didAutoPickExact = false;
+
+              try {
+                const todayStr = toDateStr(new Date());
+                const rangeFrom = __availabilityLoadedRange?.from || null;
+                const rangeTo = __availabilityLoadedRange?.to || null;
+
+                const dates = (typeof _rnrLoadedDateList === "function")
+                  ? _rnrLoadedDateList()
+                  : Object.keys(availabilityByDate || {}).sort();
+
+                let tries = 0;
+
+                for (const d of dates) {
+                  if (rangeFrom && d < rangeFrom) continue;
+                  if (d < todayStr) continue;
+                  if (rangeTo && d > rangeTo) break;
+
+                  if (Number.isInteger(dowNum)) {
+                    const dt = new Date(d + "T12:00:00");
+                    if (dt.getDay() !== dowNum) continue;
+                  }
+
+                  // Safety cap: at most ~16 candidate weekdays in a 2-month window
+                  tries++;
+                  if (tries > 16) break;
+
+                  // Jump to month + select date (programmatic but treated as user initiated so it renders times)
+                  setCalendarToMonth(d);
+                  try {
+                    document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  } catch (e) {}
+
+                  selectDate(d, { userInitiated: true });
+
+                  // If the calendar renders the exact time as clickable, click it.
+                  const picked = await RNR__selectExactTimeFromCalendarUI(d, minutes, targetLabel);
+                  if (picked) {
+                    didAutoPickExact = true;
+                    break;
+                  }
+                }
+              } catch (e) {}
+
+              if (!didAutoPickExact) {
+                // Exact time wasn’t found/clickable within the loaded 2-month window.
+                // Fall back: jump to the next matching weekday that has ANY availability and let them pick a time manually.
                 const nextDayWithAny = findNextAvailableAnyTime(dowNum);
+
                 if (nextDayWithAny) {
                   showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
                   switchTab("rebook");
@@ -3509,40 +3556,16 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
                   try {
                     document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   } catch(e) {}
-                  // Highlight the day and load its times, but do NOT auto-select a slot.
                   selectDate(nextDayWithAny, { userInitiated: true });
                   return;
                 }
 
-                // Nothing available at all (for that weekday) inside the loaded 2-month window.
-                // Do not jump beyond the loaded availability.
                 showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
                 return;
               }
 
-              // Jump the calendar to the month containing the found date, then select date + closest time.
-              setCalendarToMonth(found.dateStr);
-
-              // Ensure the calendar is in view (especially if clicked from dashboard)
-              try {
-                document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              } catch(e) {}
-
-              // Select the date (user initiated so it loads times)
-              selectDate(found.dateStr, { userInitiated: true });
-
-              // Select the EXACT time from the calendar UI (source of truth)
-              // This avoids payload-shape mismatches: if the slot is visible/clickable on the calendar,
-              // we select by reading/clicking that rendered button.
-              try {
-                const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(minutes) : null;
-                const didPick = await RNR__selectExactTimeFromCalendarUI(found.dateStr, minutes, targetLabel);
-                if (!didPick) {
-                  // We already jumped to the correct day. If we cannot auto-select the time despite it being expected,
-                  // do NOT change the day again. Just warn and let them click manually.
-                  showToast("Time not auto-selected", "Please choose the exact time manually on the selected day.", true);
-                }
-              } catch (e) {}
+              // Exact time selected successfully via UI; stop here.
+              return;
 
             } catch (e) {
               showToast("Unable to rebook", "Please book manually.", true);
