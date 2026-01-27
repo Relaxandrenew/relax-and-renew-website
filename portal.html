@@ -1989,23 +1989,6 @@ function mobileConfirmBooking() {
             
 
             <!-- Post-session feedback prompt (Dashboard) -->
-            
-
-            <!-- Book Same as Last Time -->
-            <div id="book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="repeat" class="w-6 h-6"></i>
-                  </div>
-                  <div class="flex-1">
-                    <div class="font-serif text-lg text-brand-light flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                    <div class="muted text-sm" id="last-booking-summary">Loading...</div>
-                  </div>
-                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
-                </div>
-              </button>
-            </div>
 
             <!-- Next Appointment Countdown -->
             <div id="next-appt-countdown-card" class="hidden glass-panel p-6 mb-6">
@@ -2123,28 +2106,12 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Welcome back<span id="rebook-welcome-name"></span></h2>
-                  <p class="muted mt-2 font-light">Ready to book your next session? Your profile is already saved.</p>
+                  <h2 class="text-3xl font-serif text-brand-light">Quick Rebook</h2>
+                  <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
                 </div>
               </div>
-
-              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
-                <div class="flex items-start gap-3">
-                  <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
-                  <div>
-                    <div class="font-bold text-brand-light">Profile data is missing</div>
-                    <div class="muted mt-1 text-sm">
-                      We could not find a saved address (and/or city/postal code) for your portal account. Because this is a mobile service, we cannot load availability without it.
-                      Please contact us to update your profile.
-                    </div>
-                    <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#264f4840496654434a475e4748425443484351084547">
-                        <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            </div>
+</div>
             </div>
             <!-- Booking Progress Stepper -->
             <div id="booking-stepper" class="glass-panel p-6 mb-8">
@@ -2166,15 +2133,7 @@ function mobileConfirmBooking() {
               </div>
             </div>
 
-
-            <!-- Book Same as Last Time (Rebook) -->
-            <div id="rebook-book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
-                  </div>
-                  <div class="flex-1">
+<div class="flex-1">
                     <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
                     <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
                   </div>
@@ -2214,6 +2173,23 @@ function mobileConfirmBooking() {
                 </div>
 
                 <hr class="divider my-6">
+
+
+                <!-- Book Same as Last Time (inside calendar) -->
+                <div id="rebook-book-same-container" class="hidden mt-5">
+                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                    <div class="flex items-center gap-4">
+                      <div class="w-11 h-11 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                        <i data-lucide="repeat" class="w-5 h-5"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="font-serif text-base sm:text-lg text-brand-light flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
+                        <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
+                    </div>
+                  </button>
+                </div>
 
                 <!-- NEW PROGRESS BAR LOADER -->
                 <div id="availability-loading" class="hidden mb-6">
@@ -2592,10 +2568,9 @@ function mobileConfirmBooking() {
     // Disable/enable Quick Rebook buttons until availability is fully preloaded
     function setQuickRebookEnabled(enabled) {
       const btnSelectors = [
-        '#book-same-container button',
         '#rebook-book-same-container button'
       ];
-      const summaryIds = ['last-booking-summary', 'rebook-last-booking-summary'];
+      const summaryIds = ['rebook-last-booking-summary'];
 
       btnSelectors.forEach((sel) => {
         const btn = document.querySelector(sel);
@@ -3089,20 +3064,18 @@ function mobileConfirmBooking() {
     // Book Same as Last Time (Feature #3/#4)
     // =============================
     async function loadLastBookingSummary() {
-      const dashWrap = document.getElementById("book-same-container");
-      const dashSummary = document.getElementById("last-booking-summary");
-
       const rebookWrap = document.getElementById("rebook-book-same-container");
       const rebookSummary = document.getElementById("rebook-last-booking-summary");
+      if (!rebookWrap || !rebookSummary) return;
 
-      if ((!dashWrap || !dashSummary) && (!rebookWrap || !rebookSummary)) return;
-
-      function hideBoth() {
-        try { dashWrap && dashWrap.classList.add("hidden"); } catch(e) {}
-        try { rebookWrap && rebookWrap.classList.add("hidden"); } catch(e) {}
+      function hide() {
+        try { rebookWrap.classList.add("hidden"); } catch(e) {}
       }
 
-      // Prefer locally loaded completed appointments (faster + avoids dependency on last-booking webhook)
+      // Default hidden until we confirm we have a last booking
+      hide();
+
+      // Prefer locally loaded completed appointments (fast + avoids dependency on last-booking webhook)
       try {
         const pool = Array.isArray(completedAppointments) ? completedAppointments.slice() : [];
         if (pool.length) {
@@ -3114,7 +3087,6 @@ function mobileConfirmBooking() {
             const dt = new Date(last.starts_at);
             const dowNames = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
             const dow = dowNames[dt.getDay()];
-            const timeLabel = dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
 
             // Best-effort mapping from appointment type label -> treatment-select key
             const name = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "").toString().toLowerCase();
@@ -3134,7 +3106,6 @@ function mobileConfirmBooking() {
 
             lastBookingCache = {
               day_of_week: dow,
-              start_time_local: timeLabel,
               starts_at: last.starts_at,
               duration: last.duration || last.duration_minutes || last.durationMinutes || 60,
               treatment_key: tKey || undefined
@@ -3144,69 +3115,62 @@ function mobileConfirmBooking() {
             const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
             const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
             const label = `${treatmentLabel} • ${dur} min • ${dayLabel}`;
-            try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
-            try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
-            if (dashSummary) dashSummary.textContent = label;
-            if (rebookSummary) rebookSummary.textContent = label;
+
+            rebookWrap.classList.remove("hidden");
+            rebookSummary.textContent = label;
             return;
           }
         }
       } catch (e) {}
 
+      // Fallback: webhook lookup (if available)
       if (!portalProfile?.email) {
-        hideBoth();
+        hide();
         return;
       }
 
       try {
-        if (dashSummary) dashSummary.textContent = "Loading...";
-        if (rebookSummary) rebookSummary.textContent = "Loading...";
+        rebookSummary.textContent = "Loading...";
 
         const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
         });
-        const data = await res.json().catch(() => ({}));
 
+        const data = await res.json().catch(() => ({}));
         if (!data.success || !data.lastBooking) {
-          hideBoth();
+          hide();
           return;
         }
 
         const lb = data.lastBooking;
         lastBookingCache = lb;
+
         const tLabel = (lb.treatment_label || lb.treatment || lb.treatment_key || "Massage").toString().trim();
         const dur = Number(lb.duration || lb.durationMinutes || 60) || 60;
 
         let dayPart = "";
-        let timePart = "";
-        try {
-          if (lb.day_of_week) dayPart = String(lb.day_of_week).trim();
-          if (lb.start_time_local) timePart = String(lb.start_time_local).trim();
-        } catch (e) {}
+        try { if (lb.day_of_week) dayPart = String(lb.day_of_week).trim(); } catch (e) {}
 
-        if ((!dayPart || !timePart) && lb.starts_at) {
+        if (!dayPart && lb.starts_at) {
           try {
             const dt = new Date(lb.starts_at);
-            if (!dayPart) dayPart = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dt.getDay()];
-            if (!timePart) timePart = dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
+            dayPart = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dt.getDay()];
           } catch (e) {}
         }
 
         if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
         const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}`;
 
-        try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
-        try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
-
-        if (dashSummary) dashSummary.textContent = label;
-        if (rebookSummary) rebookSummary.textContent = label;
+        rebookWrap.classList.remove("hidden");
+        rebookSummary.textContent = label;
 
       } catch (e) {
-        hideBoth();
+        hide();
       }
     }
+
 
     async function bookSameAsLastTime(ev) {
       try { if (ev && typeof ev.preventDefault === "function") ev.preventDefault(); } catch(e) {}
@@ -3220,78 +3184,77 @@ function mobileConfirmBooking() {
 
       if (!portalProfile?.email) return;
 
-      // Ensure we have last booking cached
-      try {
-        if (!lastBookingCache) await loadLastBookingSummary();
-      } catch (e) {}
-
-      if (!lastBookingCache) {
-        showToast("Rebook unavailable", "We couldn’t find your last session yet. Please try again in a moment.", true, 5200);
+      // Guard: do not trigger any reload here — Quick Rebook must use the already-preloaded 2-month window.
+      const hasLoadedAvailability = availabilityByDate && Object.keys(availabilityByDate).length > 0;
+      if (!availabilityPreloaded || availabilityPreloadInFlight || !hasLoadedAvailability) {
+        showToast("One moment", "Loading availability…", false, 2200);
         return;
       }
 
-      // Derive treatment + duration from last booking
-      let preloadTreatment = lastBookingCache.treatment_key || null;
-      let preloadDuration = Number(lastBookingCache.duration || lastBookingCache.durationMinutes || 60) || 60;
+      const lb = lastBookingCache;
+      if (!lb) {
+        showToast("Not available yet", "We couldn’t find a previous booking to rebook.", true, 2600);
+        return;
+      }
 
+      // Derive target treatment + duration from last booking
+      let targetServiceKey = (lb.treatment_key || lb.treatmentKey || "").toString().trim();
+      let targetDuration = Number(lb.duration || lb.durationMinutes || lb.standardDurationMinutes || 60) || 60;
+
+      // If the webhook returned only a label, best-effort map it.
+      if (!targetServiceKey) {
+        const name = (lb.treatment_label || lb.treatment || "").toString().toLowerCase();
+        const map = [
+          ["relaxation", "relaxation"], ["swedish", "relaxation"],
+          ["deep", "deep-tissue"], ["tissue", "deep-tissue"],
+          ["sports", "sports"],
+          ["senior", "senior"],
+          ["hot stone", "hot-stone"], ["stone", "hot-stone"],
+          ["cupping", "cupping"],
+          ["prenatal", "prenatal"],
+          ["pediatric", "pediatric"], ["paediatric", "pediatric"],
+          ["infant", "infant"]
+        ];
+        for (const [needle, key] of map) { if (name.includes(needle)) { targetServiceKey = key; break; } }
+      }
+
+      // Weekday from last booking
+      const dowMap = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+      let targetDow = null;
       try {
-        if (!preloadTreatment) {
-          const name = String(lastBookingCache.treatment_label || lastBookingCache.treatment || lastBookingCache.treatment_type || "").toLowerCase();
-          if (name.includes("deep")) preloadTreatment = "deep-tissue";
-          else if (name.includes("sport")) preloadTreatment = "sports";
-          else if (name.includes("senior")) preloadTreatment = "senior";
-          else if (name.includes("hot stone") || name.includes("stone")) preloadTreatment = "hot-stone";
-          else if (name.includes("cupping")) preloadTreatment = "cupping";
-          else if (name.includes("prenatal")) preloadTreatment = "prenatal";
-          else if (name.includes("pediatric") || name.includes("paediatric")) preloadTreatment = "pediatric";
-          else if (name.includes("infant")) preloadTreatment = "infant";
-          else if (name.includes("relax") || name.includes("swedish")) preloadTreatment = "relaxation";
+        if (lb.day_of_week) {
+          const d = String(lb.day_of_week).trim().toLowerCase();
+          if (d in dowMap) targetDow = dowMap[d];
         }
-      } catch (e) {}
-
-      const rule = preloadTreatment ? TREATMENT_RULES[preloadTreatment] : null;
-      if (!rule) {
-        showToast("Rebook unavailable", "We couldn’t match your last treatment to a bookable service.", true, 5200);
-        return;
+      } catch(e) {}
+      if (targetDow === null && lb.starts_at) {
+        try {
+          const dt = new Date(lb.starts_at);
+          if (!isNaN(dt.getTime())) targetDow = dt.getDay();
+        } catch(e) {}
       }
 
-      if (!rule.durations.includes(preloadDuration)) {
-        preloadDuration = rule.durations[0] || 60;
-      }
-
-      // Store last treatment so the preload logic and future sessions stay consistent
+      // Switch to Rebook and focus the calendar panel
+      try { switchTab("rebook"); } catch(e) {}
       try {
-        localStorage.setItem("rnr_portal_last_treatment", JSON.stringify({
-          treatment_type: lastBookingCache.treatment_label || lastBookingCache.treatment || rule.label,
-          duration: preloadDuration
-        }));
-      } catch (e) {}
+        const calPanel = document.querySelector("#tab-rebook .glass-panel");
+        calPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch(e) {}
 
-      // Load availability for that treatment/duration
-      setQuickRebookEnabled(false);
-      try { await preloadAvailabilityInBackground(true); } catch (e) {}
+      // Apply selection in UI + state (no fetch)
+      try {
+        if (treatmentSelect && targetServiceKey) {
+          treatmentSelect.value = targetServiceKey;
+          selectedServiceKey = targetServiceKey;
+          rebuildDurationOptions();
+        }
+        if (durationSelect && targetDuration) {
+          durationSelect.value = String(targetDuration);
+          selectedStandardDuration = targetDuration;
+        }
+      } catch(e) {}
 
-      if (!availabilityPreloaded) {
-        showToast("Loading availability", "We’re still loading availability for your last service. Please try again in a moment.", true, 5200);
-        return;
-      }
-
-      // Derive weekday (Toronto)
-      function deriveDowNum(lb) {
-        try {
-          const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
-          const dt = dtRaw ? new Date(String(dtRaw)) : null;
-          if (dt && !isNaN(dt.getTime())) return dt.getDay();
-        } catch (e) {}
-        try {
-          const dow = (lb.day_of_week || "").toString().toLowerCase();
-          const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-          const n = map[dow];
-          return Number.isInteger(n) ? n : null;
-        } catch (e) {}
-        return null;
-      }
-
+      // Find next available matching weekday within the already-loaded range
       function _rnrKeyToDateStr(key) {
         try {
           if (!key) return null;
@@ -3301,88 +3264,55 @@ function mobileConfirmBooking() {
             const nk = normalizeDateKey(k);
             if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
           }
-          const dt = new Date(k);
-          if (!isNaN(dt.getTime())) {
-            if (typeof toDateStr === "function") return toDateStr(dt);
-            return dt.toISOString().slice(0, 10);
-          }
         } catch (e) {}
         return null;
       }
 
-      function _rnrLoadedDateList() {
-        const set = new Set();
-        try {
-          for (const k of Object.keys(availabilityByDate || {})) {
-            const ds = _rnrKeyToDateStr(k);
-            if (ds) set.add(ds);
-          }
-        } catch (e) {}
-        return Array.from(set).sort();
+      const todayStr = toDateStr(new Date());
+      const rangeFrom = __availabilityLoadedRange?.from || null;
+      const rangeTo = __availabilityLoadedRange?.to || null;
+
+      const dates = Object.keys(availabilityByDate || {})
+        .map(_rnrKeyToDateStr)
+        .filter(Boolean)
+        .sort();
+
+      let chosenDate = null;
+      for (const d of dates) {
+        if (rangeFrom && d < rangeFrom) continue;
+        if (d < todayStr) continue;
+        if (rangeTo && d > rangeTo) break;
+
+        if (Number.isInteger(targetDow)) {
+          const dt = new Date(d + "T12:00:00");
+          if (dt.getDay() !== targetDow) continue;
+        }
+
+        const slotsRaw = availabilityByDate[d] || [];
+        const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
+        const anyAvail = slots.some(s => {
+          try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
+        });
+
+        if (anyAvail) { chosenDate = d; break; }
       }
 
-      function findNextAvailableAnyTime(targetDowNum) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(d) : (availabilityByDate?.[d] || []);
-          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
-          const anyAvail = slots.some(s => {
-            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
-          });
-
-          if (anyAvail) return d;
-        }
-        return null;
-      }
-
-      const targetDow = deriveDowNum(lastBookingCache);
-      const nextDate = findNextAvailableAnyTime(targetDow);
-
-      if (!nextDate) {
-        // Fall back to the first available day in the loaded window
-        const anyDay = findNextAvailableAnyTime(null);
-        if (!anyDay) {
-          showToast("No availability", "We couldn’t find an open day in the current availability window.", true, 6000);
-          return;
-        }
-        switchTab("rebook");
-        try {
-          const dt = new Date(anyDay + "T12:00:00");
-          calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
-          renderCalendar();
-        } catch (e) {}
-        selectDate(anyDay, { userInitiated: true });
-        showToast("Select a time", "We’ve taken you to the next available day. Pick a time that works for you.");
+      if (!chosenDate) {
+        showToast("No availability", "We couldn’t find availability for that weekday in the loaded window. Please pick a date manually.", true, 3200);
         return;
       }
 
-      // Go to the day (NOT day+time)
-      switchTab("rebook");
+      // Jump calendar to that month and select the day (DO NOT select a time)
       try {
-        const dt = new Date(nextDate + "T12:00:00");
+        const dt = new Date(chosenDate + "T12:00:00");
         calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
         renderCalendar();
-      } catch (e) {}
+      } catch(e) {}
 
-      selectDate(nextDate, { userInitiated: true });
-      showToast("Welcome back", "We’ve pulled up the next available day for your last service. Choose a time when you’re ready.");
+      // This will open the time list and let the client choose the time.
+      selectDate(chosenDate, { userInitiated: true });
     }
 
-
-    // (Removed orphaned duplicate Quick Rebook block that broke parsing)
 
 
     // =============================
@@ -4133,17 +4063,9 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
       document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
 
-      // Rebook tab: welcome banner name (UI-only)
-      try {
-        const el = document.getElementById("rebook-welcome-name");
-        if (el) el.textContent = portalProfile?.firstName ? `, ${portalProfile.firstName}` : "";
-      } catch (e) {}
-
       const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
-      const pillAddrEl = document.getElementById("pill-address");
-      if (pillAddrEl) pillAddrEl.textContent = `Address: ${addrLine}`;
-      const pillPhoneEl = document.getElementById("pill-phone");
-      if (pillPhoneEl) pillPhoneEl.textContent = `Phone: ${portalProfile?.phone || "—"}`;
+      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
+      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
       // Dashboard location
       const dashLoc = document.getElementById("dash-location");
