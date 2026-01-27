@@ -3212,125 +3212,37 @@ function mobileConfirmBooking() {
       }
     }
 
-    // =====================================================
-    // Quick Rebook: select EXACT time from the calendar UI
-    // - The calendar is the source of truth. If a time is visible/clickable there,
-    //   Quick Rebook must be able to select it.
-    // - Bounded wait so we never loop forever.
-    // =====================================================
+    
+    // Auto-select the first available time slot from the rendered calendar UI (Rebook fallback).
+    // This is intentionally UI-driven: if the calendar shows a clickable slot, this will pick it.
+    async function RNR__selectFirstAvailableTimeFromCalendarUI(timeoutMs = 2000) {
+      const grid = document.getElementById("time-slots-grid");
+      if (!grid) return false;
 
-    function RNR__normalizeTimeText(s) {
-      if (!s) return "";
-      return String(s)
-        .replace(/\u00A0/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toUpperCase();
+      const start = Date.now();
+      while ((Date.now() - start) < timeoutMs) {
+        const buttons = Array.from(grid.querySelectorAll("button"));
+        const first = buttons.find(b => {
+          if (!b || b.disabled) return false;
+          const cls = b.classList || { contains: () => false };
+          if (cls.contains("cursor-not-allowed")) return false;
+          // Some disabled-looking buttons may not use disabled=true; guard those too.
+          if (cls.contains("opacity-50") && cls.contains("text-white/30")) return false;
+          return typeof b.click === "function";
+        });
+
+        if (first) {
+          try { first.click(); } catch (e) {}
+          return true;
+        }
+
+        await new Promise(r => setTimeout(r, 50));
+      }
+
+      return false;
     }
 
-    function RNR__minutesFromLabel(label) {
-      const raw = RNR__normalizeTimeText(label);
-      if (!raw) return null;
-      // 24h HH:MM
-      let m = raw.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
-      if (m) return (parseInt(m[1], 10) * 60) + parseInt(m[2], 10);
-
-      // 12h H(:MM)? AM/PM
-      m = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
-      if (m) {
-        let hh = parseInt(m[1], 10);
-        const mm = parseInt(m[2] || "0", 10);
-        const ap = m[3];
-        if (ap === "PM" && hh !== 12) hh += 12;
-        if (ap === "AM" && hh === 12) hh = 0;
-        return (hh * 60) + mm;
-      }
-      return null;
-    }
-
-    async function RNR__waitForSlotButtons(gridEl, timeoutMs, expectedDateStr) {
-  const start = Date.now();
-  const limit = Number.isFinite(timeoutMs) ? timeoutMs : 5000;
-
-  // Normalize expected date if helpers exist
-  let expected = expectedDateStr;
-  try {
-    if (expected && typeof normalizeDateKey === "function") expected = normalizeDateKey(expected) || expected;
-  } catch (e) {}
-
-  while ((Date.now() - start) < limit) {
-    // Ensure we are looking at the correct selected date (avoids grabbing stale buttons)
-    try {
-      if (expected && typeof selectedDateStr === "string" && selectedDateStr && selectedDateStr !== expected) {
-        await new Promise(r => setTimeout(r, 60));
-        continue;
-      }
-    } catch (e) {}
-
-    const btns = gridEl ? Array.from(gridEl.querySelectorAll('button.time-slot-btn')) : [];
-    if (btns.length) return btns;
-
-    await new Promise(r => setTimeout(r, 60));
-  }
-  return [];
-}
-
-// Returns true if it successfully clicked the exact time.
-async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, targetLabel) {
-  const grid = document.getElementById("time-slots-grid");
-  if (!grid) return false;
-
-  const btns = await RNR__waitForSlotButtons(grid, 5500, dateStr);
-  if (!btns.length) return false;
-
-  const tMin = (typeof targetMinutes === 'number' && isFinite(targetMinutes)) ? targetMinutes : null;
-  const tLab = RNR__normalizeTimeText(targetLabel);
-
-  // 1) Prefer minutes match from *visible label* (works for desktop and mobile compact labels)
-  if (tMin !== null) {
-    for (const b of btns) {
-      if (!b || b.disabled) continue;
-      const bMin = RNR__minutesFromLabel(b.textContent);
-      if (bMin !== null && bMin === tMin) {
-        b.click();
-        return true;
-      }
-    }
-  }
-
-  // 2) Fallback: minutes match from slot payload stored on the button
-  if (tMin !== null && typeof getTorontoMinutesFromSlot === "function") {
-    for (const b of btns) {
-      if (!b || b.disabled) continue;
-      const raw = b.getAttribute("data-slot-raw");
-      if (!raw) continue;
-      let slotObj = null;
-      try { slotObj = JSON.parse(raw); } catch (e) {}
-      if (!slotObj) continue;
-      const m = getTorontoMinutesFromSlot(slotObj);
-      if (m !== null && m !== undefined && m === tMin) {
-        b.click();
-        return true;
-      }
-    }
-  }
-
-  // 3) Last fallback: normalized label match
-  if (tLab) {
-    for (const b of btns) {
-      if (!b || b.disabled) continue;
-      const bLab = RNR__normalizeTimeText(b.textContent);
-      if (bLab && (bLab === tLab || bLab.replace(/\s+/g,'') === tLab.replace(/\s+/g,''))) {
-        b.click();
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-    async function bookSameAsLastTime(ev) {
+async function bookSameAsLastTime(ev) {
       try { if (ev && typeof ev.preventDefault === "function") ev.preventDefault(); } catch(e) {}
       try { if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation(); } catch(e) {}
 
@@ -3341,43 +3253,15 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
       } catch(e) {}
 
       if (!portalProfile?.email) return;
-      // Helper: get weekday + minutes in America/Toronto from a Date (avoids UTC/local mismatches)
-      function _rnrTorontoDowMinutes(dateObj) {
-        try {
-          const fmt = new Intl.DateTimeFormat("en-CA", {
-            timeZone: "America/Toronto",
-            weekday: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-          });
-          const parts = fmt.formatToParts(dateObj);
-          const get = (t) => (parts.find(p => p.type === t)?.value || "").trim();
-          const wd = get("weekday").toLowerCase(); // e.g., "mon"
-          const hh = parseInt(get("hour"), 10);
-          const mm = parseInt(get("minute"), 10);
 
-          const wmap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
-          const dowNum = Object.prototype.hasOwnProperty.call(wmap, wd) ? wmap[wd] : null;
-          const minutes = (Number.isFinite(hh) && Number.isFinite(mm)) ? (hh * 60 + mm) : null;
-          return { dowNum, minutes };
-        } catch (e) {
-          return { dowNum: null, minutes: null };
-        }
-      }
-
-      // Helper: parse time minutes from various formats (ALWAYS interpreted in America/Toronto when a full datetime is provided)
+      // Helper: parse time minutes from various formats
       function minutesFromAny(v) {
         if (!v) return null;
         const raw = String(v).trim();
 
-        // If it's a full datetime, interpret its displayed time in America/Toronto (matches the calendar)
         const dt = new Date(raw);
-        if (!isNaN(dt.getTime())) {
-          return _rnrTorontoDowMinutes(dt).minutes;
-        }
+        if (!isNaN(dt.getTime())) return dt.getHours() * 60 + dt.getMinutes();
 
-        // "HH:MM" (assume 24h clock)
         let m = raw.match(/^(\d{1,2}):(\d{2})$/);
         if (m) {
           const hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
@@ -3385,7 +3269,6 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
           return hh * 60 + mm;
         }
 
-        // "h(:mm) AM/PM"
         m = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
         if (m) {
           let hh = parseInt(m[1], 10);
@@ -3395,28 +3278,17 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
           if (ap === "AM" && hh === 12) hh = 0;
           return hh * 60 + mm;
         }
-
         return null;
       }
 
       function deriveDowAndMinutes(lb) {
-        // Prefer parsing a full datetime if provided; interpret in America/Toronto (must match the calendar)
-        const dtRaw =
-          lb.start_time_local ||
-          lb.starts_at_local ||
-          lb.starts_at ||
-          lb.start_time ||
-          lb.start ||
-          lb.start_at ||
-          lb.starts_at_utc;
-
+        // Prefer parsing a full datetime if provided
+        const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
         const dt = dtRaw ? new Date(String(dtRaw)) : null;
         if (dt && !isNaN(dt.getTime())) {
-          const { dowNum, minutes } = _rnrTorontoDowMinutes(dt);
-          return { dowNum, minutes };
+          return { dowNum: dt.getDay(), minutes: dt.getHours() * 60 + dt.getMinutes() };
         }
 
-        // Fallbacks: weekday string + separate time string
         const dow = (lb.day_of_week || "").toString().toLowerCase();
         const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
         const dowNum = map[dow];
@@ -3424,154 +3296,6 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
         const minutes = minutesFromAny(lb.time || lb.start_time_local || lb.start_time || lb.starts_at || lb.start || lb.start_at);
         return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
       }
-
-      try {
-              // Use cached last booking (from locally loaded appointments or prior webhook call) when available
-              let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
-
-              if (!lb) {
-                const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!data.success || !data.lastBooking) {
-                  showToast("No previous booking found", "Please book manually.", true);
-                  switchTab("rebook");
-                  return;
-                }
-                lb = data.lastBooking;
-                lastBookingCache = lb;
-              }
-
-              // Apply treatment + duration
-              selectedServiceKey = lb.treatment_key || selectedServiceKey;
-              selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
-
-              const tSel = document.getElementById("treatment-select");
-              const dSel = document.getElementById("duration-select");
-
-              if (tSel) tSel.value = selectedServiceKey;
-              if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
-              if (dSel) dSel.value = String(selectedStandardDuration);
-
-              // Move to Rebook tab
-              switchTab("rebook");
-              updateBookingStepper();
-
-              // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
-              const desiredDuration = Number(selectedStandardDuration || 0) || null;
-              const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
-
-              const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
-                ? (Number(preloadedDuration) !== Number(desiredDuration))
-                : false;
-
-              const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
-                ? (String(preloadedTreatment) !== String(desiredTreatment))
-                : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
-
-              if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
-                const startedAt = Date.now();
-                while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
-                  await new Promise(r => setTimeout(r, 120));
-                }
-              }
-
-              // Load availability only when needed:
-              // - not preloaded yet, or
-              // - treatment changed, or
-              // - duration changed
-              if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
-                await maybeLoadAvailabilityForCurrentMonth();
-              }
-
-              // Must have a loaded range and dates
-              if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
-                showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
-                return;
-              }
-
-              const { dowNum, minutes } = deriveDowAndMinutes(lb);
-
-              // UI-truth scan: within the already-loaded 2-month window, iterate matching weekdays
-              // and attempt to click the EXACT time button from the rendered calendar UI.
-              // This avoids false negatives caused by slot payload shape/timezone/label mismatches.
-              const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(minutes) : null;
-
-              let didAutoPickExact = false;
-
-              try {
-                const todayStr = toDateStr(new Date());
-                const rangeFrom = __availabilityLoadedRange?.from || null;
-                const rangeTo = __availabilityLoadedRange?.to || null;
-
-                const dates = (typeof _rnrLoadedDateList === "function")
-                  ? _rnrLoadedDateList()
-                  : Object.keys(availabilityByDate || {}).sort();
-
-                let tries = 0;
-
-                for (const d of dates) {
-                  if (rangeFrom && d < rangeFrom) continue;
-                  if (d < todayStr) continue;
-                  if (rangeTo && d > rangeTo) break;
-
-                  if (Number.isInteger(dowNum)) {
-                    const dt = new Date(d + "T12:00:00");
-                    if (dt.getDay() !== dowNum) continue;
-                  }
-
-                  // Safety cap: at most ~16 candidate weekdays in a 2-month window
-                  tries++;
-                  if (tries > 16) break;
-
-                  // Jump to month + select date (programmatic but treated as user initiated so it renders times)
-                  setCalendarToMonth(d);
-                  try {
-                    document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  } catch (e) {}
-
-                  selectDate(d, { userInitiated: true });
-
-                  // If the calendar renders the exact time as clickable, click it.
-                  const picked = await RNR__selectExactTimeFromCalendarUI(d, minutes, targetLabel);
-                  if (picked) {
-                    didAutoPickExact = true;
-                    break;
-                  }
-                }
-              } catch (e) {}
-
-              if (!didAutoPickExact) {
-                // Exact time wasn’t found/clickable within the loaded 2-month window.
-                // Fall back: jump to the next matching weekday that has ANY availability and let them pick a time manually.
-                const nextDayWithAny = findNextAvailableAnyTime(dowNum);
-
-                if (nextDayWithAny) {
-                  showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
-                  switchTab("rebook");
-                  setCalendarToMonth(nextDayWithAny);
-                  try {
-                    document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  } catch(e) {}
-                  selectDate(nextDayWithAny, { userInitiated: true });
-                  return;
-                }
-
-                showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
-                return;
-              }
-
-              // Exact time selected successfully via UI; stop here.
-              return;
-
-            } catch (e) {
-              showToast("Unable to rebook", "Please book manually.", true);
-              switchTab("rebook");
-            }
-    }
 
       function setCalendarToMonth(dateStr) {
         try {
@@ -3588,71 +3312,31 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
         // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
         const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
         const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
-        const slots = slotsAll.filter(s => {
-          try { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); } catch(e) { return false; }
-        });
+        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
         if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
-        // Helper: parse minutes-from-midnight from common UI labels ("1:00 PM", "1 PM", "13:00", "1PM")
-        const _rnrParseMinutes = (txt) => {
-          try {
-            const s = String(txt || "").trim().toUpperCase().replace(/\s+/g, " ");
-            if (!s) return null;
+        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
+        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
 
-            // 24h "HH:MM"
-            let m = s.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
-            if (m) return (parseInt(m[1],10)*60) + parseInt(m[2],10);
-
-            // 12h with optional minutes (handles "1 PM", "1:00PM", "01:00 PM")
-            m = s.match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)$/);
-            if (!m) m = s.replace(" ", "").match(/^(\d{1,2})(?::([0-5]\d))?(AM|PM)$/);
-            if (m) {
-              let hh = parseInt(m[1],10);
-              const mm = (m[2] !== undefined) ? parseInt(m[2],10) : 0;
-              const ap = m[3];
-              if (hh === 12) hh = 0;
-              let out = hh*60 + mm;
-              if (ap === "PM") out += 12*60;
-              return out;
-            }
-          } catch(e) {}
-          return null;
-        };
-
-        // Primary: match by the *same display label pipeline* the calendar uses, then parse minutes from it.
-        // This avoids false negatives caused by minor formatting differences ("1:00PM" vs "1:00 PM" vs "1 PM").
-        const useMobile = (typeof isMobileUI === "function" && isMobileUI());
-        for (const s of slots) {
-          let label = "";
-          try {
-            if (useMobile && typeof formatTimeLabelCompact === "function") {
-              label = formatTimeLabelCompact(s);
-            } else if (typeof formatTimeLabel === "function") {
-              label = formatTimeLabel(s);
-            } else {
-              label = (s && (s.label || s.start || s.starts_at || s.start_time || s.time)) ? (s.label || s.start || s.starts_at || s.start_time || s.time) : "";
-            }
-          } catch(e) { label = ""; }
-
-          label = String(label || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
-          const mins = (typeof RNR__minutesFromLabel === "function") ? RNR__minutesFromLabel(label) : _rnrParseMinutes(label);
-          if (mins !== null && mins === targetMinutes) return s;
-        }
-
-        // Secondary fallback: parse minutes from slot fields (Toronto conversion)
-        if (typeof getTorontoMinutesFromSlot === "function") {
+        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
+        if (targetLabel && typeof formatTimeLabel === "function") {
+          const tNorm = norm(targetLabel);
           for (const s of slots) {
-            const m = getTorontoMinutesFromSlot(s);
-            if (m === null || m === undefined) continue;
-            if (m === targetMinutes) return s;
+            const lab = String(formatTimeLabel(s) || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
+            if (norm(lab) === tNorm) return s;
           }
         }
 
+        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
+        for (const s of slots) {
+          const m = getTorontoMinutesFromSlot(s);
+          if (m === null || m === undefined) continue;
+          if (m === targetMinutes) return s;
+        }
         return null;
       }
-
 
       function _rnrKeyToDateStr(key) {
         try {
@@ -3742,7 +3426,163 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
       }
 
 
-      
+      try {
+        // Use cached last booking (from locally loaded appointments or prior webhook call) when available
+        let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
+
+        if (!lb) {
+          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!data.success || !data.lastBooking) {
+            showToast("No previous booking found", "Please book manually.", true);
+            switchTab("rebook");
+            return;
+          }
+          lb = data.lastBooking;
+          lastBookingCache = lb;
+        }
+
+        // Apply treatment + duration
+        selectedServiceKey = lb.treatment_key || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        // Move to Rebook tab
+        switchTab("rebook");
+        updateBookingStepper();
+
+        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
+        const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
+
+        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
+          ? (Number(preloadedDuration) !== Number(desiredDuration))
+          : false;
+
+        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
+          ? (String(preloadedTreatment) !== String(desiredTreatment))
+          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
+
+        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
+          const startedAt = Date.now();
+          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
+            await new Promise(r => setTimeout(r, 120));
+          }
+        }
+
+        // Load availability only when needed:
+        // - not preloaded yet, or
+        // - treatment changed, or
+        // - duration changed
+        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Must have a loaded range and dates
+        if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
+          showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
+          return;
+        }
+
+        const { dowNum, minutes } = deriveDowAndMinutes(lb);
+
+        // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
+        const found = findNextAvailableExactMatch(dowNum, minutes);
+
+        if (!found) {
+          // Exact time isn’t available within the loaded 2-month window.
+          // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
+          const nextDayWithAny = findNextAvailableAnyTime(dowNum);
+          if (nextDayWithAny) {
+            showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
+            switchTab("rebook");
+            setCalendarToMonth(nextDayWithAny);
+            try {
+              document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch(e) {}
+            // Highlight the day and load its times, then auto-select the first available time slot.
+            selectDate(nextDayWithAny, { userInitiated: true });
+
+            // Auto-select the first available time on this day (UI-driven).
+            // Run asynchronously so we don't need to refactor selectDate() into async.
+            (async () => {
+              const picked = await RNR__selectFirstAvailableTimeFromCalendarUI(2500);
+              if (!picked) {
+                showToast("Times available", "Please select a time slot.", false);
+              }
+            })();
+
+            return;
+          }
+
+          // Nothing available at all (for that weekday) inside the loaded 2-month window.
+          // Do not jump beyond the loaded availability.
+          showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+          return;
+        }
+
+        // Jump the calendar to the month containing the found date, then select date + closest time.
+        setCalendarToMonth(found.dateStr);
+
+        // Ensure the calendar is in view (especially if clicked from dashboard)
+        try {
+          document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch(e) {}
+
+        // Select the date (user initiated so it loads times)
+        selectDate(found.dateStr, { userInitiated: true });
+
+        // Select the best slot in the UI after the slot grid has rendered.
+        setTimeout(() => {
+          try {
+            const exactSlot = found.slot;
+            if (!exactSlot) return;
+
+            const grid = document.getElementById("time-slots-grid");
+            if (!grid) return;
+
+            const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
+            if (!buttons.length) return;
+
+            const desiredId = String(exactSlot.start || exactSlot.label || "");
+            let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
+
+            // Fallback: strict minutes match (EXACT time only)
+            if (!btn && typeof minutes === "number" && isFinite(minutes)) {
+              for (const b of buttons) {
+                const raw = b.getAttribute("data-slot-raw");
+                if (!raw) continue;
+                let slotObj = null;
+                try { slotObj = JSON.parse(raw); } catch(e) {}
+                if (!slotObj) continue;
+                const m = getTorontoMinutesFromSlot(slotObj);
+                if (m === null || m === undefined) continue;
+                if (m === minutes) { btn = b; exactSlot.__uiSlotObj = slotObj; break; }
+              }
+            }
+
+            if (btn) {
+              const slotObj = (exactSlot && exactSlot.__uiSlotObj) ? exactSlot.__uiSlotObj : exactSlot;
+              selectTimeSlot(slotObj, btn);
+            }
+          } catch (e) {}
+        }, 120);
+
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
 
       function _rnrKeyToDateStr(key) {
         try {
