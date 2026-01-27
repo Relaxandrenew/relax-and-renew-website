@@ -1,6 +1,6 @@
-<!-- Portal Version: v1.7 | Profile edits now submit as change requests (no automatic syncing messaging) -->
+<!-- Portal Version: v2.0 | Profile update requests now send BEFORE/AFTER/DIFF + instant submit feedback -->
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
+<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.0">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -4473,6 +4473,19 @@ if (selectedSlot && driveTime > 0) {
       _profileEl("profile-cancel-btn")?.classList.toggle("hidden", !enabled);
       _profileEl("profile-save-hint")?.classList.toggle("hidden", !enabled);
 
+      // Reset save button UI state whenever toggling edit mode
+      try {
+        const sb = _profileEl("profile-save-btn");
+        if (sb) {
+          sb.disabled = false;
+          sb.dataset.state = "";
+          const sp = sb.querySelector("span");
+          if (sp) sp.textContent = "Request Change";
+        }
+        const cb = _profileEl("profile-cancel-btn");
+        if (cb) cb.disabled = false;
+      } catch(e) {}
+
       if (enabled) {
         try { fillProfileEditForm(); } catch(e) {}
         if (options.focus !== false) setTimeout(() => _profileEl("profile-first-name-input")?.focus(), 50);
@@ -4593,24 +4606,72 @@ if (selectedSlot && driveTime > 0) {
       }
 
       // Submit a change request (do not update the portal profile automatically)
+
+      // Instant UI feedback (no "loading" animation)
+      try {
+        const sb = _profileEl("profile-save-btn");
+        if (sb) {
+          sb.disabled = true;
+          sb.dataset.state = "sent";
+          const sp = sb.querySelector("span");
+          if (sp) sp.textContent = "Request Sent";
+        }
+        const cb = _profileEl("profile-cancel-btn");
+        if (cb) cb.disabled = true;
+      } catch(e) {}
+
+      showToast(
+        "Request sent",
+        "Your request has been sent. We’ll review and update your details as soon as possible. If you don’t hear back within 48 hours, please contact us by phone or email.",
+        false,
+        6500
+      );
+
+      const profile_before = {
+        firstName: before?.firstName || "",
+        lastName: before?.lastName || "",
+        email: (before?.email || "").trim().toLowerCase(),
+        phone: before?.phone || "",
+        address: before?.address || "",
+        city: before?.city || "",
+        postal_code: before?.postal_code || "",
+        cliniko_patient_id: before?.cliniko_patient_id || ""
+      };
+
+      const profile_after = {
+        firstName: after?.firstName || "",
+        lastName: after?.lastName || "",
+        email: (after?.email || "").trim().toLowerCase(),
+        phone: after?.phone || "",
+        address: after?.address || "",
+        city: after?.city || "",
+        postal_code: after?.postal_code || "",
+        cliniko_patient_id: before?.cliniko_patient_id || ""
+      };
+
+      const diff = {};
+      try {
+        for (const k of Object.keys(changes)) {
+          diff[k] = { before: profile_before?.[k] ?? "", after: profile_after?.[k] ?? "" };
+        }
+      } catch(e) {}
+
       const payload = {
         event: "profile_update_request",
         ts: new Date().toISOString(),
         auth0_sub: before?.auth0_sub || "",
         cliniko_patient_id: before?.cliniko_patient_id || "",
-        email_before: (before?.email || "").trim().toLowerCase(),
-        email: (after?.email || "").trim().toLowerCase(),
+        email_before: (profile_before?.email || "").trim().toLowerCase(),
+        email: (profile_after?.email || "").trim().toLowerCase(),
+
+        // Backwards compatibility (existing workflow/email templates)
         changes,
-        profile: {
-          firstName: after?.firstName || "",
-          lastName: after?.lastName || "",
-          email: (after?.email || "").trim().toLowerCase(),
-          phone: after?.phone || "",
-          address: after?.address || "",
-          city: after?.city || "",
-          postal_code: after?.postal_code || "",
-          cliniko_patient_id: before?.cliniko_patient_id || ""
-        }
+        profile: profile_after,
+
+        // New: explicit BEFORE vs AFTER + field-level DIFF
+        before: profile_before,
+        after: profile_after,
+        diff
       };
 
       const ok = await _sendProfileUpdateWebhook(payload);
@@ -4619,14 +4680,20 @@ if (selectedSlot && driveTime > 0) {
       // Revert UI back to stored profile values
       setProfileEditMode(false, { reset: true });
 
-      if (ok) {
-        showToast(
-          "Request sent",
-          "We’ll review and update your details as soon as possible. If you don’t hear back within 48 hours, please contact us by phone or email.",
-          false,
-          6500
-        );
-      } else {
+      // If submission actually failed, immediately inform the user and restore button state
+      if (!ok) {
+        try {
+          const sb = _profileEl("profile-save-btn");
+          if (sb) {
+            sb.disabled = false;
+            sb.dataset.state = "";
+            const sp = sb.querySelector("span");
+            if (sp) sp.textContent = "Request Change";
+          }
+          const cb = _profileEl("profile-cancel-btn");
+          if (cb) cb.disabled = false;
+        } catch(e) {}
+
         showToast(
           "Request not sent",
           "We couldn't submit your request right now. Please contact us by phone or email.",
@@ -4634,7 +4701,7 @@ if (selectedSlot && driveTime > 0) {
           6500
         );
       }
-    }
+}
 
     function loadProfileFromLocalStorage() {
       try {
