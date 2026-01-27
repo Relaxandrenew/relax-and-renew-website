@@ -3118,7 +3118,9 @@ function mobileConfirmBooking() {
       }
 
       function showBothBanners() {
-        showBothBanners();
+        // Show dashboard + rebook containers (when a last booking exists)
+        try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
+        try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
         try { dashHelper && dashHelper.classList.add("hidden"); } catch(e) {}
       }
 
@@ -3215,7 +3217,7 @@ function mobileConfirmBooking() {
         }
 
         if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
-        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
+        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}`;
 
         showBothBanners();
 
