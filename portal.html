@@ -3341,15 +3341,43 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
       } catch(e) {}
 
       if (!portalProfile?.email) return;
+      // Helper: get weekday + minutes in America/Toronto from a Date (avoids UTC/local mismatches)
+      function _rnrTorontoDowMinutes(dateObj) {
+        try {
+          const fmt = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Toronto",
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+          });
+          const parts = fmt.formatToParts(dateObj);
+          const get = (t) => (parts.find(p => p.type === t)?.value || "").trim();
+          const wd = get("weekday").toLowerCase(); // e.g., "mon"
+          const hh = parseInt(get("hour"), 10);
+          const mm = parseInt(get("minute"), 10);
 
-      // Helper: parse time minutes from various formats
+          const wmap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
+          const dowNum = Object.prototype.hasOwnProperty.call(wmap, wd) ? wmap[wd] : null;
+          const minutes = (Number.isFinite(hh) && Number.isFinite(mm)) ? (hh * 60 + mm) : null;
+          return { dowNum, minutes };
+        } catch (e) {
+          return { dowNum: null, minutes: null };
+        }
+      }
+
+      // Helper: parse time minutes from various formats (ALWAYS interpreted in America/Toronto when a full datetime is provided)
       function minutesFromAny(v) {
         if (!v) return null;
         const raw = String(v).trim();
 
+        // If it's a full datetime, interpret its displayed time in America/Toronto (matches the calendar)
         const dt = new Date(raw);
-        if (!isNaN(dt.getTime())) return dt.getHours() * 60 + dt.getMinutes();
+        if (!isNaN(dt.getTime())) {
+          return _rnrTorontoDowMinutes(dt).minutes;
+        }
 
+        // "HH:MM" (assume 24h clock)
         let m = raw.match(/^(\d{1,2}):(\d{2})$/);
         if (m) {
           const hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
@@ -3357,6 +3385,7 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
           return hh * 60 + mm;
         }
 
+        // "h(:mm) AM/PM"
         m = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
         if (m) {
           let hh = parseInt(m[1], 10);
@@ -3366,16 +3395,36 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
           if (ap === "AM" && hh === 12) hh = 0;
           return hh * 60 + mm;
         }
+
         return null;
       }
 
       function deriveDowAndMinutes(lb) {
-        // Prefer parsing a full datetime if provided
-        const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
+        // Prefer parsing a full datetime if provided; interpret in America/Toronto (must match the calendar)
+        const dtRaw =
+          lb.start_time_local ||
+          lb.starts_at_local ||
+          lb.starts_at ||
+          lb.start_time ||
+          lb.start ||
+          lb.start_at ||
+          lb.starts_at_utc;
+
         const dt = dtRaw ? new Date(String(dtRaw)) : null;
         if (dt && !isNaN(dt.getTime())) {
-          return { dowNum: dt.getDay(), minutes: dt.getHours() * 60 + dt.getMinutes() };
+          const { dowNum, minutes } = _rnrTorontoDowMinutes(dt);
+          return { dowNum, minutes };
         }
+
+        // Fallbacks: weekday string + separate time string
+        const dow = (lb.day_of_week || "").toString().toLowerCase();
+        const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+        const dowNum = map[dow];
+
+        const minutes = minutesFromAny(lb.time || lb.start_time_local || lb.start_time || lb.starts_at || lb.start || lb.start_at);
+        return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
+      }
+
 
         const dow = (lb.day_of_week || "").toString().toLowerCase();
         const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
