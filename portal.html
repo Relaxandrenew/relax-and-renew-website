@@ -1,6 +1,6 @@
-<!-- Portal Version: v2.3 | Remove session notes placeholder + membership tile coming soon + availability month reload + merge next appt countdown into Upcoming | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
+<!-- Portal Version: v2.4 | Remove session notes placeholder + membership tile coming soon + availability month reload + merge next appt countdown into Upcoming | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.3">
+<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1285,7 +1285,11 @@ function renderMobileDateStrip() {
 
       overlay.classList.remove('hidden');
       setMobileOverlayStep('step2');
-      lockBodyScroll();
+            lockBodyScroll();
+
+      // Ensure any previous timers are cleared
+      if (bookingMessageInterval) { clearInterval(bookingMessageInterval); bookingMessageInterval = null; }
+      if (bookingMessageTimeout) { clearTimeout(bookingMessageTimeout); bookingMessageTimeout = null; }
       syncMobileConfirmButton();      try {
         // Ensure the correct month availability is loaded before rendering the strip (matches calendar behavior)
         (async function(){
@@ -3719,6 +3723,7 @@ function mobileConfirmBooking() {
     ];
 
     let bookingMessageInterval = null;
+    let bookingMessageTimeout = null;
 
     function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
@@ -3743,8 +3748,19 @@ function mobileConfirmBooking() {
       let messageIndex = 0;
       bookingMessageInterval = setInterval(() => {
         messageIndex = (messageIndex + 1) % bookingMessages.length;
+
+        // Fade out then swap text (timeout is tracked so it can be cancelled on success/failure)
         statusText.style.opacity = "0";
-        setTimeout(async () => {
+
+        if (bookingMessageTimeout) {
+          clearTimeout(bookingMessageTimeout);
+          bookingMessageTimeout = null;
+        }
+
+        bookingMessageTimeout = setTimeout(() => {
+          // If the modal has transitioned (success/fail), do nothing
+          if (!bookingMessageInterval) return;
+
           statusText.textContent = bookingMessages[messageIndex].text;
           substatusText.textContent = bookingMessages[messageIndex].sub;
           statusText.style.opacity = "1";
@@ -3757,6 +3773,10 @@ function mobileConfirmBooking() {
       if (bookingMessageInterval) {
         clearInterval(bookingMessageInterval);
         bookingMessageInterval = null;
+      }
+      if (bookingMessageTimeout) {
+        clearTimeout(bookingMessageTimeout);
+        bookingMessageTimeout = null;
       }
 
       const spinner = document.getElementById("booking-modal-spinner");
@@ -3771,8 +3791,9 @@ function mobileConfirmBooking() {
 
       if (success) {
         successIcon.classList.remove("hidden");
-        statusText.textContent = "Booking Confirmed!";
-        substatusText.textContent = "Your appointment has been scheduled";
+        statusText.textContent = "Success, thanks for booking with us again!";
+        substatusText.textContent = "You’ll receive your confirmation shortly.";
+        statusText.style.opacity = "1";
       } else {
         errorIcon.classList.remove("hidden");
         document.getElementById("booking-email-preview")?.classList.add("hidden");
