@@ -1875,6 +1875,7 @@ function mobileConfirmBooking() {
               <div class="flex-1 min-w-0">
                 <div class="text-[0.65rem] text-brand-dim uppercase tracking-widest">Welcome back</div>
                 <div class="text-brand-light font-serif text-sm leading-tight truncate" id="nav-user-name">—</div>
+                <button type="button" onclick="switchTab('profile')" class="mt-1 text-[0.7rem] text-brand-gold/80 hover:text-brand-gold underline underline-offset-4 decoration-brand-gold/30 hover:decoration-brand-gold/70 transition">Edit Profile</button>
               </div>
             </div>
 
@@ -2400,10 +2401,143 @@ function mobileConfirmBooking() {
 
           <!-- Profile -->
           <div id="tab-profile" class="tab-content hidden animate-fade-in-up">
-            <h2 class="text-3xl font-serif text-brand-light mb-6">Profile</h2>
-            <div class="card-fancy p-6">
-              <div class="pill">Coming Soon</div>
-              <p class="muted mt-4">Profile updates will be available here.</p>
+            <div class="glass-panel p-6 mb-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 class="text-3xl font-serif text-brand-light">Your Profile</h2>
+                  <p class="muted mt-2 font-light">Review the information we have on file. Editing will be enabled once the profile workflow is connected.</p>
+                </div>
+                <a href="mailto:info@relaxandrenew.ca?subject=Profile%20Update%20Request" class="btn btn-outline inline-flex items-center gap-2">
+                  <i data-lucide="mail" class="w-4 h-4"></i>
+                  <span>Request a change</span>
+                </a>
+              </div>
+
+              <div id="profile-editing-note" class="mt-5 rounded-xl border border-brand-gold/25 bg-brand-gold/5 p-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-9 h-9 shrink-0 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-brand-light font-serif">Editing coming soon</div>
+                    <p class="muted mt-1">For now, if anything is incorrect, click <span class="text-brand-gold">Request a change</span> and we’ll update it for you.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Personal -->
+              <div class="card-fancy p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-brand-light font-serif text-xl">Personal details</div>
+                    <div class="muted text-sm">Who you are</div>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Full name</div>
+                    <div class="text-brand-light text-sm text-right" id="profile-full-name">—</div>
+                  </div>
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Membership status</div>
+                    <div class="text-brand-light text-sm text-right" id="profile-membership">Standard (placeholder)</div>
+                  </div>
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Direct billing</div>
+                    <div class="text-brand-light text-sm text-right" id="profile-direct-billing">Coming soon</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact -->
+              <div class="card-fancy p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
+                    <i data-lucide="phone" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-brand-light font-serif text-xl">Contact</div>
+                    <div class="muted text-sm">How we reach you</div>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Email</div>
+                    <div class="text-brand-light text-sm text-right break-all" id="profile-email">—</div>
+                  </div>
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Phone</div>
+                    <div class="text-brand-light text-sm text-right" id="profile-phone">—</div>
+                  </div>
+                  <div class="flex items-start justify-between gap-6">
+                    <div class="muted text-sm">Preferred contact</div>
+                    <div class="text-brand-light text-sm text-right" id="profile-preferred-contact">Email (placeholder)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Address -->
+              <div class="card-fancy p-6 lg:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-brand-light font-serif text-xl">Service address</div>
+                    <div class="muted text-sm">Where we come to you</div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
+                    <div class="muted text-xs uppercase tracking-widest">Street</div>
+                    <div class="text-brand-light mt-2 text-sm" id="profile-address">—</div>
+                  </div>
+                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
+                    <div class="muted text-xs uppercase tracking-widest">City</div>
+                    <div class="text-brand-light mt-2 text-sm" id="profile-city">—</div>
+                  </div>
+                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
+                    <div class="muted text-xs uppercase tracking-widest">Postal code</div>
+                    <div class="text-brand-light mt-2 text-sm" id="profile-postal">—</div>
+                  </div>
+                </div>
+
+                <div class="mt-4 muted text-sm">
+                  Tip: This address is used for travel validation and availability buffers.
+                </div>
+              </div>
+
+              <!-- Preferences -->
+              <div class="card-fancy p-6 lg:col-span-2">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
+                    <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-brand-light font-serif text-xl">Preferences</div>
+                    <div class="muted text-sm">Comfort and communication</div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
+                    <div class="muted text-xs uppercase tracking-widest">Notes</div>
+                    <div class="text-brand-light mt-2 text-sm" id="profile-notes">Not set (placeholder)</div>
+                  </div>
+                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
+                    <div class="muted text-xs uppercase tracking-widest">Reminders</div>
+                    <div class="text-brand-light mt-2 text-sm" id="profile-reminders">Enabled (placeholder)</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -4212,6 +4346,21 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
       document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
 
+      // Profile page fields (safe updates)
+      const safeSet = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+      const first = (portalProfile?.firstName || "").trim();
+      const last  = (portalProfile?.lastName  || "").trim();
+      const full  = (first || last) ? `${first} ${last}`.replace(/\s+/g," ").trim() : "—";
+
+      safeSet("profile-full-name", full);
+      safeSet("profile-email", portalProfile?.email || "—");
+      safeSet("profile-phone", portalProfile?.phone || "—");
+      safeSet("profile-address", portalProfile?.address || "—");
+      safeSet("profile-city", portalProfile?.city || "—");
+      safeSet("profile-postal", portalProfile?.postal_code || "—");
+
+
       const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
       
       // Pills removed from UI - keep for backwards compatibility
@@ -6010,6 +6159,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const active = document.getElementById("tab-" + tabId);
       if (active) active.classList.remove("hidden");
 
+      try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch(e) {}
       document.querySelectorAll(".sidebar-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.tab === tabId);
       });
