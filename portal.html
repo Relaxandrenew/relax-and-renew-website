@@ -1,3 +1,4 @@
+<!-- Portal Version: v1.3 | Profile edit wired to n8n /profile-update webhook -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
@@ -908,22 +909,19 @@
     const WAITLIST_WEBHOOK_URL      = `${N8N_WEBHOOK_BASE}/portal-join-waitlist`;
     const INVOICE_WEBHOOK_URL       = `${N8N_WEBHOOK_BASE}/portal-get-invoice`;
     const REQUEST_CANCEL_WEBHOOK_URL= `${N8N_WEBHOOK_BASE}/portal-request-cancellation`;
+    const PROFILE_UPDATE_WEBHOOK_URL = `${N8N_WEBHOOK_BASE}/profile-update`;
 
-    // =========================================================
-    // GLOBAL UI HELPERS (do not remove)
-    // - Robust scroll lock (prevents behind-scroll on iOS/Android)
-    // - Mobile-only time picker overlay (date -> modal)
-    // =========================================================
+    // Scroll lock helpers (used by mobile overlays/modals)
     let __rnrScrollLockCount = 0;
     let __rnrScrollLockY = 0;
-    let __mobileTimesMoved = false;
 
     function lockBodyScroll() {
       try {
-        __rnrScrollLockCount = (__rnrScrollLockCount || 0) + 1;
+        __rnrScrollLockCount += 1;
         if (__rnrScrollLockCount > 1) return;
 
         __rnrScrollLockY = window.scrollY || window.pageYOffset || 0;
+
         document.documentElement.classList.add('rnr-scroll-locked');
         document.body.classList.add('rnr-scroll-locked');
 
@@ -1875,7 +1873,7 @@ function mobileConfirmBooking() {
               <div class="flex-1 min-w-0">
                 <div class="text-[0.65rem] text-brand-dim uppercase tracking-widest">Welcome back</div>
                 <div class="text-brand-light font-serif text-sm leading-tight truncate" id="nav-user-name">—</div>
-                <button type="button" onclick="switchTab('profile')" class="mt-1 text-[0.7rem] text-brand-gold/80 hover:text-brand-gold underline underline-offset-4 decoration-brand-gold/30 hover:decoration-brand-gold/70 transition">Edit Profile</button>
+                <button type="button" onclick="openProfileEditor()" class="mt-1 text-[0.7rem] text-brand-gold/80 hover:text-brand-gold underline underline-offset-4 decoration-brand-gold/30 hover:decoration-brand-gold/70 transition">Edit Profile</button>
               </div>
             </div>
 
@@ -2405,22 +2403,35 @@ function mobileConfirmBooking() {
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 class="text-3xl font-serif text-brand-light">Your Profile</h2>
-                  <p class="muted mt-2 font-light">Review the information we have on file. Editing will be enabled once the profile workflow is connected.</p>
+                  <p class="muted mt-2 font-light">Review and update your personal details, contact info, and service address.</p>
                 </div>
-                <a href="mailto:info@relaxandrenew.ca?subject=Profile%20Update%20Request" class="btn btn-outline inline-flex items-center gap-2">
-                  <i data-lucide="mail" class="w-4 h-4"></i>
-                  <span>Request a change</span>
-                </a>
+
+                <div class="flex items-center gap-2">
+                  <button id="profile-edit-btn" class="btn btn-outline inline-flex items-center gap-2" onclick="setProfileEditMode(true)">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                    <span>Edit</span>
+                  </button>
+
+                  <button id="profile-save-btn" class="btn btn-filled hidden inline-flex items-center gap-2" onclick="saveProfileEdits()">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Save changes</span>
+                  </button>
+
+                  <button id="profile-cancel-btn" class="btn btn-outline hidden inline-flex items-center gap-2" onclick="setProfileEditMode(false, { reset: true })">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    <span>Cancel</span>
+                  </button>
+                </div>
               </div>
 
-              <div id="profile-editing-note" class="mt-5 rounded-xl border border-brand-gold/25 bg-brand-gold/5 p-4">
+              <div id="profile-save-hint" class="mt-4 rounded-xl border border-brand-gold/25 bg-brand-gold/5 p-4 hidden">
                 <div class="flex items-start gap-3">
                   <div class="w-9 h-9 shrink-0 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
                     <i data-lucide="info" class="w-5 h-5"></i>
                   </div>
                   <div class="min-w-0">
-                    <div class="text-brand-light font-serif">Editing coming soon</div>
-                    <p class="muted mt-1">For now, if anything is incorrect, click <span class="text-brand-gold">Request a change</span> and we’ll update it for you.</p>
+                    <div class="text-brand-light font-serif">Saving & syncing</div>
+                    <p class="muted mt-1">Your changes update immediately in the portal, then we sync them to Cliniko in the background.</p>
                   </div>
                 </div>
               </div>
@@ -2439,18 +2450,21 @@ function mobileConfirmBooking() {
                   </div>
                 </div>
 
-                <div class="space-y-4">
+                <div id="profile-view-personal" class="space-y-4">
                   <div class="flex items-start justify-between gap-6">
                     <div class="muted text-sm">Full name</div>
                     <div class="text-brand-light text-sm text-right" id="profile-full-name">—</div>
                   </div>
-                  <div class="flex items-start justify-between gap-6">
-                    <div class="muted text-sm">Membership status</div>
-                    <div class="text-brand-light text-sm text-right" id="profile-membership">Standard (placeholder)</div>
+                </div>
+
+                <div id="profile-edit-personal" class="space-y-4 hidden">
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">First name</label>
+                    <input id="profile-first-name-input" class="mt-2 w-full input-dark" type="text" autocomplete="given-name" />
                   </div>
-                  <div class="flex items-start justify-between gap-6">
-                    <div class="muted text-sm">Direct billing</div>
-                    <div class="text-brand-light text-sm text-right" id="profile-direct-billing">Coming soon</div>
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">Last name</label>
+                    <input id="profile-last-name-input" class="mt-2 w-full input-dark" type="text" autocomplete="family-name" />
                   </div>
                 </div>
               </div>
@@ -2467,7 +2481,7 @@ function mobileConfirmBooking() {
                   </div>
                 </div>
 
-                <div class="space-y-4">
+                <div id="profile-view-contact" class="space-y-4">
                   <div class="flex items-start justify-between gap-6">
                     <div class="muted text-sm">Email</div>
                     <div class="text-brand-light text-sm text-right break-all" id="profile-email">—</div>
@@ -2476,9 +2490,16 @@ function mobileConfirmBooking() {
                     <div class="muted text-sm">Phone</div>
                     <div class="text-brand-light text-sm text-right" id="profile-phone">—</div>
                   </div>
-                  <div class="flex items-start justify-between gap-6">
-                    <div class="muted text-sm">Preferred contact</div>
-                    <div class="text-brand-light text-sm text-right" id="profile-preferred-contact">Email (placeholder)</div>
+                </div>
+
+                <div id="profile-edit-contact" class="space-y-4 hidden">
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">Email</label>
+                    <input id="profile-email-input" class="mt-2 w-full input-dark" type="email" autocomplete="email" />
+                  </div>
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">Phone</label>
+                    <input id="profile-phone-input" class="mt-2 w-full input-dark" type="tel" autocomplete="tel" />
                   </div>
                 </div>
               </div>
@@ -2495,7 +2516,7 @@ function mobileConfirmBooking() {
                   </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="profile-view-address" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
                     <div class="muted text-xs uppercase tracking-widest">Street</div>
                     <div class="text-brand-light mt-2 text-sm" id="profile-address">—</div>
@@ -2510,32 +2531,23 @@ function mobileConfirmBooking() {
                   </div>
                 </div>
 
-                <div class="mt-4 muted text-sm">
-                  Tip: This address is used for travel validation and availability buffers.
-                </div>
-              </div>
-
-              <!-- Preferences -->
-              <div class="card-fancy p-6 lg:col-span-2">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class="w-10 h-10 bg-brand-gold/10 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-gold">
-                    <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+                <div id="profile-edit-address" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">Street</label>
+                    <input id="profile-address-input" class="mt-2 w-full input-dark" type="text" autocomplete="street-address" />
                   </div>
                   <div>
-                    <div class="text-brand-light font-serif text-xl">Preferences</div>
-                    <div class="muted text-sm">Comfort and communication</div>
+                    <label class="muted text-xs uppercase tracking-widest">City</label>
+                    <input id="profile-city-input" class="mt-2 w-full input-dark" type="text" autocomplete="address-level2" />
+                  </div>
+                  <div>
+                    <label class="muted text-xs uppercase tracking-widest">Postal code</label>
+                    <input id="profile-postal-input" class="mt-2 w-full input-dark" type="text" autocomplete="postal-code" />
                   </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
-                    <div class="muted text-xs uppercase tracking-widest">Notes</div>
-                    <div class="text-brand-light mt-2 text-sm" id="profile-notes">Not set (placeholder)</div>
-                  </div>
-                  <div class="rounded-xl border border-brand-gold/15 bg-black/20 p-4">
-                    <div class="muted text-xs uppercase tracking-widest">Reminders</div>
-                    <div class="text-brand-light mt-2 text-sm" id="profile-reminders">Enabled (placeholder)</div>
-                  </div>
+                <div class="mt-4 muted text-sm">
+                  Tip: This address is used for travel validation and availability buffers.
                 </div>
               </div>
             </div>
@@ -2544,7 +2556,7 @@ function mobileConfirmBooking() {
       </div>
     </div>
 
-    <!-- Bug Report Footer -->
+<!-- Bug Report Footer -->
     <div class="w-full max-w-7xl mx-auto px-4 py-8">
       <div class="text-center">
         <p class="text-brand-dim text-sm">
@@ -4359,6 +4371,7 @@ if (selectedSlot && driveTime > 0) {
       safeSet("profile-address", portalProfile?.address || "—");
       safeSet("profile-city", portalProfile?.city || "—");
       safeSet("profile-postal", portalProfile?.postal_code || "—");
+      try { fillProfileEditForm(); } catch(e) {}
 
 
       const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
@@ -4403,6 +4416,174 @@ if (selectedSlot && driveTime > 0) {
       updateSummary();
     }
 
+    // =========================================================
+    // PROFILE EDITING (Optimistic UI + background sync)
+    // =========================================================
+    function saveProfileToLocalStorage(profile) {
+      try {
+        if (!profile) return;
+        localStorage.setItem("rnr_portal_profile", JSON.stringify(profile));
+      } catch (e) {}
+    }
+
+    function _profileEl(id) { return document.getElementById(id); }
+
+    function fillProfileEditForm() {
+      _profileEl("profile-first-name-input") && (_profileEl("profile-first-name-input").value = portalProfile?.firstName || "");
+      _profileEl("profile-last-name-input") && (_profileEl("profile-last-name-input").value = portalProfile?.lastName || "");
+      _profileEl("profile-email-input") && (_profileEl("profile-email-input").value = portalProfile?.email || "");
+      _profileEl("profile-phone-input") && (_profileEl("profile-phone-input").value = portalProfile?.phone || "");
+      _profileEl("profile-address-input") && (_profileEl("profile-address-input").value = portalProfile?.address || "");
+      _profileEl("profile-city-input") && (_profileEl("profile-city-input").value = portalProfile?.city || "");
+      _profileEl("profile-postal-input") && (_profileEl("profile-postal-input").value = portalProfile?.postal_code || "");
+    }
+
+    function setProfileEditMode(enabled, opts) {
+      const options = opts || {};
+      const viewBlocks = ["profile-view-personal","profile-view-contact","profile-view-address"];
+      const editBlocks = ["profile-edit-personal","profile-edit-contact","profile-edit-address"];
+
+      viewBlocks.forEach(id => _profileEl(id)?.classList.toggle("hidden", !!enabled));
+      editBlocks.forEach(id => _profileEl(id)?.classList.toggle("hidden", !enabled));
+
+      _profileEl("profile-edit-btn")?.classList.toggle("hidden", !!enabled);
+      _profileEl("profile-save-btn")?.classList.toggle("hidden", !enabled);
+      _profileEl("profile-cancel-btn")?.classList.toggle("hidden", !enabled);
+      _profileEl("profile-save-hint")?.classList.toggle("hidden", !enabled);
+
+      if (enabled) {
+        try { fillProfileEditForm(); } catch(e) {}
+        if (options.focus !== false) setTimeout(() => _profileEl("profile-first-name-input")?.focus(), 50);
+      } else if (options.reset) {
+        try { fillProfileEditForm(); } catch(e) {}
+      }
+
+      try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch(e) {}
+    }
+
+    function openProfileEditor() {
+      switchTab("profile");
+      setTimeout(() => setProfileEditMode(true), 0);
+    }
+
+    function _normStr(v) { return String(v || "").trim(); }
+
+    function _collectProfileEdits() {
+      return {
+        firstName: _normStr(_profileEl("profile-first-name-input")?.value),
+        lastName: _normStr(_profileEl("profile-last-name-input")?.value),
+        email: _normStr(_profileEl("profile-email-input")?.value).toLowerCase(),
+        phone: _normStr(_profileEl("profile-phone-input")?.value),
+        address: _normStr(_profileEl("profile-address-input")?.value),
+        city: _normStr(_profileEl("profile-city-input")?.value),
+        postal_code: _normStr(_profileEl("profile-postal-input")?.value)
+      };
+    }
+
+    function _diffProfile(before, after) {
+      const keys = ["firstName","lastName","email","phone","address","city","postal_code"];
+      const changes = {};
+      for (const k of keys) {
+        const a = _normStr(after?.[k]);
+        const b = _normStr(before?.[k]);
+        if (a !== b) changes[k] = after?.[k] || "";
+      }
+      return changes;
+    }
+
+    function _queuePendingProfileUpdate(payload) {
+      try {
+        const raw = localStorage.getItem("rnr_profile_pending_updates");
+        const arr = raw ? (JSON.parse(raw) || []) : [];
+        arr.push(payload);
+        localStorage.setItem("rnr_profile_pending_updates", JSON.stringify(arr.slice(-10)));
+      } catch(e) {}
+    }
+
+    async function _flushPendingProfileUpdates() {
+      try {
+        const raw = localStorage.getItem("rnr_profile_pending_updates");
+        const arr = raw ? (JSON.parse(raw) || []) : [];
+        if (!Array.isArray(arr) || !arr.length) return;
+
+        const remaining = [];
+        for (const payload of arr) {
+          const ok = await _sendProfileUpdateWebhook(payload, { quiet: true });
+          if (!ok) remaining.push(payload);
+        }
+        localStorage.setItem("rnr_profile_pending_updates", JSON.stringify(remaining));
+      } catch(e) {}
+    }
+
+    async function _sendProfileUpdateWebhook(payload, options) {
+      const opts = options || {};
+      try {
+        const res = await fetch(PROFILE_UPDATE_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true
+        });
+        return !!res.ok;
+      } catch (e) {
+        if (!opts.quiet) {
+          showToast("Sync failed", "Your changes were saved in the portal, but we couldn't sync them right now. We'll retry automatically.", true);
+        }
+        return false;
+      }
+    }
+
+    async function saveProfileEdits() {
+      if (!portalProfile) {
+        showToast("Profile not loaded", "Please sign in again and try.", true);
+        return;
+      }
+
+      const before = { ...(portalProfile || {}) };
+      const after = { ...(portalProfile || {}), ..._collectProfileEdits() };
+
+      if (!after.email || !after.email.includes("@")) {
+        showToast("Invalid email", "Please enter a valid email address.", true);
+        return;
+      }
+
+      const changes = _diffProfile(before, after);
+      if (!Object.keys(changes).length) {
+        showToast("No changes", "Nothing to save.", true);
+        setProfileEditMode(false);
+        return;
+      }
+
+      // Optimistic UI update
+      portalProfile = after;
+      saveProfileToLocalStorage(portalProfile);
+      try { hydrateProfileUI();
+          try { _flushPendingProfileUpdates(); } catch(e) {} } catch(e) {}
+      setProfileEditMode(false);
+
+      showToast("Profile updated", "Syncing in the background…", false);
+
+      const payload = {
+        event: "profile_update",
+        ts: new Date().toISOString(),
+        auth0_sub: portalProfile?.auth0_sub || before?.auth0_sub || "",
+        email_before: (before?.email || "").trim().toLowerCase(),
+        email: (portalProfile?.email || "").trim().toLowerCase(),
+        changes,
+        profile: {
+          firstName: portalProfile?.firstName || "",
+          lastName: portalProfile?.lastName || "",
+          email: (portalProfile?.email || "").trim().toLowerCase(),
+          phone: portalProfile?.phone || "",
+          address: portalProfile?.address || "",
+          city: portalProfile?.city || "",
+          postal_code: portalProfile?.postal_code || ""
+        }
+      };
+
+      const ok = await _sendProfileUpdateWebhook(payload);
+      if (!ok) _queuePendingProfileUpdate(payload);
+    }
     function loadProfileFromLocalStorage() {
       try {
         const raw = localStorage.getItem("rnr_portal_profile");
@@ -4492,6 +4673,7 @@ if (selectedSlot && driveTime > 0) {
       const postal2 = addrObj && addrObj.postal_code ? addrObj.postal_code : "";
 
       return {
+        auth0_sub: payload.sub || payload.user_id || "",
         firstName,
         lastName,
         email,
@@ -4558,7 +4740,7 @@ if (selectedSlot && driveTime > 0) {
         const postal  = (claimObj && (claimObj.postal_code || claimObj.postal)) || u[CLAIM_POSTAL] || (addressObj && addressObj.postal_code) || "";
         const phone   = (claimObj && claimObj.phone) || u[CLAIM_PHONE] || u.phone_number || "";
 
-        const p2 = { firstName, lastName, email: u.email || "", phone, address, city, postal_code: postal };
+        const p2 = { auth0_sub: u.sub || u.user_id || (currentProfile && currentProfile.auth0_sub) || "", firstName, lastName, email: u.email || "", phone, address, city, postal_code: postal };
         return { ...(currentProfile || {}), ...p2 };
       } catch (e) {
         return currentProfile;
