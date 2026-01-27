@@ -2573,9 +2573,6 @@ function mobileConfirmBooking() {
     let __availabilityLoadedContextKey = null;
     let __availabilityLoadedRange = null;
 
-
-    // Availability lock: preload two months once and keep range anchored until treatment/duration changes
-    let availabilityAnchorMonth = null;
     let treatmentSelect = null;
     let durationSelect = null;
 
@@ -3144,10 +3141,7 @@ function mobileConfirmBooking() {
               treatment_key: tKey || undefined
             };
 
-            const treatmentLabel = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "Massage").toString().trim();
-            const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
-            const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
-            const label = `${treatmentLabel} • ${dur} min • ${dayLabel} • ${timeLabel}`;
+            const label = `Last: ${dow.charAt(0).toUpperCase() + dow.slice(1)} at ${timeLabel}`;
             try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
             try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
             if (dashSummary) dashSummary.textContent = label;
@@ -3180,26 +3174,7 @@ function mobileConfirmBooking() {
 
         const lb = data.lastBooking;
         lastBookingCache = lb;
-        const tLabel = (lb.treatment_label || lb.treatment || lb.treatment_key || "Massage").toString().trim();
-        const dur = Number(lb.duration || lb.durationMinutes || 60) || 60;
-
-        let dayPart = "";
-        let timePart = "";
-        try {
-          if (lb.day_of_week) dayPart = String(lb.day_of_week).trim();
-          if (lb.start_time_local) timePart = String(lb.start_time_local).trim();
-        } catch (e) {}
-
-        if ((!dayPart || !timePart) && lb.starts_at) {
-          try {
-            const dt = new Date(lb.starts_at);
-            if (!dayPart) dayPart = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dt.getDay()];
-            if (!timePart) timePart = dt.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" });
-          } catch (e) {}
-        }
-
-        if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
-        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
+        const label = `${lb.treatment_label || lb.treatment_key || "Massage"} • ${lb.duration || lb.durationMinutes || 60} min`;
 
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
@@ -3276,29 +3251,32 @@ function mobileConfirmBooking() {
         } catch (e) {}
       }
 
-      function pickExactSlotOnDate(dateStr, targetMinutes) {
+      function pickBestSlotOnDate(dateStr, targetMinutes) {
         const slots = (availabilityByDate?.[dateStr] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
-        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
+        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return slots[0];
 
+        let best = null;
+        let bestDiff = Infinity;
         for (const s of slots) {
           const m = getTorontoMinutesFromSlot(s);
           if (m === null || m === undefined) continue;
-          if (m === targetMinutes) return s;
+          const diff = Math.abs(m - targetMinutes);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            best = s;
+          }
         }
-        return null;
+        return best || slots[0];
       }
 
-
-      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
+      function findNextAvailableMatch(targetDowNum, targetMinutes) {
         const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
         const rangeTo = __availabilityLoadedRange?.to || null;
 
         const dates = Object.keys(availabilityByDate || {}).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
         for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
           if (d < todayStr) continue;
           if (rangeTo && d > rangeTo) break;
 
@@ -3307,12 +3285,11 @@ function mobileConfirmBooking() {
             if (dt.getDay() !== targetDowNum) continue;
           }
 
-          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
-          if (exactSlot) return { dateStr: d, slot: exactSlot };
+          const bestSlot = pickBestSlotOnDate(d, targetMinutes);
+          if (bestSlot) return { dateStr: d, slot: bestSlot };
         }
         return null;
       }
-
 
       try {
         // Use cached last booking (from locally loaded appointments or prior webhook call) when available
@@ -3376,10 +3353,10 @@ function mobileConfirmBooking() {
         const { dowNum, minutes } = deriveDowAndMinutes(lb);
 
         // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
-        const found = findNextAvailableExactMatch(dowNum, minutes);
+        const found = findNextAvailableMatch(dowNum, minutes);
 
         if (!found) {
-          showToast("Time not available", "Time not available in the next 2 months, please choose manually.", true);
+          showToast("No matching availability found", "Please select a date manually.", true);
           return;
         }
 
@@ -3397,8 +3374,8 @@ function mobileConfirmBooking() {
         // Select the best slot in the UI after the slot grid has rendered.
         setTimeout(() => {
           try {
-            const exactSlot = found.slot;
-            if (!exactSlot) return;
+            const bestSlot = found.slot;
+            if (!bestSlot) return;
 
             const grid = document.getElementById("time-slots-grid");
             if (!grid) return;
@@ -3406,11 +3383,13 @@ function mobileConfirmBooking() {
             const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
             if (!buttons.length) return;
 
-            const desiredId = String(exactSlot.start || exactSlot.label || "");
+            const desiredId = String(bestSlot.start || bestSlot.label || "");
             let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
 
-            // Fallback: strict minutes match (EXACT time only)
+            // Fallback: pick closest by minutes if IDs don't match perfectly
             if (!btn && typeof minutes === "number" && isFinite(minutes)) {
+              let best = null;
+              let bestDiff = Infinity;
               for (const b of buttons) {
                 const raw = b.getAttribute("data-slot-raw");
                 if (!raw) continue;
@@ -3419,14 +3398,17 @@ function mobileConfirmBooking() {
                 if (!slotObj) continue;
                 const m = getTorontoMinutesFromSlot(slotObj);
                 if (m === null || m === undefined) continue;
-                if (m === minutes) { btn = b; exactSlot.__uiSlotObj = slotObj; break; }
+                const diff = Math.abs(m - minutes);
+                if (diff < bestDiff) { bestDiff = diff; best = { b, slotObj }; }
+              }
+              if (best) {
+                btn = best.b;
+                selectTimeSlot(best.slotObj, btn);
+                return;
               }
             }
 
-            if (btn) {
-              const slotObj = (exactSlot && exactSlot.__uiSlotObj) ? exactSlot.__uiSlotObj : exactSlot;
-              selectTimeSlot(slotObj, btn);
-            }
+            if (btn) selectTimeSlot(bestSlot, btn);
           } catch (e) {}
         }, 120);
 
@@ -4996,8 +4978,7 @@ if (selectedSlot && driveTime > 0) {
       if (durationSelect) durationSelect.value = String(preloadDuration);
 
       // Build request
-      const baseMonth = availabilityAnchorMonth || calendarCurrent;
-      const { from, to } = computeTwoMonthRange(baseMonth);
+      const { from, to } = computeTwoMonthRange(calendarCurrent);
       const blockMinutes = preloadDuration + STATIC_SETUP_MINUTES;
 
       const payload = {
@@ -5505,10 +5486,6 @@ if (selectedSlot && driveTime > 0) {
 
     async function maybeLoadAvailabilityForCurrentMonth() {
       const payload = buildAvailabilityPayload();
-      // Anchor the 2-month preload window on first load; keep it fixed until treatment/duration changes.
-      try {
-        if (!availabilityAnchorMonth) availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-      } catch (e) {}
       if (payload.error) {
         updateAvailabilityStatus(payload.error, false);
         availabilityByDate = {};
@@ -5528,8 +5505,7 @@ if (selectedSlot && driveTime > 0) {
       ].join("|");
 
       try {
-        const baseMonth = availabilityAnchorMonth || calendarCurrent;
-        const monthRange = computeTwoMonthRange(baseMonth); // locked two-month window anchored to initial load
+        const monthRange = computeTwoMonthRange(calendarCurrent); // visible month + next month
         if (__availabilityLoadedContextKey === contextKey &&
             __availabilityLoadedRange &&
             __availabilityLoadedRange.from <= monthRange.from &&
@@ -5831,54 +5807,17 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       savePortalState();
     }
 
-    async function prevMonth() {
+    function prevMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
-      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
-      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
-      savePortalState();
-}
-
-    async function nextMonth() {
-      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
-      renderCalendar();
-      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
-      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
-      savePortalState();
-}
-
-    async function ensureAvailabilityForNavigatedMonth() {
-      try {
-        if (!(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code)) return;
-        if (!selectedServiceKey || !selectedStandardDuration) return;
-
-        const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
-        const contextKey = [
-          Number(selectedStandardDuration),
-          Number(blockMinutes),
-          DEFAULT_PRACTITIONER_ID,
-          portalProfile.address, portalProfile.city, portalProfile.postal_code
-        ].join("|");
-
-        const monthRange = computeTwoMonthRange(calendarCurrent);
-
-        if (__availabilityLoadedContextKey === contextKey &&
-            __availabilityLoadedRange &&
-            __availabilityLoadedRange.from <= monthRange.from &&
-            __availabilityLoadedRange.to >= monthRange.to) {
-          return;
-        }
-
-        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-        __availabilityLoadedContextKey = null;
-        __availabilityLoadedRange = null;
-
-        await maybeLoadAvailabilityForCurrentMonth();
-      } catch (e) {
-        console.warn("ensureAvailabilityForNavigatedMonth error:", e);
-      }
+      maybeLoadAvailabilityForCurrentMonth();
     }
 
+    function nextMonth() {
+      calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
+      renderCalendar();
+      maybeLoadAvailabilityForCurrentMonth();
+    }
 
     // =========================================================
     // BOOKING CONFIRMATION
@@ -6206,10 +6145,6 @@ const refreshInstallButtons = () => {
         clearSelectionUI();
         renderCalendar();
 
-        // Reset the locked preload window when treatment changes
-        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-        __availabilityLoadedContextKey = null;
-        __availabilityLoadedRange = null;
         if (!selectedServiceKey) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
         } else {
@@ -6227,11 +6162,6 @@ const refreshInstallButtons = () => {
         availabilityPreloaded = false;
         clearSelectionUI();
         renderCalendar();
-
-        // Reset the locked preload window when duration changes
-        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-        __availabilityLoadedContextKey = null;
-        __availabilityLoadedRange = null;
 
         if (selectedStandardDuration) {
           maybeLoadAvailabilityForCurrentMonth();
