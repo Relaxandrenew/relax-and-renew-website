@@ -1945,12 +1945,12 @@ function mobileConfirmBooking() {
               <div class="card-fancy p-3 sm:p-5">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                   <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
-                    <i data-lucide="history" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    <i data-lucide="crown" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Completed</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Membership</div>
                 </div>
-                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-completed-count">0</div>
-                <div class="muted text-[0.7rem] sm:text-xs mt-1">Past sessions</div>
+                <div class="text-base sm:text-lg font-serif text-brand-light" id="dash-membership-status">Standard</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Membership tier</div>
               </div>
               <div class="card-fancy p-3 sm:p-5">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
@@ -1968,10 +1968,10 @@ function mobileConfirmBooking() {
                   <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                   </div>
-                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Visits</div>
+                  <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Total Treatments</div>
                 </div>
-                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-total-visits">0</div>
-                <div class="muted text-[0.7rem] sm:text-xs mt-1">Lifetime completed sessions</div>
+                <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-total-treatments">0</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1"><span id="dash-total-hours">0 hours</span> of therapy</div>
               </div>
 </div>
 
@@ -2399,7 +2399,7 @@ function mobileConfirmBooking() {
       <div class="text-center">
         <p class="text-brand-dim text-sm">
           Experience an error or bug? 
-          <a href="mailto:info@relaxandrenew.ca?subject=Portal Bug Report" class="text-brand-gold hover:text-brand-goldHover transition-colors underline decoration-brand-gold/30 hover:decoration-brand-gold">
+          <a href="/cdn-cgi/l/email-protection#4d24232b220d3f28212c352c23293f2823283a632e2c723e382f27282e39701d223f392c216d0f382a6d1f283d223f39" class="text-brand-gold hover:text-brand-goldHover transition-colors underline decoration-brand-gold/30 hover:decoration-brand-gold">
             Please report it
           </a> 
           so we can investigate.
@@ -2536,7 +2536,7 @@ function mobileConfirmBooking() {
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -4793,10 +4793,7 @@ if (selectedSlot && driveTime > 0) {
         document.getElementById("history-empty")?.classList.remove("hidden");
         
         const dashUpcoming = document.getElementById("dash-upcoming-count");
-        const dashCompleted = document.getElementById("dash-completed-count");
-      const dashTotal = document.getElementById("dash-total-visits");
         if (dashUpcoming) dashUpcoming.textContent = "0";
-        if (dashCompleted) dashCompleted.textContent = "0";
       }, 10000);
 
       try {
@@ -4844,6 +4841,9 @@ if (selectedSlot && driveTime > 0) {
           return bs - as;
         });
 
+        // Load "Book Same as Last Time" banner immediately (parallel with other renders)
+        try { loadLastBookingSummary(); } catch (e) {}
+
         // Store last treatment for preloading
         if (completedAppointments.length > 0 || upcomingAppointments.length > 0) {
           const lastAppt = upcomingAppointments[0] || completedAppointments[0];
@@ -4863,7 +4863,6 @@ if (selectedSlot && driveTime > 0) {
         updateCountdown();
         if (countdownTimer) clearInterval(countdownTimer);
         countdownTimer = setInterval(updateCountdown, 60000);
-        loadLastBookingSummary();
 
 
       } catch (e) {
@@ -4887,10 +4886,22 @@ if (selectedSlot && driveTime > 0) {
       const emptyEl = document.getElementById("appointments-empty");
       const badge = document.getElementById("appt-count-badge");
       const dashUpcoming = document.getElementById("dash-upcoming-count");
-      const dashCompleted = document.getElementById("dash-completed-count");
+      const dashTotalTreatments = document.getElementById("dash-total-treatments");
+      const dashTotalHours = document.getElementById("dash-total-hours");
 
       if (dashUpcoming) dashUpcoming.textContent = upcomingAppointments.length;
-      if (dashCompleted) dashCompleted.textContent = completedAppointments.length;
+      
+      // Calculate total treatments and hours from completedAppointments
+      if (dashTotalTreatments) dashTotalTreatments.textContent = completedAppointments.length;
+      
+      if (dashTotalHours) {
+        const totalMinutes = completedAppointments.reduce((sum, appt) => {
+          const duration = Number(appt?.duration || appt?.duration_minutes || appt?.durationMinutes || 0);
+          return sum + duration;
+        }, 0);
+        const totalHours = Math.round(totalMinutes / 60 * 10) / 10; // Round to 1 decimal
+        dashTotalHours.textContent = `${totalHours} hours`;
+      }
 
       if (upcomingAppointments.length > 0) {
         if (badge) {
@@ -7475,10 +7486,4 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
             sw.addEventListener('statechange', () => {
               if (sw.state === 'installed' && navigator.serviceWorker.controller) {
                 // New version installed; activate ASAP
-                reg.waiting && reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          });
-
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // R
+                reg.waiting && reg.waiting.pos
