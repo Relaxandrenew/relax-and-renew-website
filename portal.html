@@ -2119,13 +2119,11 @@ function mobileConfirmBooking() {
 
           <!-- REBOOK TAB -->
           <div id="tab-rebook" class="tab-content hidden animate-fade-in-up">
-            <!-- Profile summary -->
+            <!-- Welcome Back Banner -->
             <div class="glass-panel p-6 mb-8">
-              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Welcome Back<span id="rebook-welcome-name"></span></h2>
-                  <p class="muted mt-2 font-light">Ready to book your next session? We’ll use your saved client profile.</p>
-                </div>
+              <div class="flex flex-col items-center text-center">
+                <h2 class="text-3xl font-serif text-brand-light">Welcome Back</h2>
+                <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
               </div>
 
               <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
@@ -2165,16 +2163,6 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
-
-                  <div class="flex-1">
-                    <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                  </div>
-                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
-                </div>
-              </button>
-            </div>
-
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
               <!-- Calendar + slots -->
@@ -2201,18 +2189,24 @@ function mobileConfirmBooking() {
 
                     <select id="duration-select" class="input w-full" disabled>
                       <option value="">Select a treatment first…</option>
-                    
-
-                <!-- Book Same as Last Time (Rebook) -->
-            <div id="rebook-book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
+                    </select>
                   </div>
+                </div>
 
-</select>
-                  </div>
+                <!-- Book Same as Last Time (moved inside calendar panel) -->
+                <div id="rebook-book-same-container" class="hidden mt-5">
+                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="rotate-cw" class="w-5 h-5 text-brand-gold"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-brand-light font-bold text-base flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
+                        <div class="muted text-sm truncate" id="rebook-last-booking-summary">Loading...</div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70 flex-shrink-0"></i>
+                    </div>
+                  </button>
                 </div>
 
                 <hr class="divider my-6">
@@ -3222,150 +3216,274 @@ function mobileConfirmBooking() {
 
       if (!portalProfile?.email) return;
 
-      // Ensure last booking cache exists
-      if (!lastBookingCache) {
-        try { await loadLastBookingSummary(); } catch(e) {}
-      }
-      if (!lastBookingCache) {
-        showToast("Quick Rebook", "We couldn't find a previous booking to rebook yet.", true, 4500);
-        return;
-      }
+      // Helper: parse time minutes from various formats
+      function minutesFromAny(v) {
+        if (!v) return null;
+        const raw = String(v).trim();
 
-      const lb = lastBookingCache || {};
-      const dur = Number(lb.duration || lb.durationMinutes || lb.duration_minutes || 60) || 60;
+        const dt = new Date(raw);
+        if (!isNaN(dt.getTime())) return dt.getHours() * 60 + dt.getMinutes();
 
-      // Determine weekday (0=Sun..6=Sat)
-      let targetDowNum = null;
-      try {
-        if (lb.day_of_week) {
-          const d = String(lb.day_of_week).trim().toLowerCase();
-          const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-          if (Object.prototype.hasOwnProperty.call(map, d)) targetDowNum = map[d];
+        let m = raw.match(/^(\d{1,2}):(\d{2})$/);
+        if (m) {
+          const hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+          const mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+          return hh * 60 + mm;
         }
-      } catch(e) {}
-      if (!Number.isInteger(targetDowNum) && lb.starts_at) {
+
+        m = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+        if (m) {
+          let hh = parseInt(m[1], 10);
+          const mm = parseInt(m[2] || "0", 10);
+          const ap = String(m[3]).toUpperCase();
+          if (ap === "PM" && hh !== 12) hh += 12;
+          if (ap === "AM" && hh === 12) hh = 0;
+          return hh * 60 + mm;
+        }
+        return null;
+      }
+
+      function deriveDowAndMinutes(lb) {
+        // Prefer parsing a full datetime if provided
+        const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
+        const dt = dtRaw ? new Date(String(dtRaw)) : null;
+        if (dt && !isNaN(dt.getTime())) {
+          return { dowNum: dt.getDay(), minutes: dt.getHours() * 60 + dt.getMinutes() };
+        }
+
+        const dow = (lb.day_of_week || "").toString().toLowerCase();
+        const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+        const dowNum = map[dow];
+
+        const minutes = minutesFromAny(lb.time || lb.start_time_local || lb.start_time || lb.starts_at || lb.start || lb.start_at);
+        return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
+      }
+
+      function setCalendarToMonth(dateStr) {
         try {
-          const dt = new Date(String(lb.starts_at));
-          if (!isNaN(dt.getTime())) targetDowNum = dt.getDay();
-        } catch(e) {}
+          const dt = new Date(String(dateStr) + "T12:00:00");
+          if (isNaN(dt.getTime())) return;
+          calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
+          renderCalendar();
+        } catch (e) {}
       }
 
-      // Determine treatment key
-      let tKey = (lb.treatment_key || lb.treatmentKey || lb.treatment || "").toString().trim();
-      if (!tKey) {
-        const name = (lb.treatment_label || lb.treatmentLabel || lb.treatment_type || lb.treatmentType || lb.appointment_type?.name || "").toString().toLowerCase();
-        const map = [
-          ["relaxation", "relaxation"], ["swedish", "relaxation"],
-          ["deep", "deep-tissue"], ["tissue", "deep-tissue"],
-          ["sports", "sports"],
-          ["senior", "senior"],
-          ["hot stone", "hot-stone"], ["stone", "hot-stone"],
-          ["cupping", "cupping"],
-          ["prenatal", "prenatal"],
-          ["pediatric", "pediatric"], ["paediatric", "pediatric"],
-          ["infant", "infant"]
-        ];
-        for (const [needle, key] of map) { if (name.includes(needle)) { tKey = key; break; } }
-      }
+      
+      function pickExactSlotOnDate(dateStr, targetMinutes) {
+        // IMPORTANT: Use the same slot-accessor the calendar uses, so Rebook reads availability
+        // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
+        const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
+        const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
+        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
+        if (!slots.length) return null;
 
-      if (!tKey) {
-        showToast("Quick Rebook", "We couldn't determine the treatment from your last booking.", true, 4500);
-        return;
-      }
+        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
-      // Switch to Rebook tab and set selects (NO network fetch here)
-      try { switchTab("rebook"); } catch(e) {}
+        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
+        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
+        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
 
-      selectedServiceKey = tKey;
-      selectedStandardDuration = dur;
-
-      try {
-        if (treatmentSelect) treatmentSelect.value = tKey;
-        rebuildDurationOptions();
-        if (durationSelect) durationSelect.value = String(dur);
-      } catch(e) {}
-
-      // Use already-preloaded two-month window (do not reload)
-      const payload = buildAvailabilityPayload();
-      if (payload?.error) {
-        showToast("Quick Rebook", payload.error, true, 4500);
-        return;
-      }
-
-      const cacheKey = getRequestCacheKey(payload);
-      if (!availabilityCache.has(cacheKey)) {
-        showToast("Quick Rebook", "Availability is still loading. Please wait a moment and try again.", false, 4200);
-        return;
-      }
-
-      // Hydrate from cache (no fetch)
-      try {
-        const cached = availabilityCache.get(cacheKey);
-        availabilityByDate = {};
-        dayApptsByDate = {};
-        parseAvailabilityResponse(cached);
-
-        const contextKey = [
-          payload.standardDurationMinutes,
-          payload.blockDurationMinutes,
-          payload.practitionerId,
-          payload.address, payload.city, payload.postal_code
-        ].join("|");
-        __availabilityLoadedContextKey = contextKey;
-        __availabilityLoadedRange = { from: payload.from, to: payload.to };
-      } catch(e) {}
-
-      // Find next available date matching weekday
-      const todayStr = toDateStr(new Date());
-      const rangeFrom = payload.from || __availabilityLoadedRange?.from || null;
-      const rangeTo = payload.to || __availabilityLoadedRange?.to || null;
-
-      const dates = Object.keys(availabilityByDate || {})
-        .map(k => (typeof normalizeDateKey === "function" ? normalizeDateKey(k) : k))
-        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(String(k)))
-        .sort();
-
-      let nextDate = null;
-      for (const d of dates) {
-        if (rangeFrom && d < rangeFrom) continue;
-        if (d < todayStr) continue;
-        if (rangeTo && d > rangeTo) break;
-
-        if (Number.isInteger(targetDowNum)) {
-          const dt = new Date(d + "T12:00:00");
-          if (dt.getDay() !== targetDowNum) continue;
+        if (targetLabel && typeof formatTimeLabel === "function") {
+          const tNorm = norm(targetLabel);
+          for (const s of slots) {
+            const lab = String(formatTimeLabel(s) || "").replace(/est/g, "").replace(/\(booked\)/g, "").trim();
+            if (norm(lab) === tNorm) return s;
+          }
         }
 
-        const slots = Array.isArray(availabilityByDate[d]) ? availabilityByDate[d] : [];
-        const anyAvail = slots.some(s => {
-          try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
-        });
-
-        if (anyAvail) { nextDate = d; break; }
+        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
+        for (const s of slots) {
+          const m = getTorontoMinutesFromSlot(s);
+          if (m === null || m === undefined) continue;
+          if (m === targetMinutes) return s;
+        }
+        return null;
       }
 
-      if (!nextDate) {
-        showToast("Quick Rebook", "No availability found in the currently preloaded window.", true, 4500);
-        renderCalendar();
+        return null;
+      }
+
+      function _rnrKeyToDateStr(key) {
+        try {
+          if (!key) return null;
+          const k = String(key).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
+
+          if (typeof normalizeDateKey === "function") {
+            const nk = normalizeDateKey(k);
+            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
+          }
+
+          const dt = new Date(k);
+          if (!isNaN(dt.getTime())) {
+            if (typeof toDateStr === "function") return toDateStr(dt);
+            return dt.toISOString().slice(0, 10);
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function _rnrLoadedDateList() {
+        const set = new Set();
+        try {
+          for (const k of Object.keys(availabilityByDate || {})) {
+            const ds = _rnrKeyToDateStr(k);
+            if (ds) set.add(ds);
+          }
+        } catch (e) {}
+        return Array.from(set).sort();
+      }
+
+      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+
+        // IMPORTANT: derive dates from the same normalized keys the calendar uses
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
+          if (exactSlot) return { dateStr: d, slot: exactSlot };
+        }
+        return null;
+      }
+
+
+      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
+      // and has ANY availability. Used as a fallback when the exact time isn’t available.
+      function findNextAvailableAnyTime(targetDowNum) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          // IMPORTANT: Use the same availability criteria as the calendar day cells.
+          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
+          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
+          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
+          const anyAvail = slots.some(s => {
+            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
+          });
+
+          if (anyAvail) return d;
+        }
+        return null;
+      }
+
+      // =============================
+      // MAIN QUICK REBOOK LOGIC
+      // =============================
+      const lb = lastBookingCache;
+      if (!lb) {
+        showToast("No previous booking found", "error");
         return;
       }
 
-      // Jump calendar to month + select date (no time auto-pick)
-      try {
-        const dt = new Date(nextDate + "T12:00:00");
-        if (!isNaN(dt.getTime())) calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
-      } catch(e) {}
+      // Derive treatment key and duration
+      const tKey = lb.treatment_key || "";
+      const dur = Number(lb.duration || lb.durationMinutes || 60) || 60;
 
-      renderCalendar();
+      if (!tKey) {
+        showToast("Could not determine treatment type from last booking", "error");
+        return;
+      }
 
-      try {
-        if (typeof selectDate === "function") selectDate(nextDate, { userInitiated: false });
-      } catch(e) {}
+      // Get day of week (for matching)
+      const {dowNum} = deriveDowAndMinutes(lb);
+
+      // Check if we have cached availability for this treatment/duration
+      const cacheKey = `${tKey}-${dur}`;
+      const hasCached = __availabilityLoadedRange && 
+                        __availabilityLoadedRange.treatment === tKey && 
+                        __availabilityLoadedRange.duration === dur;
+
+      if (!hasCached) {
+        showToast("Loading availability first... Please wait and try again.", "info");
+        
+        // Trigger availability load but don't continue
+        const treatmentSelect = document.getElementById("treatment-select");
+        const durationSelect = document.getElementById("duration-select");
+        
+        if (treatmentSelect && durationSelect) {
+          treatmentSelect.value = tKey;
+          treatmentSelect.dispatchEvent(new Event("change"));
+          
+          setTimeout(() => {
+            durationSelect.value = String(dur);
+            durationSelect.dispatchEvent(new Event("change"));
+          }, 100);
+        }
+        return;
+      }
+
+      // Find next available day matching the weekday (no time matching)
+      const nextDay = findNextAvailableAnyTime(dowNum);
+      
+      if (!nextDay) {
+        showToast("No availability found for that day of the week", "error");
+        return;
+      }
+
+      // Set the treatment and duration programmatically
+      const treatmentSelect = document.getElementById("treatment-select");
+      const durationSelect = document.getElementById("duration-select");
+      
+      if (treatmentSelect) {
+        treatmentSelect.value = tKey;
+        treatmentSelect.dispatchEvent(new Event("change"));
+      }
+
+      setTimeout(() => {
+        if (durationSelect) {
+          durationSelect.value = String(dur);
+          durationSelect.dispatchEvent(new Event("change"));
+        }
+
+        // Jump to the calendar month and date
+        setTimeout(() => {
+          setCalendarToMonth(nextDay);
+          
+          setTimeout(() => {
+            // Highlight the day in the calendar
+            const dayButtons = document.querySelectorAll('#calendar-days button[data-date]');
+            for (const btn of dayButtons) {
+              if (btn.dataset.date === nextDay) {
+                btn.click();
+                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                break;
+              }
+            }
+            
+            showToast(`Jumped to next ${dowNum !== null ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowNum] : 'available day'}`, "success");
+          }, 300);
+        }, 300);
+      }, 100);
     }
 
+    // (Removed orphaned duplicate Quick Rebook block that broke parsing)
 
 
-// =============================
+    // =============================
     // Session Countdown (Feature #19)
     // =============================
     let countdownTimer = null;
@@ -6262,7 +6380,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="91f8fff7fed1e3f4fdf0e9f0fff5e3f4fff4e6bff2f0">[email&#160;protected]</a> / 226 337 9064.
         </div>
       </div>
 
@@ -7437,7 +7555,7 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
     </div>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // PWA SW registration (v4)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
@@ -7461,15 +7579,4 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
           });
 
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // Reload once to get the latest HTML/JS
-            window.location.reload();
-          });
-        } catch (e) {
-          console.warn('Service worker registration failed:', e);
-        }
-      });
-    }
-  </script>
-
-</body>
-</html>
+            // R
