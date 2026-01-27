@@ -1981,15 +1981,15 @@ function mobileConfirmBooking() {
             
 
             <!-- Book Same as Last Time -->
-            <div id="book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+            <div id="book-same-container" class="mb-6">
+              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn pointer-events-none opacity-60">
                 <div class="flex items-center gap-4">
                   <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
                     <i data-lucide="repeat" class="w-6 h-6"></i>
                   </div>
                   <div class="flex-1">
                     <div class="font-serif text-lg text-brand-light flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                    <div class="muted text-sm" id="last-booking-summary">Loading...</div>
+                    <div class="muted text-sm" id="last-booking-summary"><span class="skeleton skeleton-text block w-56"></span></div>
                   </div>
                   <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
                 </div>
@@ -2203,8 +2203,8 @@ function mobileConfirmBooking() {
                 <hr class="divider my-6">
 
                 <!-- Book Same as Last Time (inline) -->
-                <div id="rebook-book-same-container" class="hidden mb-6">
-                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                <div id="rebook-book-same-container" class="mb-6">
+                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn pointer-events-none opacity-60">
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 border border-brand-gold/20 bg-black/40 rounded-lg flex items-center justify-center">
                         <i data-lucide="rotate-cw" class="w-5 h-5 text-brand-gold"></i>
@@ -3122,6 +3122,16 @@ function mobileConfirmBooking() {
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
         try { dashHelper && dashHelper.classList.add("hidden"); } catch(e) {}
+
+        // Enable the buttons now that we have real data (skeleton/disabled is only for initial load)
+        try {
+          const b1 = dashWrap && dashWrap.querySelector("button");
+          if (b1) b1.classList.remove("pointer-events-none", "opacity-60");
+        } catch(e) {}
+        try {
+          const b2 = rebookWrap && rebookWrap.querySelector("button");
+          if (b2) b2.classList.remove("pointer-events-none", "opacity-60");
+        } catch(e) {}
       }
 
       // Prefer locally loaded completed appointments (faster + avoids dependency on last-booking webhook)
@@ -3180,8 +3190,8 @@ function mobileConfirmBooking() {
       }
 
       try {
-        if (dashSummary) dashSummary.textContent = "Loading...";
-        if (rebookSummary) rebookSummary.textContent = "Loading...";
+        if (dashSummary) dashSummary.innerHTML = '<span class="skeleton skeleton-text block w-56"></span>';
+        if (rebookSummary) rebookSummary.innerHTML = '<span class="skeleton skeleton-text block w-52"></span>';
 
         const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
           method: "POST",
