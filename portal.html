@@ -1,4 +1,4 @@
-<!-- Portal Version: v1.5 | Include cliniko_patient_id + auth0_sub in profile-update payload -->
+<!-- Portal Version: v1.7 | Profile edits now submit as change requests (no automatic syncing messaging) -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-12-v4">
 <head>
@@ -2436,7 +2436,7 @@ function mobileConfirmBooking() {
 
                   <button id="profile-save-btn" class="btn btn-filled hidden inline-flex items-center gap-2" onclick="saveProfileEdits()">
                     <i data-lucide="save" class="w-4 h-4"></i>
-                    <span>Save changes</span>
+                    <span>Request Change</span>
                   </button>
 
                   <button id="profile-cancel-btn" class="btn btn-outline hidden inline-flex items-center gap-2" onclick="setProfileEditMode(false, { reset: true })">
@@ -2452,8 +2452,8 @@ function mobileConfirmBooking() {
                     <i data-lucide="info" class="w-5 h-5"></i>
                   </div>
                   <div class="min-w-0">
-                    <div class="text-brand-light font-serif">Saving & syncing</div>
-                    <p class="muted mt-1">Your changes update immediately in the portal, then we sync them to Cliniko in the background.</p>
+                    <div class="text-brand-light font-serif">Change requests</div>
+                    <p class="muted mt-1">Submit your request and we’ll update your details as soon as possible. If you don’t hear back within 48 hours, please contact us by phone or email.</p>
                   </div>
                 </div>
               </div>
@@ -4578,43 +4578,55 @@ if (selectedSlot && driveTime > 0) {
 
       const changes = _diffProfile(before, after);
       if (!Object.keys(changes).length) {
-        showToast("No changes", "Nothing to save.", true);
-        setProfileEditMode(false);
+        showToast("No changes", "Nothing to request.", true);
+        setProfileEditMode(false, { reset: true });
         return;
       }
 
-      // Optimistic UI update
-      portalProfile = after;
-      saveProfileToLocalStorage(portalProfile);
-      try { hydrateProfileUI();
-          try { _flushPendingProfileUpdates(); } catch(e) {} } catch(e) {}
-      setProfileEditMode(false);
-
-      showToast("Profile updated", "Syncing in the background…", false);
-
+      // Submit a change request (do not update the portal profile automatically)
       const payload = {
-        event: "profile_update",
+        event: "profile_update_request",
         ts: new Date().toISOString(),
-        auth0_sub: portalProfile?.auth0_sub || before?.auth0_sub || "",
-                cliniko_patient_id: portalProfile?.cliniko_patient_id || before?.cliniko_patient_id || "",
+        auth0_sub: before?.auth0_sub || "",
+        cliniko_patient_id: before?.cliniko_patient_id || "",
         email_before: (before?.email || "").trim().toLowerCase(),
-        email: (portalProfile?.email || "").trim().toLowerCase(),
+        email: (after?.email || "").trim().toLowerCase(),
         changes,
         profile: {
-          firstName: portalProfile?.firstName || "",
-          lastName: portalProfile?.lastName || "",
-          email: (portalProfile?.email || "").trim().toLowerCase(),
-          phone: portalProfile?.phone || "",
-          address: portalProfile?.address || "",
-          city: portalProfile?.city || "",
-          postal_code: portalProfile?.postal_code || "",
-          cliniko_patient_id: portalProfile?.cliniko_patient_id || ""
+          firstName: after?.firstName || "",
+          lastName: after?.lastName || "",
+          email: (after?.email || "").trim().toLowerCase(),
+          phone: after?.phone || "",
+          address: after?.address || "",
+          city: after?.city || "",
+          postal_code: after?.postal_code || "",
+          cliniko_patient_id: before?.cliniko_patient_id || ""
         }
       };
 
       const ok = await _sendProfileUpdateWebhook(payload);
       if (!ok) _queuePendingProfileUpdate(payload);
+
+      // Revert UI back to stored profile values
+      setProfileEditMode(false, { reset: true });
+
+      if (ok) {
+        showToast(
+          "Request sent",
+          "We’ll review and update your details as soon as possible. If you don’t hear back within 48 hours, please contact us by phone or email.",
+          false,
+          6500
+        );
+      } else {
+        showToast(
+          "Request not sent",
+          "We couldn't submit your request right now. Please contact us by phone or email.",
+          true,
+          6500
+        );
+      }
     }
+
     function loadProfileFromLocalStorage() {
       try {
         const raw = localStorage.getItem("rnr_portal_profile");
