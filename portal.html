@@ -2163,6 +2163,24 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
+
+
+            <!-- Book Same as Last Time (Rebook) -->
+            <div id="rebook-book-same-container" class="hidden mb-6">
+              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
+                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
+                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
+                </div>
+              </button>
+            </div>
+
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
               <!-- Calendar + slots -->
@@ -2191,22 +2209,6 @@ function mobileConfirmBooking() {
                       <option value="">Select a treatment first…</option>
                     </select>
                   </div>
-                </div>
-
-                <!-- Book Same as Last Time (moved inside calendar panel) -->
-                <div id="rebook-book-same-container" class="hidden mt-5">
-                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="rotate-cw" class="w-5 h-5 text-brand-gold"></i>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="text-brand-light font-bold text-base flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                        <div class="muted text-sm truncate" id="rebook-last-booking-summary">Loading...</div>
-                      </div>
-                      <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70 flex-shrink-0"></i>
-                    </div>
-                  </button>
                 </div>
 
                 <hr class="divider my-6">
@@ -3300,6 +3302,9 @@ function mobileConfirmBooking() {
         return null;
       }
 
+        return null;
+      }
+
       function _rnrKeyToDateStr(key) {
         try {
           if (!key) return null;
@@ -3386,96 +3391,6 @@ function mobileConfirmBooking() {
         }
         return null;
       }
-
-      // =============================
-      // MAIN QUICK REBOOK LOGIC
-      // =============================
-      const lb = lastBookingCache;
-      if (!lb) {
-        showToast("No previous booking found", "error");
-        return;
-      }
-
-      // Derive treatment key and duration
-      const tKey = lb.treatment_key || "";
-      const dur = Number(lb.duration || lb.durationMinutes || 60) || 60;
-
-      if (!tKey) {
-        showToast("Could not determine treatment type from last booking", "error");
-        return;
-      }
-
-      // Get day of week (for matching)
-      const {dowNum} = deriveDowAndMinutes(lb);
-
-      // Check if we have cached availability for this treatment/duration
-      const cacheKey = `${tKey}-${dur}`;
-      const hasCached = __availabilityLoadedRange && 
-                        __availabilityLoadedRange.treatment === tKey && 
-                        __availabilityLoadedRange.duration === dur;
-
-      if (!hasCached) {
-        showToast("Loading availability first... Please wait and try again.", "info");
-        
-        // Trigger availability load but don't continue
-        const treatmentSelect = document.getElementById("treatment-select");
-        const durationSelect = document.getElementById("duration-select");
-        
-        if (treatmentSelect && durationSelect) {
-          treatmentSelect.value = tKey;
-          treatmentSelect.dispatchEvent(new Event("change"));
-          
-          setTimeout(() => {
-            durationSelect.value = String(dur);
-            durationSelect.dispatchEvent(new Event("change"));
-          }, 100);
-        }
-        return;
-      }
-
-      // Find next available day matching the weekday (no time matching)
-      const nextDay = findNextAvailableAnyTime(dowNum);
-      
-      if (!nextDay) {
-        showToast("No availability found for that day of the week", "error");
-        return;
-      }
-
-      // Set the treatment and duration programmatically
-      const treatmentSelect = document.getElementById("treatment-select");
-      const durationSelect = document.getElementById("duration-select");
-      
-      if (treatmentSelect) {
-        treatmentSelect.value = tKey;
-        treatmentSelect.dispatchEvent(new Event("change"));
-      }
-
-      setTimeout(() => {
-        if (durationSelect) {
-          durationSelect.value = String(dur);
-          durationSelect.dispatchEvent(new Event("change"));
-        }
-
-        // Jump to the calendar month and date
-        setTimeout(() => {
-          setCalendarToMonth(nextDay);
-          
-          setTimeout(() => {
-            // Highlight the day in the calendar
-            const dayButtons = document.querySelectorAll('#calendar-days button[data-date]');
-            for (const btn of dayButtons) {
-              if (btn.dataset.date === nextDay) {
-                btn.click();
-                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                break;
-              }
-            }
-            
-            showToast(`Jumped to next ${dowNum !== null ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dowNum] : 'available day'}`, "success");
-          }, 300);
-        }, 300);
-      }, 100);
-    }
 
     // (Removed orphaned duplicate Quick Rebook block that broke parsing)
 
@@ -6377,7 +6292,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="91f8fff7fed1e3f4fdf0e9f0fff5e3f4fff4e6bff2f0">[email&#160;protected]</a> / 226 337 9064.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c1a8afa7ae81b3a4ada0b9a0afa5b3a4afa4b6efa2a0">[email&#160;protected]</a> / 226 337 9064.
         </div>
       </div>
 
