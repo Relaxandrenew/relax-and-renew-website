@@ -3565,31 +3565,71 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
         // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
         const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
         const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
-        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
+        const slots = slotsAll.filter(s => {
+          try { return isSlotAvailable(s) && slotPassesUiWindow(dateStr, s); } catch(e) { return false; }
+        });
         if (!slots.length) return null;
 
         if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
 
-        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
-        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+        // Helper: parse minutes-from-midnight from common UI labels ("1:00 PM", "1 PM", "13:00", "1PM")
+        const _rnrParseMinutes = (txt) => {
+          try {
+            const s = String(txt || "").trim().toUpperCase().replace(/\s+/g, " ");
+            if (!s) return null;
 
-        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
-        if (targetLabel && typeof formatTimeLabel === "function") {
-          const tNorm = norm(targetLabel);
+            // 24h "HH:MM"
+            let m = s.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+            if (m) return (parseInt(m[1],10)*60) + parseInt(m[2],10);
+
+            // 12h with optional minutes (handles "1 PM", "1:00PM", "01:00 PM")
+            m = s.match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)$/);
+            if (!m) m = s.replace(" ", "").match(/^(\d{1,2})(?::([0-5]\d))?(AM|PM)$/);
+            if (m) {
+              let hh = parseInt(m[1],10);
+              const mm = (m[2] !== undefined) ? parseInt(m[2],10) : 0;
+              const ap = m[3];
+              if (hh === 12) hh = 0;
+              let out = hh*60 + mm;
+              if (ap === "PM") out += 12*60;
+              return out;
+            }
+          } catch(e) {}
+          return null;
+        };
+
+        // Primary: match by the *same display label pipeline* the calendar uses, then parse minutes from it.
+        // This avoids false negatives caused by minor formatting differences ("1:00PM" vs "1:00 PM" vs "1 PM").
+        const useMobile = (typeof isMobileUI === "function" && isMobileUI());
+        for (const s of slots) {
+          let label = "";
+          try {
+            if (useMobile && typeof formatTimeLabelCompact === "function") {
+              label = formatTimeLabelCompact(s);
+            } else if (typeof formatTimeLabel === "function") {
+              label = formatTimeLabel(s);
+            } else {
+              label = (s && (s.label || s.start || s.starts_at || s.start_time || s.time)) ? (s.label || s.start || s.starts_at || s.start_time || s.time) : "";
+            }
+          } catch(e) { label = ""; }
+
+          label = String(label || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
+          const mins = (typeof RNR__minutesFromLabel === "function") ? RNR__minutesFromLabel(label) : _rnrParseMinutes(label);
+          if (mins !== null && mins === targetMinutes) return s;
+        }
+
+        // Secondary fallback: parse minutes from slot fields (Toronto conversion)
+        if (typeof getTorontoMinutesFromSlot === "function") {
           for (const s of slots) {
-            const lab = String(formatTimeLabel(s) || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
-            if (norm(lab) === tNorm) return s;
+            const m = getTorontoMinutesFromSlot(s);
+            if (m === null || m === undefined) continue;
+            if (m === targetMinutes) return s;
           }
         }
 
-        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
-        for (const s of slots) {
-          const m = getTorontoMinutesFromSlot(s);
-          if (m === null || m === undefined) continue;
-          if (m === targetMinutes) return s;
-        }
         return null;
       }
+
 
       function _rnrKeyToDateStr(key) {
         try {
