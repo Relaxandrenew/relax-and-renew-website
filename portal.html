@@ -238,6 +238,27 @@
       min-height: 48px;
       max-width: 100%; /* Prevent overflow */
     }
+    /* Profile Inputs (dark) */
+    .input-dark {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(224, 197, 132, 0.3);
+      color: var(--brand-light);
+      padding: 0.6rem 1rem;
+      border-radius: 0.25rem;
+      outline: none;
+      font-size: 1rem;
+      min-height: 48px;
+      max-width: 100%;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .input-dark::placeholder { color: rgba(224, 197, 132, 0.55); }
+    .input-dark:focus {
+      border-color: rgba(240, 213, 148, 0.8);
+      box-shadow: 0 0 0 3px rgba(224, 197, 132, 0.18);
+    }
+    textarea.input-dark { min-height: 110px; resize: vertical; }
+
     /* Fixed Dropdowns: Custom arrow, dark background for options */
     select.input {
       appearance: none;
@@ -1873,7 +1894,7 @@ function mobileConfirmBooking() {
               <div class="flex-1 min-w-0">
                 <div class="text-[0.65rem] text-brand-dim uppercase tracking-widest">Welcome back</div>
                 <div class="text-brand-light font-serif text-sm leading-tight truncate" id="nav-user-name">—</div>
-                <button type="button" onclick="openProfileEditor()" class="mt-1 text-[0.7rem] text-brand-gold/80 hover:text-brand-gold underline underline-offset-4 decoration-brand-gold/30 hover:decoration-brand-gold/70 transition">Edit Profile</button>
+                <button type="button" onclick="openProfileView()" class="mt-1 text-[0.7rem] text-brand-gold/80 hover:text-brand-gold underline underline-offset-4 decoration-brand-gold/30 hover:decoration-brand-gold/70 transition">View Profile</button>
               </div>
             </div>
 
@@ -2409,7 +2430,7 @@ function mobileConfirmBooking() {
                 <div class="flex items-center gap-2">
                   <button id="profile-edit-btn" class="btn btn-outline inline-flex items-center gap-2" onclick="setProfileEditMode(true)">
                     <i data-lucide="pencil" class="w-4 h-4"></i>
-                    <span>Edit</span>
+                    <span>Edit Details</span>
                   </button>
 
                   <button id="profile-save-btn" class="btn btn-filled hidden inline-flex items-center gap-2" onclick="saveProfileEdits()">
@@ -4461,6 +4482,13 @@ if (selectedSlot && driveTime > 0) {
       try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch(e) {}
     }
 
+    function openProfileView() {
+      switchTab("profile");
+      // Ensure we land in view mode by default
+      setTimeout(() => setProfileEditMode(false, { reset: false }), 0);
+    }
+
+    // Backwards compatibility (older buttons/bookmarks)
     function openProfileEditor() {
       switchTab("profile");
       setTimeout(() => setProfileEditMode(true), 0);
