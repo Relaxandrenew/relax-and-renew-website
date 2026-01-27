@@ -2110,15 +2110,9 @@ function mobileConfirmBooking() {
           <div id="tab-rebook" class="tab-content hidden animate-fade-in-up">
             <!-- Profile summary -->
             <div class="glass-panel p-6 mb-8">
-              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Book Appointment</h2>
-                  <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
-                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
-                </div>
+              <div>
+                <h2 class="text-3xl font-serif text-brand-light">Book Appointment</h2>
+                <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
               </div>
 
               <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
@@ -2234,17 +2228,6 @@ function mobileConfirmBooking() {
                 </div>
 
                 <div id="calendar-days" class="mt-3 grid grid-cols-7 gap-2"></div>
-
-                <div class="mt-5 card-fancy p-4 border-brand-gold/20 bg-brand-gold/5">
-                  <div class="flex items-start gap-3">
-                    <i data-lucide="info" class="w-5 h-5 text-brand-gold mt-0.5"></i>
-                    <div class="flex-1">
-                      <div class="font-bold text-brand-light text-sm" id="availability-status-title">Availability</div>
-                      <div class="muted mt-1 text-sm font-light" id="availability-status-body">Select your treatment and duration to load live availability.</div>
-                      <div class="text-brand-gold/60 mt-2 text-xs uppercase tracking-wider" id="availability-meta"></div>
-                    </div>
-                  </div>
-                </div>
 
                 <!-- Selected Date -->
                 <div id="mobile-times-anchor" class="hidden"></div>
@@ -2408,6 +2391,19 @@ function mobileConfirmBooking() {
             </div>
           </div>
         </section>
+      </div>
+    </div>
+
+    <!-- Bug Report Footer -->
+    <div class="w-full max-w-7xl mx-auto px-4 py-8">
+      <div class="text-center">
+        <p class="text-brand-dim text-sm">
+          Experience an error or bug? 
+          <a href="mailto:info@relaxandrenew.ca?subject=Portal Bug Report" class="text-brand-gold hover:text-brand-goldHover transition-colors underline decoration-brand-gold/30 hover:decoration-brand-gold">
+            Please report it
+          </a> 
+          so we can investigate.
+        </p>
       </div>
     </div>
   </main>
