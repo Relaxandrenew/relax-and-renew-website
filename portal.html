@@ -2123,14 +2123,26 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Welcome back</h2>
-                  <p class="muted mt-2 font-light">Your profile is loaded — pick a treatment to view availability.</p>
+                  <h2 class="text-3xl font-serif text-brand-light">Welcome back<span id="rebook-welcome-name"></span></h2>
+                  <p class="muted mt-2 font-light">Ready to book your next session? Your profile is already saved.</p>
                 </div>
+              </div>
 
-                <!-- Profile data is still kept in the DOM (hidden) for scripts that reference it. -->
-                <div class="hidden" aria-hidden="true">
-                  <span id="pill-address">Address: —</span>
-                  <span id="pill-phone">Phone: —</span>
+              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
+                <div class="flex items-start gap-3">
+                  <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
+                  <div>
+                    <div class="font-bold text-brand-light">Profile data is missing</div>
+                    <div class="muted mt-1 text-sm">
+                      We could not find a saved address (and/or city/postal code) for your portal account. Because this is a mobile service, we cannot load availability without it.
+                      Please contact us to update your profile.
+                    </div>
+                    <div class="mt-3">
+                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#264f4840496654434a475e4748425443484351084547">
+                        <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2153,6 +2165,24 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
+
+
+            <!-- Book Same as Last Time (Rebook) -->
+            <div id="rebook-book-same-container" class="hidden mb-6">
+              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
+                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
+                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
+                </div>
+              </button>
+            </div>
+
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
               <!-- Calendar + slots -->
@@ -2185,26 +2215,7 @@ function mobileConfirmBooking() {
 
                 <hr class="divider my-6">
 
-                                <!-- Book the same as last time (integrated) -->
-                <div id="rebook-book-same-container" class="hidden mt-4 mb-6">
-                  <button type="button" onclick="bookSameAsLastTime(event)" class="w-full text-left card-fancy p-4 hover:border-brand-gold/40 transition">
-                    <div class="flex items-start gap-4">
-                      <div class="w-10 h-10 rounded-full border border-brand-gold/30 flex items-center justify-center bg-black/30">
-                        <i data-lucide="repeat" class="w-5 h-5 text-brand-gold"></i>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="text-brand-light font-semibold flex items-center gap-2">
-                          Book the same as last time
-                          <span class="qr-spinner" aria-hidden="true"></span>
-                        </div>
-                        <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                        <div class="muted text-xs mt-1">We’ll jump you to the next available day.</div>
-                      </div>
-                      <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold/70 mt-1"></i>
-                    </div>
-                  </button>
-                </div>
-<!-- NEW PROGRESS BAR LOADER -->
+                <!-- NEW PROGRESS BAR LOADER -->
                 <div id="availability-loading" class="hidden mb-6">
                     <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
                         <span>Checking Availability...</span>
@@ -3209,353 +3220,167 @@ function mobileConfirmBooking() {
 
       if (!portalProfile?.email) return;
 
-      // Helper: parse time minutes from various formats
-      function minutesFromAny(v) {
-        if (!v) return null;
-        const raw = String(v).trim();
+      // Ensure we have last booking cached
+      try {
+        if (!lastBookingCache) await loadLastBookingSummary();
+      } catch (e) {}
 
-        const dt = new Date(raw);
-        if (!isNaN(dt.getTime())) return dt.getHours() * 60 + dt.getMinutes();
+      if (!lastBookingCache) {
+        showToast("Rebook unavailable", "We couldn’t find your last session yet. Please try again in a moment.", true, 5200);
+        return;
+      }
 
-        let m = raw.match(/^(\d{1,2}):(\d{2})$/);
-        if (m) {
-          const hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
-          const mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
-          return hh * 60 + mm;
+      // Derive treatment + duration from last booking
+      let preloadTreatment = lastBookingCache.treatment_key || null;
+      let preloadDuration = Number(lastBookingCache.duration || lastBookingCache.durationMinutes || 60) || 60;
+
+      try {
+        if (!preloadTreatment) {
+          const name = String(lastBookingCache.treatment_label || lastBookingCache.treatment || lastBookingCache.treatment_type || "").toLowerCase();
+          if (name.includes("deep")) preloadTreatment = "deep-tissue";
+          else if (name.includes("sport")) preloadTreatment = "sports";
+          else if (name.includes("senior")) preloadTreatment = "senior";
+          else if (name.includes("hot stone") || name.includes("stone")) preloadTreatment = "hot-stone";
+          else if (name.includes("cupping")) preloadTreatment = "cupping";
+          else if (name.includes("prenatal")) preloadTreatment = "prenatal";
+          else if (name.includes("pediatric") || name.includes("paediatric")) preloadTreatment = "pediatric";
+          else if (name.includes("infant")) preloadTreatment = "infant";
+          else if (name.includes("relax") || name.includes("swedish")) preloadTreatment = "relaxation";
         }
+      } catch (e) {}
 
-        m = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
-        if (m) {
-          let hh = parseInt(m[1], 10);
-          const mm = parseInt(m[2] || "0", 10);
-          const ap = String(m[3]).toUpperCase();
-          if (ap === "PM" && hh !== 12) hh += 12;
-          if (ap === "AM" && hh === 12) hh = 0;
-          return hh * 60 + mm;
+      const rule = preloadTreatment ? TREATMENT_RULES[preloadTreatment] : null;
+      if (!rule) {
+        showToast("Rebook unavailable", "We couldn’t match your last treatment to a bookable service.", true, 5200);
+        return;
+      }
+
+      if (!rule.durations.includes(preloadDuration)) {
+        preloadDuration = rule.durations[0] || 60;
+      }
+
+      // Store last treatment so the preload logic and future sessions stay consistent
+      try {
+        localStorage.setItem("rnr_portal_last_treatment", JSON.stringify({
+          treatment_type: lastBookingCache.treatment_label || lastBookingCache.treatment || rule.label,
+          duration: preloadDuration
+        }));
+      } catch (e) {}
+
+      // Load availability for that treatment/duration
+      setQuickRebookEnabled(false);
+      try { await preloadAvailabilityInBackground(true); } catch (e) {}
+
+      if (!availabilityPreloaded) {
+        showToast("Loading availability", "We’re still loading availability for your last service. Please try again in a moment.", true, 5200);
+        return;
+      }
+
+      // Derive weekday (Toronto)
+      function deriveDowNum(lb) {
+        try {
+          const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
+          const dt = dtRaw ? new Date(String(dtRaw)) : null;
+          if (dt && !isNaN(dt.getTime())) return dt.getDay();
+        } catch (e) {}
+        try {
+          const dow = (lb.day_of_week || "").toString().toLowerCase();
+          const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
+          const n = map[dow];
+          return Number.isInteger(n) ? n : null;
+        } catch (e) {}
+        return null;
+      }
+
+      function _rnrKeyToDateStr(key) {
+        try {
+          if (!key) return null;
+          const k = String(key).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
+          if (typeof normalizeDateKey === "function") {
+            const nk = normalizeDateKey(k);
+            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
+          }
+          const dt = new Date(k);
+          if (!isNaN(dt.getTime())) {
+            if (typeof toDateStr === "function") return toDateStr(dt);
+            return dt.toISOString().slice(0, 10);
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function _rnrLoadedDateList() {
+        const set = new Set();
+        try {
+          for (const k of Object.keys(availabilityByDate || {})) {
+            const ds = _rnrKeyToDateStr(k);
+            if (ds) set.add(ds);
+          }
+        } catch (e) {}
+        return Array.from(set).sort();
+      }
+
+      function findNextAvailableAnyTime(targetDowNum) {
+        const todayStr = toDateStr(new Date());
+        const rangeFrom = __availabilityLoadedRange?.from || null;
+        const rangeTo = __availabilityLoadedRange?.to || null;
+        const dates = _rnrLoadedDateList();
+
+        for (const d of dates) {
+          if (rangeFrom && d < rangeFrom) continue;
+          if (d < todayStr) continue;
+          if (rangeTo && d > rangeTo) break;
+
+          if (Number.isInteger(targetDowNum)) {
+            const dt = new Date(d + "T12:00:00");
+            if (dt.getDay() !== targetDowNum) continue;
+          }
+
+          const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(d) : (availabilityByDate?.[d] || []);
+          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
+          const anyAvail = slots.some(s => {
+            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
+          });
+
+          if (anyAvail) return d;
         }
         return null;
       }
 
-      function deriveDowAndMinutes(lb) {
-        // Prefer parsing a full datetime if provided
-        const dtRaw = lb.start_time_local || lb.starts_at_local || lb.starts_at || lb.start_time || lb.start || lb.start_at || lb.starts_at_utc;
-        const dt = dtRaw ? new Date(String(dtRaw)) : null;
-        if (dt && !isNaN(dt.getTime())) {
-          return { dowNum: dt.getDay(), minutes: dt.getHours() * 60 + dt.getMinutes() };
+      const targetDow = deriveDowNum(lastBookingCache);
+      const nextDate = findNextAvailableAnyTime(targetDow);
+
+      if (!nextDate) {
+        // Fall back to the first available day in the loaded window
+        const anyDay = findNextAvailableAnyTime(null);
+        if (!anyDay) {
+          showToast("No availability", "We couldn’t find an open day in the current availability window.", true, 6000);
+          return;
         }
-
-        const dow = (lb.day_of_week || "").toString().toLowerCase();
-        const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-        const dowNum = map[dow];
-
-        const minutes = minutesFromAny(lb.time || lb.start_time_local || lb.start_time || lb.starts_at || lb.start || lb.start_at);
-        return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
-      }
-
-      function setCalendarToMonth(dateStr) {
+        switchTab("rebook");
         try {
-          const dt = new Date(String(dateStr) + "T12:00:00");
-          if (isNaN(dt.getTime())) return;
+          const dt = new Date(anyDay + "T12:00:00");
           calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
           renderCalendar();
         } catch (e) {}
-      }
-
-      
-      function pickExactSlotOnDate(dateStr, targetMinutes) {
-        // IMPORTANT: Use the same slot-accessor the calendar uses, so Rebook reads availability
-        // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
-        const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
-        const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
-        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
-        if (!slots.length) return null;
-
-        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
-
-        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
-        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
-
-        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
-        if (targetLabel && typeof formatTimeLabel === "function") {
-          const tNorm = norm(targetLabel);
-          for (const s of slots) {
-            const lab = String(formatTimeLabel(s) || "").replace(/est/gi, "").replace(/\(booked\)/gi, "").trim();
-            if (norm(lab) === tNorm) return s;
-          }
-        }
-
-        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
-        for (const s of slots) {
-          const m = getTorontoMinutesFromSlot(s);
-          if (m === null || m === undefined) continue;
-          if (m === targetMinutes) return s;
-        }
-        return null;
-      }
-
-      function _rnrKeyToDateStr(key) {
-        try {
-          if (!key) return null;
-          const k = String(key).trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
-
-          if (typeof normalizeDateKey === "function") {
-            const nk = normalizeDateKey(k);
-            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
-          }
-
-          const dt = new Date(k);
-          if (!isNaN(dt.getTime())) {
-            if (typeof toDateStr === "function") return toDateStr(dt);
-            return dt.toISOString().slice(0, 10);
-          }
-        } catch (e) {}
-        return null;
-      }
-
-      function _rnrLoadedDateList() {
-        const set = new Set();
-        try {
-          for (const k of Object.keys(availabilityByDate || {})) {
-            const ds = _rnrKeyToDateStr(k);
-            if (ds) set.add(ds);
-          }
-        } catch (e) {}
-        return Array.from(set).sort();
-      }
-
-      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-
-        // IMPORTANT: derive dates from the same normalized keys the calendar uses
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
-          if (exactSlot) return { dateStr: d, slot: exactSlot };
-        }
-        return null;
-      }
-
-
-      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
-      // and has ANY availability. Used as a fallback when the exact time isn’t available.
-      function findNextAvailableAnyTime(targetDowNum) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          // IMPORTANT: Use the same availability criteria as the calendar day cells.
-          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
-          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
-          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
-          const anyAvail = slots.some(s => {
-            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
-          });
-
-          if (anyAvail) return d;
-        }
-        return null;
-      }
-
-
-      try {
-        // Use cached last booking (from locally loaded appointments or prior webhook call) when available
-        let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
-
-        if (!lb) {
-          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!data.success || !data.lastBooking) {
-            showToast("No previous booking found", "Please book manually.", true);
-            switchTab("rebook");
-            return;
-          }
-          lb = data.lastBooking;
-          lastBookingCache = lb;
-        }
-
-        // Apply treatment + duration
-        selectedServiceKey = lb.treatment_key || selectedServiceKey;
-        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
-
-        const tSel = document.getElementById("treatment-select");
-        const dSel = document.getElementById("duration-select");
-
-        if (tSel) tSel.value = selectedServiceKey;
-        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
-        if (dSel) dSel.value = String(selectedStandardDuration);
-
-        // Move to Rebook tab
-        switchTab("rebook");
-        updateBookingStepper();
-
-        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
-        const desiredDuration = Number(selectedStandardDuration || 0) || null;
-        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
-
-        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
-          ? (Number(preloadedDuration) !== Number(desiredDuration))
-          : false;
-
-        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
-          ? (String(preloadedTreatment) !== String(desiredTreatment))
-          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
-
-        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
-          const startedAt = Date.now();
-          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
-            await new Promise(r => setTimeout(r, 120));
-          }
-        }
-
-        // Load availability only when needed:
-        // - not preloaded yet, or
-        // - treatment changed, or
-        // - duration changed
-        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
-          await maybeLoadAvailabilityForCurrentMonth();
-        }
-
-        // Must have a loaded range and dates
-        if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
-          showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
-          return;
-        }
-        const { dowNum } = deriveDowAndMinutes(lb);
-
-        // Day-only Quick Rebook: jump to the next available day (same weekday as last booking) within the loaded 2-month window.
-        const nextDayWithAny = findNextAvailableAnyTime(dowNum);
-
-        if (nextDayWithAny) {
-          showToast("Next available day", "We’ve jumped you to the next available day. Please choose a time.", false);
-          switchTab("rebook");
-          setCalendarToMonth(nextDayWithAny);
-          try { document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
-          selectDate(nextDayWithAny, { userInitiated: true });
-          return;
-        }
-
-        showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+        selectDate(anyDay, { userInitiated: true });
+        showToast("Select a time", "We’ve taken you to the next available day. Pick a time that works for you.");
         return;
-      } catch (e) {
-        showToast("Unable to rebook", "Please book manually.", true);
-        switchTab("rebook");
       }
+
+      // Go to the day (NOT day+time)
+      switchTab("rebook");
+      try {
+        const dt = new Date(nextDate + "T12:00:00");
+        calendarCurrent = new Date(dt.getFullYear(), dt.getMonth(), 1);
+        renderCalendar();
+      } catch (e) {}
+
+      selectDate(nextDate, { userInitiated: true });
+      showToast("Welcome back", "We’ve pulled up the next available day for your last service. Choose a time when you’re ready.");
     }
 
-      function _rnrKeyToDateStr(key) {
-        try {
-          if (!key) return null;
-          const k = String(key).trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
-
-          if (typeof normalizeDateKey === "function") {
-            const nk = normalizeDateKey(k);
-            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
-          }
-
-          const dt = new Date(k);
-          if (!isNaN(dt.getTime())) {
-            if (typeof toDateStr === "function") return toDateStr(dt);
-            return dt.toISOString().slice(0, 10);
-          }
-        } catch (e) {}
-        return null;
-      }
-
-      function _rnrLoadedDateList() {
-        const set = new Set();
-        try {
-          for (const k of Object.keys(availabilityByDate || {})) {
-            const ds = _rnrKeyToDateStr(k);
-            if (ds) set.add(ds);
-          }
-        } catch (e) {}
-        return Array.from(set).sort();
-      }
-
-      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-
-        // IMPORTANT: derive dates from the same normalized keys the calendar uses
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
-          if (exactSlot) return { dateStr: d, slot: exactSlot };
-        }
-        return null;
-      }
-
-
-      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
-      // and has ANY availability. Used as a fallback when the exact time isn’t available.
-      function findNextAvailableAnyTime(targetDowNum) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          // IMPORTANT: Use the same availability criteria as the calendar day cells.
-          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
-          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
-          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
-          const anyAvail = slots.some(s => {
-            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
-          });
-
-          if (anyAvail) return d;
-        }
-        return null;
-      }
 
     // (Removed orphaned duplicate Quick Rebook block that broke parsing)
 
@@ -4114,12 +3939,8 @@ function computeMonthRange(date) {
 
     function setConfirmEnabled(enabled) {
       const btn = document.getElementById("confirm-booking-btn");
-      if (btn) {
-        btn.disabled = !enabled;
-        btn.classList.toggle("btn-disabled", !enabled);
-      }
-      // Keep mobile CTA in sync if the overlay is open
-      try { if (typeof syncMobileConfirmButton === 'function') syncMobileConfirmButton(); } catch (e) {}
+      btn.disabled = !enabled;
+      btn.classList.toggle("btn-disabled", !enabled);
     }
 
     function updateSummary() {
@@ -4312,9 +4133,17 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("nav-user-name").textContent = portalProfile?.firstName || portalProfile?.email || "—";
       document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
 
+      // Rebook tab: welcome banner name (UI-only)
+      try {
+        const el = document.getElementById("rebook-welcome-name");
+        if (el) el.textContent = portalProfile?.firstName ? `, ${portalProfile.firstName}` : "";
+      } catch (e) {}
+
       const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
-      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
-      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
+      const pillAddrEl = document.getElementById("pill-address");
+      if (pillAddrEl) pillAddrEl.textContent = `Address: ${addrLine}`;
+      const pillPhoneEl = document.getElementById("pill-phone");
+      if (pillPhoneEl) pillPhoneEl.textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
       // Dashboard location
       const dashLoc = document.getElementById("dash-location");
@@ -5971,20 +5800,14 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     }
 
     function selectTimeSlot(slot, btnElement) {
-      try {
-        selectedSlot = slot;
+      selectedSlot = slot;
 
-        try {
-          document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
-          if (btnElement && btnElement.classList) btnElement.classList.add("time-slot-selected");
-        } catch (e) {}
+      document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
+      btnElement.classList.add("time-slot-selected");
 
-        try { updateSummary(); } catch (e) { console.warn('updateSummary error:', e); }
-        try { updateBookingStepper(); } catch (e) { console.warn('updateBookingStepper error:', e); }
-        try { savePortalState(); } catch (e) {}
-      } catch (e) {
-        console.warn('selectTimeSlot error:', e);
-      }
+      updateSummary();
+      updateBookingStepper();
+      savePortalState();
     }
 
     async function prevMonth() {
