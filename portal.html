@@ -2123,30 +2123,14 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-2xl font-serif text-brand-light">Saved profile</h2>
-                  <p class="muted mt-2 font-light">We’ll use your saved details to speed up booking.</p>
+                  <h2 class="text-3xl font-serif text-brand-light">Welcome back</h2>
+                  <p class="muted mt-2 font-light">Your profile is loaded — pick a treatment to view availability.</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
-                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
-                </div>
-              </div>
 
-              <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
-                <div class="flex items-start gap-3">
-                  <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 mt-0.5"></i>
-                  <div>
-                    <div class="font-bold text-brand-light">Profile data is missing</div>
-                    <div class="muted mt-1 text-sm">
-                      We could not find a saved address (and/or city/postal code) for your portal account. Because this is a mobile service, we cannot load availability without it.
-                      Please contact us to update your profile.
-                    </div>
-                    <div class="mt-3">
-                      <a class="btn-outline text-xs py-2" href="/cdn-cgi/l/email-protection#264f4840496654434a475e4748425443484351084547">
-                        <i data-lucide="mail" class="w-4 h-4"></i> Contact Support
-                      </a>
-                    </div>
-                  </div>
+                <!-- Profile data is still kept in the DOM (hidden) for scripts that reference it. -->
+                <div class="hidden" aria-hidden="true">
+                  <span id="pill-address">Address: —</span>
+                  <span id="pill-phone">Phone: —</span>
                 </div>
               </div>
             </div>
@@ -2214,7 +2198,7 @@ function mobileConfirmBooking() {
                           <span class="qr-spinner" aria-hidden="true"></span>
                         </div>
                         <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                        <div class="muted text-xs mt-1">We’ll jump you to the next available day. Then you can pick the time.</div>
+                        <div class="muted text-xs mt-1">We’ll jump you to the next available day.</div>
                       </div>
                       <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold/70 mt-1"></i>
                     </div>
@@ -3148,7 +3132,7 @@ function mobileConfirmBooking() {
             const treatmentLabel = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "Massage").toString().trim();
             const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
             const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
-            const label = `${treatmentLabel} • ${dur} min • ${dayLabel} • ${timeLabel}`;
+            const label = `${treatmentLabel} • ${dur} min • ${dayLabel}`;
             try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
             try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
             if (dashSummary) dashSummary.textContent = label;
@@ -3200,7 +3184,7 @@ function mobileConfirmBooking() {
         }
 
         if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
-        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
+        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}`;
 
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
@@ -4130,8 +4114,12 @@ function computeMonthRange(date) {
 
     function setConfirmEnabled(enabled) {
       const btn = document.getElementById("confirm-booking-btn");
-      btn.disabled = !enabled;
-      btn.classList.toggle("btn-disabled", !enabled);
+      if (btn) {
+        btn.disabled = !enabled;
+        btn.classList.toggle("btn-disabled", !enabled);
+      }
+      // Keep mobile CTA in sync if the overlay is open
+      try { if (typeof syncMobileConfirmButton === 'function') syncMobileConfirmButton(); } catch (e) {}
     }
 
     function updateSummary() {
@@ -5983,14 +5971,20 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     }
 
     function selectTimeSlot(slot, btnElement) {
-      selectedSlot = slot;
+      try {
+        selectedSlot = slot;
 
-      document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
-      btnElement.classList.add("time-slot-selected");
+        try {
+          document.querySelectorAll(".time-slot-btn").forEach(btn => btn.classList.remove("time-slot-selected"));
+          if (btnElement && btnElement.classList) btnElement.classList.add("time-slot-selected");
+        } catch (e) {}
 
-      updateSummary();
-      updateBookingStepper();
-      savePortalState();
+        try { updateSummary(); } catch (e) { console.warn('updateSummary error:', e); }
+        try { updateBookingStepper(); } catch (e) { console.warn('updateBookingStepper error:', e); }
+        try { savePortalState(); } catch (e) {}
+      } catch (e) {
+        console.warn('selectTimeSlot error:', e);
+      }
     }
 
     async function prevMonth() {
