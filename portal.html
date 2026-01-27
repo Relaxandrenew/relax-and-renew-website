@@ -2123,13 +2123,14 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Quick Rebook</h2>
-                  <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
+                  <h2 class="text-2xl font-serif text-brand-light">Welcome back</h2>
+                  <p class="muted mt-2 text-sm font-light">Your saved profile will be used to speed up booking.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
                   <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
                 </div>
+              </div></div>
               </div>
 
               <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
@@ -2171,17 +2172,8 @@ function mobileConfirmBooking() {
             </div>
 
 
-            <!-- Book Same as Last Time (Rebook) -->
-            <div id="rebook-book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                  </div>
+            
+
                   <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
                 </div>
               </button>
@@ -2220,7 +2212,26 @@ function mobileConfirmBooking() {
                 <hr class="divider my-6">
 
                 <!-- NEW PROGRESS BAR LOADER -->
-                <div id="availability-loading" class="hidden mb-6">
+                <!-- Quick Rebook (Integrated) -->
+                <div id="rebook-book-same-container" class="hidden mt-4 mb-6">
+                  <button type="button" onclick="bookSameAsLastTime(event)" class="w-full text-left card-fancy p-4 hover:border-brand-gold/40 transition">
+                    <div class="flex items-start gap-4">
+                      <div class="w-10 h-10 rounded-full border border-brand-gold/30 flex items-center justify-center bg-black/30">
+                        <i data-lucide="repeat" class="w-5 h-5 text-brand-gold"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-brand-light font-semibold flex items-center gap-2">
+                          Book the same as last time
+                          <span class="qr-spinner" aria-hidden="true"></span>
+                        </div>
+                        <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
+                        <div class="muted text-xs mt-1">We’ll jump you to the next available day. You can pick the time.</div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold/70 mt-1"></i>
+                    </div>
+                  </button>
+                </div>
+<div id="availability-loading" class="hidden mb-6">
                     <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
                         <span>Checking Availability...</span>
                         <span class="animate-pulse">Please Wait</span>
@@ -3212,37 +3223,7 @@ function mobileConfirmBooking() {
       }
     }
 
-    
-    // Auto-select the first available time slot from the rendered calendar UI (Rebook fallback).
-    // This is intentionally UI-driven: if the calendar shows a clickable slot, this will pick it.
-    async function RNR__selectFirstAvailableTimeFromCalendarUI(timeoutMs = 2000) {
-      const grid = document.getElementById("time-slots-grid");
-      if (!grid) return false;
-
-      const start = Date.now();
-      while ((Date.now() - start) < timeoutMs) {
-        const buttons = Array.from(grid.querySelectorAll("button"));
-        const first = buttons.find(b => {
-          if (!b || b.disabled) return false;
-          const cls = b.classList || { contains: () => false };
-          if (cls.contains("cursor-not-allowed")) return false;
-          // Some disabled-looking buttons may not use disabled=true; guard those too.
-          if (cls.contains("opacity-50") && cls.contains("text-white/30")) return false;
-          return typeof b.click === "function";
-        });
-
-        if (first) {
-          try { first.click(); } catch (e) {}
-          return true;
-        }
-
-        await new Promise(r => setTimeout(r, 50));
-      }
-
-      return false;
-    }
-
-async function bookSameAsLastTime(ev) {
+    async function bookSameAsLastTime(ev) {
       try { if (ev && typeof ev.preventDefault === "function") ev.preventDefault(); } catch(e) {}
       try { if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation(); } catch(e) {}
 
@@ -3494,90 +3475,30 @@ async function bookSameAsLastTime(ev) {
           return;
         }
 
-        const { dowNum, minutes } = deriveDowAndMinutes(lb);
+        const { dowNum } = deriveDowAndMinutes(lb);
 
-        // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
-        const found = findNextAvailableExactMatch(dowNum, minutes);
+        // Day-only Quick Rebook: jump to the next available day (same weekday as last booking) within the loaded 2‑month window.
+        const nextDayWithAny = findNextAvailableAnyTime(dowNum);
 
-        if (!found) {
-          // Exact time isn’t available within the loaded 2-month window.
-          // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
-          const nextDayWithAny = findNextAvailableAnyTime(dowNum);
-          if (nextDayWithAny) {
-            showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
-            switchTab("rebook");
-            setCalendarToMonth(nextDayWithAny);
-            try {
-              document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            } catch(e) {}
-            // Highlight the day and load its times, then auto-select the first available time slot.
-            selectDate(nextDayWithAny, { userInitiated: true });
+        if (nextDayWithAny) {
+          showToast("Next available day", "We’ve jumped you to the next available day. Please choose a time.", false);
+          switchTab("rebook");
+          setCalendarToMonth(nextDayWithAny);
 
-            // Auto-select the first available time on this day (UI-driven).
-            // Run asynchronously so we don't need to refactor selectDate() into async.
-            (async () => {
-              const picked = await RNR__selectFirstAvailableTimeFromCalendarUI(2500);
-              if (!picked) {
-                showToast("Times available", "Please select a time slot.", false);
-              }
-            })();
+          // Ensure the calendar is in view (especially if clicked from dashboard)
+          try {
+            document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch(e) {}
 
-            return;
-          }
-
-          // Nothing available at all (for that weekday) inside the loaded 2-month window.
-          // Do not jump beyond the loaded availability.
-          showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+          // Highlight the day and load its times (user will choose the time)
+          selectDate(nextDayWithAny, { userInitiated: true });
           return;
         }
 
-        // Jump the calendar to the month containing the found date, then select date + closest time.
-        setCalendarToMonth(found.dateStr);
+        showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+        return;
 
-        // Ensure the calendar is in view (especially if clicked from dashboard)
-        try {
-          document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch(e) {}
-
-        // Select the date (user initiated so it loads times)
-        selectDate(found.dateStr, { userInitiated: true });
-
-        // Select the best slot in the UI after the slot grid has rendered.
-        setTimeout(() => {
-          try {
-            const exactSlot = found.slot;
-            if (!exactSlot) return;
-
-            const grid = document.getElementById("time-slots-grid");
-            if (!grid) return;
-
-            const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
-            if (!buttons.length) return;
-
-            const desiredId = String(exactSlot.start || exactSlot.label || "");
-            let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
-
-            // Fallback: strict minutes match (EXACT time only)
-            if (!btn && typeof minutes === "number" && isFinite(minutes)) {
-              for (const b of buttons) {
-                const raw = b.getAttribute("data-slot-raw");
-                if (!raw) continue;
-                let slotObj = null;
-                try { slotObj = JSON.parse(raw); } catch(e) {}
-                if (!slotObj) continue;
-                const m = getTorontoMinutesFromSlot(slotObj);
-                if (m === null || m === undefined) continue;
-                if (m === minutes) { btn = b; exactSlot.__uiSlotObj = slotObj; break; }
-              }
-            }
-
-            if (btn) {
-              const slotObj = (exactSlot && exactSlot.__uiSlotObj) ? exactSlot.__uiSlotObj : exactSlot;
-              selectTimeSlot(slotObj, btn);
-            }
-          } catch (e) {}
-        }, 120);
-
+        
       } catch (e) {
         showToast("Unable to rebook", "Please book manually.", true);
         switchTab("rebook");
