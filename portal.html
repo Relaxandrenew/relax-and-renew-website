@@ -4390,7 +4390,7 @@ if (selectedSlot && driveTime > 0) {
       safeSet("profile-full-name", full);
       safeSet("profile-email", portalProfile?.email || "—");
       safeSet("profile-phone", portalProfile?.phone || "—");
-      safeSet("profile-address", portalProfile?.address || "—");
+      safeSet("profile-address", _streetOnly(portalProfile?.address) || "—");
       safeSet("profile-city", portalProfile?.city || "—");
       safeSet("profile-postal", portalProfile?.postal_code || "—");
       try { fillProfileEditForm(); } catch(e) {}
@@ -4455,7 +4455,7 @@ if (selectedSlot && driveTime > 0) {
       _profileEl("profile-last-name-input") && (_profileEl("profile-last-name-input").value = portalProfile?.lastName || "");
       _profileEl("profile-email-input") && (_profileEl("profile-email-input").value = portalProfile?.email || "");
       _profileEl("profile-phone-input") && (_profileEl("profile-phone-input").value = portalProfile?.phone || "");
-      _profileEl("profile-address-input") && (_profileEl("profile-address-input").value = portalProfile?.address || "");
+      _profileEl("profile-address-input") && (_profileEl("profile-address-input").value = _streetOnly(portalProfile?.address) || "");
       _profileEl("profile-city-input") && (_profileEl("profile-city-input").value = portalProfile?.city || "");
       _profileEl("profile-postal-input") && (_profileEl("profile-postal-input").value = portalProfile?.postal_code || "");
     }
@@ -4497,13 +4497,22 @@ if (selectedSlot && driveTime > 0) {
 
     function _normStr(v) { return String(v || "").trim(); }
 
-    function _collectProfileEdits() {
+    
+    function _streetOnly(addr) {
+      const s = (addr || "").toString().trim();
+      if (!s) return "";
+      // If a full formatted address is provided, keep only the street portion (before the first comma)
+      const first = s.split(",")[0].trim();
+      return first;
+    }
+
+function _collectProfileEdits() {
       return {
         firstName: _normStr(_profileEl("profile-first-name-input")?.value),
         lastName: _normStr(_profileEl("profile-last-name-input")?.value),
         email: _normStr(_profileEl("profile-email-input")?.value).toLowerCase(),
         phone: _normStr(_profileEl("profile-phone-input")?.value),
-        address: _normStr(_profileEl("profile-address-input")?.value),
+        address: _streetOnly(_normStr(_profileEl("profile-address-input")?.value)),
         city: _normStr(_profileEl("profile-city-input")?.value),
         postal_code: _normStr(_profileEl("profile-postal-input")?.value)
       };
@@ -4562,7 +4571,7 @@ if (selectedSlot && driveTime > 0) {
       }
     }
 
-    async function saveProfileEdits() {
+    async async function saveProfileEdits() {
       if (!portalProfile) {
         showToast("Profile not loaded", "Please sign in again and try.", true);
         return;
