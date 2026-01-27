@@ -1,6 +1,6 @@
-<!-- Portal Version: v2.1 | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
+<!-- Portal Version: v2.3 | Remove session notes placeholder + membership tile coming soon + availability month reload + merge next appt countdown into Upcoming | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.1">
+<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.3">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1970,8 +1970,8 @@ function mobileConfirmBooking() {
                   </div>
                   <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Membership</div>
                 </div>
-                <div class="text-base sm:text-lg font-serif text-brand-light" id="dash-membership-status">Standard</div>
-                <div class="muted text-[0.7rem] sm:text-xs mt-1">Membership tier</div>
+                <div class="text-base sm:text-lg font-serif text-brand-light" id="dash-membership-status">Coming Soon</div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1">Coming soon</div>
               </div>
               <div class="card-fancy p-3 sm:p-5">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
@@ -2032,21 +2032,9 @@ function mobileConfirmBooking() {
                 </div>
               </button>
             </div>
-
-            <!-- Next Appointment Countdown -->
-            <div id="next-appt-countdown-card" class="hidden glass-panel p-6 mb-6">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
-                  <i data-lucide="timer" class="w-5 h-5 text-brand-gold"></i>
-                  Next Appointment
-                </h3>
-              </div>
-              <div class="text-2xl font-serif text-brand-light" id="next-appt-countdown">—</div>
-              <div class="muted text-xs mt-2">Countdown to your next session</div>
-            </div>
 <!-- Upcoming Appointments Section -->
             <div class="glass-panel p-6 mb-6">
-              <div class="flex items-center justify-between mb-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <h3 class="text-xl font-serif text-brand-light flex items-center gap-2">
                   <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
                   Upcoming Appointments
@@ -2055,6 +2043,20 @@ function mobileConfirmBooking() {
                   <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                   Refresh
                 </button>
+              </div>
+
+              <!-- Next Appointment (inline) -->
+              <div id="next-appt-inline" class="hidden mb-4 p-3 sm:p-4 border border-brand-gold/15 bg-black/25 rounded">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/70">Next Appointment</div>
+                    <div class="text-sm sm:text-base font-serif text-brand-light truncate" id="next-appt-inline-details">—</div>
+                  </div>
+                  <div class="text-left sm:text-right">
+                    <div class="text-xs text-brand-dim">Starts in</div>
+                    <div class="text-base sm:text-lg font-serif text-brand-light" id="next-appt-inline-countdown">—</div>
+                  </div>
+                </div>
               </div>
 
               <!-- Appointments Loading State -->
@@ -3645,24 +3647,50 @@ function mobileConfirmBooking() {
     let countdownTimer = null;
 
     function updateCountdown() {
-      const card = document.getElementById("next-appt-countdown-card");
-      const el = document.getElementById("next-appt-countdown");
-      if (!card || !el) return;
+      const box = document.getElementById("next-appt-inline");
+      const cdEl = document.getElementById("next-appt-inline-countdown");
+      const detailsEl = document.getElementById("next-appt-inline-details");
+      if (!box || !cdEl || !detailsEl) return;
 
       if (!Array.isArray(upcomingAppointments) || upcomingAppointments.length === 0) {
-        card.classList.add("hidden");
+        box.classList.add("hidden");
         return;
       }
 
       const nextAppt = upcomingAppointments[0];
-      const start = new Date(nextAppt.starts_at);
+      const start = nextAppt?.starts_at ? new Date(nextAppt.starts_at) : null;
+
+      const dateStr = start ? start.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Toronto" }) : "—";
+      const timeStr = start ? start.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Toronto" }) : "";
+
+      const treatmentRaw = (
+        nextAppt?.appointment_type?.name ||
+        nextAppt?.appointment_type?.label ||
+        nextAppt?.appointment_type_name ||
+        nextAppt?.appointmentTypeName ||
+        nextAppt?.treatment_label ||
+        nextAppt?.treatment_type ||
+        nextAppt?.service_name ||
+        nextAppt?.service ||
+        nextAppt?.type ||
+        nextAppt?.reason ||
+        "Massage"
+      );
+      const treatment = String(treatmentRaw || "Massage").trim() || "Massage";
+
+      detailsEl.textContent = `${treatment} • ${dateStr}${timeStr ? ` at ${timeStr}` : ""}`;
+      box.classList.remove("hidden");
+
+      if (!start || isNaN(start.getTime())) {
+        cdEl.textContent = "—";
+        return;
+      }
+
       const now = new Date();
       const diff = start - now;
 
-      card.classList.remove("hidden");
-
       if (diff <= 0) {
-        el.textContent = "Starting soon!";
+        cdEl.textContent = "Starting soon";
         return;
       }
 
@@ -3674,9 +3702,8 @@ function mobileConfirmBooking() {
       if (days) parts.push(`${days}d`);
       parts.push(`${hours}h`);
       parts.push(`${minutes}m`);
-      el.textContent = parts.join(" ");
+      cdEl.textContent = parts.join(" ");
     }
-
 
 
 
@@ -5272,12 +5299,7 @@ if (selectedSlot && driveTime > 0) {
                 </button>
               ` : ''}
 
-              ${canReceipt ? `
-                <div class="mt-3 p-2 bg-brand-gold/5 border border-brand-gold/10 rounded">
-                  <div class="text-xs text-brand-gold uppercase tracking-wider mb-1">Session Notes</div>
-                  <div class="pill text-xs">Coming Soon</div>
-                </div>
-                <button class="btn-outline text-xs mt-3" onclick="openInvoice('${appt?.id || ""}', '${dateStr} ${timeStr}')">
+              ${canReceipt ? `<button class="btn-outline text-xs mt-3" onclick="openInvoice('${appt?.id || ""}', '${dateStr} ${timeStr}')">
                   <i data-lucide="receipt" class="w-3 h-3"></i>
                   View Receipt
                 </button>
@@ -6394,19 +6416,47 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       savePortalState();
     }
 
+    function monthRangeWithinLoaded(date) {
+      if (!__availabilityLoadedRange || !__availabilityLoadedRange.from || !__availabilityLoadedRange.to) return false;
+      const monthStart = toDateStr(new Date(date.getFullYear(), date.getMonth(), 1));
+      const monthEnd = toDateStr(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+      return (monthStart >= __availabilityLoadedRange.from && monthEnd <= __availabilityLoadedRange.to);
+    }
+
+    function ensureAvailabilityForVisibleMonth() {
+      // If the user hasn't loaded availability yet, don't auto-fetch.
+      if (!selectedServiceKey || !selectedStandardDuration) return;
+      if (!portalProfile || !portalProfile.address || !portalProfile.city || !portalProfile.postal_code) return;
+
+      // If the user navigates outside the 2-month preloaded range (e.g., March), reload for the new range.
+      if (!monthRangeWithinLoaded(calendarCurrent)) {
+        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+        availabilityPreloaded = false;
+        availabilityPreloadInFlight = false;
+        availabilityByDate = {};
+        dayApptsByDate = {};
+        selectedDateStr = null;
+        selectedSlot = null;
+        try { updateSummary(); } catch(e) {}
+        try { updateBookingStepper(); } catch(e) {}
+        try { setQuickRebookEnabled(false); } catch(e) {}
+        preloadAvailabilityInBackground(true);
+      }
+    }
+
     function prevMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
-      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      ensureAvailabilityForVisibleMonth();
       savePortalState();
-}
+    }
 
     function nextMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
       renderCalendar();
-      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
+      ensureAvailabilityForVisibleMonth();
       savePortalState();
-}
+    }
 
     // =========================================================
     // BOOKING CONFIRMATION
