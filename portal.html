@@ -2119,11 +2119,17 @@ function mobileConfirmBooking() {
 
           <!-- REBOOK TAB -->
           <div id="tab-rebook" class="tab-content hidden animate-fade-in-up">
-            <!-- Welcome Back Banner -->
+            <!-- Profile summary -->
             <div class="glass-panel p-6 mb-8">
-              <div class="flex flex-col items-center text-center">
-                <h2 class="text-3xl font-serif text-brand-light">Welcome Back</h2>
-                <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
+              <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                <div>
+                  <h2 class="text-3xl font-serif text-brand-light">Quick Rebook</h2>
+                  <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
+                  <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
+                </div>
               </div>
 
               <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
@@ -3141,7 +3147,7 @@ function mobileConfirmBooking() {
             const treatmentLabel = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "Massage").toString().trim();
             const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
             const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
-            const label = `${treatmentLabel} • ${dur} min • ${dayLabel}`;
+            const label = `${treatmentLabel} • ${dur} min • ${dayLabel} • ${timeLabel}`;
             try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
             try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
             if (dashSummary) dashSummary.textContent = label;
@@ -3193,7 +3199,7 @@ function mobileConfirmBooking() {
         }
 
         if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
-        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}`;
+        const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
 
         try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
@@ -3270,82 +3276,32 @@ function mobileConfirmBooking() {
         } catch (e) {}
       }
 
-      
-      function pickExactSlotOnDate(dateStr, targetMinutes) {
-        // IMPORTANT: Use the same slot-accessor the calendar uses, so Rebook reads availability
-        // from the calendar cache (supports normalized keys + {slots|times|timeSlots} shapes).
-        const slotsRaw = (typeof getSlotsForDateKey === "function") ? getSlotsForDateKey(dateStr) : (availabilityByDate?.[dateStr] || []);
-        const slotsAll = (Array.isArray(slotsRaw) ? slotsRaw : []);
-        const slots = slotsAll.filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
+      function pickBestSlotOnDate(dateStr, targetMinutes) {
+        const slots = (availabilityByDate?.[dateStr] || []).filter(s => isSlotAvailable(s) && slotPassesUiWindow(dateStr, s));
         if (!slots.length) return null;
 
-        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return null;
+        if (typeof targetMinutes !== "number" || !isFinite(targetMinutes)) return slots[0];
 
-        // Prefer matching exactly the *displayed* time label, since your calendar renders availability correctly.
-        const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(targetMinutes) : null;
-        const norm = (s) => String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
-
-        if (targetLabel && typeof formatTimeLabel === "function") {
-          const tNorm = norm(targetLabel);
-          for (const s of slots) {
-            const lab = String(formatTimeLabel(s) || "").replace(/est/g, "").replace(/\(booked\)/g, "").trim();
-            if (norm(lab) === tNorm) return s;
-          }
-        }
-
-        // Fallback: numeric minutes match (Toronto minutes). Kept for robustness.
+        let best = null;
+        let bestDiff = Infinity;
         for (const s of slots) {
           const m = getTorontoMinutesFromSlot(s);
           if (m === null || m === undefined) continue;
-          if (m === targetMinutes) return s;
+          const diff = Math.abs(m - targetMinutes);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            best = s;
+          }
         }
-        return null;
+        return best || slots[0];
       }
 
-        return null;
-      }
-
-      function _rnrKeyToDateStr(key) {
-        try {
-          if (!key) return null;
-          const k = String(key).trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k)) return k;
-
-          if (typeof normalizeDateKey === "function") {
-            const nk = normalizeDateKey(k);
-            if (nk && /^\d{4}-\d{2}-\d{2}$/.test(nk)) return nk;
-          }
-
-          const dt = new Date(k);
-          if (!isNaN(dt.getTime())) {
-            if (typeof toDateStr === "function") return toDateStr(dt);
-            return dt.toISOString().slice(0, 10);
-          }
-        } catch (e) {}
-        return null;
-      }
-
-      function _rnrLoadedDateList() {
-        const set = new Set();
-        try {
-          for (const k of Object.keys(availabilityByDate || {})) {
-            const ds = _rnrKeyToDateStr(k);
-            if (ds) set.add(ds);
-          }
-        } catch (e) {}
-        return Array.from(set).sort();
-      }
-
-      function findNextAvailableExactMatch(targetDowNum, targetMinutes) {
+      function findNextAvailableMatch(targetDowNum, targetMinutes) {
         const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
         const rangeTo = __availabilityLoadedRange?.to || null;
 
-        // IMPORTANT: derive dates from the same normalized keys the calendar uses
-        const dates = _rnrLoadedDateList();
-
+        const dates = Object.keys(availabilityByDate || {}).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
         for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
           if (d < todayStr) continue;
           if (rangeTo && d > rangeTo) break;
 
@@ -3354,45 +3310,138 @@ function mobileConfirmBooking() {
             if (dt.getDay() !== targetDowNum) continue;
           }
 
-          const exactSlot = pickExactSlotOnDate(d, targetMinutes);
-          if (exactSlot) return { dateStr: d, slot: exactSlot };
+          const bestSlot = pickBestSlotOnDate(d, targetMinutes);
+          if (bestSlot) return { dateStr: d, slot: bestSlot };
         }
         return null;
       }
 
+      try {
+        // Use cached last booking (from locally loaded appointments or prior webhook call) when available
+        let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
 
-      // Find the next date (within the loaded availability window) that matches the weekday (if provided)
-      // and has ANY availability. Used as a fallback when the exact time isn’t available.
-      function findNextAvailableAnyTime(targetDowNum) {
-        const todayStr = toDateStr(new Date());
-        const rangeFrom = __availabilityLoadedRange?.from || null;
-        const rangeTo = __availabilityLoadedRange?.to || null;
-        const dates = _rnrLoadedDateList();
-
-        for (const d of dates) {
-          if (rangeFrom && d < rangeFrom) continue;
-          if (d < todayStr) continue;
-          if (rangeTo && d > rangeTo) break;
-
-          if (Number.isInteger(targetDowNum)) {
-            const dt = new Date(d + "T12:00:00");
-            if (dt.getDay() !== targetDowNum) continue;
-          }
-
-          // IMPORTANT: Use the same availability criteria as the calendar day cells.
-          // If the calendar shows this day as "Fully Booked", we must NOT jump to it.
-          const slotsRaw = (availabilityByDate && availabilityByDate[d]) ? availabilityByDate[d] : [];
-          const slots = Array.isArray(slotsRaw) ? slotsRaw : [];
-          const anyAvail = slots.some(s => {
-            try { return isSlotAvailable(s) && slotPassesUiWindow(d, s); } catch(e) { return false; }
+        if (!lb) {
+          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
           });
-
-          if (anyAvail) return d;
+          const data = await res.json().catch(() => ({}));
+          if (!data.success || !data.lastBooking) {
+            showToast("No previous booking found", "Please book manually.", true);
+            switchTab("rebook");
+            return;
+          }
+          lb = data.lastBooking;
+          lastBookingCache = lb;
         }
-        return null;
-      }
 
-    // (Removed orphaned duplicate Quick Rebook block that broke parsing)
+        // Apply treatment + duration
+        selectedServiceKey = lb.treatment_key || selectedServiceKey;
+        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+        const tSel = document.getElementById("treatment-select");
+        const dSel = document.getElementById("duration-select");
+
+        if (tSel) tSel.value = selectedServiceKey;
+        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+        if (dSel) dSel.value = String(selectedStandardDuration);
+
+        // Move to Rebook tab
+        switchTab("rebook");
+        updateBookingStepper();
+
+        // If the initial background preload is still running and we're using the same duration, wait briefly
+        const desiredDuration = Number(selectedStandardDuration || 0) || null;
+        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
+          ? (Number(preloadedDuration) !== Number(desiredDuration))
+          : false;
+
+        if (availabilityPreloadInFlight && !durationChangedFromPreload) {
+          const startedAt = Date.now();
+          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
+            await new Promise(r => setTimeout(r, 120));
+          }
+        }
+
+        // Only load availability if the last booking duration differs from the preloaded/default duration
+        if (!availabilityPreloaded || durationChangedFromPreload) {
+          await maybeLoadAvailabilityForCurrentMonth();
+        }
+
+        // Must have a loaded range and dates
+        if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
+          showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
+          return;
+        }
+
+        const { dowNum, minutes } = deriveDowAndMinutes(lb);
+
+        // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
+        const found = findNextAvailableMatch(dowNum, minutes);
+
+        if (!found) {
+          showToast("No matching availability found", "Please select a date manually.", true);
+          return;
+        }
+
+        // Jump the calendar to the month containing the found date, then select date + closest time.
+        setCalendarToMonth(found.dateStr);
+
+        // Ensure the calendar is in view (especially if clicked from dashboard)
+        try {
+          document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch(e) {}
+
+        // Select the date (user initiated so it loads times)
+        selectDate(found.dateStr, { userInitiated: true });
+
+        // Select the best slot in the UI after the slot grid has rendered.
+        setTimeout(() => {
+          try {
+            const bestSlot = found.slot;
+            if (!bestSlot) return;
+
+            const grid = document.getElementById("time-slots-grid");
+            if (!grid) return;
+
+            const buttons = Array.from(grid.querySelectorAll("button.time-slot-btn"));
+            if (!buttons.length) return;
+
+            const desiredId = String(bestSlot.start || bestSlot.label || "");
+            let btn = desiredId ? buttons.find(b => String(b.getAttribute("data-slot-id") || "") === desiredId) : null;
+
+            // Fallback: pick closest by minutes if IDs don't match perfectly
+            if (!btn && typeof minutes === "number" && isFinite(minutes)) {
+              let best = null;
+              let bestDiff = Infinity;
+              for (const b of buttons) {
+                const raw = b.getAttribute("data-slot-raw");
+                if (!raw) continue;
+                let slotObj = null;
+                try { slotObj = JSON.parse(raw); } catch(e) {}
+                if (!slotObj) continue;
+                const m = getTorontoMinutesFromSlot(slotObj);
+                if (m === null || m === undefined) continue;
+                const diff = Math.abs(m - minutes);
+                if (diff < bestDiff) { bestDiff = diff; best = { b, slotObj }; }
+              }
+              if (best) {
+                btn = best.b;
+                selectTimeSlot(best.slotObj, btn);
+                return;
+              }
+            }
+
+            if (btn) selectTimeSlot(bestSlot, btn);
+          } catch (e) {}
+        }, 120);
+
+      } catch (e) {
+        showToast("Unable to rebook", "Please book manually.", true);
+        switchTab("rebook");
+      }
+    }
 
 
     // =============================
@@ -3617,8 +3666,8 @@ function mobileConfirmBooking() {
       if (typeof slot.booked === 'boolean') return !slot.booked;
       if (slot.label && String(slot.label).toLowerCase().indexOf('(booked)') >= 0) return false;
 
-      // If it has any recognizable time field but no explicit availability flag, assume available.
-      if (slot.start || slot.starts_at || slot.start_time || slot.startsAt || slot.startAt || slot.time || slot.datetime || slot.begins_at) return true;
+      // If it has a start time but no availability flag, assume available
+      if (slot.start) return true;
 
       return false;
     }
@@ -3721,21 +3770,6 @@ function computeMonthRange(date) {
     // - Special edge-case: if an unavailable block runs from <=11:00 AM to the
     //   day's final allowed start time, hide that boundary start time.
     // =========================================================
-    function minutesToAmPmLabel(totalMinutes) {
-      try {
-        const m = Number(totalMinutes);
-        if (!isFinite(m)) return null;
-        const mins = ((m % 1440) + 1440) % 1440;
-        const h24 = Math.floor(mins / 60);
-        const mm = mins % 60;
-        const ampm = h24 >= 12 ? "PM" : "AM";
-        let h12 = h24 % 12;
-        if (h12 === 0) h12 = 12;
-        const mm2 = String(mm).padStart(2, "0");
-        return `${h12}:${mm2} ${ampm}`;
-      } catch(e) { return null; }
-    }
-
     function parseLabelMinutes(label) {
       try {
         let s = String(label || "").toLowerCase();
@@ -3790,12 +3824,9 @@ function computeMonthRange(date) {
 
     function getTorontoMinutesFromSlot(slot) {
       try {
-        if (!slot) return null;
-
-        const raw = slot.start || slot.starts_at || slot.start_time || slot.startAt || slot.datetime || slot.time || slot.begins_at || slot.beginsAt || null;
-
-        if (raw) {
-          const d = new Date(raw);
+        // Prefer slot.start when present (most reliable)
+        if (slot && slot.start) {
+          const d = new Date(slot.start);
           if (!isNaN(d.getTime())) {
             const fmt = new Intl.DateTimeFormat('en-CA', {
               hour: '2-digit',
@@ -3814,6 +3845,7 @@ function computeMonthRange(date) {
               return (hh * 60) + mm;
             }
 
+            // Fallback if formatToParts is unavailable
             const s = d.toLocaleTimeString('en-CA', {
               hour: '2-digit',
               minute: '2-digit',
@@ -3823,15 +3855,10 @@ function computeMonthRange(date) {
             const m = String(s).match(/^(\d{1,2}):(\d{2})/);
             if (m) return (parseInt(m[1], 10) * 60) + (parseInt(m[2], 10) || 0);
           }
-
-          // If it's not a parseable Date, attempt to parse as a time label
-          const m2 = parseLabelMinutes(String(raw));
-          if (m2 != null) return m2;
         }
 
-        // Fallback to label parsing
-        if (slot.label) return parseLabelMinutes(String(slot.label));
-
+        // Fallback to label parsing (some payloads may omit start)
+        if (slot && slot.label) return parseLabelMinutes(slot.label);
         return null;
       } catch (e) {
         return null;
@@ -5400,8 +5427,7 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const baseMonthForRange = availabilityAnchorMonth || calendarCurrent;
-      const { from, to } = computeTwoMonthRange(baseMonthForRange);
+      const { from, to } = computeTwoMonthRange(calendarCurrent);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -5812,59 +5838,19 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       savePortalState();
     }
 
-    async function prevMonth() {
+    function prevMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() - 1, 1);
       renderCalendar();
-      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
-      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
+      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
       savePortalState();
 }
 
-    async function nextMonth() {
+    function nextMonth() {
       calendarCurrent = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 1);
       renderCalendar();
-      // If user navigates outside the currently-loaded 2-month window, load the next 2 months and then lock again.
-      try { await ensureAvailabilityForNavigatedMonth(); } catch(e) {}
+      // Availability is preloaded/locked (2 months). Do not refetch on month navigation.
       savePortalState();
 }
-
-    async function ensureAvailabilityForNavigatedMonth() {
-      try {
-        if (!(portalProfile && portalProfile.address && portalProfile.city && portalProfile.postal_code)) return;
-        if (!selectedServiceKey || !selectedStandardDuration) return;
-
-        // If the navigated month is already covered by the currently-loaded range for the same context,
-        // do not re-fetch. (Example: Jan+Feb preloaded; browsing Jan <-> Feb must NOT reload.)
-        const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
-        const contextKey = [
-          Number(selectedStandardDuration),
-          Number(blockMinutes),
-          DEFAULT_PRACTITIONER_ID,
-          portalProfile.address, portalProfile.city, portalProfile.postal_code
-        ].join("|");
-
-        const monthStart = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1));
-        const monthEnd   = toDateStr(new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + 1, 0));
-
-        if (__availabilityLoadedContextKey === contextKey &&
-            __availabilityLoadedRange &&
-            __availabilityLoadedRange.from <= monthStart &&
-            __availabilityLoadedRange.to   >= monthEnd) {
-          return;
-        }
-
-        // Outside the loaded window: advance the 2-month window anchor to the navigated month
-
-        availabilityAnchorMonth = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
-        __availabilityLoadedContextKey = null;
-        __availabilityLoadedRange = null;
-
-        await maybeLoadAvailabilityForCurrentMonth();
-      } catch (e) {
-        console.warn("ensureAvailabilityForNavigatedMonth error:", e);
-      }
-    }
-
 
     // =========================================================
     // BOOKING CONFIRMATION
@@ -6292,7 +6278,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c1a8afa7ae81b3a4ada0b9a0afa5b3a4afa4b6efa2a0">[email&#160;protected]</a> / 226 337 9064.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at info@relaxandrenew.ca / 226 337 9064.
         </div>
       </div>
 
@@ -7467,7 +7453,7 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script>
     // PWA SW registration (v4)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
@@ -7491,4 +7477,15 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
           });
 
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // R
+            // Reload once to get the latest HTML/JS
+            window.location.reload();
+          });
+        } catch (e) {
+          console.warn('Service worker registration failed:', e);
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
