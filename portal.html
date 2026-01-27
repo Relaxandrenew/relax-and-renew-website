@@ -2123,14 +2123,13 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-2xl font-serif text-brand-light">Welcome back</h2>
-                  <p class="muted mt-2 text-sm font-light">Your saved profile will be used to speed up booking.</p>
+                  <h2 class="text-2xl font-serif text-brand-light">Saved profile</h2>
+                  <p class="muted mt-2 font-light">We’ll use your saved details to speed up booking.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <span class="pill"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i><span id="pill-address">Address: —</span></span>
                   <span class="pill"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i><span id="pill-phone">Phone: —</span></span>
                 </div>
-              </div></div>
               </div>
 
               <div id="profile-missing" class="mt-6 card-fancy p-4 hidden border-red-500/30">
@@ -2170,15 +2169,6 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
-
-
-            
-
-                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
-                </div>
-              </button>
-            </div>
-
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
               <!-- Calendar + slots -->
@@ -2211,8 +2201,7 @@ function mobileConfirmBooking() {
 
                 <hr class="divider my-6">
 
-                <!-- NEW PROGRESS BAR LOADER -->
-                <!-- Quick Rebook (Integrated) -->
+                                <!-- Book the same as last time (integrated) -->
                 <div id="rebook-book-same-container" class="hidden mt-4 mb-6">
                   <button type="button" onclick="bookSameAsLastTime(event)" class="w-full text-left card-fancy p-4 hover:border-brand-gold/40 transition">
                     <div class="flex items-start gap-4">
@@ -2225,13 +2214,14 @@ function mobileConfirmBooking() {
                           <span class="qr-spinner" aria-hidden="true"></span>
                         </div>
                         <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                        <div class="muted text-xs mt-1">We’ll jump you to the next available day. You can pick the time.</div>
+                        <div class="muted text-xs mt-1">We’ll jump you to the next available day. Then you can pick the time.</div>
                       </div>
                       <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold/70 mt-1"></i>
                     </div>
                   </button>
                 </div>
-<div id="availability-loading" class="hidden mb-6">
+<!-- NEW PROGRESS BAR LOADER -->
+                <div id="availability-loading" class="hidden mb-6">
                     <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
                         <span>Checking Availability...</span>
                         <span class="animate-pulse">Please Wait</span>
@@ -3474,31 +3464,22 @@ function mobileConfirmBooking() {
           showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
           return;
         }
-
         const { dowNum } = deriveDowAndMinutes(lb);
 
-        // Day-only Quick Rebook: jump to the next available day (same weekday as last booking) within the loaded 2‑month window.
+        // Day-only Quick Rebook: jump to the next available day (same weekday as last booking) within the loaded 2-month window.
         const nextDayWithAny = findNextAvailableAnyTime(dowNum);
 
         if (nextDayWithAny) {
           showToast("Next available day", "We’ve jumped you to the next available day. Please choose a time.", false);
           switchTab("rebook");
           setCalendarToMonth(nextDayWithAny);
-
-          // Ensure the calendar is in view (especially if clicked from dashboard)
-          try {
-            document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          } catch(e) {}
-
-          // Highlight the day and load its times (user will choose the time)
+          try { document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) {}
           selectDate(nextDayWithAny, { userInitiated: true });
           return;
         }
 
         showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
         return;
-
-        
       } catch (e) {
         showToast("Unable to rebook", "Please book manually.", true);
         switchTab("rebook");
