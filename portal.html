@@ -1996,6 +1996,22 @@ function mobileConfirmBooking() {
               </button>
             </div>
 
+            <!-- New client helper (only shows when no previous completed appointment) -->
+            <div id="book-first-helper" class="hidden mb-6">
+              <button type="button" onclick="switchTab('rebook')" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-serif text-lg text-brand-light">New here?</div>
+                    <div class="muted text-sm">Select a treatment and date to book your first appointment.</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
+                </div>
+              </button>
+            </div>
+
             <!-- Next Appointment Countdown -->
             <div id="next-appt-countdown-card" class="hidden glass-panel p-6 mb-6">
               <div class="flex items-center justify-between mb-2">
@@ -3080,15 +3096,30 @@ function mobileConfirmBooking() {
     async function loadLastBookingSummary() {
       const dashWrap = document.getElementById("book-same-container");
       const dashSummary = document.getElementById("last-booking-summary");
+      const dashHelper = document.getElementById("book-first-helper");
 
       const rebookWrap = document.getElementById("rebook-book-same-container");
       const rebookSummary = document.getElementById("rebook-last-booking-summary");
 
+      // If neither the dashboard banner nor the rebook banner exists, nothing to do.
       if ((!dashWrap || !dashSummary) && (!rebookWrap || !rebookSummary)) return;
 
-      function hideBoth() {
+      function hideAll() {
         try { dashWrap && dashWrap.classList.add("hidden"); } catch(e) {}
         try { rebookWrap && rebookWrap.classList.add("hidden"); } catch(e) {}
+        try { dashHelper && dashHelper.classList.add("hidden"); } catch(e) {}
+      }
+
+      function showNoHistoryHelper() {
+        // Only show on Dashboard. Rebook page already *is* the booking flow.
+        try { dashWrap && dashWrap.classList.add("hidden"); } catch(e) {}
+        try { rebookWrap && rebookWrap.classList.add("hidden"); } catch(e) {}
+        try { dashHelper && dashHelper.classList.remove("hidden"); } catch(e) {}
+      }
+
+      function showBothBanners() {
+        showBothBanners();
+        try { dashHelper && dashHelper.classList.add("hidden"); } catch(e) {}
       }
 
       // Prefer locally loaded completed appointments (faster + avoids dependency on last-booking webhook)
@@ -3133,8 +3164,7 @@ function mobileConfirmBooking() {
             const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
             const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
             const label = `${treatmentLabel} • ${dur} min • ${dayLabel}`;
-            try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
-            try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
+            showBothBanners();
             if (dashSummary) dashSummary.textContent = label;
             if (rebookSummary) rebookSummary.textContent = label;
             return;
@@ -3143,7 +3173,7 @@ function mobileConfirmBooking() {
       } catch (e) {}
 
       if (!portalProfile?.email) {
-        hideBoth();
+        hideAll();
         return;
       }
 
@@ -3159,7 +3189,8 @@ function mobileConfirmBooking() {
         const data = await res.json().catch(() => ({}));
 
         if (!data.success || !data.lastBooking) {
-          hideBoth();
+          // No previous completed appointment → show helper on Dashboard
+          showNoHistoryHelper();
           return;
         }
 
@@ -3186,14 +3217,13 @@ function mobileConfirmBooking() {
         if (dayPart) dayPart = dayPart.charAt(0).toUpperCase() + dayPart.slice(1);
         const label = `${tLabel} • ${dur} min${dayPart ? " • " + dayPart : ""}${timePart ? " • " + timePart : ""}`;
 
-        try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
-        try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
+        showBothBanners();
 
         if (dashSummary) dashSummary.textContent = label;
         if (rebookSummary) rebookSummary.textContent = label;
 
       } catch (e) {
-        hideBoth();
+        hideAll();
       }
     }
 
