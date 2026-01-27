@@ -2112,7 +2112,7 @@ function mobileConfirmBooking() {
             <div class="glass-panel p-6 mb-8">
               <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                 <div>
-                  <h2 class="text-3xl font-serif text-brand-light">Quick Rebook</h2>
+                  <h2 class="text-3xl font-serif text-brand-light">Book Appointment</h2>
                   <p class="muted mt-2 font-light">We use your saved client profile. No typing required.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -2160,22 +2160,6 @@ function mobileConfirmBooking() {
             </div>
 
 
-            <!-- Book Same as Last Time (Rebook) -->
-            <div id="rebook-book-same-container" class="hidden mb-6">
-              <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-5 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 border border-brand-gold/20 bg-black/40 rounded-xl flex items-center justify-center">
-                    <i data-lucide="rotate-cw" class="w-6 h-6 text-brand-gold"></i>
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-brand-light font-bold text-lg flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
-                    <div class="muted text-sm" id="rebook-last-booking-summary">Loading...</div>
-                  </div>
-                  <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold opacity-70"></i>
-                </div>
-              </button>
-            </div>
-
             <!-- Booking UI -->
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
               <!-- Calendar + slots -->
@@ -2207,6 +2191,22 @@ function mobileConfirmBooking() {
                 </div>
 
                 <hr class="divider my-6">
+
+                <!-- Book Same as Last Time (inline) -->
+                <div id="rebook-book-same-container" class="hidden mb-6">
+                  <button type="button" onclick="bookSameAsLastTime(event)" class="card-fancy p-4 w-full text-left hover:border-brand-gold/40 transition quickrebook-btn">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 border border-brand-gold/20 bg-black/40 rounded-lg flex items-center justify-center">
+                        <i data-lucide="rotate-cw" class="w-5 h-5 text-brand-gold"></i>
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-brand-light font-semibold text-base flex items-center gap-2">Book Same as Last Time<span class="qr-spinner" aria-hidden="true"></span></div>
+                        <div class="muted text-xs" id="rebook-last-booking-summary">Loading...</div>
+                      </div>
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold opacity-70"></i>
+                    </div>
+                  </button>
+                </div>
 
                 <!-- NEW PROGRESS BAR LOADER -->
                 <div id="availability-loading" class="hidden mb-6">
@@ -3136,7 +3136,7 @@ function mobileConfirmBooking() {
             const treatmentLabel = (last.appointment_type?.name || last.treatment_label || last.treatment_type || "Massage").toString().trim();
             const dur = Number(last.duration || last.duration_minutes || last.durationMinutes || 60) || 60;
             const dayLabel = dow.charAt(0).toUpperCase() + dow.slice(1);
-            const label = `${treatmentLabel} • ${dur} min • ${dayLabel} • ${timeLabel}`;
+            const label = `${treatmentLabel} • ${dur} min • ${dayLabel}`;
             try { dashWrap && dashWrap.classList.remove("hidden"); } catch(e) {}
             try { rebookWrap && rebookWrap.classList.remove("hidden"); } catch(e) {}
             if (dashSummary) dashSummary.textContent = label;
