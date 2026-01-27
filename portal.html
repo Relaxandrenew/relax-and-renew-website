@@ -5558,14 +5558,26 @@ if (selectedSlot && driveTime > 0) {
           try {
             portalProfile = buildProfileFromJwtPayload(payload) || null;
 
-            // Merge with localStorage profile if exists
+            // Merge with localStorage profile ONLY as a safe fallback (fill blanks only)
+            // This prevents stale cached values from overriding Auth0-derived profile data.
             const local = loadProfileFromLocalStorage();
-            if (local) portalProfile = { ...(portalProfile || {}), ...local };
+            if (local) {
+              portalProfile = {
+                ...(portalProfile || {}),
+                firstName: (portalProfile?.firstName || '').trim() || (local.firstName || ''),
+                lastName: (portalProfile?.lastName || '').trim() || (local.lastName || ''),
+                email: (portalProfile?.email || '').trim() || (local.email || ''),
+                phone: (portalProfile?.phone || '').trim() || (local.phone || ''),
+                address: (portalProfile?.address || '').trim() || (local.address || ''),
+                city: (portalProfile?.city || '').trim() || (local.city || ''),
+                postal_code: (portalProfile?.postal_code || '').trim() || (local.postal_code || ''),
+              };
+            }
 
             // Try to enrich from userinfo (don't let this block login)
             try {
               portalProfile = await tryEnrichProfileFromUserInfo(accessToken, portalProfile);
-            } catch (e) {
+} catch (e) {
               console.warn("Could not enrich profile from userinfo:", e);
             }
 
