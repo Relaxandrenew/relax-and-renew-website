@@ -4506,7 +4506,7 @@ if (selectedSlot && driveTime > 0) {
       return first;
     }
 
-function _collectProfileEdits() {
+    function _collectProfileEdits() {
       return {
         firstName: _normStr(_profileEl("profile-first-name-input")?.value),
         lastName: _normStr(_profileEl("profile-last-name-input")?.value),
@@ -4571,7 +4571,7 @@ function _collectProfileEdits() {
       }
     }
 
-    async async function saveProfileEdits() {
+    async function saveProfileEdits() {
       if (!portalProfile) {
         showToast("Profile not loaded", "Please sign in again and try.", true);
         return;
