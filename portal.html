@@ -3425,14 +3425,130 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
         return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
       }
 
+      try {
+              // Use cached last booking (from locally loaded appointments or prior webhook call) when available
+              let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
 
-        const dow = (lb.day_of_week || "").toString().toLowerCase();
-        const map = { sunday:0, monday:1, tuesday:2, wednesday:3, thursday:4, friday:5, saturday:6 };
-        const dowNum = map[dow];
+              if (!lb) {
+                const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!data.success || !data.lastBooking) {
+                  showToast("No previous booking found", "Please book manually.", true);
+                  switchTab("rebook");
+                  return;
+                }
+                lb = data.lastBooking;
+                lastBookingCache = lb;
+              }
 
-        const minutes = minutesFromAny(lb.time || lb.start_time_local || lb.start_time || lb.starts_at || lb.start || lb.start_at);
-        return { dowNum: Number.isInteger(dowNum) ? dowNum : null, minutes };
-      }
+              // Apply treatment + duration
+              selectedServiceKey = lb.treatment_key || selectedServiceKey;
+              selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
+
+              const tSel = document.getElementById("treatment-select");
+              const dSel = document.getElementById("duration-select");
+
+              if (tSel) tSel.value = selectedServiceKey;
+              if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
+              if (dSel) dSel.value = String(selectedStandardDuration);
+
+              // Move to Rebook tab
+              switchTab("rebook");
+              updateBookingStepper();
+
+              // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
+              const desiredDuration = Number(selectedStandardDuration || 0) || null;
+              const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
+
+              const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
+                ? (Number(preloadedDuration) !== Number(desiredDuration))
+                : false;
+
+              const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
+                ? (String(preloadedTreatment) !== String(desiredTreatment))
+                : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
+
+              if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
+                const startedAt = Date.now();
+                while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
+                  await new Promise(r => setTimeout(r, 120));
+                }
+              }
+
+              // Load availability only when needed:
+              // - not preloaded yet, or
+              // - treatment changed, or
+              // - duration changed
+              if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
+                await maybeLoadAvailabilityForCurrentMonth();
+              }
+
+              // Must have a loaded range and dates
+              if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
+                showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
+                return;
+              }
+
+              const { dowNum, minutes } = deriveDowAndMinutes(lb);
+
+              // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
+              const found = findNextAvailableExactMatch(dowNum, minutes);
+
+              if (!found) {
+                // Exact time isn’t available within the loaded 2-month window.
+                // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
+                const nextDayWithAny = findNextAvailableAnyTime(dowNum);
+                if (nextDayWithAny) {
+                  showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
+                  switchTab("rebook");
+                  setCalendarToMonth(nextDayWithAny);
+                  try {
+                    document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  } catch(e) {}
+                  // Highlight the day and load its times, but do NOT auto-select a slot.
+                  selectDate(nextDayWithAny, { userInitiated: true });
+                  return;
+                }
+
+                // Nothing available at all (for that weekday) inside the loaded 2-month window.
+                // Do not jump beyond the loaded availability.
+                showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
+                return;
+              }
+
+              // Jump the calendar to the month containing the found date, then select date + closest time.
+              setCalendarToMonth(found.dateStr);
+
+              // Ensure the calendar is in view (especially if clicked from dashboard)
+              try {
+                document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              } catch(e) {}
+
+              // Select the date (user initiated so it loads times)
+              selectDate(found.dateStr, { userInitiated: true });
+
+              // Select the EXACT time from the calendar UI (source of truth)
+              // This avoids payload-shape mismatches: if the slot is visible/clickable on the calendar,
+              // we select by reading/clicking that rendered button.
+              try {
+                const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(minutes) : null;
+                const didPick = await RNR__selectExactTimeFromCalendarUI(found.dateStr, minutes, targetLabel);
+                if (!didPick) {
+                  // We already jumped to the correct day. If we cannot auto-select the time despite it being expected,
+                  // do NOT change the day again. Just warn and let them click manually.
+                  showToast("Time not auto-selected", "Please choose the exact time manually on the selected day.", true);
+                }
+              } catch (e) {}
+
+            } catch (e) {
+              showToast("Unable to rebook", "Please book manually.", true);
+              switchTab("rebook");
+            }
+    }
 
       function setCalendarToMonth(dateStr) {
         try {
@@ -3563,130 +3679,7 @@ async function RNR__selectExactTimeFromCalendarUI(dateStr, targetMinutes, target
       }
 
 
-      try {
-        // Use cached last booking (from locally loaded appointments or prior webhook call) when available
-        let lb = (typeof lastBookingCache !== "undefined" && lastBookingCache) ? lastBookingCache : null;
-
-        if (!lb) {
-          const res = await fetch(LAST_BOOKING_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: String(portalProfile.email).trim().toLowerCase() })
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!data.success || !data.lastBooking) {
-            showToast("No previous booking found", "Please book manually.", true);
-            switchTab("rebook");
-            return;
-          }
-          lb = data.lastBooking;
-          lastBookingCache = lb;
-        }
-
-        // Apply treatment + duration
-        selectedServiceKey = lb.treatment_key || selectedServiceKey;
-        selectedStandardDuration = Number(lb.duration || lb.durationMinutes || selectedStandardDuration || 60);
-
-        const tSel = document.getElementById("treatment-select");
-        const dSel = document.getElementById("duration-select");
-
-        if (tSel) tSel.value = selectedServiceKey;
-        if (typeof rebuildDurationOptions === "function") rebuildDurationOptions();
-        if (dSel) dSel.value = String(selectedStandardDuration);
-
-        // Move to Rebook tab
-        switchTab("rebook");
-        updateBookingStepper();
-
-        // If the initial background preload is still running and we're using the same treatment + duration, wait briefly
-        const desiredDuration = Number(selectedStandardDuration || 0) || null;
-        const desiredTreatment = (selectedServiceKey || '').toString().trim() || null;
-
-        const durationChangedFromPreload = (Number(preloadedDuration || 0) && desiredDuration)
-          ? (Number(preloadedDuration) !== Number(desiredDuration))
-          : false;
-
-        const treatmentChangedFromPreload = (preloadedTreatment && desiredTreatment)
-          ? (String(preloadedTreatment) !== String(desiredTreatment))
-          : (Boolean(preloadedTreatment) !== Boolean(desiredTreatment));
-
-        if (availabilityPreloadInFlight && !(durationChangedFromPreload || treatmentChangedFromPreload)) {
-          const startedAt = Date.now();
-          while (availabilityPreloadInFlight && Date.now() - startedAt < 12000) {
-            await new Promise(r => setTimeout(r, 120));
-          }
-        }
-
-        // Load availability only when needed:
-        // - not preloaded yet, or
-        // - treatment changed, or
-        // - duration changed
-        if (!availabilityPreloaded || durationChangedFromPreload || treatmentChangedFromPreload) {
-          await maybeLoadAvailabilityForCurrentMonth();
-        }
-
-        // Must have a loaded range and dates
-        if (!availabilityByDate || Object.keys(availabilityByDate).length === 0) {
-          showToast("Availability not loaded yet", "Please wait for availability to finish loading.", true);
-          return;
-        }
-
-        const { dowNum, minutes } = deriveDowAndMinutes(lb);
-
-        // Search ONLY within the already-loaded 2-month window, and choose the next matching weekday/date.
-        const found = findNextAvailableExactMatch(dowNum, minutes);
-
-        if (!found) {
-          // Exact time isn’t available within the loaded 2-month window.
-          // If there is SOME availability on the next matching weekday within the loaded window, jump there and let them choose manually.
-          const nextDayWithAny = findNextAvailableAnyTime(dowNum);
-          if (nextDayWithAny) {
-            showToast("Time not available", "Time not available in the next 2 months. Please choose a time manually.", true);
-            switchTab("rebook");
-            setCalendarToMonth(nextDayWithAny);
-            try {
-              document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            } catch(e) {}
-            // Highlight the day and load its times, but do NOT auto-select a slot.
-            selectDate(nextDayWithAny, { userInitiated: true });
-            return;
-          }
-
-          // Nothing available at all (for that weekday) inside the loaded 2-month window.
-          // Do not jump beyond the loaded availability.
-          showToast("No availability", "No availability found in the next 2 months. Please choose manually.", true);
-          return;
-        }
-
-        // Jump the calendar to the month containing the found date, then select date + closest time.
-        setCalendarToMonth(found.dateStr);
-
-        // Ensure the calendar is in view (especially if clicked from dashboard)
-        try {
-          document.getElementById("calendar-month-label")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch(e) {}
-
-        // Select the date (user initiated so it loads times)
-        selectDate(found.dateStr, { userInitiated: true });
-
-        // Select the EXACT time from the calendar UI (source of truth)
-        // This avoids payload-shape mismatches: if the slot is visible/clickable on the calendar,
-        // we select by reading/clicking that rendered button.
-        try {
-          const targetLabel = (typeof minutesToAmPmLabel === "function") ? minutesToAmPmLabel(minutes) : null;
-          const didPick = await RNR__selectExactTimeFromCalendarUI(found.dateStr, minutes, targetLabel);
-          if (!didPick) {
-            // We already jumped to the correct day. If we cannot auto-select the time despite it being expected,
-            // do NOT change the day again. Just warn and let them click manually.
-            showToast("Time not auto-selected", "Please choose the exact time manually on the selected day.", true);
-          }
-        } catch (e) {}
-
-      } catch (e) {
-        showToast("Unable to rebook", "Please book manually.", true);
-        switchTab("rebook");
-      }
-    }
+      
 
       function _rnrKeyToDateStr(key) {
         try {
