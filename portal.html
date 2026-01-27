@@ -4035,22 +4035,32 @@ if (selectedSlot && driveTime > 0) {
     }
 
     function updateAvailabilityStatus(body, loaded) {
-      document.getElementById("availability-status-title").textContent = loaded ? "Availability loaded" : "Availability";
-      document.getElementById("availability-status-body").textContent = body || "";
+      // Elements removed from UI - function kept for compatibility
+      try {
+        const titleEl = document.getElementById("availability-status-title");
+        const bodyEl = document.getElementById("availability-status-body");
+        const metaEl = document.getElementById("availability-meta");
+        
+        if (titleEl) titleEl.textContent = loaded ? "Availability loaded" : "Availability";
+        if (bodyEl) bodyEl.textContent = body || "";
 
-      const metaEl = document.getElementById("availability-meta");
-      const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
-      const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
-      const baseDrive = availabilityMeta.baseToClientDriveTimeMinutes || 0;
+        if (metaEl) {
+          const buffer = availabilityMeta.effective_travel_buffer_minutes || 0;
+          const maxDrive = availabilityMeta.maxDriveTimeMinutes || 0;
+          const baseDrive = availabilityMeta.baseToClientDriveTimeMinutes || 0;
 
-      const show = loaded && (
-        (maxDrive > 0 && baseDrive > maxDrive) ||
-        (baseDrive >= TRAVEL_FEE_THRESHOLD_MINUTES)
-      );
+          const show = loaded && (
+            (maxDrive > 0 && baseDrive > maxDrive) ||
+            (baseDrive >= TRAVEL_FEE_THRESHOLD_MINUTES)
+          );
 
-      metaEl.textContent = show
-        ? `Travel time from base: ${baseDrive} min${buffer ? ` • Buffer applied: ${buffer} min` : ""}`
-        : "";
+          metaEl.textContent = show
+            ? `Travel time from base: ${baseDrive} min${buffer ? ` • Buffer applied: ${buffer} min` : ""}`
+            : "";
+        }
+      } catch (e) {
+        // Silent fail - elements may not exist in UI
+      }
     }
 
     function setCalendarLoading(isLoading) {
@@ -4161,8 +4171,12 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("welcome-pill").textContent = portalProfile?.firstName ? `Hi ${portalProfile.firstName}` : (portalProfile?.email || "Profile loaded");
 
       const addrLine = portalProfile?.address ? `${portalProfile.address}, ${portalProfile.city || ""} ${portalProfile.postal_code || ""}`.replace(/\s+/g," ").trim() : "—";
-      document.getElementById("pill-address").textContent = `Address: ${addrLine}`;
-      document.getElementById("pill-phone").textContent = `Phone: ${portalProfile?.phone || "—"}`;
+      
+      // Pills removed from UI - keep for backwards compatibility
+      const pillAddress = document.getElementById("pill-address");
+      const pillPhone = document.getElementById("pill-phone");
+      if (pillAddress) pillAddress.textContent = `Address: ${addrLine}`;
+      if (pillPhone) pillPhone.textContent = `Phone: ${portalProfile?.phone || "—"}`;
 
       // Dashboard location
       const dashLoc = document.getElementById("dash-location");
