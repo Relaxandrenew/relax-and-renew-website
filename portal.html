@@ -1,6 +1,6 @@
-<!-- Portal Version: v2.0 | Profile update requests now send BEFORE/AFTER/DIFF + instant submit feedback -->
+<!-- Portal Version: v2.1 | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.0">
+<html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.1">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -4535,8 +4535,22 @@ if (selectedSlot && driveTime > 0) {
       const keys = ["firstName","lastName","email","phone","address","city","postal_code"];
       const changes = {};
       for (const k of keys) {
-        const a = _normStr(after?.[k]);
-        const b = _normStr(before?.[k]);
+        // Normalize comparisons so we don't flag false "changes" from formatting differences
+        let a = _normStr(after?.[k]);
+        let b = _normStr(before?.[k]);
+
+        if (k === "email") {
+          a = a.toLowerCase();
+          b = b.toLowerCase();
+        }
+
+        if (k === "address") {
+          // Portal UI stores/displays a street-line value; Cliniko/Places may store a full formatted address.
+          // Compare street-line to street-line to avoid false positives.
+          a = _streetOnly(a);
+          b = _streetOnly(b);
+        }
+
         if (a !== b) changes[k] = after?.[k] || "";
       }
       return changes;
@@ -4627,12 +4641,15 @@ if (selectedSlot && driveTime > 0) {
         6500
       );
 
+      // Close edit mode immediately after clicking Request (no delay)
+      setProfileEditMode(false, { reset: true });
+
       const profile_before = {
         firstName: before?.firstName || "",
         lastName: before?.lastName || "",
         email: (before?.email || "").trim().toLowerCase(),
         phone: before?.phone || "",
-        address: before?.address || "",
+        address: _streetOnly(before?.address || ""),
         city: before?.city || "",
         postal_code: before?.postal_code || "",
         cliniko_patient_id: before?.cliniko_patient_id || ""
@@ -4643,7 +4660,7 @@ if (selectedSlot && driveTime > 0) {
         lastName: after?.lastName || "",
         email: (after?.email || "").trim().toLowerCase(),
         phone: after?.phone || "",
-        address: after?.address || "",
+        address: _streetOnly(after?.address || ""),
         city: after?.city || "",
         postal_code: after?.postal_code || "",
         cliniko_patient_id: before?.cliniko_patient_id || ""
@@ -4677,8 +4694,7 @@ if (selectedSlot && driveTime > 0) {
       const ok = await _sendProfileUpdateWebhook(payload);
       if (!ok) _queuePendingProfileUpdate(payload);
 
-      // Revert UI back to stored profile values
-      setProfileEditMode(false, { reset: true });
+      // Revert UI back to stored profile values (already closed above)
 
       // If submission actually failed, immediately inform the user and restore button state
       if (!ok) {
