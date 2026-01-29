@@ -913,7 +913,18 @@
 }
 @keyframes rnrSpin { to { transform: rotate(360deg); } }
 
-</style>
+/* --- Membership UI helpers --- */
+.kv { display:flex; flex-direction:column; gap:10px; }
+.kv-row { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.kv-k { color: rgba(224,197,132,0.85); font-weight:600; }
+.kv-v { color: rgba(255,255,255,0.92); text-align:right; max-width:60%; }
+.plan-card { border: 1px solid rgba(224,197,132,0.25); background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); border-radius: 16px; padding: 14px; }
+.plan-name { font-weight: 700; font-size: 1.1rem; }
+.plan-price { margin-top: 6px; font-size: 1.05rem; color: rgba(224,197,132,0.95); }
+.plan-meta { margin-top: 6px; color: rgba(255,255,255,0.72); font-size: 0.95rem; line-height: 1.5; }
+.toast { border: 1px solid rgba(224,197,132,0.25); background: rgba(0,0,0,0.45); border-radius: 14px; padding: 12px 14px; }
+
+\1
 
   <script>
     // =========================================================
@@ -1917,7 +1928,7 @@ function mobileConfirmBooking() {
                 <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
               </button>
-              <button class="sidebar-btn" data-tab="membership" disabled>
+              <button class="sidebar-btn" data-tab="membership" >
                 <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
                 <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
@@ -6591,7 +6602,205 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     // =========================================================
     // INIT
     // =========================================================
-    async function init() {
+// ==============================
+// Membership (Stripe-backed)
+// ==============================
+const MEMBERSHIP_STATUS_URL = `${N8N_WEBHOOK_BASE}/membership/status`;
+const MEMBERSHIP_SUBSCRIBE_URL = `${N8N_WEBHOOK_BASE}/membership/subscribe`;
+const MEMBERSHIP_PORTAL_URL = `${N8N_WEBHOOK_BASE}/membership/portal`;
+const MEMBERSHIP_CANCEL_URL = `${N8N_WEBHOOK_BASE}/membership/cancel`;
+
+function fmtDate(tsSeconds) {
+  if (!tsSeconds) return "—";
+  const d = new Date(tsSeconds * 1000);
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+}
+
+function showToast(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function hideToast(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = "none";
+}
+
+async function loadMembership() {
+  hideToast("ms-subscribe-msg");
+  hideToast("ms-cancel-msg");
+
+  const statusEl = document.getElementById("ms-status");
+  if (statusEl) statusEl.textContent = "Loading…";
+
+  let profile = null;
+  try { profile = await getCurrentProfile(); } catch (e) {}
+
+  const email = (profile?.email || window?.userProfile?.email || "").trim();
+  const qs = email ? `?email=${encodeURIComponent(email)}` : "";
+  const res = await fetch(MEMBERSHIP_STATUS_URL + qs, { method: "GET" });
+
+  if (!res.ok) {
+    if (statusEl) statusEl.textContent = "Membership status unavailable.";
+    document.getElementById("ms-plan").textContent = "—";
+    document.getElementById("ms-start").textContent = "—";
+    document.getElementById("ms-next").textContent = "—";
+    document.getElementById("ms-term").textContent = "—";
+    document.getElementById("ms-credits").textContent = "—";
+    document.getElementById("ms-rollover").textContent = "—";
+    document.getElementById("ms-seats").textContent = "—";
+    return;
+  }
+
+  const data = await res.json();
+
+  // Expected shape (backend can adapt):
+  // { active: boolean, plan_name, plan_key, term_months, started_at, next_invoice_at, credits_per_seat, rollover, seat_count, within_min_term, min_term_ends_at, customer_portal_enabled }
+  const active = !!data.active;
+
+  if (statusEl) statusEl.textContent = active ? "Active" : "No active membership found.";
+
+  document.getElementById("ms-plan").textContent = data.plan_name || data.plan_key || "—";
+  document.getElementById("ms-start").textContent = fmtDate(data.started_at);
+  document.getElementById("ms-next").textContent = fmtDate(data.next_invoice_at);
+  document.getElementById("ms-term").textContent = data.term_months ? `${data.term_months} month minimum` : "—";
+  document.getElementById("ms-credits").textContent = (data.credits_per_seat ? `${data.credits_per_seat} / seat / month` : "—");
+  document.getElementById("ms-rollover").textContent = (data.rollover === true ? "Enabled" : (data.rollover === false ? "Not enabled" : "—"));
+  document.getElementById("ms-seats").textContent = (data.seat_count ? String(data.seat_count) : "—");
+
+  // Manage Billing button
+  const manageBtn = document.getElementById("btn-membership-manage");
+  const manageNote = document.getElementById("ms-manage-note");
+  if (manageBtn) {
+    manageBtn.disabled = !email;
+    manageBtn.onclick = async () => {
+      hideToast("ms-cancel-msg");
+      try {
+        const pr = await getCurrentProfile();
+        const em = (pr?.email || email || "").trim();
+        if (!em) throw new Error("Missing email");
+        const pres = await fetch(MEMBERSHIP_PORTAL_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em })
+        });
+        if (!pres.ok) throw new Error(await pres.text());
+        const pjson = await pres.json();
+        if (pjson?.url) {
+          window.open(pjson.url, "_blank", "noopener");
+        } else {
+          throw new Error("No portal URL returned");
+        }
+      } catch (err) {
+        if (manageNote) {
+          manageNote.style.display = "block";
+          manageNote.textContent = "Unable to open billing portal right now.";
+        }
+        console.error(err);
+      }
+    };
+  }
+  if (manageNote) manageNote.style.display = "none";
+
+  // Cancel request logic (UI-only; backend can enforce min-term)
+  const cancelBtn = document.getElementById("btn-membership-request-cancel");
+  if (cancelBtn) {
+    cancelBtn.disabled = !active || !email;
+    cancelBtn.onclick = async () => {
+      hideToast("ms-cancel-msg");
+      try {
+        const pr = await getCurrentProfile();
+        const em = (pr?.email || email || "").trim();
+        if (!em) throw new Error("Missing email");
+
+        const cres = await fetch(MEMBERSHIP_CANCEL_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em })
+        });
+
+        const ctext = await cres.text();
+        let cjson = null;
+        try { cjson = JSON.parse(ctext); } catch (e) {}
+
+        if (!cres.ok) {
+          // backend should return friendly message e.g. { message: "...", min_term_ends_at: 123 }
+          const msg = cjson?.message || "Cancellation can’t be completed in the portal right now. Please contact us.";
+          showToast("ms-cancel-msg", msg);
+          return;
+        }
+
+        showToast("ms-cancel-msg", cjson?.message || "Cancellation request received.");
+      } catch (err) {
+        showToast("ms-cancel-msg", "Cancellation can’t be completed right now. Please contact us.");
+        console.error(err);
+      }
+    };
+  }
+
+  // Subscribe buttons
+  const subMsgId = "ms-subscribe-msg";
+  const btnInd = document.getElementById("btn-subscribe-ind");
+  const btnBW = document.getElementById("btn-subscribe-bw");
+  const indTerm = document.getElementById("plan-ind-term");
+
+  if (btnInd) {
+    btnInd.onclick = async () => {
+      hideToast(subMsgId);
+      try {
+        const pr = await getCurrentProfile();
+        const em = (pr?.email || email || "").trim();
+        if (!em) throw new Error("Missing email");
+        const term = Number(indTerm?.value || 3);
+
+        const sres = await fetch(MEMBERSHIP_SUBSCRIBE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em, plan_key: "IND_MO", term_months: term, seat_count: 1 })
+        });
+        if (!sres.ok) throw new Error(await sres.text());
+        const sjson = await sres.json();
+        if (sjson?.url) window.location.href = sjson.url;
+        else throw new Error("No checkout URL returned");
+      } catch (err) {
+        showToast(subMsgId, "Unable to start checkout right now.");
+        console.error(err);
+      }
+    };
+  }
+
+  if (btnBW) {
+    btnBW.onclick = async () => {
+      hideToast(subMsgId);
+      try {
+        const pr = await getCurrentProfile();
+        const em = (pr?.email || email || "").trim();
+        if (!em) throw new Error("Missing email");
+
+        const sres = await fetch(MEMBERSHIP_SUBSCRIBE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: em, plan_key: "IND_BW", term_months: 0, seat_count: 1 })
+        });
+        if (!sres.ok) throw new Error(await sres.text());
+        const sjson = await sres.json();
+        if (sjson?.url) window.location.href = sjson.url;
+        else throw new Error("No checkout URL returned");
+      } catch (err) {
+        showToast(subMsgId, "Unable to start checkout right now.");
+        console.error(err);
+      }
+    };
+  }
+
+  const refreshBtn = document.getElementById("btn-membership-refresh");
+  if (refreshBtn) refreshBtn.onclick = () => loadMembership().catch(console.error);
+}
+
+async function init() {
       if (typeof lucide !== "undefined") lucide.createIcons();
 
       applySavedTheme();
