@@ -2465,68 +2465,47 @@ function mobileConfirmBooking() {
         </div>
 
         <div class="mt-6 grid gap-5">
-          <div class="card-fancy p-5">
-            <div class="card-title">What you get</div>
-            <ul class="mt-3 space-y-2 text-brand-light/80 text-[0.98rem] leading-relaxed">
-              <li class="flex gap-2"><span class="text-brand-gold">•</span> Membership pricing and benefits included in every billing cycle</li>
-              <li class="flex gap-2"><span class="text-brand-gold">•</span> Credits apply toward eligible treatments (based on your plan)</li>
-              <li class="flex gap-2"><span class="text-brand-gold">•</span> Mobile service across Niagara Region</li>
-            </ul>
-          </div>
+                  <div class="card-fancy p-5" id="membership-status-card">
+          <div id="membership-conn-label" class="text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/70">Not connected yet</div>
 
-          <div class="card-fancy p-5">
-            <div class="card-title">How minimum terms work</div>
-            <div class="card-text mt-3">
-              If your plan has a minimum term, billing continues until the term ends.
-              You can request cancellation anytime — it will take effect at the end of the term.
-              Bi-weekly plans have no minimum term.
-            </div>
-          </div>
-
-          <div class="card-fancy p-5">
-            <div class="card-title">Open Membership Signup</div>
-            <p class="card-text mt-2">
-              Tip: If you signed up for a minimum-term plan, your checkout screen shows the term message before you subscribe.
-            </p>
-            <div class="membership-actions mt-4 grid sm:grid-cols-2 gap-3">
-              <a class="btn-filled" href="https://www.relaxandrenew.ca/membership" target="_blank" rel="noopener">
-                <i data-lucide="external-link" class="w-4 h-4"></i>
-                View Plans / Join
-              </a>
-              <button class="btn-outline" onclick="switchTab('rebook')">
-                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
-                Book Now
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Status + actions -->
-      <div class="glass-panel p-6 membership-panel">
-        <h3 class="text-2xl font-serif text-brand-light">Membership Status</h3>
-        <p class="muted mt-2 font-light">
-          This section will show your active plan, next billing date, and term details.
-        </p>
-
-        <div class="divider my-5"></div>
-
-        <div class="card-fancy p-5">
-          <div class="text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/70">Not connected yet</div>
-          <div class="card-text mt-2">
+          <div id="membership-status-summary" class="card-text mt-2">
             Membership status will appear here once the billing integration is enabled for the portal.
           </div>
 
+          <!-- Populated once n8n/Stripe integration is enabled (UI only) -->
+          <div id="membership-details" class="hidden mt-4 space-y-2 text-[0.98rem] leading-relaxed">
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-brand-dim">Plan</div>
+              <div id="m_plan_name" class="text-brand-light text-right">—</div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-brand-dim">Status</div>
+              <div id="m_status" class="text-brand-light text-right">—</div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-brand-dim">Renewal date</div>
+              <div id="m_renewal" class="text-brand-light text-right">—</div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-brand-dim">Commitment end</div>
+              <div id="m_commit_end" class="text-brand-light text-right">—</div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <div class="text-brand-dim">Credits remaining</div>
+              <div id="m_credits_remaining" class="text-brand-light text-right">—</div>
+            </div>
+          </div>
+
           <div class="mt-5 grid gap-3">
-            <button class="btn-outline" disabled title="Coming soon">
+            <button id="btn-manage-billing" class="btn-outline" disabled title="Coming soon" onclick="return openStripeBillingPortal();">
               Manage Billing
             </button>
-            <button class="btn-outline" disabled title="Coming soon">
+            <button id="btn-request-cancel" class="btn-outline" disabled title="Coming soon" onclick="return requestMembershipCancellation();">
               Request Cancellation
             </button>
           </div>
 
-          <div class="card-text mt-4">
+          <div id="membership-action-hint" class="card-text mt-4">
             If you need changes right now, please contact us via the Book Now page.
           </div>
         </div>
@@ -2917,6 +2896,9 @@ function mobileConfirmBooking() {
 const AUTH0_DOMAIN = "auth.relaxandrenew.ca";
 const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
 const AUTH0_DB_CONNECTION = "Username-Password-Authentication";
+
+// Membership (UI-only wiring; n8n/Stripe workflows will populate this later)
+const MEMBERSHIP_STATUS_URL = ""; // e.g. "https://<railway-host>/webhook/membership/status" (leave blank until ready)
 let lock = null;
     let portalProfile = null;
 
@@ -6762,7 +6744,134 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
     // =========================================================
     // TAB SWITCHING
     // =========================================================
-    function switchTab(tabId) {
+        // =========================================================
+    // MEMBERSHIP (UI ONLY)
+    // =========================================================
+    function _fmtDateMaybe(d) {
+      if (!d) return "—";
+      try {
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return "—";
+        return dt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+      } catch { return "—"; }
+    }
+
+    function _setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (val === null || val === undefined || val === "") ? "—" : String(val);
+    }
+
+    function _setHidden(id, hidden) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden", !!hidden);
+    }
+
+    function renderMembershipUI(payload) {
+      // Payload is expected to be derived from Stripe (source of truth) and mirrored into Cliniko by n8n.
+      // Portal is UI only.
+      const connLabel = document.getElementById("membership-conn-label");
+      const summary = document.getElementById("membership-status-summary");
+
+      const hasData = payload && typeof payload === "object" && !!payload.status;
+      if (!hasData) {
+        if (connLabel) connLabel.textContent = "Not connected yet";
+        if (summary) summary.textContent = "Membership status will appear here once the billing integration is enabled for the portal.";
+        _setHidden("membership-details", true);
+        const mb = document.getElementById("btn-manage-billing");
+        const rc = document.getElementById("btn-request-cancel");
+        if (mb) { mb.disabled = true; mb.title = "Coming soon"; }
+        if (rc) { rc.disabled = true; rc.title = "Coming soon"; }
+        return;
+      }
+
+      const status = String(payload.status || "").toLowerCase();
+      const isActive = status === "active";
+
+      if (connLabel) connLabel.textContent = isActive ? "Member active" : "Not a member";
+      if (summary) summary.textContent = isActive
+        ? "Your membership details are shown below."
+        : "You do not currently have an active membership. You can view plans or join anytime.";
+
+      _setHidden("membership-details", !isActive);
+
+      if (isActive) {
+        _setText("m_plan_name", payload.plan_name || payload.plan || "—");
+        _setText("m_status", status);
+        _setText("m_renewal", _fmtDateMaybe(payload.renewal_date));
+        _setText("m_commit_end", _fmtDateMaybe(payload.commitment_end_date));
+        _setText("m_credits_remaining", payload.credits_remaining ?? "—");
+      }
+
+      const mb = document.getElementById("btn-manage-billing");
+      const rc = document.getElementById("btn-request-cancel");
+
+      // Manage billing: only enable if n8n provides a billing portal URL (read-only).
+      const billingUrl = payload.billing_portal_url || "";
+      if (mb) {
+        mb.disabled = !(isActive && !!billingUrl);
+        mb.title = mb.disabled ? "Not available yet" : "";
+        mb.dataset.url = billingUrl;
+      }
+
+      // Cancellation request: portal can only gate + request; never cancels Stripe directly.
+      const commitEnd = payload.commitment_end_date ? new Date(payload.commitment_end_date) : null;
+      const today = new Date();
+      const canRequestCancel = isActive && commitEnd && !isNaN(commitEnd.getTime()) && (today >= commitEnd);
+
+      if (rc) {
+        rc.disabled = !canRequestCancel;
+        rc.title = rc.disabled ? "Not eligible yet" : "";
+      }
+
+      const hint = document.getElementById("membership-action-hint");
+      if (hint) {
+        if (!isActive) {
+          hint.textContent = "View plans to join, or book a session anytime.";
+        } else if (!billingUrl) {
+          hint.textContent = "Billing management will appear here once the billing portal integration is enabled.";
+        } else if (commitEnd && today < commitEnd) {
+          hint.textContent = "Minimum-term plan: cancellation requests are not eligible until your commitment end date. Please contact us if you need changes.";
+        } else {
+          hint.textContent = "You can manage billing, or request cancellation if eligible.";
+        }
+      }
+    }
+
+    async function loadMembershipStatus() {
+      // Safe no-op until URL is set.
+      if (!MEMBERSHIP_STATUS_URL) {
+        renderMembershipUI(null);
+        return null;
+      }
+
+      try {
+        // If you later choose to secure this, add an Authorization header here (Auth0 access token).
+        const res = await fetch(MEMBERSHIP_STATUS_URL, { method: "GET", credentials: "omit" });
+        if (!res.ok) throw new Error("Bad response");
+        const data = await res.json();
+        renderMembershipUI(data);
+        return data;
+      } catch (e) {
+        // Never throw — portal must continue to function.
+        renderMembershipUI(null);
+        return null;
+      }
+    }
+
+    function openStripeBillingPortal() {
+      const mb = document.getElementById("btn-manage-billing");
+      const url = mb?.dataset?.url;
+      if (url) window.open(url, "_blank", "noopener");
+      return false;
+    }
+
+    function requestMembershipCancellation() {
+      // UI-only placeholder: real request will be a workflow later.
+      alert("Cancellation requests will be enabled once the membership workflows are live. For now, please contact us via the Book Now page.");
+      return false;
+    }
+
+function switchTab(tabId) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       const active = document.getElementById("tab-" + tabId);
       if (active) active.classList.remove("hidden");
@@ -6771,6 +6880,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       document.querySelectorAll(".sidebar-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.tab === tabId);
       });
+
+      if (tabId === "membership") { loadMembershipStatus(); }
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
