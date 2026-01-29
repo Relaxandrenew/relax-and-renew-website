@@ -2350,15 +2350,107 @@ function mobileConfirmBooking() {
           </div>
 
           <!-- Membership -->
-          <div id="tab-membership" class="tab-content hidden animate-fade-in-up">
-            <h2 class="text-3xl font-serif text-brand-light mb-6">Membership</h2>
-            <div class="card-fancy p-6">
-              <div class="pill">Coming Soon</div>
-              <p class="muted mt-4">Membership management will be available here.</p>
+        <section id="tab-membership" class="tab-content" style="display:none;">
+          <div class="grid" style="grid-template-columns: 1.15fr 0.85fr; gap: 18px;">
+            <!-- Left: Membership content -->
+            <div class="panel">
+              <div class="panel-title">Membership</div>
+              <div class="panel-subtitle">Manage your membership, billing, and benefits.</div>
+
+              <div class="divider"></div>
+
+              <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 14px;">
+                <div class="card">
+                  <div class="card-title">Individual Monthly</div>
+                  <div class="card-text">1 treatment credit per month. Best for consistent monthly care.</div>
+                  <div class="pill">Minimum-term options available</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Duo / Group</div>
+                  <div class="card-text">For partners or households. Credits scale with seats.</div>
+                  <div class="pill">Great value for shared plans</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Bi-Weekly</div>
+                  <div class="card-text">More frequent care. No minimum-term commitment.</div>
+                  <div class="pill">Cancel anytime</div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="card">
+                  <div class="card-title">What you get</div>
+                  <ul style="margin:0; padding-left:18px; line-height:1.7;">
+                    <li>Membership pricing and benefits included in every billing cycle</li>
+                    <li>Credits apply toward eligible treatments (based on your plan)</li>
+                    <li>Mobile service across Niagara Region</li>
+                  </ul>
+                </div>
+                <div class="card">
+                  <div class="card-title">How minimum terms work</div>
+                  <ul style="margin:0; padding-left:18px; line-height:1.7;">
+                    <li>If your plan has a minimum term, billing continues until the term ends</li>
+                    <li>You can request cancellation anytime — it will take effect at the end of the term</li>
+                    <li>Bi-weekly plans have no minimum term</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+                <a class="btn" href="https://relaxandrenew.ca/membership" target="_blank" rel="noopener">
+                  Open Membership Signup
+                </a>
+                <a class="btn btn-ghost" href="https://relaxandrenew.ca/book-now" target="_blank" rel="noopener">
+                  Book Now
+                </a>
+              </div>
+
+              <div style="height: 10px;"></div>
+
+              <div class="muted" style="font-size: 0.98rem;">
+                Tip: If you signed up for a minimum-term plan, your checkout screen shows the term message before you subscribe.
+              </div>
+            </div>
+
+            <!-- Right: Status + actions -->
+            <div class="panel">
+              <div class="panel-title">Membership Status</div>
+              <div class="panel-subtitle">This section will show your active plan, next billing date, and term details.</div>
+
+              <div class="divider"></div>
+
+              <div id="membershipStatusCard" class="card">
+                <div class="card-title">Not connected yet</div>
+                <div class="card-text">
+                  Membership status will appear here once the billing integration is enabled for the portal.
+                </div>
+              </div>
+
+              <div style="height: 12px;"></div>
+
+              <div class="grid" style="grid-template-columns: 1fr; gap: 10px;">
+                <button id="btnManageBilling" class="btn" type="button" disabled title="Coming soon">
+                  Manage Billing
+                </button>
+                <button id="btnRequestCancel" class="btn btn-ghost" type="button" disabled title="Coming soon">
+                  Request Cancellation
+                </button>
+              </div>
+
+              <div style="height: 10px;"></div>
+
+              <div class="muted" style="font-size: 0.95rem;">
+                If you need changes right now, please contact us via the Book Now page.
+              </div>
             </div>
           </div>
+        </section>
 
-          <!-- History -->
+        <!-- History -->
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
             <h2 class="text-3xl font-serif text-brand-light mb-6">Session History</h2>
 
