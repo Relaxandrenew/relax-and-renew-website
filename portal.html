@@ -1,4 +1,4 @@
-<!-- Portal Version: v2.6 | Remove session notes placeholder + membership tile coming soon + availability month reload + merge next appt countdown into Upcoming | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
+<!-- Portal Version: v2.7 | Enable Membership Section UI (Content + Placeholders) -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -1914,10 +1914,9 @@ function mobileConfirmBooking() {
                 <i data-lucide="history" class="w-5 h-5 text-brand-gold"></i>
                 <span>History</span>
               </button>
-              <button class="sidebar-btn" data-tab="membership" disabled>
-                <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
+              <button class="sidebar-btn" data-tab="membership">
+                <i data-lucide="badge-percent" class="w-5 h-5 text-brand-gold"></i>
                 <span>Membership</span>
-                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               
               <button id="theme-toggle-btn" class="sidebar-btn text-left nav-link text-lg flex items-center gap-3" onclick="toggleTheme()">
@@ -2350,7 +2349,7 @@ function mobileConfirmBooking() {
           </div>
 
           <!-- Membership -->
-        <section id="tab-membership" class="tab-content" style="display:none;">
+        <section id="tab-membership" class="tab-content hidden animate-fade-in-up">
           <div class="grid" style="grid-template-columns: 1.15fr 0.85fr; gap: 18px;">
             <!-- Left: Membership content -->
             <div class="panel">
