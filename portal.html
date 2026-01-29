@@ -1,4 +1,4 @@
-<!-- Portal Version: v2.7 | Enable Membership Section UI (Content + Placeholders) -->
+<!-- Portal Version: v2.6 | Remove session notes placeholder + membership tile coming soon + availability month reload + merge next appt countdown into Upcoming | Fix false address diffs (street-only compare) + close edit mode instantly on request -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -913,6 +913,32 @@
 }
 @keyframes rnrSpin { to { transform: rotate(360deg); } }
 
+
+    /* --- Membership UI (v2.7+) --- */
+    .membership-layout { grid-template-columns: 1.15fr 0.85fr; gap: 18px; }
+    .membership-plan-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .membership-panel .divider { margin: 1rem 0; }
+
+    .panel-title { font-family: var(--font-serif); font-size: 1.6rem; color: var(--brand-light); }
+    .panel-subtitle { color: rgba(240, 226, 192, 0.7); margin-top: 0.2rem; margin-bottom: 0.8rem; }
+
+    .membership-card .pill { margin-top: 0.7rem; }
+
+    .card-title { font-family: var(--font-serif); font-size: 1.1rem; color: var(--brand-light); margin-bottom: 0.35rem; }
+    .card-text { color: rgba(240, 226, 192, 0.7); font-size: 0.95rem; line-height: 1.5; }
+
+    @media (max-width: 900px) {
+      .membership-layout { grid-template-columns: 1fr; }
+      .membership-plan-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Dashboard tile links */
+    .dashboard-tile-link { cursor: pointer; }
+    .dashboard-tile-link:focus { outline: 2px solid rgba(224, 197, 132, 0.35); outline-offset: 2px; }
+
+    /* Sidebar theme toggle (smaller / less prominent) */
+    .sidebar-btn--compact { font-size: 0.92rem; padding: 0.6rem 0.9rem; color: rgba(240, 226, 192, 0.5); }
+    .sidebar-btn--compact:hover { color: rgba(240, 226, 192, 0.75); }
 </style>
 
   <script>
@@ -1915,13 +1941,14 @@ function mobileConfirmBooking() {
                 <span>History</span>
               </button>
               <button class="sidebar-btn" data-tab="membership">
-                <i data-lucide="badge-percent" class="w-5 h-5 text-brand-gold"></i>
+                <i data-lucide="badge-percent" class="w-5 h-5 text-brand-dim"></i>
                 <span>Membership</span>
+                <span class="ml-auto pill text-[10px] px-1.5 py-0.5">Soon</span>
               </button>
               
-              <button id="theme-toggle-btn" class="sidebar-btn text-left nav-link text-lg flex items-center gap-3" onclick="toggleTheme()">
+              <button id="theme-toggle-btn" class="sidebar-btn sidebar-btn--compact flex items-center gap-3" onclick="toggleTheme()">
                 <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-brand-gold"></i>
-                <span id="theme-label">Light Mode</span>
+                <span id="theme-label" class="muted text-sm">Light Mode</span>
               </button>
 <hr class="divider my-3">
               <button id="logout-btn" class="sidebar-btn text-red-400 hover:text-red-200 hover:bg-red-900/10 hover:border-red-900/30">
@@ -1963,7 +1990,7 @@ function mobileConfirmBooking() {
                 <div class="text-2xl sm:text-3xl font-serif text-brand-light" id="dash-upcoming-count">0</div>
                 <div class="muted text-[0.7rem] sm:text-xs mt-1">Scheduled appointments</div>
               </div>
-              <div class="card-fancy p-3 sm:p-5">
+              <div class="card-fancy p-3 sm:p-5 dashboard-tile-link" role="button" tabindex="0" onclick="switchTab('membership')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('membership');}">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                   <div class="w-9 h-9 sm:w-10 sm:h-10 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded">
                     <i data-lucide="crown" class="w-4 h-4 sm:w-5 sm:h-5"></i>
@@ -2349,27 +2376,27 @@ function mobileConfirmBooking() {
           </div>
 
           <!-- Membership -->
-        <section id="tab-membership" class="tab-content hidden animate-fade-in-up">
-          <div class="grid" style="grid-template-columns: 1.15fr 0.85fr; gap: 18px;">
+        <section id="tab-membership" class="tab-content">
+          <div class="grid membership-layout">
             <!-- Left: Membership content -->
-            <div class="panel">
+            <div class="glass-panel p-6 membership-panel">
               <div class="panel-title">Membership</div>
               <div class="panel-subtitle">Manage your membership, billing, and benefits.</div>
 
               <div class="divider"></div>
 
-              <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 14px;">
-                <div class="card">
+              <div class="grid membership-plan-grid">
+                <div class="card-fancy p-4 membership-card">
                   <div class="card-title">Individual Monthly</div>
                   <div class="card-text">1 treatment credit per month. Best for consistent monthly care.</div>
                   <div class="pill">Minimum-term options available</div>
                 </div>
-                <div class="card">
+                <div class="card-fancy p-4 membership-card">
                   <div class="card-title">Duo / Group</div>
                   <div class="card-text">For partners or households. Credits scale with seats.</div>
                   <div class="pill">Great value for shared plans</div>
                 </div>
-                <div class="card">
+                <div class="card-fancy p-4 membership-card">
                   <div class="card-title">Bi-Weekly</div>
                   <div class="card-text">More frequent care. No minimum-term commitment.</div>
                   <div class="pill">Cancel anytime</div>
@@ -2379,7 +2406,7 @@ function mobileConfirmBooking() {
               <div class="divider"></div>
 
               <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div class="card">
+                <div class="card-fancy p-4 membership-card">
                   <div class="card-title">What you get</div>
                   <ul style="margin:0; padding-left:18px; line-height:1.7;">
                     <li>Membership pricing and benefits included in every billing cycle</li>
@@ -2387,7 +2414,7 @@ function mobileConfirmBooking() {
                     <li>Mobile service across Niagara Region</li>
                   </ul>
                 </div>
-                <div class="card">
+                <div class="card-fancy p-4 membership-card">
                   <div class="card-title">How minimum terms work</div>
                   <ul style="margin:0; padding-left:18px; line-height:1.7;">
                     <li>If your plan has a minimum term, billing continues until the term ends</li>
@@ -2416,7 +2443,7 @@ function mobileConfirmBooking() {
             </div>
 
             <!-- Right: Status + actions -->
-            <div class="panel">
+            <div class="glass-panel p-6 membership-panel">
               <div class="panel-title">Membership Status</div>
               <div class="panel-subtitle">This section will show your active plan, next billing date, and term details.</div>
 
