@@ -956,10 +956,10 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- HEADER HERO WITH PROGRESS INDICATOR -->
-    <header class="header-hero pt-28 pb-16 border-b border-brand-gold/20">
+    <header class="header-hero pt-20 pb-10 md:pt-24 md:pb-14 border-b border-brand-gold/20">
         <div class="container mx-auto px-6 max-w-6xl">
             <!-- Progress Steps -->
-            <div class="flex items-center justify-center mb-12 max-w-3xl mx-auto">
+            <div class="flex items-center justify-center mb-8 md:mb-10 max-w-3xl mx-auto">
                 <div class="progress-step active" id="step-1">
                     <div class="step-circle">
                         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-6 h-6 object-contain" />
@@ -990,10 +990,10 @@ function fillAddressFromPlace(place) {
             </div>
 
             <div class="animate-slide-up text-center">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl text-brand-light mt-3 mb-5 font-serif leading-tight">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl text-brand-light mt-2 mb-3 md:mt-3 md:mb-4 font-serif leading-tight">
                     Book Your Mobile Massage
                 </h1>
-                <p class="text-brand-dim text-base md:text-lg max-w-2xl leading-relaxed mx-auto">
+                <p class="text-brand-dim text-sm md:text-base max-w-2xl leading-relaxed mx-auto">
                     We'll calculate drive-time between appointments and show you times that work for your location.
                 </p>
             </div>
@@ -2571,7 +2571,38 @@ container.appendChild(groupRow);
             selectedStandardDuration = null;
         }
 
-        async function loadAvailabilityForCurrentMonth() {
+        // State tracking for preloading and caching
+        let preloadedMonths = new Set(); // Track which months we've loaded
+        let lastLoadedState = {
+            address: null,
+            duration: null,
+            serviceKey: null
+        };
+
+        function shouldReloadAvailability() {
+            const addrObj = window.__selectedAddress;
+            const currentState = {
+                address: addrObj?.address || null,
+                duration: selectedStandardDuration,
+                serviceKey: selectedServiceKey
+            };
+            
+            const changed = (
+                currentState.address !== lastLoadedState.address ||
+                currentState.duration !== lastLoadedState.duration ||
+                currentState.serviceKey !== lastLoadedState.serviceKey
+            );
+            
+            if (changed) {
+                lastLoadedState = currentState;
+                // Clear preloaded months cache when state changes
+                preloadedMonths.clear();
+            }
+            
+            return changed;
+        }
+
+        async function loadAvailabilityForCurrentMonth(preloadNext = false) {
             const addrObj = window.__selectedAddress;
             if (!addrObj || !addrObj.address) {
                 updateAvailabilityStatus("Enter your address to load live availability.", false);
@@ -2583,18 +2614,35 @@ container.appendChild(groupRow);
             }
 
             try {
-                // SHOW PROGRESS BAR + HIDE CALENDAR
+                // Check if already loaded (cache check)
+                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                if (preloadedMonths.has(monthKey) && !preloadNext) {
+                    // Already loaded, just render
+                    console.log('📋 Using cached availability for', monthKey);
+                    renderCalendar();
+                    return;
+                }
+
+                // SHOW PROGRESS BAR + KEEP CALENDAR VISIBLE (Fix #7)
                 document.getElementById('availability-loading').classList.remove('hidden'); // Show bar
-                document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton (replaced by bar)
-                document.getElementById('calendar-content').classList.add('hidden');
+                document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton
+                // DON'T hide calendar - keep it visible to reduce perceived lag
                 
-                updateAvailabilityStatus("Checking live availability for this address...", false);
+                if (!preloadNext) {
+                    updateAvailabilityStatus("Checking live availability for this address...", false);
+                }
                 selectedDateStr = null;
                 selectedSlot = null;
                 document.getElementById('time-slots-wrapper').classList.add('hidden');
                 updateStickyBar();
 
-                const { from, to } = computeMonthRange(calendarCurrent);
+                // Calculate date range - load 2 months if preloading (Fix #3)
+                const monthsToLoad = preloadNext ? 2 : 1;
+                const fromDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
+                const toDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + monthsToLoad, 0);
+                
+                const from = toDateStr(fromDate);
+                const to = toDateStr(toDate);
                 
                 // Calculate block minutes (what Cliniko needs to reserve)
                 const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipantCount || 0) : 1);
@@ -2618,6 +2666,7 @@ container.appendChild(groupRow);
 
                 console.log('📤 Sending payload:', payload);
                 console.log('🔍 Payload details:');
+                console.log('  - Loading', monthsToLoad, 'month(s) from', from, 'to', to);
                 console.log('  - Address:', payload.address);
                 console.log('  - Standard duration (what client sees):', payload.standardDurationMinutes, 'minutes');
                 console.log('  - Block duration (standard + 25 setup):', payload.durationMinutes, 'minutes');
@@ -2630,9 +2679,8 @@ container.appendChild(groupRow);
                     body: JSON.stringify(payload)
                 });
 
-                // HIDE PROGRESS BAR + SHOW CALENDAR
+                // HIDE PROGRESS BAR (calendar already visible - Fix #7)
                 document.getElementById('availability-loading').classList.add('hidden');
-                document.getElementById('calendar-content').classList.remove('hidden');
 
                 if (!res.ok) {
                     // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
@@ -2695,6 +2743,14 @@ container.appendChild(groupRow);
 
                 setAvailabilityFromResponse(data);
 
+                // Mark months as loaded (Fix #3)
+                for (let i = 0; i < monthsToLoad; i++) {
+                    const d = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + i, 1);
+                    const key = `${d.getFullYear()}-${d.getMonth()}`;
+                    preloadedMonths.add(key);
+                    console.log('✅ Cached month:', key);
+                }
+
                 const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
                 
                 // Debug: Show what dates have availability
@@ -2726,7 +2782,6 @@ container.appendChild(groupRow);
             } catch (e) {
                 // Hide loader on error
                 document.getElementById('availability-loading').classList.add('hidden');
-                document.getElementById('calendar-content').classList.remove('hidden');
                 
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
@@ -2862,9 +2917,12 @@ container.appendChild(groupRow);
             durationSelect.addEventListener('change', async () => {
                 selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
 
-                // If availability is already being shown, reload using the new block duration
+                // Only reload if state has actually changed (Fix #4)
                 if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
-                    await loadAvailabilityForCurrentMonth();
+                    if (shouldReloadAvailability()) {
+                        console.log('🔄 Duration changed, reloading availability');
+                        await loadAvailabilityForCurrentMonth(true); // Preload 2 months
+                    }
                 }
             });
 
@@ -2879,8 +2937,12 @@ container.appendChild(groupRow);
                     selectedStandardDuration = prevDuration;
                 }
 
+                // Only reload if state has actually changed (Fix #4)
                 if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
-                    await loadAvailabilityForCurrentMonth();
+                    if (shouldReloadAvailability()) {
+                        console.log('🔄 Participants changed, reloading availability');
+                        await loadAvailabilityForCurrentMonth(true); // Preload 2 months
+                    }
                 }
             });
 
@@ -2891,9 +2953,22 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
 
                 if (isCurrentMonth) return;
                 
+                // Move back exactly 1 month (Fix #5)
                 calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
-                await loadAvailabilityForCurrentMonth();
-                updatePrevMonthButton();
+                
+                // Check if this month is already loaded (Fix #3, #4)
+                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                if (preloadedMonths.has(monthKey)) {
+                    // Already loaded, just render
+                    console.log('📋 Using cached month:', monthKey);
+                    renderCalendar();
+                    updatePrevMonthButton();
+                } else {
+                    // Need to load this month
+                    console.log('📥 Loading month:', monthKey);
+                    await loadAvailabilityForCurrentMonth(false);
+                    updatePrevMonthButton();
+                }
             });
             
             function updatePrevMonthButton() {
@@ -2904,9 +2979,22 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
             updatePrevMonthButton();
 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
+                // Move forward exactly 1 month (Fix #5)
                 calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
-                await loadAvailabilityForCurrentMonth();
-                updatePrevMonthButton();
+                
+                // Check if this month is already loaded (Fix #3, #4)
+                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                if (preloadedMonths.has(monthKey)) {
+                    // Already loaded, just render
+                    console.log('📋 Using cached month:', monthKey);
+                    renderCalendar();
+                    updatePrevMonthButton();
+                } else {
+                    // Need to load this month (beyond preloaded range)
+                    console.log('📥 Loading month:', monthKey);
+                    await loadAvailabilityForCurrentMonth(false);
+                    updatePrevMonthButton();
+                }
             });
 
             document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
@@ -2961,7 +3049,8 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 }
                 // ========== END BOOKING INTENT EVENT ==========
 
-                await loadAvailabilityForCurrentMonth();
+                // Preload 2 months on initial load (Fix #3)
+                await loadAvailabilityForCurrentMonth(true);
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
@@ -3150,7 +3239,7 @@ function getTravelCanonicalFromSlot(slot) {
         if (travelFeeCents > 0) {
             warningBox.classList.remove("hidden");
             warningText.innerHTML = `
-                Due to extended travel distance (${driveTimeMinutes} minutes), a <b>${travelCharge}</b> travel charge will be added to your total (collected after treatment).
+                Due to extended travel distance (${driveTimeMinutes} min), a <b>${travelCharge}</b> travel charge will be added to your total (collected after treatment).
             `;
 
             if (requiresPayment) {
@@ -3528,8 +3617,8 @@ if (result.success) {
     </script>
 
     <!-- CONFIRMATION SUCCESS MODAL -->
-    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]">
-        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up">
+    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]" onclick="event.stopPropagation();">
+        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up" onclick="event.stopPropagation();">
             <div class="text-center">
                 <div class="inline-block bg-brand-gold/10 p-4 rounded-full mb-6">
                     <i data-lucide="check-circle" class="w-16 h-16 text-brand-gold"></i>
