@@ -1619,7 +1619,7 @@ function fillAddressFromPlace(place) {
         // ============================================================================
         
         // ---------------- CONFIG ----------------
-        const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
+        const AVAILABILITY_URL = "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-availability";
         const STATIC_SETUP_MINUTES = 25;
 
         // Pricing data (base price before HST)
@@ -2769,11 +2769,16 @@ async function loadAvailabilityForWindow(force = false) {
         const to = toDateStr(toDate);
 
         // Block minutes (Cliniko reservation time)
-        const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipants || 3) : 1);
-        const perPerson = Number(selectedStandardDuration);
-        const blockMinutes = (selectedServiceKey === 'group' || selectedServiceKey === 'event') ? perPerson : (perPerson * participants);
+        const participants = (selectedServiceKey === 'duo')
+            ? 2
+            : ((selectedServiceKey === 'group' || selectedServiceKey === 'event')
+                ? Number(selectedParticipantCount || 3)
+                : 1);
 
-        const treat = TREATMENTS[selectedServiceKey] || null;
+        // Cliniko needs the *blocked* time (treatment minutes × participants + setup buffer)
+        const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
+
+        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
 
         const payload = {
             address: addrObj.address,
