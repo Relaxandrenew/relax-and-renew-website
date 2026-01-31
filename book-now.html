@@ -968,9 +968,9 @@ function fillAddressFromPlace(place) {
 
     <!-- NAVIGATION -->
     <nav id="navbar" class="fixed-nav">
-        <div class="container mx-auto px-6 flex justify-between items-center h-20">
+        <div class="container mx-auto px-6 flex justify-between items-center h-14">
             <a href="index.html" class="flex items-center gap-3 no-underline group">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-8 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
                     <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
                     <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
@@ -1025,7 +1025,7 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- HEADER HERO WITH PROGRESS INDICATOR -->
-    <header class="header-hero pt-14 pb-6 md:pt-24 md:pb-14 border-b border-brand-gold/20">
+    <header class="header-hero hidden md:block pt-14 pb-6 md:pt-24 md:pb-14 border-b border-brand-gold/20">
         <div class="container mx-auto px-6 max-w-6xl">
             <!-- Desktop Progress Steps (restore original desktop layout) -->
             <div class="hidden md:flex items-center justify-center mb-8 md:mb-10 max-w-3xl mx-auto" aria-label="Booking steps">
@@ -1070,7 +1070,7 @@ function fillAddressFromPlace(place) {
     </header>
 
     <!-- BOOKING CALENDAR SECTION -->
-    <section id="booking" class="py-12 bg-brand-black border-b border-brand-light/5">
+    <section id="booking" class="pt-20 pb-32 md:pt-12 md:pb-12 bg-brand-black border-b border-brand-light/5">
         <div class="container mx-auto px-6 max-w-6xl">
             <div class="card-fancy animate-fade-in">
                 <!-- Top helper row -->
@@ -1335,7 +1335,7 @@ function fillAddressFromPlace(place) {
             <div class="mt-8 space-y-4">
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
-                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all">
+                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all relative z-10">
                         <option value="" disabled selected>Select a treatment...</option>
 
                         <optgroup label="Core Therapeutic">
@@ -1366,7 +1366,7 @@ function fillAddressFromPlace(place) {
 
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
-                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
+                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all relative z-10">
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
 
@@ -2055,15 +2055,21 @@ function fillAddressFromPlace(place) {
         }
 
         function updateProgress(step) {
-            const nodes = document.querySelectorAll('.progress-step[data-step]');
-            nodes.forEach((el) => {
-                const n = parseInt(el.getAttribute('data-step'), 10);
-                if (!n) return;
-
-                if (n < step) {
-                    el.classList.add('completed');
-                    el.classList.remove('active');
-                } else if (n === step) {
+            const desktopNodes = document.querySelectorAll('.progress-step[data-step]');
+            const mobileNodes = document.querySelectorAll('.progress-footer-step[data-step]');
+            const allNodes = [...desktopNodes, ...mobileNodes];
+            
+            allNodes.forEach(node => {
+                const nodeStep = parseInt(node.dataset.step);
+                node.classList.remove('active', 'completed');
+                
+                if (nodeStep < step) {
+                    node.classList.add('completed');
+                } else if (nodeStep === step) {
+                    node.classList.add('active');
+                }
+            });
+        } else if (n === step) {
                     el.classList.add('active');
                     el.classList.remove('completed');
                 } else {
@@ -3377,7 +3383,16 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const price = getPrice();
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
                 closeAddressModal();
-                updateProgress(2);
+
+                // Soft scroll to calendar
+                setTimeout(() => {
+                    const bookingSection = document.getElementById(\'booking\');
+                    if (bookingSection) {
+                        bookingSection.scrollIntoView({ behavior: \'smooth\', block: \'start\' });
+                    }
+                }, 300);
+
+updateProgress(2);
 
                 // Mobile UX: bring the calendar into view after initiating availability
                 try { scheduleCalendarAutoScroll(); } catch (_) {}
@@ -4044,6 +4059,58 @@ if (result.success) {
             </button>
         </div>
     </div>
+
+
+<!-- MOBILE PROGRESS FOOTER -->
+<div id="mobile-progress-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-40 animate-slide-up">
+    <div class="px-4 py-3">
+        <div class="text-center mb-2">
+            <div class="text-brand-gold text-sm font-serif tracking-wide">Book Your Mobile Massage</div>
+        </div>
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <div class="progress-footer-step flex-1" data-step="1">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">1</div>
+                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Address</div>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-8 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="progress-footer-step flex-1" data-step="2">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">2</div>
+                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Date</div>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-8 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="progress-footer-step flex-1" data-step="3">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">3</div>
+                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Details</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress-footer-step.active .step-circle-mini {
+    background: #E0C584;
+    color: #000;
+    border-color: #E0C584;
+    box-shadow: 0 0 12px rgba(224, 197, 132, 0.4);
+}
+.progress-footer-step.active .step-label {
+    color: rgba(224, 197, 132, 0.9);
+}
+.progress-footer-step.completed .step-circle-mini {
+    background: rgba(224, 197, 132, 0.3);
+    border-color: #E0C584;
+}
+.progress-footer-step.completed .step-label {
+    color: rgba(224, 197, 132, 0.7);
+}
+</style>
+
 
 </body>
 </html>
