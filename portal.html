@@ -2418,108 +2418,97 @@ function mobileConfirmBooking() {
 
           <!-- Membership -->
         <section id="tab-membership" class="tab-content animate-fade-in-up">
-  <div class="membership-wrap">
-    <div class="grid membership-layout">
-      <!-- Left: Plans + benefits -->
-      <div class="glass-panel p-6 membership-panel">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-3xl font-serif text-brand-light">Membership</h2>
-            <p class="muted mt-2 font-light">Manage your membership, billing, and benefits.</p>
-          </div>
-          <div class="text-right">
-            <div class="text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/70">Portal</div>
-            <div class="text-sm text-brand-light/80">UI only</div>
-          </div>
-        </div>
+          <div class="max-w-3xl mx-auto">
+            <h2 class="text-3xl font-serif text-brand-light mb-2">Membership</h2>
+            <p class="muted mb-6">View and manage your membership details.</p>
 
-        <div class="divider my-5"></div>
+            <!-- Loading State -->
+            <div id="membership-loading" class="glass-panel p-8 text-center">
+              <div class="inline-block w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin mb-3"></div>
+              <p class="text-brand-dim text-sm">Checking membership status...</p>
+            </div>
 
-        <div class="grid membership-plan-grid">
-          <div class="card-fancy p-4 membership-card">
-            <div class="card-title">Individual Monthly</div>
-            <div class="card-text">1 treatment credit per month. Best for consistent monthly care.</div>
-            <div class="pill mt-3">
-              <i data-lucide="lock" class="w-4 h-4"></i>
-              Minimum-term options available
+            <!-- No Membership State -->
+            <div id="membership-none" class="glass-panel p-8 text-center hidden">
+              <div class="w-16 h-16 mx-auto mb-4 border border-brand-gold/20 rounded-full flex items-center justify-center">
+                <i data-lucide="crown" class="w-8 h-8 text-brand-gold/50"></i>
+              </div>
+              <h3 class="text-2xl font-serif text-brand-light mb-3">No Active Membership</h3>
+              <p class="muted mb-6 max-w-md mx-auto">You don't currently have an active membership. Join today to unlock exclusive benefits and priority booking.</p>
+              <a href="https://relaxandrenew.ca/membership" target="_blank" class="btn-filled inline-flex items-center gap-2">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+                View Membership Options
+              </a>
+            </div>
+
+            <!-- Active Membership State -->
+            <div id="membership-active" class="hidden">
+              <div class="glass-panel p-6 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <div class="text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/70">Current Plan</div>
+                    <div class="text-2xl font-serif text-brand-light mt-1" id="m_plan_name">—</div>
+                  </div>
+                  <div class="pill bg-green-500/20 text-green-400 border-green-500/30">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <span id="m_status">Active</span>
+                  </div>
+                </div>
+
+                <div class="divider my-4"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="card-fancy p-4">
+                    <div class="text-xs text-brand-gold/70 uppercase tracking-wider mb-1">Next Renewal</div>
+                    <div class="text-brand-light font-serif text-lg" id="m_renewal">—</div>
+                  </div>
+                  <div class="card-fancy p-4">
+                    <div class="text-xs text-brand-gold/70 uppercase tracking-wider mb-1">Credits Remaining</div>
+                    <div class="text-brand-light font-serif text-lg" id="m_credits_remaining">—</div>
+                  </div>
+                  <div class="card-fancy p-4">
+                    <div class="text-xs text-brand-gold/70 uppercase tracking-wider mb-1">Commitment End</div>
+                    <div class="text-brand-light font-serif text-lg" id="m_commit_end">—</div>
+                  </div>
+                  <div class="card-fancy p-4">
+                    <div class="text-xs text-brand-gold/70 uppercase tracking-wider mb-1">Member Since</div>
+                    <div class="text-brand-light font-serif text-lg" id="m_member_since">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="glass-panel p-6">
+                <h3 class="text-xl font-serif text-brand-light mb-4">Manage Your Membership</h3>
+                <div class="grid gap-3">
+                  <button id="btn-manage-billing" class="btn-filled w-full" onclick="return openStripeBillingPortal();">
+                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    Manage Billing & Payment
+                  </button>
+                  <button id="btn-request-cancel" class="btn-outline w-full" onclick="return requestMembershipCancellation();">
+                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                    Request Cancellation
+                  </button>
+                </div>
+                <p class="muted text-xs mt-4 text-center">
+                  Need help? Contact us at <a href="mailto:info@relaxandrenew.ca" class="text-brand-gold hover:text-brand-goldHover">info@relaxandrenew.ca</a>
+                </p>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="membership-error" class="glass-panel p-8 text-center hidden">
+              <div class="w-16 h-16 mx-auto mb-4 border border-red-500/30 rounded-full flex items-center justify-center">
+                <i data-lucide="alert-circle" class="w-8 h-8 text-red-400"></i>
+              </div>
+              <h3 class="text-xl font-serif text-brand-light mb-2">Unable to Load Membership</h3>
+              <p class="muted mb-4" id="membership-error-message">Please try again in a moment.</p>
+              <button onclick="loadMembershipStatus()" class="btn-outline">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                Retry
+              </button>
             </div>
           </div>
-
-          <div class="card-fancy p-4 membership-card">
-            <div class="card-title">Duo / Group</div>
-            <div class="card-text">For partners or households. Credits scale with seats.</div>
-            <div class="pill mt-3">
-              <i data-lucide="users" class="w-4 h-4"></i>
-              Shared plans
-            </div>
-          </div>
-
-          <div class="card-fancy p-4 membership-card">
-            <div class="card-title">Bi-Weekly</div>
-            <div class="card-text">More frequent care. No minimum-term commitment.</div>
-            <div class="pill mt-3">
-              <i data-lucide="calendar-clock" class="w-4 h-4"></i>
-              Cancel anytime
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-5">
-                  <div class="card-fancy p-5" id="membership-status-card">
-          <div id="membership-conn-label" class="text-[0.7rem] tracking-[0.22em] uppercase text-brand-gold/70">Not connected yet</div>
-
-          <div id="membership-status-summary" class="card-text mt-2">
-            Membership status will appear here once the billing integration is enabled for the portal.
-          </div>
-
-          <!-- Populated once n8n/Stripe integration is enabled (UI only) -->
-          <div id="membership-details" class="hidden mt-4 space-y-2 text-[0.98rem] leading-relaxed">
-            <div class="flex items-center justify-between gap-4">
-              <div class="text-brand-dim">Plan</div>
-              <div id="m_plan_name" class="text-brand-light text-right">—</div>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <div class="text-brand-dim">Status</div>
-              <div id="m_status" class="text-brand-light text-right">—</div>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <div class="text-brand-dim">Renewal date</div>
-              <div id="m_renewal" class="text-brand-light text-right">—</div>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <div class="text-brand-dim">Commitment end</div>
-              <div id="m_commit_end" class="text-brand-light text-right">—</div>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <div class="text-brand-dim">Credits remaining</div>
-              <div id="m_credits_remaining" class="text-brand-light text-right">—</div>
-            </div>
-          </div>
-
-          <div class="mt-5 grid gap-3">
-            <button id="btn-manage-billing" class="btn-outline" disabled title="Coming soon" onclick="return openStripeBillingPortal();">
-              Manage Billing
-            </button>
-            <button id="btn-request-cancel" class="btn-outline" disabled title="Coming soon" onclick="return requestMembershipCancellation();">
-              Request Cancellation
-            </button>
-          </div>
-
-          <div id="membership-action-hint" class="card-text mt-4">
-            If you need changes right now, please contact us via the Book Now page.
-          </div>
-        </div>
-
-        <div class="mt-5 card-fancy p-5">
-          <div class="card-title">Minimum-term enforcement</div>
-          <div class="card-text mt-2">
-            For minimum-term plans, the commitment end date governs cancellation eligibility. This portal cannot override billing rules.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+        </section>
 
         <!-- History -->
           <div id="tab-history" class="tab-content hidden animate-fade-in-up">
@@ -5696,53 +5685,91 @@ if (selectedSlot && driveTime > 0) {
     // LOAD MEMBERSHIP STATUS
     // =========================================================
     async function loadMembershipStatus() {
+      console.log("loadMembershipStatus called");
+      
+      // Show loading state
+      showMembershipState('loading');
+      
       // Only proceed if MEMBERSHIP_STATUS_URL is configured
       if (!MEMBERSHIP_STATUS_URL || MEMBERSHIP_STATUS_URL.trim() === "") {
         console.log("Membership status URL not configured");
+        showMembershipState('none');
         return;
       }
 
       if (!portalProfile || !portalProfile.email) {
         console.warn("No profile/email to load membership");
+        showMembershipState('none');
         return;
       }
 
       try {
+        console.log("Fetching membership status for:", portalProfile.email);
         const res = await fetch(MEMBERSHIP_STATUS_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: portalProfile.email,
-            // Optionally include Auth0 token for verification
-            // token: localStorage.getItem('rnr_id_token')
+            email: portalProfile.email
           })
         });
 
+        console.log("Membership status response:", res.status);
+
         if (!res.ok) {
           console.warn(`Membership status check failed: HTTP ${res.status}`);
-          renderNoMembership();
+          showMembershipState('none');
           return;
         }
 
         const data = await res.json();
+        console.log("Membership data received:", data);
         membershipData = data;
 
         // Check if they have an active membership
-        if (data && data.membership_status && 
-            (data.membership_status.toLowerCase() === 'active' || 
-             data.membership_status.toLowerCase() === 'trialing')) {
+        if (data && data.has_membership === true) {
           renderActiveMembership(data);
         } else {
-          renderNoMembership();
+          showMembershipState('none');
         }
 
       } catch (e) {
         console.error("Failed to load membership status:", e);
-        renderNoMembership();
+        showMembershipState('error', e.message);
       }
     }
 
+    function showMembershipState(state, errorMsg = '') {
+      // Hide all states
+      document.getElementById("membership-loading")?.classList.add("hidden");
+      document.getElementById("membership-none")?.classList.add("hidden");
+      document.getElementById("membership-active")?.classList.add("hidden");
+      document.getElementById("membership-error")?.classList.add("hidden");
+
+      // Show the requested state
+      if (state === 'loading') {
+        document.getElementById("membership-loading")?.classList.remove("hidden");
+      } else if (state === 'none') {
+        document.getElementById("membership-none")?.classList.remove("hidden");
+        
+        // Update dashboard tile
+        const dashStatus = document.getElementById("dash-membership-status");
+        const dashSubtext = dashStatus?.nextElementSibling;
+        if (dashStatus) dashStatus.textContent = "No Active Membership";
+        if (dashSubtext) dashSubtext.textContent = "Join to unlock benefits";
+      } else if (state === 'error') {
+        document.getElementById("membership-error")?.classList.remove("hidden");
+        if (errorMsg) {
+          document.getElementById("membership-error-message").textContent = errorMsg;
+        }
+      }
+
+      // Refresh icons
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
     function renderActiveMembership(data) {
+      console.log("Rendering active membership:", data);
+      
       // Update dashboard tile
       const dashStatus = document.getElementById("dash-membership-status");
       const dashSubtext = dashStatus?.nextElementSibling;
@@ -5750,65 +5777,27 @@ if (selectedSlot && driveTime > 0) {
         dashStatus.textContent = data.plan_name || "Active";
       }
       if (dashSubtext) {
-        dashSubtext.textContent = `Next renewal: ${formatDate(data.renewal_date)}`;
+        dashSubtext.textContent = `Renews ${formatDate(data.renewal_date)}`;
       }
 
-      // Show membership details in the Membership tab
-      document.getElementById("membership-conn-label").textContent = "Active Membership";
-      document.getElementById("membership-status-summary").textContent = 
-        `You have an active ${data.plan_name || 'membership'} subscription.`;
+      // Show active membership section
+      document.getElementById("membership-loading")?.classList.add("hidden");
+      document.getElementById("membership-none")?.classList.add("hidden");
+      document.getElementById("membership-error")?.classList.add("hidden");
+      document.getElementById("membership-active")?.classList.remove("hidden");
 
       // Populate membership details
-      const detailsSection = document.getElementById("membership-details");
-      if (detailsSection) {
-        detailsSection.classList.remove("hidden");
-        
-        document.getElementById("m_plan_name").textContent = data.plan_name || "—";
-        document.getElementById("m_status").textContent = capitalizeFirst(data.membership_status) || "—";
-        document.getElementById("m_renewal").textContent = formatDate(data.renewal_date) || "—";
-        document.getElementById("m_commit_end").textContent = formatDate(data.commitment_end_date) || "N/A";
-        document.getElementById("m_credits_remaining").textContent = data.credits_remaining ?? "—";
-      }
+      document.getElementById("m_plan_name").textContent = data.plan_name || "—";
+      document.getElementById("m_status").textContent = capitalizeFirst(data.membership_status) || "Active";
+      document.getElementById("m_renewal").textContent = formatDate(data.renewal_date) || "—";
+      document.getElementById("m_commit_end").textContent = formatDate(data.commitment_end_date) || "N/A";
+      document.getElementById("m_credits_remaining").textContent = data.credits_remaining ?? "—";
+      
+      // Member since (optional - can use created date from Stripe if available)
+      document.getElementById("m_member_since").textContent = "—";
 
-      // Enable action buttons
-      document.getElementById("btn-manage-billing").disabled = false;
-      document.getElementById("btn-manage-billing").title = "";
-      document.getElementById("btn-request-cancel").disabled = false;
-      document.getElementById("btn-request-cancel").title = "";
-
-      // Update action hint
-      document.getElementById("membership-action-hint").textContent = 
-        "Use the buttons above to manage your billing or request cancellation.";
-    }
-
-    function renderNoMembership() {
-      // Update dashboard tile
-      const dashStatus = document.getElementById("dash-membership-status");
-      const dashSubtext = dashStatus?.nextElementSibling;
-      if (dashStatus) {
-        dashStatus.textContent = "No Active Membership";
-      }
-      if (dashSubtext) {
-        dashSubtext.textContent = "Join to unlock benefits";
-      }
-
-      // Show no membership message
-      document.getElementById("membership-conn-label").textContent = "No Active Membership";
-      document.getElementById("membership-status-summary").innerHTML = 
-        `You don't currently have an active membership. <a href="https://relaxandrenew.ca/membership" target="_blank" class="text-brand-gold hover:text-brand-goldHover underline">View membership options</a> to get started.`;
-
-      // Hide membership details
-      document.getElementById("membership-details")?.classList.add("hidden");
-
-      // Keep action buttons disabled
-      document.getElementById("btn-manage-billing").disabled = true;
-      document.getElementById("btn-manage-billing").title = "No active membership";
-      document.getElementById("btn-request-cancel").disabled = true;
-      document.getElementById("btn-request-cancel").title = "No active membership";
-
-      // Update action hint
-      document.getElementById("membership-action-hint").textContent = 
-        "Once you have an active membership, you'll be able to manage billing and view your benefits here.";
+      // Refresh icons
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
     async function openStripeBillingPortal() {
@@ -5852,7 +5841,6 @@ if (selectedSlot && driveTime > 0) {
     }
 
     function requestMembershipCancellation() {
-      // For now, just show contact info
       showToast("Contact Us", "Please email info@relaxandrenew.ca or call 226-337-9064 to request cancellation.", false, 7000);
       return false;
     }
@@ -7023,40 +7011,6 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
           hint.textContent = "You can manage billing, or request cancellation if eligible.";
         }
       }
-    }
-
-    async function loadMembershipStatus() {
-      // Safe no-op until URL is set.
-      if (!MEMBERSHIP_STATUS_URL) {
-        renderMembershipUI(null);
-        return null;
-      }
-
-      try {
-        // If you later choose to secure this, add an Authorization header here (Auth0 access token).
-        const res = await fetch(MEMBERSHIP_STATUS_URL, { method: "GET", credentials: "omit" });
-        if (!res.ok) throw new Error("Bad response");
-        const data = await res.json();
-        renderMembershipUI(data);
-        return data;
-      } catch (e) {
-        // Never throw — portal must continue to function.
-        renderMembershipUI(null);
-        return null;
-      }
-    }
-
-    function openStripeBillingPortal() {
-      const mb = document.getElementById("btn-manage-billing");
-      const url = mb?.dataset?.url;
-      if (url) window.open(url, "_blank", "noopener");
-      return false;
-    }
-
-    function requestMembershipCancellation() {
-      // UI-only placeholder: real request will be a workflow later.
-      alert("Cancellation requests will be enabled once the membership workflows are live. For now, please contact us via the Book Now page.");
-      return false;
     }
 
 function switchTab(tabId) {
