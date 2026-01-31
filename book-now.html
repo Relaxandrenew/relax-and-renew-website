@@ -2706,9 +2706,12 @@ container.appendChild(groupRow);
                 durationSelect.appendChild(opt);
             });
 
+            // CRITICAL FIX: Aggressively enable duration select (desktop fix)
             durationSelect.disabled = false;
+            durationSelect.removeAttribute('disabled');
             durationSelect.style.pointerEvents = 'auto';
             durationSelect.style.opacity = '1';
+            durationSelect.style.cursor = 'pointer';
             console.log("✅ Duration select enabled!");
             console.log("  - Options count:", durationSelect.options.length);
             console.log("  - Disabled?", durationSelect.disabled);
@@ -3283,7 +3286,8 @@ async function loadAvailabilityForWindow(force = false) {
             const durationSelect = document.getElementById('duration-select');
             const participantsSelect = document.getElementById('participants-select');
 
-            serviceSelect.addEventListener('change', () => {
+            // Listen to both 'change' and 'input' events for maximum compatibility (especially on desktop)
+            const handleServiceChange = () => {
                 selectedServiceKey = serviceSelect.value || null;
                 console.log('📝 Service selected:', selectedServiceKey);
 
@@ -3291,6 +3295,32 @@ async function loadAvailabilityForWindow(force = false) {
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
 
                 rebuildDurationOptions();
+                
+                // CRITICAL FIX: Force enable duration select immediately (desktop fix)
+                const durationSelect = document.getElementById('duration-select');
+                if (selectedServiceKey && durationSelect) {
+                    durationSelect.disabled = false;
+                    durationSelect.removeAttribute('disabled');
+                    durationSelect.style.opacity = '1';
+                    durationSelect.style.pointerEvents = 'auto';
+                    durationSelect.style.cursor = 'pointer';
+                    console.log('🔓 Duration select FORCE enabled after service selection');
+                }
+            };
+            
+            serviceSelect.addEventListener('change', handleServiceChange);
+            serviceSelect.addEventListener('input', handleServiceChange);
+
+            // Additional safeguard: Force enable on duration select focus if treatment is selected
+            durationSelect.addEventListener('focus', () => {
+                if (selectedServiceKey) {
+                    durationSelect.disabled = false;
+                    durationSelect.removeAttribute('disabled');
+                    durationSelect.style.opacity = '1';
+                    durationSelect.style.pointerEvents = 'auto';
+                    durationSelect.style.cursor = 'pointer';
+                    console.log('🔓 Duration select RE-ENABLED on focus (safeguard)');
+                }
             });
 
             durationSelect.addEventListener('change', async () => {
