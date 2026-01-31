@@ -1293,7 +1293,7 @@ function fillAddressFromPlace(place) {
     </footer>
 
     <!-- ADDRESS MODAL -->
-    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+    <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
             <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
@@ -1366,7 +1366,7 @@ function fillAddressFromPlace(place) {
 
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
-                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10;">
+                    <select id="duration-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10; opacity: 0.6; pointer-events: none;">
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
 
@@ -2664,6 +2664,23 @@ container.appendChild(groupRow);
 
         function rebuildDurationOptions() {
             const durationSelect = document.getElementById('duration-select');
+            
+            // FORCE duration select to be interactive
+            if (durationSelect) {
+                durationSelect.addEventListener('click', function(e) {
+                    console.log('🖱️ Duration select clicked, disabled:', this.disabled);
+                    if (this.disabled) {
+                        console.warn('⚠️ Duration select is disabled but was clicked!');
+                        this.disabled = false;
+                        this.style.pointerEvents = 'auto';
+                        this.style.opacity = '1';
+                    }
+                });
+                
+                durationSelect.addEventListener('mousedown', function(e) {
+                    console.log('🖱️ Duration select mousedown');
+                });
+            }
             durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
 
             // Always rebuild participants when service changes (so the dropdown appears immediately)
@@ -2705,6 +2722,8 @@ container.appendChild(groupRow);
             });
 
             durationSelect.disabled = false;
+            durationSelect.style.pointerEvents = 'auto';
+            durationSelect.style.opacity = '1';
             console.log("✅ Duration select enabled, options:", durationSelect.options.length);
             selectedStandardDuration = null;
         }
@@ -3257,8 +3276,21 @@ async function loadAvailabilityForWindow(force = false) {
             const participantsSelect = document.getElementById('participants-select');
 
             serviceSelect.addEventListener('change', () => {
+                // FORCE enable duration select
+                const durSel = document.getElementById('duration-select');
+                if (durSel) {
+                    durSel.disabled = false;
+                    durSel.style.pointerEvents = 'auto';
+                    durSel.style.opacity = '1';
+                    console.log('🔓 FORCED duration select enabled');
+                }
                 selectedServiceKey = serviceSelect.value || null;
                 console.log("📝 Service selected:", selectedServiceKey);
+
+                // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
+                selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
+
+                rebuildDurationOptions();
 
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
