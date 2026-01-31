@@ -1366,7 +1366,7 @@ function fillAddressFromPlace(place) {
 
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
-                    <select id="duration-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10; opacity: 0.6; pointer-events: none;">
+                    <select id="duration-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10;" disabled>
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
 
@@ -2663,24 +2663,9 @@ container.appendChild(groupRow);
         }
 
         function rebuildDurationOptions() {
+            console.log("=== REBUILD DURATION OPTIONS CALLED ===");
+            console.log("  selectedServiceKey:", selectedServiceKey);
             const durationSelect = document.getElementById('duration-select');
-            
-            // FORCE duration select to be interactive
-            if (durationSelect) {
-                durationSelect.addEventListener('click', function(e) {
-                    console.log('🖱️ Duration select clicked, disabled:', this.disabled);
-                    if (this.disabled) {
-                        console.warn('⚠️ Duration select is disabled but was clicked!');
-                        this.disabled = false;
-                        this.style.pointerEvents = 'auto';
-                        this.style.opacity = '1';
-                    }
-                });
-                
-                durationSelect.addEventListener('mousedown', function(e) {
-                    console.log('🖱️ Duration select mousedown');
-                });
-            }
             durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
 
             // Always rebuild participants when service changes (so the dropdown appears immediately)
@@ -2724,7 +2709,22 @@ container.appendChild(groupRow);
             durationSelect.disabled = false;
             durationSelect.style.pointerEvents = 'auto';
             durationSelect.style.opacity = '1';
-            console.log("✅ Duration select enabled, options:", durationSelect.options.length);
+            console.log("✅ Duration select enabled!");
+            console.log("  - Options count:", durationSelect.options.length);
+            console.log("  - Disabled?", durationSelect.disabled);
+            console.log("  - Opacity:", durationSelect.style.opacity);
+            console.log("  - Pointer events:", durationSelect.style.pointerEvents);
+            
+            // FINAL CHECK
+            setTimeout(() => {
+                console.log("=== 100ms AFTER ENABLE ===");
+                const check = document.getElementById('duration-select');
+                console.log("  Disabled?", check.disabled);
+                console.log("  Opacity:", check.style.opacity);
+                console.log("  Pointer-events:", check.style.pointerEvents);
+                console.log("  Computed opacity:", window.getComputedStyle(check).opacity);
+                console.log("  Computed pointer-events:", window.getComputedStyle(check).pointerEvents);
+            }, 100);
             selectedStandardDuration = null;
         }
 
@@ -3249,6 +3249,14 @@ async function loadAvailabilityForWindow(force = false) {
         // ==============================================================
 
         function initializeApp() {
+            console.log("=== INIT DEBUG ===");
+            const durSel = document.getElementById('duration-select');
+            console.log("Duration select found:", !!durSel);
+            if (durSel) {
+                console.log("  Initial disabled:", durSel.disabled);
+                console.log("  Initial opacity:", durSel.style.opacity);
+                console.log("  Initial pointer-events:", durSel.style.pointerEvents);
+            }
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
             // Mobile menu
@@ -3276,21 +3284,8 @@ async function loadAvailabilityForWindow(force = false) {
             const participantsSelect = document.getElementById('participants-select');
 
             serviceSelect.addEventListener('change', () => {
-                // FORCE enable duration select
-                const durSel = document.getElementById('duration-select');
-                if (durSel) {
-                    durSel.disabled = false;
-                    durSel.style.pointerEvents = 'auto';
-                    durSel.style.opacity = '1';
-                    console.log('🔓 FORCED duration select enabled');
-                }
                 selectedServiceKey = serviceSelect.value || null;
-                console.log("📝 Service selected:", selectedServiceKey);
-
-                // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
-                selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
-
-                rebuildDurationOptions();
+                console.log('📝 Service selected:', selectedServiceKey);
 
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
