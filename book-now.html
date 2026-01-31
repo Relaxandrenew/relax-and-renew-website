@@ -137,7 +137,7 @@
         .btn-filled { background: #E0C584; color: #000; border: 2px solid #E0C584; padding: 0.75rem 2.5rem; text-transform: uppercase; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.08em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
         .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); }
 
-        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: \'Cormorant Garamond\', serif; z-index: 99999 !important; border-radius: 4px; }
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 99999 !important; border-radius: 4px; }
         .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
         .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
         .pac-item-query { color: #E0C584; }
@@ -3431,9 +3431,9 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
 
                 // Soft scroll to calendar
                 setTimeout(() => {
-                    const bookingSection = document.getElementById(\'booking\');
+                    const bookingSection = document.getElementById('booking');
                     if (bookingSection) {
-                        bookingSection.scrollIntoView({ behavior: \'smooth\', block: \'start\' });
+                        bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 }, 300);
 
