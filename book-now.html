@@ -1068,7 +1068,7 @@ function fillAddressFromPlace(place) {
                             <div class="text-brand-light text-lg md:text-xl font-serif">
                                 <span id="calendar-month-label"></span>
                             </div>
-                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
+                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                                 <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
                             </button>
                         </div>
@@ -1661,6 +1661,9 @@ function fillAddressFromPlace(place) {
         // ---------------- STATE ----------------
         let availabilityByDate = {};
         let calendarCurrent = new Date();
+        // Normalize to the 1st of the month to avoid month-skip overflow (e.g., Jan 31 → Mar)
+        calendarCurrent.setHours(0,0,0,0);
+        calendarCurrent.setDate(1);
         let selectedDateStr = null;
         let selectedSlot = null;
         window.__selectedAddress = null;
@@ -2612,8 +2615,10 @@ container.appendChild(groupRow);
             [prevBtn, nextBtn].forEach(btn => {
                 if (!btn) return;
                 if (disabled) {
+                    btn.setAttribute('aria-disabled', 'true');
                     btn.classList.add('opacity-40', 'cursor-not-allowed');
                 } else {
+                    btn.removeAttribute('aria-disabled');
                     btn.classList.remove('opacity-40', 'cursor-not-allowed');
                 }
             });
@@ -2705,19 +2710,19 @@ container.appendChild(groupRow);
                 availabilityAbortController = new AbortController();
 
                 // Loading UI + lock navigation (prevents interrupted requests)
-                const isInitialLoad = !hasLoadedAvailabilityOnce;
+                const monthKeyNow = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                const isInitialLoad = (!hasLoadedAvailabilityOnce) || (!preloadedMonths.has(monthKeyNow));
                 beginAvailabilityLoadUI(isInitialLoad);
                 
-                if (!preloadNext) {
-                    updateAvailabilityStatus("Checking live availability for this address...", false);
-                }
+                updateAvailabilityStatus("Checking live availability for this address...", false);
                 selectedDateStr = null;
                 selectedSlot = null;
                 document.getElementById('time-slots-wrapper').classList.add('hidden');
                 updateStickyBar();
 
-                // Calculate date range - load 2 months if preloading (Fix #3)
-                const monthsToLoad = preloadNext ? 2 : 1;
+                // Calculate date range — always request a 2‑month window (current + next)
+                // This prevents blank months, reduces UI popping, and aligns with the 2‑month booking window.
+                const monthsToLoad = 2;
                 const fromDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
                 const toDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + monthsToLoad, 0);
                 
@@ -3059,6 +3064,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 if (isCurrentMonth) return;
                 
                 // Move back exactly 1 month (Fix #5)
+                calendarCurrent.setDate(1);
                 calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
                 
                 // Check if this month is already loaded (Fix #3, #4)
@@ -3086,6 +3092,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
                 if (isAvailabilityLoading) return;
                 // Move forward exactly 1 month (Fix #5)
+                calendarCurrent.setDate(1);
                 calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
                 
                 // Check if this month is already loaded (Fix #3, #4)
