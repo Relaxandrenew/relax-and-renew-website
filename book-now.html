@@ -1969,7 +1969,8 @@ function fillAddressFromPlace(place) {
         }
 
         function setAvailabilityFromResponse(data) {
-            availabilityByDate = {};
+            // DON'T clear existing data - merge new months with cached months
+            // availabilityByDate = {}; // REMOVED - this was clearing cached months!
 
             console.log('🔍 Raw API Response:', data);
             console.log('🔍 Type:', typeof data);
@@ -2424,12 +2425,28 @@ container.appendChild(groupRow);
         // ---------------- ADDRESS MODAL LOGIC ----------------
         function openAddressModal() {
             const modal = document.getElementById('address-modal');
-            if (modal) modal.classList.remove('hidden');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Lock body scroll on mobile (Fix #3)
+                if (window.innerWidth < 768) {
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.width = '100%';
+                }
+            }
         }
         
         function closeAddressModal() {
             const modal = document.getElementById('address-modal');
-            if (modal) modal.classList.add('hidden');
+            if (modal) {
+                modal.classList.add('hidden');
+                // Unlock body scroll on mobile (Fix #3)
+                if (window.innerWidth < 768) {
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                }
+            }
         }
 
         function getAddressFromModal() {
@@ -2597,6 +2614,9 @@ container.appendChild(groupRow);
                 lastLoadedState = currentState;
                 // Clear preloaded months cache when state changes
                 preloadedMonths.clear();
+                // Also clear the availability data since it's for old state
+                availabilityByDate = {};
+                console.log('🔄 State changed, cleared cache and availability data');
             }
             
             return changed;
@@ -2627,6 +2647,12 @@ container.appendChild(groupRow);
                 document.getElementById('availability-loading').classList.remove('hidden'); // Show bar
                 document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton
                 // DON'T hide calendar - keep it visible to reduce perceived lag
+                
+                // Disable navigation buttons during loading (DESKTOP ONLY - Fix #2)
+                if (window.innerWidth >= 768) {
+                    document.getElementById('prev-month-btn').disabled = true;
+                    document.getElementById('next-month-btn').disabled = true;
+                }
                 
                 if (!preloadNext) {
                     updateAvailabilityStatus("Checking live availability for this address...", false);
@@ -2681,6 +2707,14 @@ container.appendChild(groupRow);
 
                 // HIDE PROGRESS BAR (calendar already visible - Fix #7)
                 document.getElementById('availability-loading').classList.add('hidden');
+                
+                // Re-enable navigation buttons after loading (Fix #2)
+                const prevBtn = document.getElementById('prev-month-btn');
+                const nextBtn = document.getElementById('next-month-btn');
+                if (prevBtn) {
+                    updatePrevMonthButton(); // This handles prev button disabled state correctly
+                }
+                if (nextBtn) nextBtn.disabled = false;
 
                 if (!res.ok) {
                     // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
@@ -2782,6 +2816,12 @@ container.appendChild(groupRow);
             } catch (e) {
                 // Hide loader on error
                 document.getElementById('availability-loading').classList.add('hidden');
+                
+                // Re-enable navigation buttons on error (Fix #2)
+                const prevBtn = document.getElementById('prev-month-btn');
+                const nextBtn = document.getElementById('next-month-btn');
+                if (prevBtn) updatePrevMonthButton();
+                if (nextBtn) nextBtn.disabled = false;
                 
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
