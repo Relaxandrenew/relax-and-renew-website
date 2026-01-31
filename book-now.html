@@ -2596,6 +2596,58 @@ container.appendChild(groupRow);
             serviceKey: null
         };
 
+        // Availability loading + request sequencing (prevents race conditions)
+        let isAvailabilityLoading = false;
+        let availabilityRequestSeq = 0;
+        let availabilityAbortController = null;
+        let hasLoadedAvailabilityOnce = false;
+
+        function setCalendarNavDisabled(disabled) {
+            const prevBtn = document.getElementById('prev-month-btn');
+            const nextBtn = document.getElementById('next-month-btn');
+            if (prevBtn) prevBtn.disabled = !!disabled || prevBtn.disabled; // preserve "cannot go before current month"
+            if (nextBtn) nextBtn.disabled = !!disabled;
+
+            // Visual cue (even if CSS disabled styles don't apply everywhere)
+            [prevBtn, nextBtn].forEach(btn => {
+                if (!btn) return;
+                if (disabled) {
+                    btn.classList.add('opacity-40', 'cursor-not-allowed');
+                } else {
+                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        function beginAvailabilityLoadUI(isInitial = false) {
+            isAvailabilityLoading = true;
+            setCalendarNavDisabled(true);
+
+            // Progress bar always visible during load
+            document.getElementById('availability-loading').classList.remove('hidden');
+
+            // On first ever load, keep skeleton until we have data to render
+            if (isInitial) {
+                document.getElementById('calendar-skeleton').classList.remove('hidden');
+                document.getElementById('calendar-content').classList.add('hidden');
+            } else {
+                // Keep calendar visible to reduce perceived lag
+                document.getElementById('calendar-skeleton').classList.add('hidden');
+                document.getElementById('calendar-content').classList.remove('hidden');
+            }
+        }
+
+        function endAvailabilityLoadUI() {
+            isAvailabilityLoading = false;
+            document.getElementById('availability-loading').classList.add('hidden');
+            document.getElementById('calendar-skeleton').classList.add('hidden');
+            document.getElementById('calendar-content').classList.remove('hidden');
+
+            // Re-enable nav (prev is handled by updatePrevMonthButton)
+            setCalendarNavDisabled(false);
+        }
+
+
         function shouldReloadAvailability() {
             const addrObj = window.__selectedAddress;
             const currentState = {
@@ -2639,20 +2691,22 @@ container.appendChild(groupRow);
                 if (preloadedMonths.has(monthKey) && !preloadNext) {
                     // Already loaded, just render
                     console.log('📋 Using cached availability for', monthKey);
+                    // Ensure nav isn't stuck disabled from a previous request
+                    endAvailabilityLoadUI();
                     renderCalendar();
                     return;
                 }
 
-                // SHOW PROGRESS BAR + KEEP CALENDAR VISIBLE (Fix #7)
-                document.getElementById('availability-loading').classList.remove('hidden'); // Show bar
-                document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton
-                // DON'T hide calendar - keep it visible to reduce perceived lag
-                
-                // Disable navigation buttons during loading (DESKTOP ONLY - Fix #2)
-                if (window.innerWidth >= 768) {
-                    document.getElementById('prev-month-btn').disabled = true;
-                    document.getElementById('next-month-btn').disabled = true;
+                // Request sequencing + cancellation (prevents race conditions)
+                const requestSeq = ++availabilityRequestSeq;
+                if (availabilityAbortController) {
+                    try { availabilityAbortController.abort(); } catch (e) {}
                 }
+                availabilityAbortController = new AbortController();
+
+                // Loading UI + lock navigation (prevents interrupted requests)
+                const isInitialLoad = !hasLoadedAvailabilityOnce;
+                beginAvailabilityLoadUI(isInitialLoad);
                 
                 if (!preloadNext) {
                     updateAvailabilityStatus("Checking live availability for this address...", false);
@@ -2702,19 +2756,19 @@ container.appendChild(groupRow);
                 const res = await fetch(AVAILABILITY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: availabilityAbortController.signal
                 });
 
-                // HIDE PROGRESS BAR (calendar already visible - Fix #7)
-                document.getElementById('availability-loading').classList.add('hidden');
-                
-                // Re-enable navigation buttons after loading (Fix #2)
-                const prevBtn = document.getElementById('prev-month-btn');
-                const nextBtn = document.getElementById('next-month-btn');
-                if (prevBtn) {
-                    updatePrevMonthButton(); // This handles prev button disabled state correctly
+                // If a newer request started while we were waiting, ignore this result.
+                if (requestSeq !== availabilityRequestSeq) {
+                    console.log('⏭️  Ignoring stale availability response (requestSeq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
+                    return;
                 }
-                if (nextBtn) nextBtn.disabled = false;
+
+                // End loading UI + unlock navigation
+                endAvailabilityLoadUI();
+                updatePrevMonthButton();
 
                 if (!res.ok) {
                     // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
@@ -2744,6 +2798,12 @@ container.appendChild(groupRow);
 
                 const raw = await res.json();
                 const data = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
+
+                // Stale guard (in case fetch resolved after a newer request)
+                if (requestSeq !== availabilityRequestSeq) {
+                    console.log('⏭️  Ignoring stale parsed availability data (requestSeq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
+                    return;
+                }
                 console.log('📥 Response received:', data);
                 console.log('📊 Response structure check:');
                 console.log('  - Raw is array?', Array.isArray(raw));
@@ -2813,16 +2873,20 @@ container.appendChild(groupRow);
                 }
 
                 renderCalendar();
+                hasLoadedAvailabilityOnce = true;
             } catch (e) {
-                // Hide loader on error
-                document.getElementById('availability-loading').classList.add('hidden');
-                
-                // Re-enable navigation buttons on error (Fix #2)
-                const prevBtn = document.getElementById('prev-month-btn');
-                const nextBtn = document.getElementById('next-month-btn');
-                if (prevBtn) updatePrevMonthButton();
-                if (nextBtn) nextBtn.disabled = false;
-                
+                // If this was an abort (newer request), silently ignore.
+                if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
+                    console.log('🛑 Availability request aborted (newer request started).');
+                    return;
+                }
+
+                // Only end loading UI if we're still the latest request
+                if (requestSeq === availabilityRequestSeq) {
+                    endAvailabilityLoadUI();
+                    updatePrevMonthButton();
+                }
+
                 console.error('❌ Availability exception', e);
                 updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
             }
@@ -2988,6 +3052,7 @@ container.appendChild(groupRow);
 
 
 document.getElementById('prev-month-btn').addEventListener('click', async () => {
+                if (isAvailabilityLoading) return;
                 const today = new Date(); today.setHours(0,0,0,0);
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
 
@@ -3019,6 +3084,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
             updatePrevMonthButton();
 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
+                if (isAvailabilityLoading) return;
                 // Move forward exactly 1 month (Fix #5)
                 calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
                 
