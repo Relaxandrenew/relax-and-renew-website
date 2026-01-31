@@ -2898,7 +2898,9 @@ const AUTH0_CLIENT_ID = "T8FERqkpcryRN77voMnLeaXIkha1eqK1";
 const AUTH0_DB_CONNECTION = "Username-Password-Authentication";
 
 // Membership (UI-only wiring; n8n/Stripe workflows will populate this later)
-const MEMBERSHIP_STATUS_URL = ""; // e.g. "https://<railway-host>/webhook/membership/status" (leave blank until ready)
+const MEMBERSHIP_STATUS_URL = "https://primary-production-efcf.up.railway.app/webhook/membership/status"; // e.g. "https://<railway-host>/webhook/membership/status" (leave blank until ready)
+const MEMBERSHIP_PORTAL_URL = "https://primary-production-efcf.up.railway.app/webhook/membership/portal"; // e.g. "https://<railway-host>/webhook/membership/portal" (leave blank until ready)
+let membershipData = null;
 let lock = null;
     let portalProfile = null;
 
@@ -5691,6 +5693,186 @@ if (selectedSlot && driveTime > 0) {
     }
 
     // =========================================================
+    // LOAD MEMBERSHIP STATUS
+    // =========================================================
+    async function loadMembershipStatus() {
+      // Only proceed if MEMBERSHIP_STATUS_URL is configured
+      if (!MEMBERSHIP_STATUS_URL || MEMBERSHIP_STATUS_URL.trim() === "") {
+        console.log("Membership status URL not configured");
+        return;
+      }
+
+      if (!portalProfile || !portalProfile.email) {
+        console.warn("No profile/email to load membership");
+        return;
+      }
+
+      try {
+        const res = await fetch(MEMBERSHIP_STATUS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: portalProfile.email,
+            // Optionally include Auth0 token for verification
+            // token: localStorage.getItem('rnr_id_token')
+          })
+        });
+
+        if (!res.ok) {
+          console.warn(`Membership status check failed: HTTP ${res.status}`);
+          renderNoMembership();
+          return;
+        }
+
+        const data = await res.json();
+        membershipData = data;
+
+        // Check if they have an active membership
+        if (data && data.membership_status && 
+            (data.membership_status.toLowerCase() === 'active' || 
+             data.membership_status.toLowerCase() === 'trialing')) {
+          renderActiveMembership(data);
+        } else {
+          renderNoMembership();
+        }
+
+      } catch (e) {
+        console.error("Failed to load membership status:", e);
+        renderNoMembership();
+      }
+    }
+
+    function renderActiveMembership(data) {
+      // Update dashboard tile
+      const dashStatus = document.getElementById("dash-membership-status");
+      const dashSubtext = dashStatus?.nextElementSibling;
+      if (dashStatus) {
+        dashStatus.textContent = data.plan_name || "Active";
+      }
+      if (dashSubtext) {
+        dashSubtext.textContent = `Next renewal: ${formatDate(data.renewal_date)}`;
+      }
+
+      // Show membership details in the Membership tab
+      document.getElementById("membership-conn-label").textContent = "Active Membership";
+      document.getElementById("membership-status-summary").textContent = 
+        `You have an active ${data.plan_name || 'membership'} subscription.`;
+
+      // Populate membership details
+      const detailsSection = document.getElementById("membership-details");
+      if (detailsSection) {
+        detailsSection.classList.remove("hidden");
+        
+        document.getElementById("m_plan_name").textContent = data.plan_name || "—";
+        document.getElementById("m_status").textContent = capitalizeFirst(data.membership_status) || "—";
+        document.getElementById("m_renewal").textContent = formatDate(data.renewal_date) || "—";
+        document.getElementById("m_commit_end").textContent = formatDate(data.commitment_end_date) || "N/A";
+        document.getElementById("m_credits_remaining").textContent = data.credits_remaining ?? "—";
+      }
+
+      // Enable action buttons
+      document.getElementById("btn-manage-billing").disabled = false;
+      document.getElementById("btn-manage-billing").title = "";
+      document.getElementById("btn-request-cancel").disabled = false;
+      document.getElementById("btn-request-cancel").title = "";
+
+      // Update action hint
+      document.getElementById("membership-action-hint").textContent = 
+        "Use the buttons above to manage your billing or request cancellation.";
+    }
+
+    function renderNoMembership() {
+      // Update dashboard tile
+      const dashStatus = document.getElementById("dash-membership-status");
+      const dashSubtext = dashStatus?.nextElementSibling;
+      if (dashStatus) {
+        dashStatus.textContent = "No Active Membership";
+      }
+      if (dashSubtext) {
+        dashSubtext.textContent = "Join to unlock benefits";
+      }
+
+      // Show no membership message
+      document.getElementById("membership-conn-label").textContent = "No Active Membership";
+      document.getElementById("membership-status-summary").innerHTML = 
+        `You don't currently have an active membership. <a href="https://relaxandrenew.ca/membership" target="_blank" class="text-brand-gold hover:text-brand-goldHover underline">View membership options</a> to get started.`;
+
+      // Hide membership details
+      document.getElementById("membership-details")?.classList.add("hidden");
+
+      // Keep action buttons disabled
+      document.getElementById("btn-manage-billing").disabled = true;
+      document.getElementById("btn-manage-billing").title = "No active membership";
+      document.getElementById("btn-request-cancel").disabled = true;
+      document.getElementById("btn-request-cancel").title = "No active membership";
+
+      // Update action hint
+      document.getElementById("membership-action-hint").textContent = 
+        "Once you have an active membership, you'll be able to manage billing and view your benefits here.";
+    }
+
+    async function openStripeBillingPortal() {
+      if (!MEMBERSHIP_PORTAL_URL || MEMBERSHIP_PORTAL_URL.trim() === "") {
+        showToast("Coming Soon", "Billing portal is not yet configured.", true);
+        return false;
+      }
+
+      if (!portalProfile || !portalProfile.email) {
+        showToast("Error", "Please log in to manage billing.", true);
+        return false;
+      }
+
+      try {
+        const res = await fetch(MEMBERSHIP_PORTAL_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: portalProfile.email,
+            return_url: window.location.href
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data && data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error("No portal URL returned");
+        }
+
+      } catch (e) {
+        console.error("Failed to open billing portal:", e);
+        showToast("Error", "Unable to open billing portal. Please try again.", true);
+      }
+
+      return false;
+    }
+
+    function requestMembershipCancellation() {
+      // For now, just show contact info
+      showToast("Contact Us", "Please email info@relaxandrenew.ca or call 226-337-9064 to request cancellation.", false, 7000);
+      return false;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return null;
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    }
+
+    function capitalizeFirst(str) {
+      if (!str) return str;
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    // =========================================================
     // PRELOAD AVAILABILITY IN BACKGROUND
     // =========================================================
     async function preloadAvailabilityInBackground(forceReload = false) {
@@ -5898,6 +6080,9 @@ if (selectedSlot && driveTime > 0) {
           loadUpcomingAppointments();
           if (!availabilityPreloaded) preloadAvailabilityInBackground();
 
+          // Load membership status
+          loadMembershipStatus();
+
           return true;
         } else {
           // Token expired - clear it
@@ -6071,6 +6256,9 @@ if (selectedSlot && driveTime > 0) {
             // Load appointments and preload availability
             loadUpcomingAppointments();
             preloadAvailabilityInBackground();
+            
+            // Load membership status
+            loadMembershipStatus();
           }, 300);
 
         } catch (e) {
