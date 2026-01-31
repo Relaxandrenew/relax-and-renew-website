@@ -702,6 +702,19 @@
   position: relative;
 }
 
+
+
+/* Calendar month navigation - disabled state */
+#prev-month-btn:disabled,
+#next-month-btn:disabled,
+#prev-month-btn[aria-disabled="true"],
+#next-month-btn[aria-disabled="true"] {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  filter: grayscale(60%);
+}
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -1068,7 +1081,7 @@ function fillAddressFromPlace(place) {
                             <div class="text-brand-light text-lg md:text-xl font-serif">
                                 <span id="calendar-month-label"></span>
                             </div>
-                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                            <button id="next-month-btn" class="p-2 rounded border border-brand-gold/30 hover:bg-brand-gold/10 hover:border-brand-gold transition-all">
                                 <i data-lucide="chevron-right" class="w-5 h-5 text-brand-gold"></i>
                             </button>
                         </div>
@@ -1661,9 +1674,6 @@ function fillAddressFromPlace(place) {
         // ---------------- STATE ----------------
         let availabilityByDate = {};
         let calendarCurrent = new Date();
-        // Normalize to the 1st of the month to avoid month-skip overflow (e.g., Jan 31 → Mar)
-        calendarCurrent.setHours(0,0,0,0);
-        calendarCurrent.setDate(1);
         let selectedDateStr = null;
         let selectedSlot = null;
         window.__selectedAddress = null;
@@ -2591,322 +2601,264 @@ container.appendChild(groupRow);
             selectedStandardDuration = null;
         }
 
-        // State tracking for month-window preloading + caching (FOUNDATIONAL FIX)
-// We treat availability as a 2-month "window" (current month + next month).
-// Navigation never mutates based on fetch responses; fetch only fills cache.
+        // =============================================================================
+// AVAILABILITY WINDOW + REQUEST SEQUENCING (FOUNDATIONAL FIX)
+// =============================================================================
+// We preload a 2-month window (current month + next month). Navigation never triggers
+// redundant loads if the month is already cached. All month math is normalized to
+// the 1st to prevent the classic Jan 31 → Mar overflow bug on mobile.
 const WINDOW_MONTHS = 2; // current + next month
-let loadedMonthKeys = new Set(); // Track which months are loaded for the active window (keys: YYYY-MM)
-let windowStartMonth = null; // Date: first day of the month that anchors the active preload window
+let loadedMonthKeys = new Set(); // YYYY-MM keys loaded for the active window
+let windowStartMonth = null;      // Date (1st of month) that anchors the active window
 
-function monthKeyFromDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-function monthStart(d) {
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-function addMonths(d, delta) {
-    return new Date(d.getFullYear(), d.getMonth() + delta, 1);
-}
-function monthIndex(d) {
-    return d.getFullYear() * 12 + d.getMonth();
-}
+// Prevent race conditions from overlapping fetches
+let isAvailabilityLoading = false;
+let availabilityRequestSeq = 0;
+let availabilityAbortController = null;
+let hasLoadedAvailabilityOnce = false;
+
+function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function addMonths(d, delta) { return new Date(d.getFullYear(), d.getMonth() + delta, 1); }
+function monthIndex(d) { return d.getFullYear() * 12 + d.getMonth(); }
+function monthKeyFromDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
 function windowKeys(startMonth) {
     const keys = [];
     for (let i = 0; i < WINDOW_MONTHS; i++) keys.push(monthKeyFromDate(addMonths(startMonth, i)));
     return keys;
 }
-function windowEndMonth(startMonth) {
-    return addMonths(startMonth, WINDOW_MONTHS - 1);
+function windowEndMonth(startMonth) { return addMonths(startMonth, WINDOW_MONTHS - 1); }
+function lastDayOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0); }
+
+function setCalendarNavDisabled(disabled) {
+    const prevBtn = document.getElementById('prev-month-btn');
+    const nextBtn = document.getElementById('next-month-btn');
+    if (!prevBtn || !nextBtn) return;
+
+    if (disabled) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        prevBtn.setAttribute('aria-disabled', 'true');
+        nextBtn.setAttribute('aria-disabled', 'true');
+    } else {
+        prevBtn.removeAttribute('aria-disabled');
+        nextBtn.removeAttribute('aria-disabled');
+        // Prev button is governed by updatePrevMonthButton()
+        nextBtn.disabled = false;
+    }
 }
-function lastDayOfMonth(d) {
-    return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+function beginAvailabilityLoadUI() {
+    isAvailabilityLoading = true;
+
+    // Show loading UI
+    try { document.getElementById('availability-loading').classList.remove('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-skeleton').classList.remove('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-content').classList.add('hidden'); } catch (_) {}
+
+    // Disable month navigation while fetching
+    setCalendarNavDisabled(true);
+}
+
+function endAvailabilityLoadUI() {
+    isAvailabilityLoading = false;
+
+    // Hide loading UI
+    try { document.getElementById('availability-loading').classList.add('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-skeleton').classList.add('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-content').classList.remove('hidden'); } catch (_) {}
+
+    // Re-enable month navigation
+    setCalendarNavDisabled(false);
+    try { updatePrevMonthButton(); } catch (_) {}
 }
 
 let lastLoadedState = {
-            address: null,
-            duration: null,
-            serviceKey: null
+    address: null,
+    duration: null,
+    serviceKey: null
+};
+
+function shouldReloadAvailability() {
+    const addrObj = window.__selectedAddress;
+    const currentState = {
+        address: addrObj?.address || null,
+        duration: selectedStandardDuration,
+        serviceKey: selectedServiceKey
+    };
+
+    const changed = (
+        currentState.address !== lastLoadedState.address ||
+        currentState.duration !== lastLoadedState.duration ||
+        currentState.serviceKey !== lastLoadedState.serviceKey
+    );
+
+    if (changed) {
+        lastLoadedState = currentState;
+
+        // Clear window cache when inputs change
+        loadedMonthKeys.clear();
+        windowStartMonth = null;
+        availabilityByDate = {};
+
+        console.log('🔄 State changed, cleared window cache and availability data');
+    }
+
+    return changed;
+}
+
+async function loadAvailabilityForWindow(force = false) {
+    const addrObj = window.__selectedAddress;
+
+    if (!addrObj || !addrObj.address) {
+        updateAvailabilityStatus("Enter your address to load live availability.", false);
+        return;
+    }
+    if (!selectedServiceKey || !selectedStandardDuration) {
+        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        return;
+    }
+
+    // Normalize active month to the 1st (prevents mobile overflow skips)
+    calendarCurrent = monthStart(calendarCurrent);
+
+    // Ensure window is aligned
+    if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
+
+    // If viewing month is outside the active window, shift window
+    const activeIdx = monthIndex(calendarCurrent);
+    const winStartIdx = monthIndex(windowStartMonth);
+    const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
+    if (activeIdx < winStartIdx || activeIdx > winEndIdx) {
+        windowStartMonth = monthStart(calendarCurrent);
+        loadedMonthKeys.clear();
+    }
+
+    const keys = windowKeys(windowStartMonth);
+    const allLoaded = keys.every(k => loadedMonthKeys.has(k));
+
+    // Fast path: cached window
+    if (!force && allLoaded) {
+        console.log('📋 Using cached availability window:', keys.join(', '));
+        endAvailabilityLoadUI();
+        renderCalendar();
+        updatePrevMonthButton();
+        return;
+    }
+
+    // Abort any in-flight request and start a new one
+    const requestSeq = ++availabilityRequestSeq;
+    if (availabilityAbortController) {
+        try { availabilityAbortController.abort(); } catch (_) {}
+    }
+    availabilityAbortController = new AbortController();
+
+    // Reset selections when loading a new window
+    selectedDateStr = null;
+    selectedSlot = null;
+    try { document.getElementById('time-slots-wrapper').classList.add('hidden'); } catch (_) {}
+    try { updateStickyBar(); } catch (_) {}
+
+    updateAvailabilityStatus("Checking live availability…", false);
+    beginAvailabilityLoadUI();
+
+    try {
+        // Load the 2-month window range
+        const fromDate = monthStart(windowStartMonth);
+        const toDate = lastDayOfMonth(windowEndMonth(windowStartMonth));
+        const from = toDateStr(fromDate);
+        const to = toDateStr(toDate);
+
+        // Block minutes (Cliniko reservation time)
+        const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipants || 3) : 1);
+        const perPerson = Number(selectedStandardDuration);
+        const blockMinutes = (selectedServiceKey === 'group' || selectedServiceKey === 'event') ? perPerson : (perPerson * participants);
+
+        const treat = TREATMENTS[selectedServiceKey] || null;
+
+        const payload = {
+            address: addrObj.address,
+            city: addrObj.city,
+            postal_code: addrObj.postal_code,
+
+            // Range
+            from,
+            to,
+
+            // Durations (send both explicit fields expected by the workflow)
+            standardDurationMinutes: Number(selectedStandardDuration),
+            blockDurationMinutes: blockMinutes,
+            durationMinutes: blockMinutes, // backwards-compat for older nodes
+
+            // Slot generation knobs
+            slotIntervalMinutes: 15,
+
+            participants: participants,
+            treatment_key: selectedServiceKey,
+            treatment_label: treat ? treat.label : ""
         };
 
-        // Availability loading + request sequencing (prevents race conditions)
-        let isAvailabilityLoading = false;
-        let availabilityRequestSeq = 0;
-        let availabilityAbortController = null;
-        let hasLoadedAvailabilityOnce = false;
+        console.log('📤 Availability payload:', payload);
 
-        function setCalendarNavDisabled(disabled) {
-            const prevBtn = document.getElementById('prev-month-btn');
-            const nextBtn = document.getElementById('next-month-btn');
-            if (!prevBtn || !nextBtn) return;
+        const res = await fetch(AVAILABILITY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: availabilityAbortController.signal
+        });
 
-            if (disabled) {
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-            } else {
-                // Restore normal state. Prev is governed by "cannot go before current month".
-                try { updatePrevMonthButton(); } catch (_) { prevBtn.disabled = false; }
-                nextBtn.disabled = false;
+        // Stale response guard
+        if (requestSeq !== availabilityRequestSeq) {
+            console.log('⏭️ Ignoring stale availability response (seq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
+            return;
+        }
+
+        let data = null;
+        try { data = await res.json(); } catch (_) {}
+
+        // Handle tamper/blocked responses cleanly
+        if (!res.ok) {
+            if (res.status === 403 && data && data.blocked) {
+                updateAvailabilityStatus(data.message || "Request blocked.", true);
+                return;
             }
-
-            // Visual cue
-            [prevBtn, nextBtn].forEach(btn => {
-                if (!btn) return;
-                if (disabled) {
-                    btn.setAttribute('aria-disabled', 'true');
-                    btn.classList.add('opacity-40', 'cursor-not-allowed');
-                } else {
-                    btn.removeAttribute('aria-disabled');
-                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
-                }
-            });
+            updateAvailabilityStatus("Could not load availability. Please try again.", true);
+            console.error('❌ Availability HTTP error', res.status, data);
+            return;
         }
 
-        function beginAvailabilityLoadUI(isInitial = false) {
-            isAvailabilityLoading = true;
-            setCalendarNavDisabled(true);
+        // Merge availability into cache
+        setAvailabilityFromResponse(data);
 
-            // Progress bar always visible during load
-            document.getElementById('availability-loading').classList.remove('hidden');
+        // Mark the whole active window as loaded
+        keys.forEach(k => loadedMonthKeys.add(k));
 
-            // On first ever load, keep skeleton until we have data to render
-            if (isInitial) {
-                document.getElementById('calendar-skeleton').classList.remove('hidden');
-                document.getElementById('calendar-content').classList.add('hidden');
-            } else {
-                // Keep calendar visible to reduce perceived lag
-                document.getElementById('calendar-skeleton').classList.add('hidden');
-                document.getElementById('calendar-content').classList.remove('hidden');
-            }
+        // Status messaging
+        const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
+        if (!any) {
+            updateAvailabilityStatus("No mobile availability found for this 2‑month window with the selected treatment and duration. Please try another month or contact us.", false);
+        } else {
+            updateAvailabilityStatus("Select a date to see available times.", false);
         }
 
-        function endAvailabilityLoadUI() {
-            isAvailabilityLoading = false;
-            document.getElementById('availability-loading').classList.add('hidden');
-            document.getElementById('calendar-skeleton').classList.add('hidden');
-            document.getElementById('calendar-content').classList.remove('hidden');
-
-            // Re-enable nav (prev is handled by updatePrevMonthButton)
-            setCalendarNavDisabled(false);
+        renderCalendar();
+        hasLoadedAvailabilityOnce = true;
+    } catch (e) {
+        // Abort is expected on rapid user changes
+        if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
+            console.log('🛑 Availability request aborted (newer request started).');
+            return;
         }
-
-
-        function shouldReloadAvailability() {
-            const addrObj = window.__selectedAddress;
-            const currentState = {
-                address: addrObj?.address || null,
-                duration: selectedStandardDuration,
-                serviceKey: selectedServiceKey
-            };
-            
-            const changed = (
-                currentState.address !== lastLoadedState.address ||
-                currentState.duration !== lastLoadedState.duration ||
-                currentState.serviceKey !== lastLoadedState.serviceKey
-            );
-            
-            if (changed) {
-                lastLoadedState = currentState;
-                // Clear preloaded months cache when state changes
-                loadedMonthKeys.clear();
-                windowStartMonth = null;
-                // Also clear the availability data since it's for old state
-                availabilityByDate = {};
-                console.log('🔄 State changed, cleared cache and availability data');
-            }
-            
-            return changed;
+        console.error('❌ Availability exception', e);
+        updateAvailabilityStatus("Could not load availability. Please try again.", true);
+    } finally {
+        // Only end loading UI if we're still the latest request
+        if (requestSeq === availabilityRequestSeq) {
+            endAvailabilityLoadUI();
         }
+    }
+}
 
-                        async function loadAvailabilityForWindow(force = false) {
-                    const addrObj = window.__selectedAddress;
-                    if (!addrObj || !addrObj.address) {
-                        updateAvailabilityStatus("Enter your address to load live availability.", false);
-                        return;
-                    }
-                    if (!selectedServiceKey || !selectedStandardDuration) {
-                        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-                        return;
-                    }
 
-                    // Ensure the active month and window anchor are always normalized to the 1st.
-                    calendarCurrent = monthStart(calendarCurrent);
-                    if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
-
-                    // If we're currently viewing a month outside the active window, realign the window.
-                    const activeIdx = monthIndex(calendarCurrent);
-                    const winStartIdx = monthIndex(windowStartMonth);
-                    const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
-                    if (activeIdx < winStartIdx || activeIdx > winEndIdx) {
-                        windowStartMonth = monthStart(calendarCurrent);
-                        loadedMonthKeys.clear();
-                    }
-
-                    const keys = windowKeys(windowStartMonth);
-                    const allLoaded = keys.every(k => loadedMonthKeys.has(k));
-
-                    // Fast path: everything for this window is already cached.
-                    if (!force && allLoaded) {
-                        console.log('📋 Using cached availability window:', keys.join(', '));
-                        try { endAvailabilityLoadUI(); } catch (_) {}
-                        renderCalendar();
-                        try { updatePrevMonthButton(); } catch (_) {}
-                        return;
-                    }
-
-                    let requestSeq = 0;
-
-                    try {
-                        // Request sequencing + cancellation (prevents race conditions)
-                        requestSeq = ++availabilityRequestSeq;
-                        if (availabilityAbortController) {
-                            try { availabilityAbortController.abort(); } catch (e) {}
-                        }
-                        availabilityAbortController = new AbortController();
-
-                        const isInitialLoad = (!hasLoadedAvailabilityOnce);
-                        beginAvailabilityLoadUI(isInitialLoad);
-
-                        updateAvailabilityStatus("Checking live availability for this address...", false);
-                        selectedDateStr = null;
-                        selectedSlot = null;
-                        document.getElementById('time-slots-wrapper').classList.add('hidden');
-                        updateStickyBar();
-
-                        // Always request the full 2‑month window (current + next)
-                        const monthsToLoad = WINDOW_MONTHS;
-                        const fromDate = monthStart(windowStartMonth);
-                        const toDate = lastDayOfMonth(windowEndMonth(windowStartMonth));
-
-                        const from = toDateStr(fromDate);
-                        const to = toDateStr(toDate);
-
-                        // Calculate block minutes (what Cliniko needs to reserve)
-                        const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipantCount || 0) : 1);
-                        const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
-
-                        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
-
-                        const payload = {
-                            address: addrObj.address,
-                            city: addrObj.city,
-                            postal_code: addrObj.postal_code,
-                            from,
-                            to,
-                            durationMinutes: blockMinutes,
-                            standardDurationMinutes: Number(selectedStandardDuration),
-                            participants: participants,
-                            treatment_key: selectedServiceKey,
-                            treatment_label: treat ? treat.label : ""
-                        };
-
-                        console.log('📤 Sending payload:', payload);
-                        console.log('  - Loading', monthsToLoad, 'month(s) window:', keys.join(', '));
-
-                        const res = await fetch(AVAILABILITY_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                            signal: availabilityAbortController.signal
-                        });
-
-                        // If a newer request started while we were waiting, ignore this result.
-                        if (requestSeq !== availabilityRequestSeq) {
-                            console.log('⏭️  Ignoring stale availability response (requestSeq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
-                            return;
-                        }
-
-                        // End loading UI + unlock navigation
-                        endAvailabilityLoadUI();
-                        updatePrevMonthButton();
-
-                        if (!res.ok) {
-                            let payload = null;
-                            try { payload = await res.json(); } catch (e) { payload = null; }
-                            const blockedData = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});
-                            const isBlocked = (res.status === 403) || (blockedData && blockedData.blocked === true);
-
-                            if (isBlocked) {
-                                document.getElementById('availability-loading').classList.add('hidden');
-                                document.getElementById('calendar-content').classList.add('hidden');
-                                window.showBlockedPopup && window.showBlockedPopup();
-                                return;
-                            }
-
-                            const errorText = payload ? JSON.stringify(payload) : await res.text();
-                            console.error('❌ Availability API Error');
-                            console.error('  Status:', res.status);
-                            console.error('  Response:', errorText);
-                            setAvailabilityFromResponse(null);
-                            renderCalendar();
-                            updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
-                            return;
-                        }
-
-                        const raw = await res.json();
-                        // n8n commonly returns: [{ json: {...} }]
-                        const data = Array.isArray(raw)
-                            ? ((raw[0] && raw[0].json) ? raw[0].json : (raw[0] || {}))
-                            : ((raw && raw.json) ? raw.json : (raw || {}));
-
-                        // Stale guard (in case fetch resolved after a newer request)
-                        if (requestSeq !== availabilityRequestSeq) {
-                            console.log('⏭️  Ignoring stale parsed availability data (requestSeq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
-                            return;
-                        }
-
-                        console.log('📥 Response received:', data);
-
-                        // Store max drive time (informational only; do NOT use this for charging)
-                        const inferredMaxDrive = (() => {
-                            const explicit =
-                                Number(data?.maxDriveTimeMinutes) ||
-                                Number(data?.travel?.maxDriveTimeMinutes) ||
-                                0;
-
-                            if (explicit > 0) return explicit;
-
-                            const mins = (data?.dates || [])
-                                .flatMap(d => (d?.slots || []).map(s =>
-                                    Number(s?.driveTimeMinutes ?? s?.drive_time_minutes ?? s?.travel?.driveTimeMinutes ?? s?.travel?.drive_time_minutes ?? 0)
-                                ))
-                                .filter(n => Number.isFinite(n) && n > 0);
-
-                            return mins.length ? Math.max(...mins) : 0;
-                        })();
-
-                        window.__maxDriveTimeMinutes = inferredMaxDrive;
-                        console.log('🚗 Max drive time (informational):', window.__maxDriveTimeMinutes, 'minutes');
-
-                        setAvailabilityFromResponse(data);
-
-                        // Mark months as loaded for this window (current + next)
-                        keys.forEach(k => loadedMonthKeys.add(k));
-
-                        const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
-
-                        if (!any) {
-                            updateAvailabilityStatus("No mobile availability found for this 2‑month window with the selected treatment and duration. This may be due to existing appointments and travel time constraints. Please try another month or contact us.", false);
-                        } else {
-                            updateAvailabilityStatus("Select a date to see available times.", false);
-                        }
-
-                        renderCalendar();
-                        hasLoadedAvailabilityOnce = true;
-                    } catch (e) {
-                        // If this was an abort (newer request), silently ignore.
-                        if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
-                            console.log('🛑 Availability request aborted (newer request started).');
-                            return;
-                        }
-
-                        // Ensure UI doesn't get stuck hidden
-                        try { endAvailabilityLoadUI(); } catch (_) {}
-                        try { updatePrevMonthButton(); } catch (_) {}
-
-                        console.error('❌ Availability exception', e);
-                        updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
-                    }
-                }
 
         // ---------------- INIT ----------------
         // ============= STRIPE PAYMENT INTEGRATION =============
@@ -3067,7 +3019,6 @@ let lastLoadedState = {
             });
 
 
-
 document.getElementById('prev-month-btn').addEventListener('click', async () => {
                 if (isAvailabilityLoading) return;
 
@@ -3075,40 +3026,39 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
                 if (isCurrentMonth) return;
 
-                // Move back exactly 1 month (normalized to the 1st to prevent overflow)
+                // Safe month math: always operate on month-start to prevent overflow
                 calendarCurrent = addMonths(monthStart(calendarCurrent), -1);
 
-                // If we somehow moved outside the active window, realign and force-load.
+                // If we moved outside the active window, shift the window and force-load
                 if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
                 const idx = monthIndex(calendarCurrent);
                 const winStartIdx = monthIndex(windowStartMonth);
                 const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
 
-                if (idx < winStartIdx || idx > winEndIdx) {
+                if (idx < winStartIdx) {
                     windowStartMonth = monthStart(calendarCurrent);
                     loadedMonthKeys.clear();
                     await loadAvailabilityForWindow(true);
                 } else {
-                    // Window may already be cached; load only if needed.
+                    // Window should already contain this month
                     await loadAvailabilityForWindow(false);
                     renderCalendar();
                 }
 
                 updatePrevMonthButton();
             });
-            
+
             function updatePrevMonthButton() {
                 const today = new Date(); today.setHours(0,0,0,0);
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
-                document.getElementById('prev-month-btn').disabled = isCurrentMonth;
+                document.getElementById('prev-month-btn').disabled = isCurrentMonth || isAvailabilityLoading;
             }
             updatePrevMonthButton();
 
-            
-document.getElementById('next-month-btn').addEventListener('click', async () => {
+            document.getElementById('next-month-btn').addEventListener('click', async () => {
                 if (isAvailabilityLoading) return;
 
-                // Move forward exactly 1 month (normalized to the 1st to prevent overflow)
+                // Safe month math: always operate on month-start to prevent overflow
                 calendarCurrent = addMonths(monthStart(calendarCurrent), 1);
 
                 if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
@@ -3117,12 +3067,12 @@ document.getElementById('next-month-btn').addEventListener('click', async () => 
                 const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
 
                 if (idx > winEndIdx) {
-                    // We moved beyond the cached window → shift window and force-load the next 2 months.
+                    // Shift window forward and force-load the next 2 months
                     windowStartMonth = monthStart(calendarCurrent);
                     loadedMonthKeys.clear();
                     await loadAvailabilityForWindow(true);
                 } else {
-                    // Within the cached window → render instantly if window loaded; otherwise load it.
+                    // Within cached window → render instantly if loaded, otherwise load
                     const keys = windowKeys(windowStartMonth);
                     const allLoaded = keys.every(k => loadedMonthKeys.has(k));
                     if (allLoaded) {
@@ -3133,9 +3083,7 @@ document.getElementById('next-month-btn').addEventListener('click', async () => 
                 }
 
                 updatePrevMonthButton();
-            });
-
-            document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
+            });document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
                 e.preventDefault();
                 const manualWrapper = document.getElementById('manual-address-wrapper');
                 const autoInput = document.getElementById('address-input-initial');
@@ -3745,12 +3693,9 @@ if (result.success) {
                 }
             });
 
-            // Start with modal open (do NOT render calendar until availability is loaded)
+            // Start with modal open
             openAddressModal();
-            try {
-                document.getElementById('calendar-skeleton').classList.remove('hidden');
-                document.getElementById('calendar-content').classList.add('hidden');
-            } catch (_) {}
+            renderCalendar();
         }
 
         window.onload = initializeApp;
