@@ -2615,12 +2615,125 @@ let windowStartMonth = null;      // Date (1st of month) that anchors the active
 let isAvailabilityLoading = false;
 let availabilityRequestSeq = 0;
 let availabilityAbortController = null;
+let availabilityPrefetchAbortController = null;
+let availabilityPrefetchSeq = 0;
 let hasLoadedAvailabilityOnce = false;
+// ---------------- CLIENT-SIDE CACHE (SESSION) ----------------
+// Goal: once a month is fetched, going backward renders instantly with no API call.
+// We keep an in-memory cache (availabilityByDate + loadedMonthKeys) AND persist it
+// to sessionStorage so navigation stays "warmed" during the session.
+//
+// Cache is scoped to the current "availability signature" (address + service + duration + participants).
+const SESSION_AVAIL_CACHE_KEY = 'rr_booknow_availability_cache_v1';
+const SESSION_AVAIL_CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes (sessionStorage also clears on tab close)
+let hasTriedSessionCacheRestore = false;
+
+function getParticipantsForSelection() {
+    if (selectedServiceKey === 'duo') return 2;
+    if (selectedServiceKey === 'group' || selectedServiceKey === 'event') return Number(selectedParticipantCount || 3);
+    return 1;
+}
+
+function getAvailabilitySignature() {
+    const addrObj = window.__selectedAddress;
+    const sigObj = {
+        address: addrObj?.address || "",
+        city: addrObj?.city || "",
+        postal_code: addrObj?.postal_code || "",
+        serviceKey: selectedServiceKey || "",
+        standardDuration: Number(selectedStandardDuration || 0),
+        participants: getParticipantsForSelection(),
+        slotInterval: 15,
+        setup: STATIC_SETUP_MINUTES
+    };
+    return JSON.stringify(sigObj);
+}
+
+function clearAvailabilitySessionCache() {
+    try { sessionStorage.removeItem(SESSION_AVAIL_CACHE_KEY); } catch (_) {}
+    hasTriedSessionCacheRestore = false;
+}
+
+function persistAvailabilityCacheToSession() {
+    try {
+        const sig = getAvailabilitySignature();
+        // Only persist when we have a valid selection
+        if (!sig || sig.includes('"address":""') || sig.includes('"serviceKey":""') || sig.includes('"standardDuration":0')) return;
+
+        const payload = {
+            savedAt: Date.now(),
+            signature: sig,
+            loadedMonthKeys: Array.from(loadedMonthKeys),
+            availabilityByDate: availabilityByDate
+        };
+        sessionStorage.setItem(SESSION_AVAIL_CACHE_KEY, JSON.stringify(payload));
+        // console.log('💾 Persisted availability cache to session:', payload.loadedMonthKeys);
+    } catch (e) {
+        console.warn('⚠️ Could not persist availability cache to session', e);
+    }
+}
+
+function tryRestoreAvailabilityCacheFromSession() {
+    if (hasTriedSessionCacheRestore) return;
+    hasTriedSessionCacheRestore = true;
+
+    try {
+        const raw = sessionStorage.getItem(SESSION_AVAIL_CACHE_KEY);
+        if (!raw) return;
+
+        const cached = JSON.parse(raw);
+        if (!cached || !cached.signature || !cached.availabilityByDate) return;
+
+        const savedAt = Number(cached.savedAt || 0);
+        if (!savedAt || (Date.now() - savedAt) > SESSION_AVAIL_CACHE_TTL_MS) return;
+
+        const sig = getAvailabilitySignature();
+        if (cached.signature !== sig) return;
+
+        availabilityByDate = cached.availabilityByDate || {};
+        loadedMonthKeys = new Set(Array.isArray(cached.loadedMonthKeys) ? cached.loadedMonthKeys : []);
+        try { lastAvailabilitySignature = cached.signature; } catch (_) {}
+        console.log('🔥 Restored availability cache from session:', Array.from(loadedMonthKeys).join(', '));
+    } catch (e) {
+        console.warn('⚠️ Could not restore availability cache from session', e);
+    }
+}
 
 function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
 function addMonths(d, delta) { return new Date(d.getFullYear(), d.getMonth() + delta, 1); }
 function monthIndex(d) { return d.getFullYear() * 12 + d.getMonth(); }
 function monthKeyFromDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+
+function monthStartFromKey(key) {
+    const parts = String(key || '').split('-');
+    const y = Number(parts[0] || 0);
+    const m = Number(parts[1] || 1);
+    return new Date(y, Math.max(0, (m - 1)), 1);
+}
+function dateFromMonthIndex(idx) {
+    const y = Math.floor(idx / 12);
+    const m0 = idx % 12;
+    return new Date(y, m0, 1);
+}
+function rangeFromMonthKeys(keys) {
+    if (!Array.isArray(keys) || keys.length === 0) return null;
+    let minIdx = Infinity;
+    let maxIdx = -Infinity;
+
+    for (const k of keys) {
+        const d = monthStartFromKey(k);
+        const idx = monthIndex(d);
+        if (idx < minIdx) minIdx = idx;
+        if (idx > maxIdx) maxIdx = idx;
+    }
+
+    if (!isFinite(minIdx) || !isFinite(maxIdx)) return null;
+
+    const fromDate = dateFromMonthIndex(minIdx);
+    const toDate = lastDayOfMonth(dateFromMonthIndex(maxIdx));
+    return { fromDate, toDate };
+}
+
 function windowKeys(startMonth) {
     const keys = [];
     for (let i = 0; i < WINDOW_MONTHS; i++) keys.push(monthKeyFromDate(addMonths(startMonth, i)));
@@ -2672,38 +2785,120 @@ function endAvailabilityLoadUI() {
     try { updatePrevMonthButton(); } catch (_) {}
 }
 
-let lastLoadedState = {
-    address: null,
-    duration: null,
-    serviceKey: null
-};
+let lastAvailabilitySignature = null;
 
 function shouldReloadAvailability() {
-    const addrObj = window.__selectedAddress;
-    const currentState = {
-        address: addrObj?.address || null,
-        duration: selectedStandardDuration,
-        serviceKey: selectedServiceKey
-    };
+    const sig = getAvailabilitySignature();
+    const hasRequiredSelection = sig
+        && !sig.includes('"address":""')
+        && !sig.includes('"serviceKey":""')
+        && !sig.includes('"standardDuration":0');
 
-    const changed = (
-        currentState.address !== lastLoadedState.address ||
-        currentState.duration !== lastLoadedState.duration ||
-        currentState.serviceKey !== lastLoadedState.serviceKey
-    );
+    if (!hasRequiredSelection) return false;
+
+    const changed = (sig !== lastAvailabilitySignature);
 
     if (changed) {
-        lastLoadedState = currentState;
+        lastAvailabilitySignature = sig;
 
-        // Clear window cache when inputs change
+        // Clear caches when inputs change
         loadedMonthKeys.clear();
         windowStartMonth = null;
         availabilityByDate = {};
+        clearAvailabilitySessionCache();
 
-        console.log('🔄 State changed, cleared window cache and availability data');
+        console.log('🔄 Availability signature changed, cleared cache');
     }
 
     return changed;
+}
+
+
+async function prefetchAvailabilityForMonths(monthKeys) {
+    const addrObj = window.__selectedAddress;
+
+    if (!addrObj || !addrObj.address) return;
+    if (!selectedServiceKey || !selectedStandardDuration) return;
+
+    // Only prefetch months we still don't have
+    const toFetch = (Array.isArray(monthKeys) ? monthKeys : []).filter(k => k && !loadedMonthKeys.has(k));
+    if (toFetch.length === 0) return;
+
+    // Ensure selection hasn't changed mid-flight
+    const sigAtStart = getAvailabilitySignature();
+    const hasRequiredSelection = sigAtStart
+        && !sigAtStart.includes('"address":""')
+        && !sigAtStart.includes('"serviceKey":""')
+        && !sigAtStart.includes('"standardDuration":0');
+    if (!hasRequiredSelection) return;
+
+    const range = rangeFromMonthKeys(toFetch);
+    if (!range) return;
+
+    // Abort any in-flight prefetch and start a new one
+    const prefetchSeq = ++availabilityPrefetchSeq;
+    if (availabilityPrefetchAbortController) {
+        try { availabilityPrefetchAbortController.abort(); } catch (_) {}
+    }
+    availabilityPrefetchAbortController = new AbortController();
+
+    try {
+        const from = toDateStr(range.fromDate);
+        const to = toDateStr(range.toDate);
+
+        const participants = getParticipantsForSelection();
+        const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
+        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+        const payload = {
+            address: addrObj.address,
+            city: addrObj.city,
+            postal_code: addrObj.postal_code,
+
+            from,
+            to,
+
+            standardDurationMinutes: Number(selectedStandardDuration),
+            blockDurationMinutes: blockMinutes,
+            durationMinutes: blockMinutes,
+
+            slotIntervalMinutes: 15,
+
+            participants: participants,
+            treatment_key: selectedServiceKey,
+            treatment_label: treat ? treat.label : ""
+        };
+
+        console.log('🧊 Prefetching availability for months:', toFetch.join(', '), 'range:', from, '→', to);
+
+        const res = await fetch(AVAILABILITY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: availabilityPrefetchAbortController.signal
+        });
+
+        // Ignore stale prefetch responses
+        if (prefetchSeq !== availabilityPrefetchSeq) return;
+
+        // If selection changed, do not merge results
+        if (getAvailabilitySignature() !== sigAtStart) return;
+
+        let data = null;
+        try { data = await res.json(); } catch (_) {}
+
+        if (!res.ok) {
+            console.warn('⚠️ Prefetch availability HTTP error', res.status, data);
+            return;
+        }
+
+        setAvailabilityFromResponse(data);
+        toFetch.forEach(k => loadedMonthKeys.add(k));
+        persistAvailabilityCacheToSession();
+    } catch (e) {
+        if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) return;
+        console.warn('⚠️ Prefetch availability exception', e);
+    }
 }
 
 async function loadAvailabilityForWindow(force = false) {
@@ -2718,41 +2913,57 @@ async function loadAvailabilityForWindow(force = false) {
         return;
     }
 
+    // Restore session cache (if it matches current selection)
+    tryRestoreAvailabilityCacheFromSession();
+
     // Normalize active month to the 1st (prevents mobile overflow skips)
     calendarCurrent = monthStart(calendarCurrent);
 
-    // Ensure window is aligned
-    if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
+    // Desired warm window is always: current view month + next month
+    const desiredWindowStart = monthStart(calendarCurrent);
+    windowStartMonth = desiredWindowStart; // kept for backwards compatibility in other helpers
+    const desiredKeys = windowKeys(desiredWindowStart);
 
-    // If viewing month is outside the active window, shift window
-    const activeIdx = monthIndex(calendarCurrent);
-    const winStartIdx = monthIndex(windowStartMonth);
-    const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
-    if (activeIdx < winStartIdx || activeIdx > winEndIdx) {
-        windowStartMonth = monthStart(calendarCurrent);
-        loadedMonthKeys.clear();
-    }
+    const currentKey = monthKeyFromDate(calendarCurrent);
+    const missingKeys = desiredKeys.filter(k => !loadedMonthKeys.has(k));
+    const currentLoaded = loadedMonthKeys.has(currentKey);
 
-    const keys = windowKeys(windowStartMonth);
-    const allLoaded = keys.every(k => loadedMonthKeys.has(k));
-
-    // Fast path: cached window
-    if (!force && allLoaded) {
-        console.log('📋 Using cached availability window:', keys.join(', '));
+    // Fast path: everything needed for the 2‑month window is already cached
+    if (!force && missingKeys.length === 0) {
+        console.log('📋 Using cached availability window:', desiredKeys.join(', '));
         endAvailabilityLoadUI();
         renderCalendar();
         updatePrevMonthButton();
         return;
     }
 
-    // Abort any in-flight request and start a new one
+    // If the current month is loaded, render immediately (no spinner),
+    // and prefetch only the missing month(s) in the background.
+    if (!force && currentLoaded) {
+        endAvailabilityLoadUI();
+        renderCalendar();
+        updatePrevMonthButton();
+
+        // Background warm-up (does not block UI)
+        prefetchAvailabilityForMonths(missingKeys);
+        return;
+    }
+
+    // ---------- Blocking fetch (current month not loaded OR force reload) ----------
+
+    // Abort any in-flight prefetch; user-facing load wins.
+    if (availabilityPrefetchAbortController) {
+        try { availabilityPrefetchAbortController.abort(); } catch (_) {}
+    }
+
+    // Abort any in-flight user request and start a new one
     const requestSeq = ++availabilityRequestSeq;
     if (availabilityAbortController) {
         try { availabilityAbortController.abort(); } catch (_) {}
     }
     availabilityAbortController = new AbortController();
 
-    // Reset selections when loading a new window
+    // Reset selections when loading (prevents stale time-slot selection across window shifts)
     selectedDateStr = null;
     selectedSlot = null;
     try { document.getElementById('time-slots-wrapper').classList.add('hidden'); } catch (_) {}
@@ -2762,18 +2973,18 @@ async function loadAvailabilityForWindow(force = false) {
     beginAvailabilityLoadUI();
 
     try {
-        // Load the 2-month window range
-        const fromDate = monthStart(windowStartMonth);
-        const toDate = lastDayOfMonth(windowEndMonth(windowStartMonth));
-        const from = toDateStr(fromDate);
-        const to = toDateStr(toDate);
+        const fetchKeys = force ? desiredKeys : missingKeys;
+        const range = rangeFromMonthKeys(fetchKeys);
+        if (!range) {
+            updateAvailabilityStatus("Could not load availability. Please try again.", true);
+            return;
+        }
+
+        const from = toDateStr(range.fromDate);
+        const to = toDateStr(range.toDate);
 
         // Block minutes (Cliniko reservation time)
-        const participants = (selectedServiceKey === 'duo')
-            ? 2
-            : ((selectedServiceKey === 'group' || selectedServiceKey === 'event')
-                ? Number(selectedParticipantCount || 3)
-                : 1);
+        const participants = getParticipantsForSelection();
 
         // Cliniko needs the *blocked* time (treatment minutes × participants + setup buffer)
         const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
@@ -2789,10 +3000,10 @@ async function loadAvailabilityForWindow(force = false) {
             from,
             to,
 
-            // Durations (send both explicit fields expected by the workflow)
+            // Durations
             standardDurationMinutes: Number(selectedStandardDuration),
             blockDurationMinutes: blockMinutes,
-            durationMinutes: blockMinutes, // backwards-compat for older nodes
+            durationMinutes: blockMinutes,
 
             // Slot generation knobs
             slotIntervalMinutes: 15,
@@ -2834,19 +3045,26 @@ async function loadAvailabilityForWindow(force = false) {
         // Merge availability into cache
         setAvailabilityFromResponse(data);
 
-        // Mark the whole active window as loaded
-        keys.forEach(k => loadedMonthKeys.add(k));
+        // Mark only fetched months as loaded (partial window fetch)
+        fetchKeys.forEach(k => loadedMonthKeys.add(k));
 
-        // Status messaging
+        // Status messaging (based on overall cache; fast and consistent)
         const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
         if (!any) {
-            updateAvailabilityStatus("No mobile availability found for this 2‑month window with the selected treatment and duration. Please try another month or contact us.", false);
+            updateAvailabilityStatus("No mobile availability found for this window with the selected treatment and duration. Please try another month or contact us.", false);
         } else {
             updateAvailabilityStatus("Select a date to see available times.", false);
         }
 
         renderCalendar();
+        persistAvailabilityCacheToSession();
         hasLoadedAvailabilityOnce = true;
+
+        // If we still have a missing look-ahead month (rare), warm it in the background.
+        const stillMissing = desiredKeys.filter(k => !loadedMonthKeys.has(k));
+        if (stillMissing.length > 0) {
+            prefetchAvailabilityForMonths(stillMissing);
+        }
     } catch (e) {
         // Abort is expected on rapid user changes
         if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
@@ -3039,16 +3257,14 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const idx = monthIndex(calendarCurrent);
                 const winStartIdx = monthIndex(windowStartMonth);
                 const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
-
                 if (idx < winStartIdx) {
+                    // Shift the active window anchor, but keep all previously cached months warmed.
                     windowStartMonth = monthStart(calendarCurrent);
-                    loadedMonthKeys.clear();
-                    await loadAvailabilityForWindow(true);
-                } else {
-                    // Window should already contain this month
-                    await loadAvailabilityForWindow(false);
-                    renderCalendar();
                 }
+
+                // If the target months are already cached, this renders instantly with no loading state.
+                await loadAvailabilityForWindow(false);
+                renderCalendar();
 
                 updatePrevMonthButton();
             });
@@ -3070,22 +3286,14 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const idx = monthIndex(calendarCurrent);
                 const winStartIdx = monthIndex(windowStartMonth);
                 const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
-
                 if (idx > winEndIdx) {
-                    // Shift window forward and force-load the next 2 months
+                    // Shift the active window anchor, but keep all previously cached months warmed.
                     windowStartMonth = monthStart(calendarCurrent);
-                    loadedMonthKeys.clear();
-                    await loadAvailabilityForWindow(true);
-                } else {
-                    // Within cached window → render instantly if loaded, otherwise load
-                    const keys = windowKeys(windowStartMonth);
-                    const allLoaded = keys.every(k => loadedMonthKeys.has(k));
-                    if (allLoaded) {
-                        renderCalendar();
-                    } else {
-                        await loadAvailabilityForWindow(false);
-                    }
                 }
+
+                // If the target months are already cached, this renders instantly with no loading state.
+                await loadAvailabilityForWindow(false);
+                renderCalendar();
 
                 updatePrevMonthButton();
             });document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
