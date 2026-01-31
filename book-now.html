@@ -2069,20 +2069,6 @@ function fillAddressFromPlace(place) {
                     node.classList.add('active');
                 }
             });
-        } else if (n === step) {
-                    el.classList.add('active');
-                    el.classList.remove('completed');
-                } else {
-                    el.classList.remove('active', 'completed');
-                }
-            });
-        }else if (idx === step - 1) {
-                    el.classList.add('active');
-                    el.classList.remove('completed');
-                } else {
-                    el.classList.remove('active', 'completed');
-                }
-            });
         }
 
         function setAvailabilityFromResponse(data) {
