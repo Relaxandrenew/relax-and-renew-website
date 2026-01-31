@@ -1335,7 +1335,7 @@ function fillAddressFromPlace(place) {
             <div class="mt-8 space-y-4">
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
-                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all relative z-10">
+                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all" style="position: relative; z-index: 10;">
                         <option value="" disabled selected>Select a treatment...</option>
 
                         <optgroup label="Core Therapeutic">
@@ -1366,7 +1366,7 @@ function fillAddressFromPlace(place) {
 
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
-                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all relative z-10">
+                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10;">
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
 
@@ -2705,6 +2705,7 @@ container.appendChild(groupRow);
             });
 
             durationSelect.disabled = false;
+            console.log("✅ Duration select enabled, options:", durationSelect.options.length);
             selectedStandardDuration = null;
         }
 
@@ -3257,6 +3258,7 @@ async function loadAvailabilityForWindow(force = false) {
 
             serviceSelect.addEventListener('change', () => {
                 selectedServiceKey = serviceSelect.value || null;
+                console.log("📝 Service selected:", selectedServiceKey);
 
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
