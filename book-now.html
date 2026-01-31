@@ -2592,7 +2592,16 @@ container.appendChild(groupRow);
         }
 
         // State tracking for preloading and caching
-        let preloadedMonths = new Set(); // Track which months we've loaded
+        const PRELOAD_MONTHS = 2; // current + next month
+        let preloadedMonths = new Set(); // Track which months we've loaded (keys: YYYY-MM)
+        let preloadWindowStartKey = null; // YYYY-MM of the current preload window start
+
+        function monthKeyFromDate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+        function addMonthsToFirstOfMonth(d, delta) {
+            return new Date(d.getFullYear(), d.getMonth() + delta, 1);
+        }
         let lastLoadedState = {
             address: null,
             duration: null,
@@ -2608,10 +2617,18 @@ container.appendChild(groupRow);
         function setCalendarNavDisabled(disabled) {
             const prevBtn = document.getElementById('prev-month-btn');
             const nextBtn = document.getElementById('next-month-btn');
-            if (prevBtn) prevBtn.disabled = !!disabled || prevBtn.disabled; // preserve "cannot go before current month"
-            if (nextBtn) nextBtn.disabled = !!disabled;
+            if (!prevBtn || !nextBtn) return;
 
-            // Visual cue (even if CSS disabled styles don't apply everywhere)
+            if (disabled) {
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+            } else {
+                // Restore normal state. Prev is governed by "cannot go before current month".
+                try { updatePrevMonthButton(); } catch (_) { prevBtn.disabled = false; }
+                nextBtn.disabled = false;
+            }
+
+            // Visual cue
             [prevBtn, nextBtn].forEach(btn => {
                 if (!btn) return;
                 if (disabled) {
@@ -2671,6 +2688,7 @@ container.appendChild(groupRow);
                 lastLoadedState = currentState;
                 // Clear preloaded months cache when state changes
                 preloadedMonths.clear();
+                preloadWindowStartKey = null;
                 // Also clear the availability data since it's for old state
                 availabilityByDate = {};
                 console.log('🔄 State changed, cleared cache and availability data');
@@ -2692,17 +2710,19 @@ container.appendChild(groupRow);
 
             try {
                 // Check if already loaded (cache check)
-                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
-                if (preloadedMonths.has(monthKey) && !preloadNext) {
-                    // Already loaded, just render
-                    console.log('📋 Using cached availability for', monthKey);
-                    // Ensure nav isn't stuck disabled from a previous request
+                const monthKey = monthKeyFromDate(calendarCurrent);
+                const nextMonthKey = monthKeyFromDate(addMonthsToFirstOfMonth(calendarCurrent, 1));
+                const hasPreloadedWindow = (preloadWindowStartKey === monthKey) && preloadedMonths.has(monthKey) && preloadedMonths.has(nextMonthKey);
+
+                // If this month is already loaded (and the 2‑month window exists when requested), just render.
+                if ((!preloadNext && preloadedMonths.has(monthKey)) || (preloadNext && hasPreloadedWindow)) {
+                    console.log('📋 Using cached availability for', monthKey, preloadNext ? '(with 2‑month window)' : '');
                     endAvailabilityLoadUI();
                     renderCalendar();
                     return;
                 }
 
-                // Request sequencing + cancellation (prevents race conditions)
+// Request sequencing + cancellation (prevents race conditions)
                 const requestSeq = ++availabilityRequestSeq;
                 if (availabilityAbortController) {
                     try { availabilityAbortController.abort(); } catch (e) {}
@@ -2710,7 +2730,7 @@ container.appendChild(groupRow);
                 availabilityAbortController = new AbortController();
 
                 // Loading UI + lock navigation (prevents interrupted requests)
-                const monthKeyNow = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                const monthKeyNow = monthKeyFromDate(calendarCurrent);
                 const isInitialLoad = (!hasLoadedAvailabilityOnce) || (!preloadedMonths.has(monthKeyNow));
                 beginAvailabilityLoadUI(isInitialLoad);
                 
@@ -2722,7 +2742,7 @@ container.appendChild(groupRow);
 
                 // Calculate date range — always request a 2‑month window (current + next)
                 // This prevents blank months, reduces UI popping, and aligns with the 2‑month booking window.
-                const monthsToLoad = 2;
+                const monthsToLoad = PRELOAD_MONTHS;
                 const fromDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth(), 1);
                 const toDate = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + monthsToLoad, 0);
                 
@@ -2802,7 +2822,10 @@ container.appendChild(groupRow);
                 }
 
                 const raw = await res.json();
-                const data = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
+                // n8n commonly returns: [{ json: {...} }]
+                const data = Array.isArray(raw)
+                    ? ((raw[0] && raw[0].json) ? raw[0].json : (raw[0] || {}))
+                    : ((raw && raw.json) ? raw.json : (raw || {}));
 
                 // Stale guard (in case fetch resolved after a newer request)
                 if (requestSeq !== availabilityRequestSeq) {
@@ -2842,15 +2865,18 @@ container.appendChild(groupRow);
 
                 setAvailabilityFromResponse(data);
 
-                // Mark months as loaded (Fix #3)
+                // Track current preload window start (so we can avoid redundant reloads)
+                preloadWindowStartKey = monthKeyFromDate(calendarCurrent);
+
+                // Mark months as loaded (current + next)
                 for (let i = 0; i < monthsToLoad; i++) {
-                    const d = new Date(calendarCurrent.getFullYear(), calendarCurrent.getMonth() + i, 1);
-                    const key = `${d.getFullYear()}-${d.getMonth()}`;
+                    const d = addMonthsToFirstOfMonth(calendarCurrent, i);
+                    const key = monthKeyFromDate(d);
                     preloadedMonths.add(key);
                     console.log('✅ Cached month:', key);
                 }
 
-                const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
+const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
                 
                 // Debug: Show what dates have availability
                 console.log('📅 Availability Summary:');
@@ -3068,7 +3094,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
                 
                 // Check if this month is already loaded (Fix #3, #4)
-                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                const monthKey = monthKeyFromDate(calendarCurrent);
                 if (preloadedMonths.has(monthKey)) {
                     // Already loaded, just render
                     console.log('📋 Using cached month:', monthKey);
@@ -3096,7 +3122,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
                 
                 // Check if this month is already loaded (Fix #3, #4)
-                const monthKey = `${calendarCurrent.getFullYear()}-${calendarCurrent.getMonth()}`;
+                const monthKey = monthKeyFromDate(calendarCurrent);
                 if (preloadedMonths.has(monthKey)) {
                     // Already loaded, just render
                     console.log('📋 Using cached month:', monthKey);
@@ -3720,9 +3746,12 @@ if (result.success) {
                 }
             });
 
-            // Start with modal open
+            // Start with modal open (do NOT render calendar until availability is loaded)
             openAddressModal();
-            renderCalendar();
+            try {
+                document.getElementById('calendar-skeleton').classList.remove('hidden');
+                document.getElementById('calendar-content').classList.add('hidden');
+            } catch (_) {}
         }
 
         window.onload = initializeApp;
