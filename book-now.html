@@ -335,6 +335,11 @@
                 font-size: 0.8rem !important;
             }
 
+            
+            /* Hide desktop time slots on mobile (use expanding footer instead) */
+            #time-slots-wrapper {
+                display: none;
+            }
             /* Mobile modal improvements - First modal (address/treatment) */
             #address-modal > div {
                 padding: 1.25rem;
@@ -1097,21 +1102,10 @@ function fillAddressFromPlace(place) {
     <section id="booking" class="pt-20 pb-32 md:pt-12 md:pb-12 bg-brand-black border-b border-brand-light/5">
         <div class="container mx-auto px-6 max-w-6xl">
             <div class="card-fancy animate-fade-in">
-                <!-- Top helper row -->
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-brand-gold/10">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-brand-gold/10 p-2 rounded-full">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-brand-gold"></i>
-                        </div>
-                        <div>
-                            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold/70 font-bold mb-1">Service Location</div>
-                            <div class="text-base md:text-lg text-brand-light font-medium" id="selected-address-label">Service address + treatment required to view availability</div>
-                        </div>
-                    </div>
-                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3 hidden md:inline-flex">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        <span>Change Selection</span>
-                    </button>
+                <!-- Calendar Title -->
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl md:text-3xl text-brand-gold font-serif mb-2">Choose Your Date & Time</h2>
+                    <p class="text-sm text-brand-dim/80" id="selected-address-label">Select your treatment above to view availability</p>
                 </div>
 
                 <!-- NEW PROGRESS BAR LOADER -->
@@ -1324,7 +1318,7 @@ function fillAddressFromPlace(place) {
             </button>
             <div class="text-center mb-8">
                 <div class="inline-block p-3 rounded-full mb-4">
-                    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 object-contain" />
+                    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-16 h-16 object-contain" />
                 </div>
                 <h3 class="text-3xl text-brand-gold font-serif mb-2">Where will we be visiting?</h3>
                 <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
@@ -1402,21 +1396,6 @@ function fillAddressFromPlace(place) {
                     <p class="text-xs text-brand-dim/60 mt-2 leading-snug">For Group bookings we support up to 8 participants; for Events up to 30.</p>
                 </div>
 
-                </div>
-            </div>
-
-            <!-- Payment Options -->
-            <div class="mt-6 payment-badge rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                    <div class="bg-brand-gold/10 p-2 rounded-full mt-0.5">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-brand-gold"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs uppercase tracking-[0.15em] text-brand-gold font-bold mb-2">Payment Options</div>
-                        <div class="text-xs text-brand-dim/80 leading-relaxed">
-                            We accept <strong class="text-brand-light">Cash, Credit Card, and E-Transfer</strong>. We also offer <strong class="text-brand-light">Direct Billing</strong> for most insurance companies. <strong class="text-brand-light">Payment is collected after treatment completion.</strong> No credit card required to book.
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -2218,6 +2197,74 @@ function fillAddressFromPlace(place) {
         }
 
         // ---------------- CALENDAR RENDER ----------------
+
+        // Mobile Footer Expand/Collapse Functions
+        function expandMobileFooter(dateStr) {
+            if (!isMobileViewport()) return;
+            
+            const footer = document.getElementById('mobile-progress-footer');
+            const dateLabel = document.getElementById('mobile-footer-date-label');
+            const mobileContainer = document.getElementById('mobile-time-slots-container');
+            
+            // Set date label
+            const [yy, mm, dd] = dateStr.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            dateLabel.textContent = formatDateLabel(dateObj);
+            
+            // Clone time slots from desktop to mobile footer
+            const desktopSlots = document.getElementById('time-slots');
+            if (desktopSlots && desktopSlots.innerHTML) {
+                mobileContainer.innerHTML = desktopSlots.innerHTML;
+                
+                // Re-attach event listeners for cloned slots
+                const slotButtons = mobileContainer.querySelectorAll('.time-slot-btn');
+                slotButtons.forEach(btn => {
+                    const start = btn.dataset.start;
+                    const end = btn.dataset.end;
+                    const label = btn.dataset.label;
+                    const isAvail = btn.dataset.available === 'true';
+                    
+                    if (isAvail) {
+                        btn.addEventListener('click', () => {
+                            selectedSlot = { start, end, label, available: true };
+                            updateStickyBar();
+                            collapseMobileFooter();
+                        });
+                    }
+                });
+                
+                // Re-attach expand button listeners
+                const expandButtons = mobileContainer.querySelectorAll('[id^="expand-"]');
+                expandButtons.forEach(btn => {
+                    const groupKey = btn.id.replace('expand-', '');
+                    btn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                });
+                
+                // Re-attach group button listeners
+                const groupButtons = mobileContainer.querySelectorAll('[data-group]');
+                groupButtons.forEach(btn => {
+                    const groupKey = btn.dataset.group;
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                    }
+                });
+                
+                // Re-create lucide icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+            
+            // Expand footer
+            footer.classList.add('expanded');
+        }
+        
+        function collapseMobileFooter() {
+            const footer = document.getElementById('mobile-progress-footer');
+            footer.classList.remove('expanded');
+        }
+        
+        function isMobileViewport() {
+            return window.innerWidth < 768;
+        }
         function renderCalendar() {
             const monthLabelEl = document.getElementById('calendar-month-label');
             const daysContainer = document.getElementById('calendar-days');
@@ -2286,6 +2333,7 @@ function fillAddressFromPlace(place) {
                     selectedSlot = null;
                     renderCalendar();
                     renderTimeSlotsForDate(dateStr);
+                    expandMobileFooter(dateStr);
                     updateProgress(2);
                     updateStickyBar();
                 });
@@ -3520,6 +3568,7 @@ updateProgress(2);
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
             document.getElementById('mobile-change-selection-btn').addEventListener('click', openAddressModal);
+            document.getElementById('mobile-footer-collapse-btn').addEventListener('click', collapseMobileFooter);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
             // Continue to booking button - opens Step 3
@@ -4170,9 +4219,11 @@ if (result.success) {
     </div>
 
 
-<!-- MOBILE PROGRESS FOOTER -->
+<!-- MOBILE PROGRESS FOOTER (EXPANDING) -->
 <div id="mobile-progress-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-40 animate-slide-up">
-    <div class="px-3 py-2.5">
+    
+    <!-- COLLAPSED STATE (default) -->
+    <div id="mobile-footer-collapsed" class="px-3 py-2.5">
         <!-- Selection Summary (compact) -->
         <div id="mobile-selection-summary" class="mb-2 pb-2 border-b border-brand-gold/10">
             <div class="flex items-center justify-between gap-2">
@@ -4210,9 +4261,62 @@ if (result.success) {
             </div>
         </div>
     </div>
+    
+    <!-- EXPANDED STATE (time slots) -->
+    <div id="mobile-footer-expanded" class="px-3 py-3">
+        <!-- Header with back button -->
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-brand-gold/20">
+            <button id="mobile-footer-collapse-btn" class="flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors">
+                <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                <span class="text-sm font-bold uppercase tracking-wider">Back to Calendar</span>
+            </button>
+            <div class="text-xs text-brand-dim/70" id="mobile-footer-date-label">Select a time</div>
+        </div>
+        
+        <!-- Time slots container -->
+        <div id="mobile-time-slots-container" class="space-y-3 max-h-[40vh] overflow-y-auto pb-4">
+            <!-- Time slots will be injected here -->
+        </div>
+    </div>
+    
 </div>
 
 <style>
+
+/* Expanding Footer States */
+#mobile-progress-footer {
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
+    height: auto;
+    max-height: 25vh;
+}
+
+#mobile-progress-footer.expanded {
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+#mobile-footer-collapsed,
+#mobile-footer-expanded {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#mobile-footer-collapsed {
+    display: block;
+}
+
+#mobile-footer-expanded {
+    display: none;
+    opacity: 0;
+}
+
+#mobile-progress-footer.expanded #mobile-footer-collapsed {
+    display: none;
+}
+
+#mobile-progress-footer.expanded #mobile-footer-expanded {
+    display: block;
+    opacity: 1;
+}
 .progress-footer-step.active .step-circle-mini {
     background: #E0C584;
     color: #000;
