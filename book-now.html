@@ -311,6 +311,30 @@
             .therapist-badge { padding: 0.5rem 0.75rem; }
             .therapist-avatar { width: 40px; height: 40px; }
 
+            /* Mobile Calendar Scaling - Compact for footer coexistence */
+            #calendar-days button {
+                padding: 0.5rem 0.25rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            #calendar-content {
+                margin-bottom: 0 !important;
+            }
+            
+            .card-fancy {
+                margin-bottom: 8rem !important; /* Space for footer */
+            }
+            
+            /* Time slots compact on mobile */
+            #time-slots-wrapper {
+                margin-bottom: 6rem !important;
+            }
+            
+            .time-slot-btn {
+                padding: 0.6rem 0.75rem !important;
+                font-size: 0.8rem !important;
+            }
+
             /* Mobile modal improvements - First modal (address/treatment) */
             #address-modal > div {
                 padding: 1.25rem;
@@ -1084,7 +1108,7 @@ function fillAddressFromPlace(place) {
                             <div class="text-base md:text-lg text-brand-light font-medium" id="selected-address-label">Service address + treatment required to view availability</div>
                         </div>
                     </div>
-                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
+                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3 hidden md:inline-flex">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                         <span>Change Selection</span>
                     </button>
@@ -3427,6 +3451,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 errorEl.classList.add('hidden');
                 const price = getPrice();
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                const mobileLabelEl = document.getElementById('mobile-selected-address-label');                if (mobileLabelEl) mobileLabelEl.textContent = `${treat.label} (${selectedStandardDuration}min) • ${addr.city || 'Service location'}`;
                 closeAddressModal();
 
                 // Soft scroll to calendar
@@ -3465,6 +3490,7 @@ updateProgress(2);
             });
 
             document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
+            document.getElementById('mobile-change-selection-btn').addEventListener('click', openAddressModal);
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
             // Continue to booking button - opens Step 3
@@ -4108,29 +4134,40 @@ if (result.success) {
 
 <!-- MOBILE PROGRESS FOOTER -->
 <div id="mobile-progress-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-40 animate-slide-up">
-    <div class="px-4 py-3">
-        <div class="text-center mb-2">
-            <div class="text-brand-gold text-sm font-serif tracking-wide">Book Your Mobile Massage</div>
+    <div class="px-3 py-2.5">
+        <!-- Selection Summary (compact) -->
+        <div id="mobile-selection-summary" class="mb-2 pb-2 border-b border-brand-gold/10">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
+                    <div class="text-[0.7rem] text-brand-light/90 font-medium truncate" id="mobile-selected-address-label">Select address & treatment</div>
+                </div>
+                <button id="mobile-change-selection-btn" class="text-brand-gold hover:text-brand-light transition-colors flex-shrink-0 text-[0.65rem] font-bold uppercase tracking-wider px-2 py-1 border border-brand-gold/30 rounded">
+                    Change
+                </button>
+            </div>
         </div>
+        
+        <!-- Progress Steps (compact) -->
         <div class="flex items-center justify-between max-w-md mx-auto">
             <div class="progress-footer-step flex-1" data-step="1">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">1</div>
-                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Address</div>
+                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">1</div>
+                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Address</div>
                 </div>
             </div>
-            <div class="flex-shrink-0 w-8 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="flex-shrink-0 w-6 h-0.5 bg-brand-gold/20 -mx-1"></div>
             <div class="progress-footer-step flex-1" data-step="2">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">2</div>
-                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Date</div>
+                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">2</div>
+                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Date</div>
                 </div>
             </div>
-            <div class="flex-shrink-0 w-8 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="flex-shrink-0 w-6 h-0.5 bg-brand-gold/20 -mx-1"></div>
             <div class="progress-footer-step flex-1" data-step="3">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-8 h-8 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">3</div>
-                    <div class="step-label text-[0.65rem] text-brand-dim/60 font-medium">Details</div>
+                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">3</div>
+                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Details</div>
                 </div>
             </div>
         </div>
