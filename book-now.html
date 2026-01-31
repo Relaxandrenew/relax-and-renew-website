@@ -1318,17 +1318,17 @@ function fillAddressFromPlace(place) {
 
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
             <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
             <div class="text-center mb-8">
-                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+                <div class="inline-block p-3 rounded-full mb-4">
                     <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 object-contain" />
                 </div>
                 <h3 class="text-3xl text-brand-gold font-serif mb-2">Where will we be visiting?</h3>
                 <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
-                    We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+                    Enter your service address.
                 </p>
             </div>
 
@@ -3150,6 +3150,35 @@ async function loadAvailabilityForWindow(force = false) {
             updateAvailabilityStatus("Select a date to see available times.", false);
         }
 
+        // AUTO-SKIP EMPTY MONTHS: If current month has zero availability, advance to first month with slots
+        const currentMonthKey = monthKey(calendarCurrent);
+        const currentMonthHasSlots = Object.keys(availabilityByDate).some(dateStr => {
+            const d = new Date(dateStr);
+            return monthKey(d) === currentMonthKey && hasSlots(dateStr);
+        });
+        
+        if (!currentMonthHasSlots && hasLoadedAvailabilityOnce) {
+            // Find first month with availability in the loaded window
+            const allDates = Object.keys(availabilityByDate).filter(d => hasSlots(d)).sort();
+            if (allDates.length > 0) {
+                const firstAvailDate = new Date(allDates[0]);
+                const firstAvailMonthKey = monthKey(firstAvailDate);
+                
+                // Only advance if the first available month is different from current
+                if (firstAvailMonthKey !== currentMonthKey) {
+                    console.log('🔄 Auto-advancing from empty month', currentMonthKey, 'to first available month', firstAvailMonthKey);
+                    calendarCurrent = monthStart(firstAvailDate);
+                    
+                    // Shift window if needed
+                    windowStartMonth = monthStart(firstAvailDate);
+                    
+                    // Re-render with the new month
+                    renderCalendar();
+                    updatePrevMonthButton();
+                }
+            }
+        }
+
         renderCalendar();
         persistAvailabilityCacheToSession();
         hasLoadedAvailabilityOnce = true;
@@ -3731,12 +3760,18 @@ function getTravelCanonicalFromSlot(slot) {
                 }
                 
                 modal.classList.remove('hidden');
+                
+                // Freeze background scroll
+                document.body.style.overflow = 'hidden';
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
             window.closeConfirmationModal = async function() {
                 const modal = document.getElementById('confirmation-modal');
                 modal.classList.add('hidden');
+                
+                // Unfreeze background scroll
+                document.body.style.overflow = '';
 
                 // 1) Immediately prevent "same slot again" from stale UI (optimistic lock)
                 try {
@@ -4054,8 +4089,11 @@ if (result.success) {
     </script>
 
     <!-- CONFIRMATION SUCCESS MODAL -->
-    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]" onclick="event.stopPropagation();">
-        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up" onclick="event.stopPropagation();">
+    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]" onclick="return false;">
+        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-6 md:p-8 max-w-2xl max-h-[92vh] overflow-y-auto w-full relative shadow-2xl animate-slide-up" onclick="event.stopPropagation();">
+            <button onclick="closeConfirmationModal()" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors z-10">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
             <div class="text-center">
                 <div class="inline-block bg-brand-gold/10 p-4 rounded-full mb-6">
                     <i data-lucide="check-circle" class="w-16 h-16 text-brand-gold"></i>
