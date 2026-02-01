@@ -137,10 +137,40 @@
         .btn-filled { background: #E0C584; color: #000; border: 2px solid #E0C584; padding: 0.75rem 2.5rem; text-transform: uppercase; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.08em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
         .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); }
 
-        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 99999 !important; border-radius: 4px; }
-        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-container { 
+            background-color: #1a1a1a; 
+            border: 1px solid #E0C584; 
+            font-family: 'Cormorant Garamond', serif; 
+            z-index: 999999 !important; 
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 12px 10px; cursor: pointer; font-size: 0.95rem; }
         .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
         .pac-item-query { color: #E0C584; }
+        
+        /* Mobile: position autocomplete dropdown better when keyboard is open */
+        @media (max-width: 768px) {
+            .pac-container {
+                position: fixed !important;
+                left: 16px !important;
+                right: 16px !important;
+                width: auto !important;
+                top: auto !important;
+                bottom: 50vh !important;
+                max-height: 180px;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            }
+            #address-modal {
+                align-items: flex-start !important;
+                padding-top: 2rem;
+            }
+            #address-modal > div {
+                max-height: 70vh;
+                margin-bottom: auto;
+            }
+        }
 
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.95); backdrop-filter: blur(12px); z-index: 100; }
 
@@ -396,97 +426,146 @@
             }
 
             /* Mobile modal improvements - Client details modal */
+            #client-details-modal {
+                padding: 0.5rem !important;
+            }
             #client-details-modal > div {
-                padding: 1rem;
-                max-height: 95vh;
-                margin: 0.25rem;
+                padding: 0;
+                max-height: 98vh;
+                margin: 0;
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
                 position: relative;
-                            }
-                        #client-details-modal{ overflow-x: hidden; }
-/* Client details modal: scrolling (no horizontal scroll) */
-            #client-details-modal .client-details-scroll{
+            }
+            #client-details-modal { overflow-x: hidden; }
+            
+            /* Compact inner padding */
+            #client-details-modal .client-details-scroll-inner {
+                padding: 1rem 1rem 1.5rem !important;
+            }
+            
+            /* Client details modal: scrolling (no horizontal scroll) */
+            #client-details-modal .client-details-scroll {
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
-                padding-right: 0; /* scrollbar flush to the right edge */
+                padding-right: 0;
             }
-            /* keep content comfortably off the scrollbar without shifting it left */
-            #client-details-modal .client-details-scroll > *{
-                padding-right: 0.75rem;
+            #client-details-modal .client-details-scroll > * {
+                padding-right: 0.5rem;
             }
 
-/* Client details modal: ensure the content area scrolls and keep scrollbar visible */
-            #client-details-modal .client-details-scroll--content{
+            /* Client details modal: ensure the content area scrolls */
+            #client-details-modal .client-details-scroll--content {
                 overflow-y: auto !important;
             }
 
-            /* Client details modal: floating close button outside the card */
-            #client-details-modal #client-modal-close:focus{
-                outline: none;
-                box-shadow: 0 0 0 3px rgba(224,197,132,0.18), 0 10px 30px rgba(0,0,0,0.55);
+            /* Close button compact */
+            #client-details-modal .flex.justify-end.mb-2 {
+                margin-bottom: 0 !important;
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                z-index: 10;
             }
-            #client-details-modal #client-modal-close i{
+            #client-details-modal #client-modal-close {
+                width: 2rem;
+                height: 2rem;
+                padding: 0.25rem;
+            }
+            #client-details-modal #client-modal-close i {
+                width: 1.25rem;
+                height: 1.25rem;
                 pointer-events: none;
             }
+            #client-details-modal #client-modal-close:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(224,197,132,0.18);
+            }
 
+            /* Header area compact */
+            #client-details-modal .text-center.mb-8 {
+                margin-bottom: 0.5rem !important;
+            }
+            #client-details-modal .inline-block.p-3 {
+                padding: 0.4rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+            #client-details-modal .inline-block.p-3 img {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+            }
             #client-details-modal h3 {
-                font-size: 1.35rem;
+                font-size: 1.25rem;
+                margin-bottom: 0.25rem !important;
+            }
+            #client-details-modal .text-center.mb-8 > p {
+                font-size: 0.75rem;
+                display: none; /* Hide subtitle on mobile */
             }
             
-            #client-details-modal .mb-8 {
-                margin-bottom: 0.75rem;
+            /* Booking summary compact */
+            #client-details-modal .mb-6.p-4 {
+                margin-bottom: 0.5rem !important;
+                padding: 0.6rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .text-xs {
+                font-size: 0.6rem;
+                margin-bottom: 0.35rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .space-y-2 {
+                gap: 0.15rem;
+            }
+            #client-details-modal .mb-6.p-4 .space-y-2 > div {
+                margin-top: 0.15rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .text-sm {
+                font-size: 0.75rem;
+            }
+            #client-details-modal .mb-6.p-4 .text-lg {
+                font-size: 0.9rem;
+            }
+            /* Hide payment notice on mobile to save space */
+            #client-details-modal .mb-6.p-4 .mt-3.flex {
+                display: none;
             }
             
-            #client-details-modal .mb-6 {
-                margin-bottom: 0.5rem;
-            }
-            
-            #client-details-modal .p-4 {
-                padding: 0.6rem;
-            }
-            
+            /* Form fields compact */
             #client-details-modal .space-y-4 > * + * {
-                margin-top: 0.5rem;
-            }
-            
-            #client-details-modal .space-y-3 > * + * {
                 margin-top: 0.4rem;
             }
-            
-            #client-details-modal .grid-cols-2 {
-                gap: 0.4rem;
+            #client-details-modal .space-y-3 > * + * {
+                margin-top: 0.3rem;
             }
-            
+            #client-details-modal .grid-cols-2 {
+                gap: 0.35rem;
+            }
             #client-details-modal input,
             #client-details-modal textarea {
                 padding: 0.5rem;
-                font-size: 0.85rem;
+                font-size: 0.8rem;
             }
-            
             #client-details-modal label {
-                font-size: 0.6rem;
-                margin-bottom: 0.25rem;
+                font-size: 0.55rem;
+                margin-bottom: 0.2rem;
             }
-            
             #client-details-modal .text-xs {
-                font-size: 0.65rem;
+                font-size: 0.6rem;
             }
-            
             #client-details-modal .py-4 {
-                padding-top: 0.6rem;
-                padding-bottom: 0.6rem;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
             }
-            
             #client-details-modal .mt-6 {
-                margin-top: 0.75rem;
+                margin-top: 0.5rem;
             }
             
-            #client-details-modal .inline-block.p-3 {
-                padding: 0.5rem;
+            /* Submit button compact */
+            #client-details-modal .btn-filled {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
             }
 
             /* Booking confirmation modal mobile fix */
@@ -1264,7 +1343,7 @@ function fillAddressFromPlace(place) {
 
 
     <!-- Spacer so fixed mobile footer doesn't cover content -->
-    <div class="h-24 md:hidden"></div>
+    <div class="h-28 md:hidden"></div>
 
     <!-- STICKY BOTTOM BAR -->
     <div id="sticky-bar" class="sticky-bar">
@@ -1420,7 +1499,7 @@ function fillAddressFromPlace(place) {
 </div>
 <div class="text-center mb-8">
 <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
-<i class="w-8 h-8 text-brand-gold" data-lucide="user"></i>
+<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-8 h-8 object-contain" />
 </div>
 <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
 <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
@@ -4266,40 +4345,40 @@ if (result.success) {
 <div id="mobile-progress-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-50 animate-slide-up">
     
     <!-- COLLAPSED STATE (default) -->
-    <div id="mobile-footer-collapsed" class="px-3 py-2.5">
+    <div id="mobile-footer-collapsed" class="px-3 py-1.5">
         <!-- Selection Summary (compact) -->
-        <div id="mobile-selection-summary" class="mb-2 pb-2 border-b border-brand-gold/10">
+        <div id="mobile-selection-summary" class="mb-1 pb-1 border-b border-brand-gold/10">
             <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-1 min-w-0">
-                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-gold flex-shrink-0"></i>
-                    <div class="text-[0.7rem] text-brand-light/90 font-medium truncate" id="mobile-selected-address-label">Select address & treatment</div>
+                    <i data-lucide="map-pin" class="w-3 h-3 text-brand-gold flex-shrink-0"></i>
+                    <div class="text-[0.65rem] text-brand-light/90 font-medium truncate" id="mobile-selected-address-label">Select address & treatment</div>
                 </div>
-                <button id="mobile-change-selection-btn" class="text-brand-gold hover:text-brand-light transition-colors flex-shrink-0 text-[0.65rem] font-bold uppercase tracking-wider px-2 py-1 border border-brand-gold/30 rounded">
+                <button id="mobile-change-selection-btn" class="text-brand-gold hover:text-brand-light transition-colors flex-shrink-0 text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-brand-gold/30 rounded">
                     Change
                 </button>
             </div>
         </div>
         
         <!-- Progress Steps (compact) -->
-        <div class="flex items-center justify-between max-w-md mx-auto">
+        <div class="flex items-center justify-between max-w-xs mx-auto py-1">
             <div class="progress-footer-step flex-1" data-step="1">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">1</div>
-                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Address</div>
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">1</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Address</div>
                 </div>
             </div>
-            <div class="flex-shrink-0 w-6 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
             <div class="progress-footer-step flex-1" data-step="2">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">2</div>
-                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Date</div>
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">2</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Date</div>
                 </div>
             </div>
-            <div class="flex-shrink-0 w-6 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
             <div class="progress-footer-step flex-1" data-step="3">
                 <div class="flex flex-col items-center">
-                    <div class="step-circle-mini w-7 h-7 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-xs font-bold mb-1 transition-all">3</div>
-                    <div class="step-label text-[0.6rem] text-brand-dim/60 font-medium">Details</div>
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">3</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Details</div>
                 </div>
             </div>
         </div>
@@ -4357,13 +4436,16 @@ if (result.success) {
 /* Expanding Footer States */
 #mobile-progress-footer {
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
-    height: 25vh;
+    height: auto;
+    max-height: 110px;
     overflow: hidden;
     z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 #mobile-progress-footer.expanded {
     height: 65vh;
+    max-height: 65vh;
     overflow: hidden;
     border-width: 2px;
     box-shadow: 0 -8px 32px rgba(224, 197, 132, 0.25);
@@ -4389,7 +4471,9 @@ if (result.success) {
 }
 
 #mobile-progress-footer.expanded #mobile-footer-expanded {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     opacity: 1;
 }
 .progress-footer-step.active .step-circle-mini {
