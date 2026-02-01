@@ -690,7 +690,8 @@
 
         /* Calendar: fully booked day number styling */
         .calendar-day-fully-booked {
-            opacity: 0.45;
+            position: relative;
+opacity: 0.45;
             cursor: not-allowed;
             pointer-events: none;
             color: rgba(240, 226, 192, 0.35) !important;
@@ -700,7 +701,20 @@
             background: rgba(0,0,0,0.35) !important;
             border-color: rgba(224,197,132,0.2) !important;
         }
-        /* Custom Scrollbar Styling */
+        
+        .calendar-day-fully-booked::after {
+            content: '';
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            width: 140%;
+            height: 2px;
+            background: rgba(224, 197, 132, 0.35);
+            transform: translateY(-50%) rotate(-45deg);
+            transform-origin: center;
+            pointer-events: none;
+        }
+/* Custom Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -2945,8 +2959,7 @@ function setCalendarNavDisabled(disabled) {
     } else {
         prevBtn.removeAttribute('aria-disabled');
         nextBtn.removeAttribute('aria-disabled');
-        // Prev button is governed by updatePrevMonthButton()
-        nextBtn.disabled = false;
+        // Prev button is governed by window.updatePrevMonthButton?.();nextBtn.disabled = false;
     }
 }
 
@@ -2972,7 +2985,7 @@ function endAvailabilityLoadUI() {
 
     // Re-enable month navigation
     setCalendarNavDisabled(false);
-    try { updatePrevMonthButton(); } catch (_) {}
+    try { window.updatePrevMonthButton?.(); } catch (_) {}
 }
 
 function isMobileViewport() {
@@ -3130,7 +3143,7 @@ async function loadAvailabilityForWindow(force = false) {
         console.log('📋 Using cached availability window:', keys.join(', '));
         endAvailabilityLoadUI();
         renderCalendar();
-        updatePrevMonthButton();
+        window.updatePrevMonthButton?.();
         return;
     }
 
@@ -3238,7 +3251,7 @@ async function loadAvailabilityForWindow(force = false) {
         }
 
         renderCalendar();
-        updatePrevMonthButton();
+        window.updatePrevMonthButton?.();
         persistAvailabilityCacheToSession();
         hasLoadedAvailabilityOnce = true;
     } catch (e) {
@@ -3478,15 +3491,15 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 await loadAvailabilityForWindow(false);
                 renderCalendar();
 
-                updatePrevMonthButton();
+                window.updatePrevMonthButton?.();
             });
 
-            function updatePrevMonthButton() {
+            window.updatePrevMonthButton = function () {
                 const today = new Date(); today.setHours(0,0,0,0);
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
                 document.getElementById('prev-month-btn').disabled = isCurrentMonth || isAvailabilityLoading;
             }
-            updatePrevMonthButton();
+            window.updatePrevMonthButton?.();
 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
                 if (isAvailabilityLoading) return;
@@ -3507,7 +3520,7 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 await loadAvailabilityForWindow(false);
                 renderCalendar();
 
-                updatePrevMonthButton();
+                window.updatePrevMonthButton?.();
             });document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
                 e.preventDefault();
                 const manualWrapper = document.getElementById('manual-address-wrapper');
