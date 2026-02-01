@@ -1104,7 +1104,7 @@ function fillAddressFromPlace(place) {
             <div class="card-fancy animate-fade-in">
                 <!-- Calendar Title -->
                 <div class="text-center mb-8">
-                    <h2 class="text-2xl md:text-3xl text-brand-gold font-serif mb-2">Choose Your Date & Time</h2>
+                    <h2 class="text-2xl md:text-3xl text-brand-gold font-serif mb-2">Our Availability</h2>
                     <p class="text-sm text-brand-dim/80" id="selected-address-label">Select your treatment above to view availability</p>
                 </div>
 
@@ -2413,7 +2413,7 @@ function showBookingModal() {
                 groupBtn.type = 'button';
 
                 // Disable expanding when there are NO available slots in that period
-                groupBtn.disabled = !hasAvail;
+                groupBtn.disabled = !hasAny;
 
                 if (!hasAny) {
                     groupBtn.className = 'px-4 py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/60 font-bold text-sm md:text-lg opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
@@ -2422,12 +2422,12 @@ function showBookingModal() {
                         <span class="text-xs font-normal opacity-70">(None)</span>
                     `;
                 } else if (!hasAvail) {
-                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg opacity-60 cursor-not-allowed flex flex-col items-center gap-1 transition-all';
+groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg opacity-60  flex flex-col items-center gap-1 transition-all hover:bg-brand-gold/5 cursor-pointer';
                     groupBtn.innerHTML = `
                         <span>${group.label}</span>
                         <span class="text-xs font-normal opacity-80">(Fully Booked)</span>
                     `;
-                    // Intentionally NO click handler when fully booked
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
                 } else {
                     groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/30 bg-black/60 hover:bg-brand-gold/10 text-brand-light font-bold text-sm md:text-lg transition-all';
                     groupBtn.textContent = group.label;
@@ -3175,7 +3175,8 @@ async function loadAvailabilityForWindow(force = false) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: availabilityAbortController.signal
+            signal: availabilityAbortController.signal,
+            mode: 'cors'
         });
 
         // Stale response guard
@@ -3213,38 +3214,23 @@ async function loadAvailabilityForWindow(force = false) {
         } else {
             updateAvailabilityStatus("Select a date to see available times.", false);
         }
-        console.log('🔍 Auto-skip check: currentMonthKey=', currentMonthKey, 'currentMonthHasSlots=', currentMonthHasSlots);
+        // SMART START: auto-advance to the first month that actually has availability
+        const availableDates = Object.keys(availabilityByDate).filter(d => hasSlots(d)).sort();
+        if (availableDates.length > 0) {
+            const currentMonthKey = monthKey(calendarCurrent);
+            const currentMonthHasSlots = availableDates.some(dateStr => monthKey(new Date(dateStr)) === currentMonthKey);
 
-        // AUTO-SKIP EMPTY MONTHS: If current month has zero availability, advance to first month with slots
-        const currentMonthKey = monthKey(calendarCurrent);
-        const currentMonthHasSlots = Object.keys(availabilityByDate).some(dateStr => {
-            const d = new Date(dateStr);
-            return monthKey(d) === currentMonthKey && hasSlots(dateStr);
-        });
-        
-        if (!currentMonthHasSlots && hasLoadedAvailabilityOnce) {
-            // Find first month with availability in the loaded window
-            const allDates = Object.keys(availabilityByDate).filter(d => hasSlots(d)).sort();
-            if (allDates.length > 0) {
-                const firstAvailDate = new Date(allDates[0]);
+            if (!currentMonthHasSlots) {
+                const firstAvailDate = new Date(availableDates[0]);
                 const firstAvailMonthKey = monthKey(firstAvailDate);
-                
-                // Only advance if the first available month is different from current
-                if (firstAvailMonthKey !== currentMonthKey) {
-                    console.log('🔄 Auto-advancing from empty month', currentMonthKey, 'to first available month', firstAvailMonthKey);
-                    calendarCurrent = monthStart(firstAvailDate);
-                    
-                    // Shift window if needed
-                    windowStartMonth = monthStart(firstAvailDate);
-                    
-                    // Re-render with the new month
-                    renderCalendar();
-                    updatePrevMonthButton();
-                }
+                console.log('🔄 Smart-start: advancing from', currentMonthKey, 'to', firstAvailMonthKey);
+                calendarCurrent = monthStart(firstAvailDate);
+                windowStartMonth = monthStart(firstAvailDate);
             }
         }
 
         renderCalendar();
+        updatePrevMonthButton();
         persistAvailabilityCacheToSession();
         hasLoadedAvailabilityOnce = true;
     } catch (e) {
@@ -4309,15 +4295,15 @@ if (result.success) {
 /* Expanding Footer States */
 #mobile-progress-footer {
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
-    height: auto;
-    max-height: 25vh;
+    height: 25vh;
+    overflow: hidden;
+}
+
 #mobile-progress-footer.expanded {
-    max-height: 60vh !important;
+    height: 55vh;
     overflow-y: auto;
     border-width: 2px;
     box-shadow: 0 -8px 32px rgba(224, 197, 132, 0.2);
-}
-    overflow-y: auto;
 }
 
 #mobile-footer-collapsed,
