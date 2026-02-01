@@ -691,7 +691,8 @@
         /* Calendar: fully booked day number styling */
         .calendar-day-fully-booked {
             position: relative;
-opacity: 0.45;
+            overflow: hidden;
+            opacity: 0.45;
             cursor: not-allowed;
             pointer-events: none;
             color: rgba(240, 226, 192, 0.35) !important;
@@ -705,13 +706,17 @@ opacity: 0.45;
         .calendar-day-fully-booked::after {
             content: '';
             position: absolute;
-            left: 10%;
-            top: 50%;
-            width: 140%;
-            height: 2px;
-            background: rgba(224, 197, 132, 0.35);
-            transform: translateY(-50%) rotate(-45deg);
-            transform-origin: center;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom right,
+                transparent calc(50% - 1px),
+                rgba(224, 197, 132, 0.35) calc(50% - 1px),
+                rgba(224, 197, 132, 0.35) calc(50% + 1px),
+                transparent calc(50% + 1px)
+            );
             pointer-events: none;
         }
 /* Custom Scrollbar Styling */
@@ -2265,7 +2270,7 @@ function showBookingModal() {
                 const expandButtons = mobileContainer.querySelectorAll('[id^="expand-"]');
                 expandButtons.forEach(btn => {
                     const groupKey = btn.id.replace('expand-', '');
-                    btn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                    btn.addEventListener('click', () => window.toggleGroupExpansion?.(groupKey));
                 });
                 
                 // Re-attach group button listeners
@@ -2273,7 +2278,7 @@ function showBookingModal() {
                 groupButtons.forEach(btn => {
                     const groupKey = btn.dataset.group;
                     if (!btn.disabled) {
-                        btn.addEventListener('click', () => toggleGroupExpansion(groupKey));
+                        btn.addEventListener('click', () => window.toggleGroupExpansion?.(groupKey));
                     }
                 });
                 
@@ -2419,18 +2424,18 @@ function showBookingModal() {
 
             // Group slots by time of day (show ALL slots, but disable/grey booked ones)
             const timeGroups = {
-                morning:   { label: 'AM',   slots: [] }, // 10-11
-                afternoon: { label: 'AFT', slots: [] }, // 12-15
-                evening:   { label: 'EVE', slots: [] }, // 16-20
+                morning:   { label: 'AM',   slots: [] }, // Before 12:00 PM
+                afternoon: { label: 'AFT', slots: [] }, // 12:00 PM – 4:59 PM
+                evening:   { label: 'EVE', slots: [] }, // 5:00 PM and later
             };
 
             daySlots.forEach(slot => {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
 
-                if (hour >= 11 && hour < 12) timeGroups.morning.slots.push(slot);
-                else if (hour >= 12 && hour < 16) timeGroups.afternoon.slots.push(slot);
-                else if (hour >= 16 && hour <= 20) timeGroups.evening.slots.push(slot);
+                if (hour < 12) timeGroups.morning.slots.push(slot);
+                else if (hour >= 12 && hour < 17) timeGroups.afternoon.slots.push(slot);
+                else if (hour >= 17) timeGroups.evening.slots.push(slot);
             });
 
             // Helper: determine if a group has at least one AVAILABLE slot
@@ -2543,7 +2548,11 @@ container.appendChild(groupRow);
                     // If booked, we strike it out.
 
                     if (isAvail) {
-                        slotBtn.className = 'px-1 py-2 rounded-lg border border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center transition-all w-full';
+                        slotBtn.className = 'time-slot-btn px-1 py-2 rounded-lg border border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center transition-all w-full';
+                        slotBtn.dataset.start = slot.start;
+                        slotBtn.dataset.end = slot.end;
+                        slotBtn.dataset.label = formatTimeLabel(slot);
+                        slotBtn.dataset.available = 'true';
                         slotBtn.innerHTML = `
                             <span class="font-bold text-sm whitespace-nowrap">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
@@ -2554,7 +2563,11 @@ container.appendChild(groupRow);
                         });
                     } else {
                         // Greyed out + disabled + strikethrough
-                        slotBtn.className = 'px-1 py-2 rounded-lg border border-white/5 text-white/30 bg-white/5 flex items-center justify-center w-full cursor-not-allowed';
+                        slotBtn.className = 'time-slot-btn px-1 py-2 rounded-lg border border-white/5 text-white/30 bg-white/5 flex items-center justify-center w-full cursor-not-allowed';
+                        slotBtn.dataset.start = slot.start;
+                        slotBtn.dataset.end = slot.end;
+                        slotBtn.dataset.label = formatTimeLabel(slot);
+                        slotBtn.dataset.available = 'false';
                         slotBtn.innerHTML = `
                             <span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
@@ -2647,6 +2660,9 @@ container.appendChild(groupRow);
 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
+            
+            // Expose to global scope for mobile footer access
+            window.toggleGroupExpansion = toggleGroupExpansion;
         }
 
 
@@ -2959,7 +2975,8 @@ function setCalendarNavDisabled(disabled) {
     } else {
         prevBtn.removeAttribute('aria-disabled');
         nextBtn.removeAttribute('aria-disabled');
-        // Prev button is governed by window.updatePrevMonthButton?.();nextBtn.disabled = false;
+        // Prev button is governed by window.updatePrevMonthButton?.();
+        nextBtn.disabled = false;
     }
 }
 
