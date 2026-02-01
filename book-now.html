@@ -352,14 +352,10 @@
             }
             
             .card-fancy {
-                margin-bottom: 8rem !important; /* Space for footer */
+                margin-bottom: 0 !important; /* Removed excess space */
             }
             
             /* Time slots compact on mobile */
-            #time-slots-wrapper {
-                margin-bottom: 6rem !important;
-            }
-            
             .time-slot-btn {
                 padding: 0.6rem 0.75rem !important;
                 font-size: 0.8rem !important;
@@ -1231,7 +1227,7 @@ function fillAddressFromPlace(place) {
     </header>
 
     <!-- BOOKING CALENDAR SECTION -->
-    <section id="booking" class="pt-20 pb-8 md:pt-12 md:pb-12 bg-brand-black border-b border-brand-light/5">
+    <section id="booking" class="pt-20 pb-0 md:pt-12 md:pb-8 bg-brand-black border-b border-brand-light/5">
         <div class="container mx-auto px-6 max-w-6xl">
             <div class="card-fancy animate-fade-in">
                 <!-- Calendar Title -->
@@ -1377,7 +1373,7 @@ function fillAddressFromPlace(place) {
 
 
     <!-- Spacer so fixed mobile footer doesn't cover content -->
-    <div class="h-28 md:hidden"></div>
+    <div class="h-32 md:hidden"></div>
 
     <!-- STICKY BOTTOM BAR -->
     <div id="sticky-bar" class="sticky-bar">
@@ -1417,7 +1413,7 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- ADDRESS MODAL -->
-    <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4">
+    <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4 hidden">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
             <div class="text-center mb-8">
                 <div class="inline-block p-3 rounded-full mb-4">
@@ -2366,6 +2362,8 @@ function showBookingModal() {
             // Hide continue button initially when drawer opens
             const continueWrapper = document.getElementById('mobile-continue-wrapper');
             if (continueWrapper) continueWrapper.classList.add('hidden');
+            // Update day navigation button states
+            updateMobileDayNavButtons();
             console.log('✅ Footer expanded class added');
         }
         
@@ -2389,6 +2387,95 @@ function showBookingModal() {
             // Hide continue button when collapsed
             const continueWrapper = document.getElementById('mobile-continue-wrapper');
             if (continueWrapper) continueWrapper.classList.add('hidden');
+        }
+        
+        // Navigate to previous/next available day in mobile drawer
+        function navigateMobileDay(direction) {
+            if (!selectedDateStr) return;
+            
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            let currentDate = new Date(yy, mm - 1, dd);
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            // Find next available date in the given direction
+            let attempts = 0;
+            const maxAttempts = 60; // Look up to 60 days ahead/back
+            
+            while (attempts < maxAttempts) {
+                currentDate.setDate(currentDate.getDate() + direction);
+                attempts++;
+                
+                // Don't go before today
+                if (currentDate < today) continue;
+                
+                const testDateStr = toDateStr(currentDate);
+                
+                // Check if this date has available slots
+                if (hasAnyAvailableSlot(testDateStr)) {
+                    // Found an available day - navigate to it
+                    selectedDateStr = testDateStr;
+                    selectedSlot = null;
+                    
+                    // Update calendar to show correct month if needed
+                    if (currentDate.getMonth() !== calendarCurrent.getMonth() || 
+                        currentDate.getFullYear() !== calendarCurrent.getFullYear()) {
+                        calendarCurrent = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                        renderCalendar();
+                    } else {
+                        renderCalendar();
+                    }
+                    
+                    // Render time slots for new date
+                    renderTimeSlotsForDate(testDateStr);
+                    
+                    // Re-populate mobile drawer
+                    expandMobileFooter(testDateStr);
+                    
+                    // Update day navigation button states
+                    updateMobileDayNavButtons();
+                    
+                    return;
+                }
+            }
+            
+            console.log('No available day found in direction:', direction);
+        }
+        
+        // Update prev/next day button disabled states
+        function updateMobileDayNavButtons() {
+            const prevBtn = document.getElementById('mobile-prev-day-btn');
+            const nextBtn = document.getElementById('mobile-next-day-btn');
+            if (!prevBtn || !nextBtn || !selectedDateStr) return;
+            
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            const currentDate = new Date(yy, mm - 1, dd);
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            // Check if there's a previous available day
+            let hasPrev = false;
+            let testDate = new Date(currentDate);
+            for (let i = 0; i < 60; i++) {
+                testDate.setDate(testDate.getDate() - 1);
+                if (testDate < today) break;
+                if (hasAnyAvailableSlot(toDateStr(testDate))) {
+                    hasPrev = true;
+                    break;
+                }
+            }
+            
+            // Check if there's a next available day
+            let hasNext = false;
+            testDate = new Date(currentDate);
+            for (let i = 0; i < 60; i++) {
+                testDate.setDate(testDate.getDate() + 1);
+                if (hasAnyAvailableSlot(toDateStr(testDate))) {
+                    hasNext = true;
+                    break;
+                }
+            }
+            
+            prevBtn.disabled = !hasPrev;
+            nextBtn.disabled = !hasNext;
         }
         
         function isMobileViewport() {
@@ -3717,6 +3804,21 @@ updateProgress(2);
             const mobileCollapseBtn = document.getElementById('mobile-footer-collapse-btn');
             if (mobileCollapseBtn) mobileCollapseBtn.addEventListener('click', collapseMobileFooter);
             
+            // Mobile day navigation buttons
+            const mobilePrevDayBtn = document.getElementById('mobile-prev-day-btn');
+            const mobileNextDayBtn = document.getElementById('mobile-next-day-btn');
+            
+            if (mobilePrevDayBtn) {
+                mobilePrevDayBtn.addEventListener('click', () => {
+                    navigateMobileDay(-1);
+                });
+            }
+            if (mobileNextDayBtn) {
+                mobileNextDayBtn.addEventListener('click', () => {
+                    navigateMobileDay(1);
+                });
+            }
+            
             // Mobile Continue button - opens Step 3 (client details)
             const mobileContinueBtn = document.getElementById('mobile-continue-btn');
             if (mobileContinueBtn) {
@@ -3778,18 +3880,52 @@ updateProgress(2);
                 if (!modal) return;
                 modal.classList.add('hidden');
                 
+                // Restore body scroll
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                
                 // Reset mobile drawer state to prevent layout overlap
                 const mobileFooter = document.getElementById('mobile-progress-footer');
                 if (mobileFooter) {
                     mobileFooter.classList.remove('expanded');
                 }
+                
+                // Hide the continue wrapper
                 const continueWrapper = document.getElementById('mobile-continue-wrapper');
                 if (continueWrapper) {
                     continueWrapper.classList.add('hidden');
                 }
                 
-                // Reset progress to step 2 (date selection)
+                // Hide sticky bar since we're back to date selection
+                const stickyBar = document.getElementById('sticky-bar');
+                if (stickyBar) {
+                    stickyBar.classList.remove('show');
+                }
+                
+                // Clear time slot selection styling
+                document.querySelectorAll('.time-slot-selected').forEach(el => {
+                    el.classList.remove('time-slot-selected');
+                });
+                
+                // Reset selected slot so user must re-select
+                selectedSlot = null;
+                
+                // Reset progress to step 2 (date selection)  
                 updateProgress(2);
+                
+                // Re-render calendar and time slots to clear selection state
+                try { 
+                    renderCalendar();
+                    // Clear time slots panel
+                    const timeSlotsPanel = document.getElementById('time-slots-panel');
+                    if (timeSlotsPanel) {
+                        timeSlotsPanel.classList.add('hidden');
+                    }
+                } catch (_) {}
+                
+                // Refresh Lucide icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }
 
             function bindClientDetailsModalClose() {
@@ -4296,8 +4432,30 @@ if (result.success) {
                 }
             });
 
-            // Start with modal open
-            openAddressModal();
+            // Start with modal open ONLY if no cached address
+            const cachedAddress = window.__selectedAddress;
+            if (!cachedAddress || !cachedAddress.address) {
+                openAddressModal();
+            } else {
+                // Address is cached - keep modal CLOSED and update UI labels
+                const addressModal = document.getElementById('address-modal');
+                if (addressModal) addressModal.classList.add('hidden'); // Ensure it's hidden
+                
+                // Pre-fill address input for when user clicks Change
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput) addrInput.value = cachedAddress.address;
+                
+                // Update mobile label immediately
+                const mobileLabelEl = document.getElementById('mobile-selected-address-label');
+                if (mobileLabelEl) {
+                    mobileLabelEl.textContent = cachedAddress.city 
+                        ? cachedAddress.city 
+                        : 'Address saved • Select treatment';
+                }
+                
+                // Mark step 1 as complete if address exists
+                updateProgress(1);
+            }
             renderCalendar();
         }
 
@@ -4432,14 +4590,23 @@ if (result.success) {
     
     <!-- EXPANDED STATE (time slots) -->
     <div id="mobile-footer-expanded" class="flex flex-col h-full">
-        <!-- Header with back button and stepper -->
+        <!-- Header with back button and day navigation -->
         <div class="px-3 pt-3 pb-2 border-b border-brand-gold/20 flex-shrink-0">
             <div class="flex items-center justify-between mb-2">
                 <button id="mobile-footer-collapse-btn" class="flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors">
                     <i data-lucide="chevron-down" class="w-5 h-5"></i>
                     <span class="text-sm font-bold uppercase tracking-wider">Back</span>
                 </button>
-                <div class="text-xs text-brand-dim/70" id="mobile-footer-date-label">Select a time</div>
+                <!-- Day navigation with arrows -->
+                <div class="flex items-center gap-2">
+                    <button id="mobile-prev-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
+                    </button>
+                    <div class="text-xs text-brand-light font-semibold min-w-[100px] text-center" id="mobile-footer-date-label">Select a time</div>
+                    <button id="mobile-next-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
+                    </button>
+                </div>
             </div>
             <!-- Integrated mini stepper in expanded view -->
             <div class="flex items-center justify-center gap-3 py-1">
