@@ -1872,7 +1872,9 @@ function fillAddressFromPlace(place) {
   } else {
     bindBookingModalClose();
   }
-})();function showBookingModal() {
+})();
+
+function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
       const spinner = document.getElementById("booking-modal-spinner");
       const successIcon = document.getElementById("booking-modal-success");
@@ -2201,6 +2203,7 @@ function fillAddressFromPlace(place) {
         // Mobile Footer Expand/Collapse Functions
         function expandMobileFooter(dateStr) {
             if (!isMobileViewport()) return;
+            console.log('📱 expandMobileFooter called for date:', dateStr);
             
             const footer = document.getElementById('mobile-progress-footer');
             const dateLabel = document.getElementById('mobile-footer-date-label');
@@ -2214,6 +2217,7 @@ function fillAddressFromPlace(place) {
             // Clone time slots from desktop to mobile footer
             const desktopSlots = document.getElementById('time-slots');
             if (desktopSlots && desktopSlots.innerHTML) {
+                console.log('📋 Cloning slots from desktop:', desktopSlots.innerHTML.length, 'chars');
                 mobileContainer.innerHTML = desktopSlots.innerHTML;
                 
                 // Re-attach event listeners for cloned slots
@@ -2255,9 +2259,11 @@ function fillAddressFromPlace(place) {
             
             // Expand footer
             footer.classList.add('expanded');
+            console.log('✅ Footer expanded class added');
         }
         
         function collapseMobileFooter() {
+            console.log('📥 Collapsing mobile footer');
             const footer = document.getElementById('mobile-progress-footer');
             footer.classList.remove('expanded');
         }
@@ -2535,9 +2541,16 @@ container.appendChild(groupRow);
 
             // Toggle function
             function toggleGroupExpansion(groupKey) {
-                const section = document.getElementById(`slots-${groupKey}`);
-                const expandBtn = document.getElementById(`expand-${groupKey}`);
-                const groupBtn = document.querySelector(`button[data-group="${groupKey}"]`);
+                console.log('🔘 toggleGroupExpansion called for:', groupKey);
+                // Check if we're in mobile footer
+                const isMobile = isMobileViewport();
+                const container = isMobile 
+                    ? document.getElementById('mobile-time-slots-container')
+                    : document.getElementById('time-slots');
+                
+                const section = container ? container.querySelector(`#slots-${groupKey}`) : null;
+                const expandBtn = container ? container.querySelector(`#expand-${groupKey}`) : null;
+                const groupBtn = container ? container.querySelector(`button[data-group="${groupKey}"]`) : null;
 
                 if (!section) return;
 
@@ -2557,9 +2570,9 @@ container.appendChild(groupRow);
                 };
 
                 const collapseGroup = (k) => {
-                    const sec = document.getElementById(`slots-${k}`);
-                    const exp = document.getElementById(`expand-${k}`);
-                    const btn = document.querySelector(`button[data-group="${k}"]`);
+                    const sec = container ? container.querySelector(`#slots-${k}`) : null;
+                    const exp = container ? container.querySelector(`#expand-${k}`) : null;
+                    const btn = container ? container.querySelector(`button[data-group="${k}"]`) : null;
                     if (sec) {
                         sec.classList.add('hidden');
                         sec.style.maxHeight = '0px';
@@ -2569,6 +2582,7 @@ container.appendChild(groupRow);
                     }
                     resetExpandBtn(exp);
                 };
+
 
                 const isHidden = section.classList.contains('hidden');
 
@@ -3180,6 +3194,8 @@ async function loadAvailabilityForWindow(force = false) {
                 return;
             }
             updateAvailabilityStatus("Could not load availability. Please try again.", true);
+            console.error('❌ Fetch failed:', res.status, res.statusText, 'Response:', data);
+            console.error('❌ Payload sent:', payload);
             console.error('❌ Availability HTTP error', res.status, data);
             return;
         }
@@ -3197,6 +3213,7 @@ async function loadAvailabilityForWindow(force = false) {
         } else {
             updateAvailabilityStatus("Select a date to see available times.", false);
         }
+        console.log('🔍 Auto-skip check: currentMonthKey=', currentMonthKey, 'currentMonthHasSlots=', currentMonthHasSlots);
 
         // AUTO-SKIP EMPTY MONTHS: If current month has zero availability, advance to first month with slots
         const currentMonthKey = monthKey(calendarCurrent);
@@ -3566,9 +3583,15 @@ updateProgress(2);
                 await loadAvailabilityForWindow(true);
             });
 
-            document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
-            document.getElementById('mobile-change-selection-btn').addEventListener('click', openAddressModal);
-            document.getElementById('mobile-footer-collapse-btn').addEventListener('click', collapseMobileFooter);
+            const changeAddrBtn = document.getElementById('change-address-btn');
+            if (changeAddrBtn) changeAddrBtn.addEventListener('click', openAddressModal);
+            
+            const mobileChangeBtn = document.getElementById('mobile-change-selection-btn');
+            if (mobileChangeBtn) mobileChangeBtn.addEventListener('click', openAddressModal);
+            
+            const mobileCollapseBtn = document.getElementById('mobile-footer-collapse-btn');
+            if (mobileCollapseBtn) mobileCollapseBtn.addEventListener('click', collapseMobileFooter);
+            
             document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
             
             // Continue to booking button - opens Step 3
@@ -4288,10 +4311,12 @@ if (result.success) {
     transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
     height: auto;
     max-height: 25vh;
-}
-
 #mobile-progress-footer.expanded {
-    max-height: 55vh;
+    max-height: 60vh !important;
+    overflow-y: auto;
+    border-width: 2px;
+    box-shadow: 0 -8px 32px rgba(224, 197, 132, 0.2);
+}
     overflow-y: auto;
 }
 
