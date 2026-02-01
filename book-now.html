@@ -1070,10 +1070,44 @@ function fillAddressFromPlace(place) {
                 }
                 
                 window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
+                // Save to localStorage for persistence
+                saveAddressToStorage(window.__selectedAddress);
             } catch (e) {
                 console.warn("fillAddressFromPlace error", e);
             }
         }
+
+        // ============ ADDRESS PERSISTENCE (localStorage) ============
+        function saveAddressToStorage(addrObj) {
+            try {
+                if (addrObj && addrObj.address) {
+                    localStorage.setItem('rnr_saved_address', JSON.stringify(addrObj));
+                }
+            } catch (e) {
+                console.warn('Could not save address to localStorage', e);
+            }
+        }
+        
+        function loadAddressFromStorage() {
+            try {
+                const saved = localStorage.getItem('rnr_saved_address');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('Could not load address from localStorage', e);
+            }
+            return null;
+        }
+        
+        function clearAddressFromStorage() {
+            try {
+                localStorage.removeItem('rnr_saved_address');
+            } catch (e) {
+                console.warn('Could not clear address from localStorage', e);
+            }
+        }
+        // ============ END ADDRESS PERSISTENCE ============
 
         // Canadian postal validation helpers (also used to block US ZIP codes)
         function normalizeCanadianPostal(postal) {
@@ -1197,7 +1231,7 @@ function fillAddressFromPlace(place) {
     </header>
 
     <!-- BOOKING CALENDAR SECTION -->
-    <section id="booking" class="pt-20 pb-32 md:pt-12 md:pb-12 bg-brand-black border-b border-brand-light/5">
+    <section id="booking" class="pt-20 pb-8 md:pt-12 md:pb-12 bg-brand-black border-b border-brand-light/5">
         <div class="container mx-auto px-6 max-w-6xl">
             <div class="card-fancy animate-fade-in">
                 <!-- Calendar Title -->
@@ -1385,9 +1419,6 @@ function fillAddressFromPlace(place) {
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4">
         <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
-            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
             <div class="text-center mb-8">
                 <div class="inline-block p-3 rounded-full mb-4">
                     <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-16 h-16 object-contain" />
@@ -1498,7 +1529,7 @@ function fillAddressFromPlace(place) {
 </button>
 </div>
 <div class="text-center mb-8">
-<div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
+<div class="inline-block p-3 rounded-full mb-4">
 <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-8 h-8 object-contain" />
 </div>
 <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
@@ -1526,11 +1557,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-</div>
-<!-- Payment Notice -->
-<div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
-<i class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" data-lucide="info"></i>
-<span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
+<p class="text-[0.65rem] text-brand-dim/70 text-center mt-2 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -1840,7 +1867,8 @@ function fillAddressFromPlace(place) {
         let calendarCurrent = new Date();
         let selectedDateStr = null;
         let selectedSlot = null;
-        window.__selectedAddress = null;
+        // Load saved address from localStorage if available
+        window.__selectedAddress = (typeof loadAddressFromStorage === 'function') ? loadAddressFromStorage() : null;
 
         let selectedServiceKey = null;
         let selectedStandardDuration = null;
@@ -2743,6 +2771,11 @@ container.appendChild(groupRow);
                     document.body.style.position = 'fixed';
                     document.body.style.width = '100%';
                 }
+                // Pre-populate input with saved address if available
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput && window.__selectedAddress && window.__selectedAddress.address) {
+                    addrInput.value = window.__selectedAddress.address;
+                }
             }
         }
         
@@ -2781,6 +2814,7 @@ container.appendChild(groupRow);
                 const full = city ? `${street}, ${city} ${postal}` : `${street} ${postal}`;
                 const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
+                saveAddressToStorage(addrObj);
                 return addrObj;
             }
 
@@ -2811,6 +2845,7 @@ container.appendChild(groupRow);
             }
             const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
             window.__selectedAddress = addrObj;
+            saveAddressToStorage(addrObj);
             return addrObj;
         }
 
@@ -3691,8 +3726,6 @@ updateProgress(2);
                 });
             }
             
-            document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
-            
             // Continue to booking button - opens Step 3
             document.getElementById('continue-to-booking-btn').addEventListener('click', () => {
                 openClientDetailsModal();
@@ -3744,6 +3777,19 @@ updateProgress(2);
                 const modal = document.getElementById('client-details-modal');
                 if (!modal) return;
                 modal.classList.add('hidden');
+                
+                // Reset mobile drawer state to prevent layout overlap
+                const mobileFooter = document.getElementById('mobile-progress-footer');
+                if (mobileFooter) {
+                    mobileFooter.classList.remove('expanded');
+                }
+                const continueWrapper = document.getElementById('mobile-continue-wrapper');
+                if (continueWrapper) {
+                    continueWrapper.classList.add('hidden');
+                }
+                
+                // Reset progress to step 2 (date selection)
+                updateProgress(2);
             }
 
             function bindClientDetailsModalClose() {
