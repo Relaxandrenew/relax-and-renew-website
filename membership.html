@@ -697,13 +697,9 @@
                 content.classList.add('active');
                 if (icon) icon.classList.add('active');
             }
-        } else { 
-                document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('active')); 
-                document.querySelectorAll('.rotate-icon').forEach(el => el.classList.remove('active')); 
-                content.classList.add('active'); 
-                icon.classList.add('active'); 
-            }
         }
+
+
 
         // Auto-fill plan from buttons & Handle Term Field Logic
         const planSelect = document.getElementById('plan-select');
