@@ -1147,7 +1147,55 @@
                 setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
             }
         }
-    </script>
+    
+
+        // --- Inline-handler-safe bindings (for stricter CSP / Netlify headers) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Ensure form submission always routes through JS (prevents blank-page native submit)
+                const form = document.getElementById('membership-form');
+                if (form) {
+                    form.addEventListener('submit', handleMembershipSubmit);
+                }
+
+                // FAQ accordion buttons (bind even if inline onclick is blocked)
+                document.querySelectorAll('button[onclick*="toggleAccordion"]').forEach((btn) => {
+                    const raw = btn.getAttribute('onclick') || '';
+                    const m = raw.match(/toggleAccordion\('([^']+)'\)/);
+                    if (!m) return;
+                    const id = m[1];
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        toggleAccordion(id);
+                    });
+                });
+
+                // Plan select buttons (bind even if inline onclick is blocked)
+                document.querySelectorAll('a[onclick*="selectPlan"]').forEach((a) => {
+                    const raw = a.getAttribute('onclick') || '';
+                    const m = raw.match(/selectPlan\('([^']+)'\)/);
+                    if (!m) return;
+                    const plan = m[1];
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        selectPlan(plan);
+                        const formEl = document.getElementById('signup-form');
+                        if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                });
+
+                // Try Again (clear status param) safe binding
+                document.querySelectorAll('[onclick*="clearStatusParam"]').forEach((el) => {
+                    el.addEventListener('click', () => {
+                        try { clearStatusParam(); } catch(e) {}
+                    });
+                });
+            } catch (e) {
+                console.warn('Binding error:', e);
+            }
+        });
+
+</script>
 
     <!-- Google Maps API (Async/Defer) -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAutocomplete" async defer></script>
