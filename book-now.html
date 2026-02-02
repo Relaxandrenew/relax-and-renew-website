@@ -1525,8 +1525,8 @@ function fillAddressFromPlace(place) {
 </button>
 </div>
 <div class="text-center mb-8">
-<div class="inline-block p-3 rounded-full mb-4">
-<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-8 h-8 object-contain" />
+<div class="inline-block p-3 md:p-4 rounded-full mb-4">
+<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-8 h-8 md:w-20 md:h-20 object-contain" />
 </div>
 <h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
 <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
@@ -1553,7 +1553,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-<p class="text-[0.65rem] text-brand-dim/70 text-center mt-2 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
+<p class="text-[0.65rem] md:text-sm text-brand-dim/70 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -2285,7 +2285,7 @@ function showBookingModal() {
                 ? `${treat.label} (${selectedStandardDuration} min/person x${participants})`
                 : `${treat.label} (${selectedStandardDuration} min)`;
             document.getElementById('summary-datetime').innerHTML = `<i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${dateLabel} at ${timeLabel} EST`;
-            document.getElementById('summary-price').textContent = `$${price.base}+HST`;
+            document.getElementById('summary-price').innerHTML = `$${price.base}+HST <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`;
             document.getElementById('summary-total').textContent = `$${price.total}`;
 
             bar.classList.add('show');
@@ -3756,7 +3756,10 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
 
                 errorEl.classList.add('hidden');
                 const price = getPrice();
-                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                const locationDisplay = addr.city && addr.postal_code 
+                    ? `${addr.city}, ${addr.postal_code}` 
+                    : (addr.city || addr.address);
+                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) • ${locationDisplay} • <span class="text-brand-gold">$${price.base}+HST (~$${price.total})</span>`;
                 const mobileLabelEl = document.getElementById('mobile-selected-address-label');                if (mobileLabelEl) mobileLabelEl.textContent = `${treat.label} (${selectedStandardDuration}min) • ${addr.city || 'Service location'}`;
                 closeAddressModal();
 
@@ -4432,30 +4435,14 @@ if (result.success) {
                 }
             });
 
-            // Start with modal open ONLY if no cached address
+            // Always open address modal, but pre-fill with cached address if available
             const cachedAddress = window.__selectedAddress;
-            if (!cachedAddress || !cachedAddress.address) {
-                openAddressModal();
-            } else {
-                // Address is cached - keep modal CLOSED and update UI labels
-                const addressModal = document.getElementById('address-modal');
-                if (addressModal) addressModal.classList.add('hidden'); // Ensure it's hidden
-                
-                // Pre-fill address input for when user clicks Change
+            if (cachedAddress && cachedAddress.address) {
+                // Pre-fill address input with cached data
                 const addrInput = document.getElementById('address-input-initial');
                 if (addrInput) addrInput.value = cachedAddress.address;
-                
-                // Update mobile label immediately
-                const mobileLabelEl = document.getElementById('mobile-selected-address-label');
-                if (mobileLabelEl) {
-                    mobileLabelEl.textContent = cachedAddress.city 
-                        ? cachedAddress.city 
-                        : 'Address saved • Select treatment';
-                }
-                
-                // Mark step 1 as complete if address exists
-                updateProgress(1);
             }
+            openAddressModal();
             renderCalendar();
         }
 
@@ -4648,16 +4635,16 @@ if (result.success) {
 
 /* Expanding Footer States */
 #mobile-progress-footer {
-    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s ease;
+    transition: max-height 0.25s ease-out, box-shadow 0.25s ease-out, border-width 0.15s ease-out;
     height: auto;
     max-height: 110px;
     overflow: hidden;
     z-index: 50;
     padding-bottom: env(safe-area-inset-bottom, 0);
+    will-change: max-height;
 }
 
 #mobile-progress-footer.expanded {
-    height: 65vh;
     max-height: 65vh;
     overflow: hidden;
     border-width: 2px;
@@ -4667,7 +4654,7 @@ if (result.success) {
 
 #mobile-footer-collapsed,
 #mobile-footer-expanded {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.2s ease-out;
 }
 
 #mobile-footer-collapsed {
