@@ -448,7 +448,7 @@
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Phone *</label>
-                            <input type="tel" id="phone-input" name="phone" required placeholder="(555) 555-5555" maxlength="14" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                            <input type="tel" inputmode="tel" id="phone-input" name="phone" autocomplete="tel" required placeholder="(555) 555-5555" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
                         </div>
                         <div>
                             <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Email *</label>
@@ -684,10 +684,20 @@
         function toggleAccordion(id) {
             const content = document.getElementById(id);
             const icon = document.getElementById('icon-' + id);
-            if (content.classList.contains('active')) { 
-                content.classList.remove('active'); 
-                icon.classList.remove('active'); 
-            } else { 
+            if (!content) return;
+
+            const isOpen = content.classList.contains('active');
+
+            // Close all
+            document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.rotate-icon').forEach(el => el.classList.remove('active'));
+
+            // Toggle selected
+            if (!isOpen) {
+                content.classList.add('active');
+                if (icon) icon.classList.add('active');
+            }
+        } else { 
                 document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('active')); 
                 document.querySelectorAll('.rotate-icon').forEach(el => el.classList.remove('active')); 
                 content.classList.add('active'); 
@@ -743,12 +753,32 @@
             }
         }
 
-        // Phone Number Formatting Logic
+        // Phone Number Formatting Logic (force mask: (xxx) xxx-xxxx)
         const phoneInput = document.getElementById('phone-input');
         if (phoneInput) {
-             phoneInput.addEventListener('input', function (e) {
-                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
-                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            const formatPhone = (value) => {
+                const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+                const a = digits.slice(0, 3);
+                const b = digits.slice(3, 6);
+                const c = digits.slice(6, 10);
+                if (digits.length <= 3) return a ? `(${a}` : '';
+                if (digits.length <= 6) return `(${a}) ${b}`;
+                return `(${a}) ${b}-${c}`;
+            };
+
+            phoneInput.addEventListener('input', (e) => {
+                e.target.value = formatPhone(e.target.value);
+            });
+
+            phoneInput.addEventListener('keydown', (e) => {
+                const allowed = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+                if (allowed.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+                if (!/\d/.test(e.key)) e.preventDefault();
+            });
+
+            phoneInput.addEventListener('blur', (e) => {
+                e.target.value = formatPhone(e.target.value);
             });
         }
 
@@ -756,15 +786,50 @@
         function initAutocomplete() {
             try {
                 if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
-                
+
                 const addressInput = document.getElementById('autocomplete-address');
                 if (!addressInput) return;
 
                 const autocomplete = new google.maps.places.Autocomplete(addressInput, {
                     componentRestrictions: { country: "ca" },
-                    fields: ["address_components", "name"],
+                    fields: ["address_components", "formatted_address", "name"],
                     types: ["address"],
                 });
+
+                const get = (components, type) => {
+                    const c = (components || []).find(x => (x.types || []).includes(type));
+                    return c ? c.long_name : "";
+                };
+
+                const buildStreet = (components) => {
+                    const streetNumber = get(components, "street_number");
+                    const route = get(components, "route");
+                    const street = [streetNumber, route].filter(Boolean).join(" ").trim();
+                    return street || "";
+                };
+
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+                    const comps = place.address_components || [];
+                    if (!comps.length) return;
+
+                    // Street-only format (e.g., 661 Clarence St)
+                    const street = buildStreet(comps);
+                    if (street) addressInput.value = street;
+
+                    const city = get(comps, "locality") || get(comps, "administrative_area_level_3") || get(comps, "administrative_area_level_2");
+                    const postalCode = get(comps, "postal_code");
+
+                    const cityInput = document.getElementById('form-city');
+                    const postalInput = document.getElementById('form-postal');
+
+                    if (cityInput && city) cityInput.value = city;
+                    if (postalInput && postalCode) postalInput.value = postalCode;
+                });
+            } catch (e) {
+                console.warn("Google Maps Autocomplete Error:", e);
+            }
+        });
 
                 autocomplete.addListener("place_changed", () => {
                     const place = autocomplete.getPlace();
@@ -812,36 +877,77 @@
             const btn = document.getElementById('submit-btn');
             const originalText = btn.innerHTML;
 
-            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin inline mr-2"></i> Processing...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin inline mr-2"></i> Redirecting to Checkout...`;
             btn.disabled = true;
             btn.classList.add('opacity-70', 'cursor-not-allowed');
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
-        // Handle status banners from Stripe success/cancel redirects
-        (function handleMembershipStatus() {
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
             try {
-                const params = new URLSearchParams(window.location.search);
-                const status = (params.get('status') || '').toLowerCase();
+                const email = String(data.email || "").trim().toLowerCase();
+                if (!email || !email.includes("@")) {
+                    throw new Error("Valid email required.");
+                }
 
-                const panels = document.getElementById('status-panels');
-                const success = document.getElementById('status-success');
-                const cancel = document.getElementById('status-cancel');
+                const isLiveTest = String(data.plan || "").trim() === "Live Test ($1)";
 
-                if (!panels || !success || !cancel) return;
+                const payload = {
+                    ...data,
+                    plan_display: data.plan || "",
+                    term_display: data.term_length || "",
+                    ...(isLiveTest ? {
+                        plan_key: "LIVE_TEST",
+                        term_months: 12,
+                        stripe_price_id: "price_1SwP932atTjzVbCkppuTSdm6",
+                        seat_count: 1
+                    } : {})
+                };
 
-                if (status === 'success') {
-                    panels.classList.remove('hidden');
-                    success.classList.remove('hidden');
-                    cancel.classList.add('hidden');
+                const res = await fetch(N8N_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
 
-                    // Hide the purchase flow after checkout to avoid confusion
-                    const plans = document.getElementById('plans');
-                    const signup = document.getElementById('signup-form');
-                    if (plans) plans.classList.add('hidden');
-                    if (signup) signup.classList.add('hidden');
+                if (!res.ok) {
+                    const txt = await res.text().catch(() => "");
+                    throw new Error(`Request failed (${res.status}). ${txt}`);
+                }
 
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else if (status === 'cancel') {
+                let out = {};
+                try { out = await res.json(); } catch (e) { out = {}; }
+                const url = out && typeof out.url === "string" ? out.url : "";
+
+                if (url && url.startsWith("http")) {
+                    window.location.href = url;
+                    return;
+                }
+
+                // Fallback (if workflow returns no url): show success message
+                btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Submitted!`;
+                btn.classList.remove('btn-filled');
+                btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');
+                    btn.classList.add('btn-filled');
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }, 2500);
+            } catch (error) {
+                console.error(error);
+                btn.innerHTML = "Error. Please try again.";
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }, 2200);
+            }
+        } else if (status === 'cancel') {
                     panels.classList.remove('hidden');
                     cancel.classList.remove('hidden');
                     success.classList.add('hidden');
