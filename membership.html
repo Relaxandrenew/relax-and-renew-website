@@ -623,10 +623,97 @@
     </footer>
 
 
-    <!-- Google Maps Places API -->
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        // ============================================================
+        // GOOGLE MAPS AUTOCOMPLETE (must be defined before API loads)
+        // ============================================================
+        function initAutocomplete() {
+            // Wait for DOM if not ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAutocompleteInternal);
+            } else {
+                initAutocompleteInternal();
+            }
+        }
+
+        function initAutocompleteInternal() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                    console.warn('Google Maps API not available');
+                    return;
+                }
+
+                const addressInput = document.getElementById('autocomplete-address');
+                if (!addressInput) {
+                    console.warn('Address input not found');
+                    return;
+                }
+
+                const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                    componentRestrictions: { country: "ca" },
+                    fields: ["address_components", "formatted_address"],
+                    types: ["address"]
+                });
+
+                autocomplete.addListener("place_changed", function() {
+                    const place = autocomplete.getPlace();
+                    if (!place || !place.address_components) {
+                        console.warn('No place data');
+                        return;
+                    }
+
+                    let streetNumber = '';
+                    let route = '';
+                    let city = '';
+                    let postalCode = '';
+
+                    for (const component of place.address_components) {
+                        const type = component.types[0];
+                        
+                        if (type === 'street_number') {
+                            streetNumber = component.long_name;
+                        } else if (type === 'route') {
+                            route = component.long_name;
+                        } else if (type === 'locality') {
+                            city = component.long_name;
+                        } else if (type === 'administrative_area_level_3' && !city) {
+                            city = component.long_name;
+                        } else if (type === 'postal_code') {
+                            postalCode = component.long_name;
+                        }
+                    }
+
+                    // Format street address
+                    const street = [streetNumber, route].filter(Boolean).join(' ').trim();
+                    if (street) {
+                        addressInput.value = street;
+                    }
+
+                    // Auto-fill City and Postal Code
+                    const cityInput = document.getElementById('form-city');
+                    const postalInput = document.getElementById('form-postal');
+
+                    if (cityInput && city) {
+                        cityInput.value = city;
+                    }
+                    if (postalInput && postalCode) {
+                        postalInput.value = postalCode;
+                    }
+
+                    console.log('Address filled:', { street, city, postalCode });
+                });
+
+                console.log('Google Maps Autocomplete initialized successfully');
+            } catch (e) {
+                console.error("Google Maps Autocomplete Error:", e);
+            }
+        }
+    </script>
+
+    <!-- Google Maps Places API (loaded after initAutocomplete is defined) -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAutocomplete" async defer></script>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script>
         // ============================================================
         // CONFIGURATION
@@ -918,70 +1005,6 @@
             if (planSelect) {
                 planSelect.value = planName;
                 toggleTermSelect(planSelect, termContainer, termSelect, planCol);
-            }
-        }
-
-        // ============================================================
-        // GOOGLE MAPS AUTOCOMPLETE
-        // ============================================================
-        function initAutocomplete() {
-            try {
-                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
-                    console.warn('Google Maps API not loaded');
-                    return;
-                }
-
-                const addressInput = document.getElementById('autocomplete-address');
-                if (!addressInput) return;
-
-                const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                    componentRestrictions: { country: "ca" },
-                    fields: ["address_components", "formatted_address"],
-                    types: ["address"]
-                });
-
-                autocomplete.addListener("place_changed", () => {
-                    const place = autocomplete.getPlace();
-                    if (!place.address_components) return;
-
-                    let streetNumber = '';
-                    let route = '';
-                    let city = '';
-                    let postalCode = '';
-
-                    for (const component of place.address_components) {
-                        const type = component.types[0];
-                        
-                        switch (type) {
-                            case 'street_number':
-                                streetNumber = component.long_name;
-                                break;
-                            case 'route':
-                                route = component.long_name;
-                                break;
-                            case 'locality':
-                            case 'administrative_area_level_3':
-                                if (!city) city = component.long_name;
-                                break;
-                            case 'postal_code':
-                                postalCode = component.long_name;
-                                break;
-                        }
-                    }
-
-                    // Format street address
-                    const street = [streetNumber, route].filter(Boolean).join(' ').trim();
-                    if (street) addressInput.value = street;
-
-                    // Auto-fill City and Postal Code
-                    const cityInput = document.getElementById('form-city');
-                    const postalInput = document.getElementById('form-postal');
-
-                    if (cityInput && city) cityInput.value = city;
-                    if (postalInput && postalCode) postalInput.value = postalCode;
-                });
-            } catch (e) {
-                console.warn("Google Maps Autocomplete Error:", e);
             }
         }
 
