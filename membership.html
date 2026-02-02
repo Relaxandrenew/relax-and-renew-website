@@ -154,6 +154,92 @@
             <a href="#signup-form" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Join Now</a>
         </nav>
     </div>
+    <!-- STATUS PANELS (success / cancel) -->
+    <section id="status-panels" class="hidden pt-28 pb-10 bg-brand-black border-b border-brand-gold/10">
+        <div class="container mx-auto px-6">
+            <!-- Success -->
+            <div id="status-success" class="hidden bg-white/5 border border-brand-gold/25 rounded-lg shadow-2xl relative p-8 md:p-10">
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand-gold"></div>
+                <div class="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-brand-gold"></div>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-brand-gold"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand-gold"></div>
+
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-12 h-12 rounded-full border border-brand-gold/35 bg-white/5 flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-7 h-7 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <p class="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Membership Confirmed</p>
+                        <h2 class="text-3xl md:text-4xl text-brand-light font-serif mt-1">You’re all set.</h2>
+                    </div>
+                </div>
+
+                <p class="text-brand-light/90 font-light leading-relaxed mb-3">
+                    Your membership signup was successful. If you’re already an existing client, you can head to the portal now to manage appointments, book sessions, and more.
+                </p>
+                <p class="text-brand-dim font-light text-sm leading-relaxed mb-7">
+                    If you’re new to Relax &amp; Renew, you’ll receive an email invitation shortly to activate your portal access.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-start">
+                    <a href="index.html" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Home Page
+                    </a>
+                    <a href="https://www.relaxandrenew.ca/portal" class="btn-filled w-full sm:w-auto justify-center">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Go to Portal
+                    </a>
+                    <a href="/membership" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="crown" class="w-4 h-4"></i>
+                        Back to Membership
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cancel -->
+            <div id="status-cancel" class="hidden bg-white/5 border border-brand-gold/20 rounded-lg shadow-2xl relative p-8 md:p-10">
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand-gold"></div>
+                <div class="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-brand-gold"></div>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-brand-gold"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand-gold"></div>
+
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-12 h-12 rounded-full border border-brand-gold/30 bg-white/5 flex items-center justify-center">
+                        <i data-lucide="x-circle" class="w-7 h-7 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <p class="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Checkout Cancelled</p>
+                        <h2 class="text-3xl md:text-4xl text-brand-light font-serif mt-1">No worries.</h2>
+                    </div>
+                </div>
+
+                <p class="text-brand-light/90 font-light leading-relaxed mb-7">
+                    Your checkout was cancelled and no payment was taken. You can try again anytime.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-start">
+                    <a href="#signup-form" class="btn-filled w-full sm:w-auto justify-center" onclick="clearStatusParam()">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        Try Again
+                    </a>
+                    <a href="/membership" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="crown" class="w-4 h-4"></i>
+                        Back to Membership
+                    </a>
+                    <a href="index.html" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Home Page
+                    </a>
+                </div>
+
+                <p class="text-xs text-brand-dim/60 mt-6">
+                    If you’re having trouble checking out, email <a class="text-brand-gold hover:text-brand-light transition-colors" href="mailto:info@relaxandrenew.ca">info@relaxandrenew.ca</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
 
     <!-- HERO SECTION -->
     <header class="relative min-h-[60vh] flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900">
@@ -540,6 +626,46 @@
         // Init Icons
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
+        // Handle status banners from Stripe success/cancel redirects
+        (function handleMembershipStatus() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const status = (params.get('status') || '').toLowerCase();
+
+                const panels = document.getElementById('status-panels');
+                const success = document.getElementById('status-success');
+                const cancel = document.getElementById('status-cancel');
+
+                if (!panels || !success || !cancel) return;
+
+                if (status === 'success') {
+                    panels.classList.remove('hidden');
+                    success.classList.remove('hidden');
+                    cancel.classList.add('hidden');
+
+                    // Hide the purchase flow after checkout to avoid confusion
+                    const plans = document.getElementById('plans');
+                    const signup = document.getElementById('signup-form');
+                    if (plans) plans.classList.add('hidden');
+                    if (signup) signup.classList.add('hidden');
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (status === 'cancel') {
+                    panels.classList.remove('hidden');
+                    cancel.classList.remove('hidden');
+                    success.classList.add('hidden');
+
+                    const signup = document.getElementById('signup-form');
+                    if (signup) signup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (e) {}
+        })();
+
+
+
+        // Webhook URL (shared)
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
+
         // Menu Toggle
         const menuBtn = document.getElementById('menu-btn'); 
         const mobMenu = document.getElementById('mob-menu'); 
@@ -670,6 +796,16 @@
         }
 
         // Form Handling
+        // Status param helper (membership?status=success | membership?status=cancel)
+        function clearStatusParam() {
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('status');
+                window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? ('?' + url.searchParams.toString()) : '') + url.hash);
+            } catch (e) {}
+        }
+
+
         async function handleMembershipSubmit(event) {
             event.preventDefault();
 
@@ -680,6 +816,46 @@
             btn.disabled = true;
             btn.classList.add('opacity-70', 'cursor-not-allowed');
             if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Handle status banners from Stripe success/cancel redirects
+        (function handleMembershipStatus() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const status = (params.get('status') || '').toLowerCase();
+
+                const panels = document.getElementById('status-panels');
+                const success = document.getElementById('status-success');
+                const cancel = document.getElementById('status-cancel');
+
+                if (!panels || !success || !cancel) return;
+
+                if (status === 'success') {
+                    panels.classList.remove('hidden');
+                    success.classList.remove('hidden');
+                    cancel.classList.add('hidden');
+
+                    // Hide the purchase flow after checkout to avoid confusion
+                    const plans = document.getElementById('plans');
+                    const signup = document.getElementById('signup-form');
+                    if (plans) plans.classList.add('hidden');
+                    if (signup) signup.classList.add('hidden');
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (status === 'cancel') {
+                    panels.classList.remove('hidden');
+                    cancel.classList.remove('hidden');
+                    success.classList.add('hidden');
+
+                    const signup = document.getElementById('signup-form');
+                    if (signup) signup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (e) {}
+        })();
+
+
+
+        // Webhook URL (shared)
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
 
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
@@ -738,6 +914,46 @@
                 btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
                 if (typeof lucide !== 'undefined') lucide.createIcons();
 
+        // Handle status banners from Stripe success/cancel redirects
+        (function handleMembershipStatus() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const status = (params.get('status') || '').toLowerCase();
+
+                const panels = document.getElementById('status-panels');
+                const success = document.getElementById('status-success');
+                const cancel = document.getElementById('status-cancel');
+
+                if (!panels || !success || !cancel) return;
+
+                if (status === 'success') {
+                    panels.classList.remove('hidden');
+                    success.classList.remove('hidden');
+                    cancel.classList.add('hidden');
+
+                    // Hide the purchase flow after checkout to avoid confusion
+                    const plans = document.getElementById('plans');
+                    const signup = document.getElementById('signup-form');
+                    if (plans) plans.classList.add('hidden');
+                    if (signup) signup.classList.add('hidden');
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (status === 'cancel') {
+                    panels.classList.remove('hidden');
+                    cancel.classList.remove('hidden');
+                    success.classList.add('hidden');
+
+                    const signup = document.getElementById('signup-form');
+                    if (signup) signup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (e) {}
+        })();
+
+
+
+        // Webhook URL (shared)
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
+
                 setTimeout(() => {
                     event.target.reset();
                     if (typeof termContainer !== "undefined" && termContainer) {
@@ -766,6 +982,46 @@
                     btn.classList.remove('btn-filled');
                     btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Handle status banners from Stripe success/cancel redirects
+        (function handleMembershipStatus() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const status = (params.get('status') || '').toLowerCase();
+
+                const panels = document.getElementById('status-panels');
+                const success = document.getElementById('status-success');
+                const cancel = document.getElementById('status-cancel');
+
+                if (!panels || !success || !cancel) return;
+
+                if (status === 'success') {
+                    panels.classList.remove('hidden');
+                    success.classList.remove('hidden');
+                    cancel.classList.add('hidden');
+
+                    // Hide the purchase flow after checkout to avoid confusion
+                    const plans = document.getElementById('plans');
+                    const signup = document.getElementById('signup-form');
+                    if (plans) plans.classList.add('hidden');
+                    if (signup) signup.classList.add('hidden');
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (status === 'cancel') {
+                    panels.classList.remove('hidden');
+                    cancel.classList.remove('hidden');
+                    success.classList.add('hidden');
+
+                    const signup = document.getElementById('signup-form');
+                    if (signup) signup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (e) {}
+        })();
+
+
+
+        // Webhook URL (shared)
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
                     setTimeout(() => {
                         event.target.reset();
                         // Reset term visibility manually
