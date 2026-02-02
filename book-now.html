@@ -1414,7 +1414,7 @@ function fillAddressFromPlace(place) {
 
     <!-- ADDRESS MODAL -->
     <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4 hidden">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
             <div class="text-center mb-8">
                 <div class="inline-block p-3 rounded-full mb-4">
                     <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-16 h-16 object-contain" />
@@ -1518,20 +1518,18 @@ function fillAddressFromPlace(place) {
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
     <div class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden" id="client-details-modal">
 <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-0 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
-<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-8 md:p-10">
-<div class="flex justify-end mb-2">
-<button aria-label="Close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors" id="client-modal-close" onclick="closeClientDetailsModal();">
-<i class="w-6 h-6" data-lucide="x"></i>
+<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-5 md:p-8">
+<!-- Close button - absolute positioned -->
+<button aria-label="Close" class="absolute top-3 right-3 md:top-4 md:right-4 client-modal-close-btn inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-1.5 md:p-2 text-brand-gold/80 hover:text-brand-light transition-colors z-10" id="client-modal-close" onclick="closeClientDetailsModal();">
+<i class="w-5 h-5 md:w-6 md:h-6" data-lucide="x"></i>
 </button>
+<!-- Header: Logo + Title inline -->
+<div class="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pr-10">
+<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" />
+<div>
+<h3 class="text-xl md:text-2xl text-brand-gold font-serif leading-tight">Your Contact Information</h3>
+<p class="text-xs md:text-sm text-brand-dim/70 leading-snug mt-0.5">Complete your booking details</p>
 </div>
-<div class="text-center mb-8">
-<div class="inline-block p-3 md:p-4 rounded-full mb-4">
-<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-8 h-8 md:w-20 md:h-20 object-contain" />
-</div>
-<h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
-<p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
-                    Please provide your details to complete the booking.
-                </p>
 </div>
 <!-- Booking Summary -->
 <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
@@ -1553,7 +1551,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-<p class="text-[0.65rem] md:text-sm text-brand-dim/70 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
+<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -2851,17 +2849,24 @@ container.appendChild(groupRow);
         function openAddressModal() {
             const modal = document.getElementById('address-modal');
             if (modal) {
+                // Immediately lock body scroll for instant screen lock
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                document.body.style.top = `-${window.scrollY}px`;
+                
+                // Show modal instantly
                 modal.classList.remove('hidden');
-                // Lock body scroll on mobile (Fix #3)
-                if (window.innerWidth < 768) {
-                    document.body.style.overflow = 'hidden';
-                    document.body.style.position = 'fixed';
-                    document.body.style.width = '100%';
-                }
+                
                 // Pre-populate input with saved address if available
                 const addrInput = document.getElementById('address-input-initial');
                 if (addrInput && window.__selectedAddress && window.__selectedAddress.address) {
                     addrInput.value = window.__selectedAddress.address;
+                }
+                
+                // Focus the input field
+                if (addrInput) {
+                    setTimeout(() => addrInput.focus(), 50);
                 }
             }
         }
@@ -2870,12 +2875,13 @@ container.appendChild(groupRow);
             const modal = document.getElementById('address-modal');
             if (modal) {
                 modal.classList.add('hidden');
-                // Unlock body scroll on mobile (Fix #3)
-                if (window.innerWidth < 768) {
-                    document.body.style.overflow = '';
-                    document.body.style.position = '';
-                    document.body.style.width = '';
-                }
+                // Restore scroll position and unlock body
+                const scrollY = document.body.style.top;
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                document.body.style.top = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
             }
         }
 
@@ -4580,9 +4586,9 @@ if (result.success) {
         <!-- Header with back button and day navigation -->
         <div class="px-3 pt-3 pb-2 border-b border-brand-gold/20 flex-shrink-0">
             <div class="flex items-center justify-between mb-2">
-                <button id="mobile-footer-collapse-btn" class="flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors">
-                    <i data-lucide="chevron-down" class="w-5 h-5"></i>
-                    <span class="text-sm font-bold uppercase tracking-wider">Back</span>
+                <button id="mobile-footer-collapse-btn" class="flex items-center gap-1.5 text-brand-gold hover:text-brand-light hover:shadow-[0_0_12px_rgba(224,197,132,0.3)] hover:-translate-y-0.5 transition-all duration-200 px-2 py-1 rounded border border-transparent hover:border-brand-gold/30">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider">Back to calendar</span>
                 </button>
                 <!-- Day navigation with arrows -->
                 <div class="flex items-center gap-2">
