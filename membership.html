@@ -109,28 +109,6 @@
         .term-visible { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Live Test button (discreet) */
-        .btn-test {
-            border: 1px solid rgba(224, 197, 132, 0.25);
-            color: rgba(240, 226, 192, 0.6);
-            padding: 0.35rem 0.8rem;
-            font-size: 0.65rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.02);
-            transition: 0.25s;
-        }
-        .btn-test:hover {
-            border-color: rgba(224, 197, 132, 0.45);
-            color: rgba(240, 226, 192, 0.85);
-            background: rgba(224, 197, 132, 0.06);
-            box-shadow: 0 0 14px rgba(224, 197, 132, 0.12);
-        }
-        .btn-test[disabled] {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
     </style>
 </head>
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
@@ -359,7 +337,7 @@
             <div class="text-center mb-12">
                 <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Start Your Journey</span>
                 <h2 class="text-4xl text-brand-light mt-2">Membership Application</h2>
-                <p class="text-brand-dim mt-4 font-light">Fill out the form below. We will contact you to confirm the details and set up your credit profile.</p>
+                <p class="text-brand-dim mt-4 font-light">Fill out the form below to get started. You’ll be securely redirected to Stripe to complete checkout. If you’re not already an existing client, you’ll receive an invitation to our client portal where you can manage appointments, book sessions, and more.</p>
             </div>
 
             <div class="bg-white/5 border border-brand-gold/20 p-8 rounded-lg shadow-2xl relative">
@@ -419,6 +397,7 @@
                                 <option value="Individual Bi-Weekly">Individual Bi-Weekly ($90/session + HST)</option>
                                 <option value="Duo">Duo / Couples ($100/person + HST)</option>
                                 <option value="Household">Household 3+ ($90/person + HST)</option>
+                                <option value="Live Test ($1)">Live Test ($1/month • 12 months)</option>
                             </select>
                         </div>
                         
@@ -550,18 +529,9 @@
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-brand-light/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-dim/30 gap-4">
+            <div class="border-t border-brand-light/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-dim/30">
                 <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
-
-                <!-- ✅ Discreet Live Test button (TEMP) -->
-                <button id="live-test-btn" class="btn-test" type="button" onclick="startLiveTestCheckout()">
-                    Live Test: $1 Membership
-                </button>
-
-                <div class="flex gap-6 mt-4 md:mt-0">
-                    <a href="#" class="hover:text-brand-gold">Privacy Policy</a>
-                    <a href="#" class="hover:text-brand-gold">Terms of Service</a>
-                </div>
+                <div class="flex gap-6 mt-4 md:mt-0"><a href="#" class="hover:text-brand-gold">Privacy Policy</a><a href="#" class="hover:text-brand-gold">Terms of Service</a></div>
             </div>
         </div>
     </footer>
@@ -627,6 +597,11 @@
                 termContainer.classList.add('term-hidden');
                 termSelect.removeAttribute('required');
                 termSelect.value = ""; // Reset value
+                
+                // Make plan select full width if term is hidden (optional, but looks cleaner)
+                if(selectedPlan === 'Individual Bi-Weekly') {
+                     // Keep grid layout stable
+                }
             }
         }
 
@@ -694,15 +669,13 @@
             }
         }
 
-        // Webhook URL (shared)
-        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
-
-        // Form Handling (application inquiry)
+        // Form Handling
         async function handleMembershipSubmit(event) {
             event.preventDefault();
+
             const btn = document.getElementById('submit-btn');
             const originalText = btn.innerHTML;
-            
+
             btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin inline mr-2"></i> Processing...`;
             btn.disabled = true;
             btn.classList.add('opacity-70', 'cursor-not-allowed');
@@ -710,14 +683,83 @@
 
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
-            console.log("Membership Inquiry:", data);
 
             try {
-                 const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...data, type: 'Membership Inquiry' })
+                const selectedPlan = String(data.plan || "").trim();
+
+                // Live Test ($1) → create checkout session + redirect (Workflow 1)
+                if (selectedPlan === "Live Test ($1)") {
+                    const email = String(data.email || "").trim().toLowerCase();
+                    if (!email || !email.includes("@")) {
+                        throw new Error("Valid email required for checkout.");
+                    }
+
+                    const payload = {
+                        email,
+                        plan_key: "LIVE_TEST",
+                        term_months: 12,
+                        stripe_price_id: "price_1SwP932atTjzVbCkppuTSdm6",
+                        seat_count: 1
+                    };
+
+                    const res = await fetch(N8N_WEBHOOK_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const txt = await res.text().catch(() => "");
+                        throw new Error(`Checkout request failed (${res.status}). ${txt}`);
+                    }
+
+                    const out = await res.json().catch(() => ({}));
+                    const url = out?.url;
+
+                    if (!url || typeof url !== "string") {
+                        throw new Error("No checkout URL returned.");
+                    }
+
+                    window.location.href = url;
+                    return;
+                }
+
+                // Default: membership application inquiry
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...data, type: "Membership Inquiry" })
                 });
+
+                if (!response.ok) throw new Error("Network error");
+
+                btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Application Sent!`;
+                btn.classList.remove('btn-filled');
+                btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                setTimeout(() => {
+                    event.target.reset();
+                    if (typeof termContainer !== "undefined" && termContainer) {
+                        termContainer.classList.add('term-hidden');
+                        termContainer.classList.remove('term-visible');
+                    }
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');
+                    btn.classList.add('btn-filled');
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }, 3000);
+            } catch (error) {
+                console.error(error);
+                btn.innerHTML = "Error. Please try again.";
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }, 2200);
+            }
+        });
 
                 if (response.ok) {
                     btn.innerHTML = `<i data-lucide="check" class="inline mr-2"></i> Application Sent!`;
@@ -741,70 +783,6 @@
                 console.error(error);
                 btn.innerHTML = "Error. Please try again.";
                 setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-            }
-        }
-
-        // ✅ Live Test Checkout (TEMP)
-        async function startLiveTestCheckout() {
-            const btn = document.getElementById('live-test-btn');
-            if (!btn) return;
-
-            const original = btn.textContent;
-
-            // Prefer email from form if it's already filled
-            let email = "";
-            const emailField = document.querySelector('input[name="email"]');
-            if (emailField && emailField.value) email = String(emailField.value).trim().toLowerCase();
-
-            // Otherwise prompt (dev only)
-            if (!email) {
-                email = prompt("Live Test Checkout — Enter email for membership:", "") || "";
-                email = String(email).trim().toLowerCase();
-            }
-
-            if (!email || !email.includes("@")) {
-                alert("Please enter a valid email to run the live test checkout.");
-                return;
-            }
-
-            // IMPORTANT: these values must match your n8n allowlist/guard
-            const payload = {
-                email,
-                plan_key: "LIVE_TEST",
-                term_months: 12,
-                stripe_price_id: "price_1SwP932atTjzVbCkppuTSdm6",
-                seat_count: 1
-            };
-
-            try {
-                btn.disabled = true;
-                btn.textContent = "Launching checkout...";
-                
-                const res = await fetch(N8N_WEBHOOK_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) {
-                    const txt = await res.text().catch(() => "");
-                    throw new Error(`Checkout request failed (${res.status}). ${txt}`);
-                }
-
-                const out = await res.json().catch(() => ({}));
-                const url = out?.url;
-
-                if (!url || typeof url !== "string" || !url.startsWith("http")) {
-                    throw new Error("No checkout URL returned from webhook.");
-                }
-
-                // Redirect to Stripe Checkout
-                window.location.href = url;
-            } catch (e) {
-                console.error("Live Test Checkout Error:", e);
-                alert("Live test checkout failed. Check console / n8n execution logs.");
-                btn.disabled = false;
-                btn.textContent = original;
             }
         }
     </script>
