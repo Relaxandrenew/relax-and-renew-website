@@ -137,12 +137,42 @@
         .btn-filled { background: #E0C584; color: #000; border: 2px solid #E0C584; padding: 0.75rem 2.5rem; text-transform: uppercase; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.08em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; border-radius: 4px; }
         .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); }
 
-        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; border-radius: 4px; }
-        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-container { 
+            background-color: #1a1a1a; 
+            border: 1px solid #E0C584; 
+            font-family: 'Cormorant Garamond', serif; 
+            z-index: 999999 !important; 
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 12px 10px; cursor: pointer; font-size: 0.95rem; }
         .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
         .pac-item-query { color: #E0C584; }
+        
+        /* Mobile: position autocomplete dropdown better when keyboard is open */
+        @media (max-width: 768px) {
+            .pac-container {
+                position: fixed !important;
+                left: 16px !important;
+                right: 16px !important;
+                width: auto !important;
+                top: auto !important;
+                bottom: 50vh !important;
+                max-height: 180px;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            }
+            #address-modal {
+                align-items: flex-start !important;
+                padding-top: 2rem;
+            }
+            #address-modal > div {
+                max-height: 70vh;
+                margin-bottom: auto;
+            }
+        }
 
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); z-index: 100; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.95); backdrop-filter: blur(12px); z-index: 100; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
         .calendar-day-disabled { opacity: 0.25; cursor: not-allowed; }
@@ -196,9 +226,70 @@
         .progress-step.completed::before { background: #E0C584; }
         .step-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(224,197,132,0.3); background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; margin: 0 auto; transition: all 0.3s ease; }
 
+
+        /* Mobile progress footer (compact steps) */
+        .progress-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 35; /* below sticky booking bar (z=40) */
+            /* Glass (stronger / less transparent) */
+            background: linear-gradient(to top, rgba(5,5,5,0.995), rgba(5,5,5,0.975));
+            backdrop-filter: blur(22px);
+            border-top: 1px solid rgba(224,197,132,0.30);
+            box-shadow: 0 -4px 30px rgba(0,0,0,0.55);
+            color: rgba(224,197,132,0.92);
+            padding: 10px 0 calc(env(safe-area-inset-bottom, 0px) + 10px);
+            transform: translateY(0);
+            opacity: 1;
+            transition: transform 0.35s ease, opacity 0.25s ease;
+            will-change: transform, opacity;
+        }
+        .progress-footer.hide {
+            transform: translateY(110%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .progress-footer .progress-step { flex: 1; text-align: center; }
+        .progress-footer .progress-step::before { display: none !important; }
+        .progress-footer .step-circle {
+            width: 32px;
+            height: 32px;
+            border-width: 1px;
+        }
+        .progress-footer .step-label {
+            margin-top: 6px;
+            font-size: 10px;
+            line-height: 1;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(240,226,192,0.55);
+            font-weight: 700;
+        }
+        .progress-footer .progress-step.active .step-label { color: rgba(224,197,132,0.95); }
+        .progress-footer .progress-step.completed .step-label { color: rgba(224,197,132,0.8); }
+
+        /* Make the header tighter on mobile now that steps are moved */
+        @media (max-width: 767px) {
+            .header-hero { padding-bottom: 28px !important; }
+        }
+
+
         /* Sticky Bar */
-        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(5,5,5,0.98), rgba(5,5,5,0.95)); backdrop-filter: blur(20px); border-top: 1px solid rgba(224,197,132,0.3); z-index: 40; transform: translateY(100%); transition: transform 0.3s ease; box-shadow: 0 -4px 30px rgba(0,0,0,0.5); }
-        .sticky-bar.show { transform: translateY(0); }
+        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0;
+            /* Glass (stronger / less transparent) */
+            background: linear-gradient(to top, rgba(5,5,5,0.995), rgba(5,5,5,0.975));
+            backdrop-filter: blur(22px);
+            border-top: 1px solid rgba(224,197,132,0.30);
+            z-index: 40;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.35s ease, opacity 0.25s ease;
+            box-shadow: 0 -4px 30px rgba(0,0,0,0.55);
+            will-change: transform, opacity;
+        }
+        .sticky-bar.show { transform: translateY(0); opacity: 1; }
 
         /* Header hero section */
         .header-hero { 
@@ -250,6 +341,31 @@
             .therapist-badge { padding: 0.5rem 0.75rem; }
             .therapist-avatar { width: 40px; height: 40px; }
 
+            /* Mobile Calendar Scaling - Compact for footer coexistence */
+            #calendar-days button {
+                padding: 0.5rem 0.25rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            #calendar-content {
+                margin-bottom: 0 !important;
+            }
+            
+            .card-fancy {
+                margin-bottom: 0 !important; /* Removed excess space */
+            }
+            
+            /* Time slots compact on mobile */
+            .time-slot-btn {
+                padding: 0.6rem 0.75rem !important;
+                font-size: 0.8rem !important;
+            }
+
+            
+            /* Hide desktop time slots on mobile (use expanding footer instead) */
+            #time-slots-wrapper {
+                display: none;
+            }
             /* Mobile modal improvements - First modal (address/treatment) */
             #address-modal > div {
                 padding: 1.25rem;
@@ -306,97 +422,146 @@
             }
 
             /* Mobile modal improvements - Client details modal */
+            #client-details-modal {
+                padding: 0.5rem !important;
+            }
             #client-details-modal > div {
-                padding: 1rem;
-                max-height: 95vh;
-                margin: 0.25rem;
+                padding: 0;
+                max-height: 98vh;
+                margin: 0;
                 border: 1px solid rgba(224, 197, 132, 0.3);
                 border-radius: 8px;
                 position: relative;
-                            }
-                        #client-details-modal{ overflow-x: hidden; }
-/* Client details modal: scrolling (no horizontal scroll) */
-            #client-details-modal .client-details-scroll{
+            }
+            #client-details-modal { overflow-x: hidden; }
+            
+            /* Compact inner padding */
+            #client-details-modal .client-details-scroll-inner {
+                padding: 1rem 1rem 1.5rem !important;
+            }
+            
+            /* Client details modal: scrolling (no horizontal scroll) */
+            #client-details-modal .client-details-scroll {
                 flex: 1;
                 min-height: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
-                padding-right: 0; /* scrollbar flush to the right edge */
+                padding-right: 0;
             }
-            /* keep content comfortably off the scrollbar without shifting it left */
-            #client-details-modal .client-details-scroll > *{
-                padding-right: 0.75rem;
+            #client-details-modal .client-details-scroll > * {
+                padding-right: 0.5rem;
             }
 
-/* Client details modal: ensure the content area scrolls and keep scrollbar visible */
-            #client-details-modal .client-details-scroll--content{
+            /* Client details modal: ensure the content area scrolls */
+            #client-details-modal .client-details-scroll--content {
                 overflow-y: auto !important;
             }
 
-            /* Client details modal: floating close button outside the card */
-            #client-details-modal #client-modal-close:focus{
-                outline: none;
-                box-shadow: 0 0 0 3px rgba(224,197,132,0.18), 0 10px 30px rgba(0,0,0,0.55);
+            /* Close button compact */
+            #client-details-modal .flex.justify-end.mb-2 {
+                margin-bottom: 0 !important;
+                position: absolute;
+                top: 0.5rem;
+                right: 0.5rem;
+                z-index: 10;
             }
-            #client-details-modal #client-modal-close i{
+            #client-details-modal #client-modal-close {
+                width: 2rem;
+                height: 2rem;
+                padding: 0.25rem;
+            }
+            #client-details-modal #client-modal-close i {
+                width: 1.25rem;
+                height: 1.25rem;
                 pointer-events: none;
             }
+            #client-details-modal #client-modal-close:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(224,197,132,0.18);
+            }
 
+            /* Header area compact */
+            #client-details-modal .text-center.mb-8 {
+                margin-bottom: 0.5rem !important;
+            }
+            #client-details-modal .inline-block.p-3 {
+                padding: 0.4rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+            #client-details-modal .inline-block.p-3 img {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+            }
             #client-details-modal h3 {
-                font-size: 1.35rem;
+                font-size: 1.25rem;
+                margin-bottom: 0.25rem !important;
+            }
+            #client-details-modal .text-center.mb-8 > p {
+                font-size: 0.75rem;
+                display: none; /* Hide subtitle on mobile */
             }
             
-            #client-details-modal .mb-8 {
-                margin-bottom: 0.75rem;
+            /* Booking summary compact */
+            #client-details-modal .mb-6.p-4 {
+                margin-bottom: 0.5rem !important;
+                padding: 0.6rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .text-xs {
+                font-size: 0.6rem;
+                margin-bottom: 0.35rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .space-y-2 {
+                gap: 0.15rem;
+            }
+            #client-details-modal .mb-6.p-4 .space-y-2 > div {
+                margin-top: 0.15rem !important;
+            }
+            #client-details-modal .mb-6.p-4 .text-sm {
+                font-size: 0.75rem;
+            }
+            #client-details-modal .mb-6.p-4 .text-lg {
+                font-size: 0.9rem;
+            }
+            /* Hide payment notice on mobile to save space */
+            #client-details-modal .mb-6.p-4 .mt-3.flex {
+                display: none;
             }
             
-            #client-details-modal .mb-6 {
-                margin-bottom: 0.5rem;
-            }
-            
-            #client-details-modal .p-4 {
-                padding: 0.6rem;
-            }
-            
+            /* Form fields compact */
             #client-details-modal .space-y-4 > * + * {
-                margin-top: 0.5rem;
-            }
-            
-            #client-details-modal .space-y-3 > * + * {
                 margin-top: 0.4rem;
             }
-            
-            #client-details-modal .grid-cols-2 {
-                gap: 0.4rem;
+            #client-details-modal .space-y-3 > * + * {
+                margin-top: 0.3rem;
             }
-            
+            #client-details-modal .grid-cols-2 {
+                gap: 0.35rem;
+            }
             #client-details-modal input,
             #client-details-modal textarea {
                 padding: 0.5rem;
-                font-size: 0.85rem;
+                font-size: 0.8rem;
             }
-            
             #client-details-modal label {
-                font-size: 0.6rem;
-                margin-bottom: 0.25rem;
+                font-size: 0.55rem;
+                margin-bottom: 0.2rem;
             }
-            
             #client-details-modal .text-xs {
-                font-size: 0.65rem;
+                font-size: 0.6rem;
             }
-            
             #client-details-modal .py-4 {
-                padding-top: 0.6rem;
-                padding-bottom: 0.6rem;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
             }
-            
             #client-details-modal .mt-6 {
-                margin-top: 0.75rem;
+                margin-top: 0.5rem;
             }
             
-            #client-details-modal .inline-block.p-3 {
-                padding: 0.5rem;
+            /* Submit button compact */
+            #client-details-modal .btn-filled {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
             }
 
             /* Booking confirmation modal mobile fix */
@@ -416,8 +581,8 @@
   right: 0;
   bottom: 0;
   z-index: 300;
-  background: rgba(0,0,0,0.9);
-  backdrop-filter: blur(15px);
+  background: rgba(0,0,0,0.94);
+  backdrop-filter: blur(18px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -600,6 +765,8 @@
 
         /* Calendar: fully booked day number styling */
         .calendar-day-fully-booked {
+            position: relative;
+            overflow: hidden;
             opacity: 0.45;
             cursor: not-allowed;
             pointer-events: none;
@@ -610,7 +777,24 @@
             background: rgba(0,0,0,0.35) !important;
             border-color: rgba(224,197,132,0.2) !important;
         }
-        /* Custom Scrollbar Styling */
+        
+        .calendar-day-fully-booked::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom right,
+                transparent calc(50% - 1px),
+                rgba(224, 197, 132, 0.35) calc(50% - 1px),
+                rgba(224, 197, 132, 0.35) calc(50% + 1px),
+                transparent calc(50% + 1px)
+            );
+            pointer-events: none;
+        }
+/* Custom Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -679,8 +863,8 @@
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 350;
-  background: rgba(0,0,0,0.9);
-  backdrop-filter: blur(15px);
+  background: rgba(0,0,0,0.94);
+  backdrop-filter: blur(18px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -702,6 +886,19 @@
   position: relative;
 }
 
+
+
+/* Calendar month navigation - disabled state */
+#prev-month-btn:disabled,
+#next-month-btn:disabled,
+#prev-month-btn[aria-disabled="true"],
+#next-month-btn[aria-disabled="true"] {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  filter: grayscale(60%);
+}
 </style>
 
     <!-- Address autocomplete bootstrap -->
@@ -789,11 +986,6 @@
                     pac.style.maxHeight = maxHeight + 'px';
                     pac.style.overflowY = 'auto';
                     pac.style.zIndex = '9999';
-
-                    // Make sure the input is visible too (Android keyboards can shift the layout unpredictably)
-                    setTimeout(() => {
-                        try { inputEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
-                    }, 50);
                 };
 
                 const onFocus = () => {
@@ -874,10 +1066,44 @@ function fillAddressFromPlace(place) {
                 }
                 
                 window.__selectedAddress = { address: street, city, postal_code: normalizeCanadianPostal(postal), country_code: (countryCode ? String(countryCode).toUpperCase() : "CA") };
+                // Save to localStorage for persistence
+                saveAddressToStorage(window.__selectedAddress);
             } catch (e) {
                 console.warn("fillAddressFromPlace error", e);
             }
         }
+
+        // ============ ADDRESS PERSISTENCE (localStorage) ============
+        function saveAddressToStorage(addrObj) {
+            try {
+                if (addrObj && addrObj.address) {
+                    localStorage.setItem('rnr_saved_address', JSON.stringify(addrObj));
+                }
+            } catch (e) {
+                console.warn('Could not save address to localStorage', e);
+            }
+        }
+        
+        function loadAddressFromStorage() {
+            try {
+                const saved = localStorage.getItem('rnr_saved_address');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('Could not load address from localStorage', e);
+            }
+            return null;
+        }
+        
+        function clearAddressFromStorage() {
+            try {
+                localStorage.removeItem('rnr_saved_address');
+            } catch (e) {
+                console.warn('Could not clear address from localStorage', e);
+            }
+        }
+        // ============ END ADDRESS PERSISTENCE ============
 
         // Canadian postal validation helpers (also used to block US ZIP codes)
         function normalizeCanadianPostal(postal) {
@@ -899,9 +1125,9 @@ function fillAddressFromPlace(place) {
 
     <!-- NAVIGATION -->
     <nav id="navbar" class="fixed-nav">
-        <div class="container mx-auto px-6 flex justify-between items-center h-20">
+        <div class="container mx-auto px-6 flex justify-between items-center h-14">
             <a href="index.html" class="flex items-center gap-3 no-underline group">
-                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-8 w-auto transition-transform group-hover:scale-105">
                 <div class="hidden md:flex flex-col">
                     <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
                     <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
@@ -956,44 +1182,44 @@ function fillAddressFromPlace(place) {
     </div>
 
     <!-- HEADER HERO WITH PROGRESS INDICATOR -->
-    <header class="header-hero pt-28 pb-16 border-b border-brand-gold/20">
+    <header class="header-hero hidden md:block pt-14 pb-6 md:pt-24 md:pb-14 border-b border-brand-gold/20">
         <div class="container mx-auto px-6 max-w-6xl">
-            <!-- Progress Steps -->
-            <div class="flex items-center justify-center mb-12 max-w-3xl mx-auto">
-                <div class="progress-step active" id="step-1">
+            <!-- Desktop Progress Steps (restore original desktop layout) -->
+            <div class="hidden md:flex items-center justify-center mb-8 md:mb-10 max-w-3xl mx-auto" aria-label="Booking steps">
+                <div class="progress-step active" data-step="1">
                     <div class="step-circle">
                         <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-6 h-6 object-contain" />
                     </div>
                     <div class="text-center mt-3">
                         <div class="text-sm uppercase tracking-[0.15em] text-brand-gold font-bold">Step 1</div>
-                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Location & Service</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden lg:block">Location &amp; Service</div>
                     </div>
                 </div>
-                <div class="progress-step" id="step-2">
+                <div class="progress-step" data-step="2">
                     <div class="step-circle">
                         <i data-lucide="calendar" class="w-5 h-5"></i>
                     </div>
                     <div class="text-center mt-3">
                         <div class="text-sm uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 2</div>
-                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Date & Time</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden lg:block">Date &amp; Time</div>
                     </div>
                 </div>
-                <div class="progress-step" id="step-3">
+                <div class="progress-step" data-step="3">
                     <div class="step-circle">
-                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
                     </div>
                     <div class="text-center mt-3">
                         <div class="text-sm uppercase tracking-[0.15em] text-brand-dim/70 font-bold">Step 3</div>
-                        <div class="text-xs text-brand-dim/70 mt-1 hidden md:block">Your Details</div>
+                        <div class="text-xs text-brand-dim/70 mt-1 hidden lg:block">Confirm</div>
                     </div>
                 </div>
             </div>
 
             <div class="animate-slide-up text-center">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl text-brand-light mt-3 mb-5 font-serif leading-tight">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl text-brand-light mt-2 mb-3 md:mt-3 md:mb-4 font-serif leading-tight">
                     Book Your Mobile Massage
                 </h1>
-                <p class="text-brand-dim text-base md:text-lg max-w-2xl leading-relaxed mx-auto">
+                <p class="text-brand-dim text-sm md:text-base max-w-2xl leading-relaxed mx-auto">
                     We'll calculate drive-time between appointments and show you times that work for your location.
                 </p>
             </div>
@@ -1001,24 +1227,14 @@ function fillAddressFromPlace(place) {
     </header>
 
     <!-- BOOKING CALENDAR SECTION -->
-    <section id="booking" class="py-12 bg-brand-black border-b border-brand-light/5">
+    <section id="booking" class="pt-20 pb-0 md:pt-12 md:pb-8 bg-brand-black border-b border-brand-light/5">
         <div class="container mx-auto px-6 max-w-6xl">
             <div class="card-fancy animate-fade-in">
-                <!-- Top helper row -->
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-brand-gold/10">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-brand-gold/10 p-2 rounded-full">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-brand-gold"></i>
-                        </div>
-                        <div>
-                            <div class="text-xs uppercase tracking-[0.18em] text-brand-gold/70 font-bold mb-1">Service Location</div>
-                            <div class="text-base md:text-lg text-brand-light font-medium" id="selected-address-label">Service address + treatment required to view availability</div>
-                        </div>
-                    </div>
-                    <button id="change-address-btn" class="btn-gold text-sm px-6 py-3">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        <span>Change Selection</span>
-                    </button>
+                <!-- Calendar Title -->
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl md:text-3xl text-brand-gold font-serif mb-2">Our Availability</h2>
+                    <p class="text-[0.7rem] text-brand-dim/50 uppercase tracking-widest mb-2">Professional, Registered Mobile Massage Therapy</p>
+                    <p class="text-sm text-brand-dim/80" id="selected-address-label">Select your treatment above to view availability</p>
                 </div>
 
                 <!-- NEW PROGRESS BAR LOADER -->
@@ -1031,6 +1247,9 @@ function fillAddressFromPlace(place) {
                         <div class="absolute top-0 left-0 h-full bg-brand-gold w-1/3 animate-loading-bar rounded-full"></div>
                     </div>
                 </div>
+
+<!-- Calendar anchor for mobile auto-scroll -->
+                <div id="calendar-anchor" class="scroll-mt-24"></div>
 
                 <!-- Skeleton Loader -->
                 <div id="calendar-skeleton" class="hidden space-y-4">
@@ -1103,7 +1322,17 @@ function fillAddressFromPlace(place) {
                     </div>
 
                     <!-- Calendar days -->
-                    <div id="calendar-days" class="calendar-grid text-sm mb-8"></div>
+                    <div id="calendar-grid-wrapper" class="relative mb-8">
+                        <div id="calendar-days" class="calendar-grid text-sm"></div>
+
+                        <!-- Fully booked month overlay -->
+                        <div id="calendar-fully-booked-overlay" class="hidden absolute inset-0 z-10 flex items-center justify-center rounded-lg border border-brand-gold/10 bg-black/55 backdrop-blur-sm">
+                            <div class="text-center px-6">
+                                <div class="text-2xl md:text-3xl font-bold text-brand-gold tracking-wide">Fully Booked</div>
+                                <div class="mt-2 text-sm md:text-base text-brand-dim/80">Please choose another month.</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Availability status -->
                     <div id="availability-status" class="text-sm text-brand-dim/80 mb-6 p-4 rounded bg-brand-gold/5 border border-brand-gold/10">
@@ -1142,6 +1371,10 @@ function fillAddressFromPlace(place) {
         </div>
     </section>
 
+
+    <!-- Spacer so fixed mobile footer doesn't cover content -->
+    <div class="h-32 md:hidden"></div>
+
     <!-- STICKY BOTTOM BAR -->
     <div id="sticky-bar" class="sticky-bar">
         <div class="container mx-auto px-6 py-4">
@@ -1179,30 +1412,16 @@ function fillAddressFromPlace(place) {
         </div>
     </div>
 
-    <footer class="bg-neutral-950 py-12 border-t border-brand-gold/20 text-center">
-        <div class="container mx-auto px-6">
-            <p class="text-brand-dim/60 text-sm mb-4">Professional, registered mobile massage therapy.</p>
-            <div class="flex justify-center gap-6 text-brand-gold mb-8">
-                <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
-                <a href="/cdn-cgi/l/email-protection#ea83848c85aa988f868b928b848e988f848f9dc4898b" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
-            </div>
-            <a href="https://relaxandrenew.ca" class="text-brand-gold hover:text-brand-light text-sm underline transition-colors">Return to Main Website</a>
-        </div>
-    </footer>
-
     <!-- ADDRESS MODAL -->
-    <div id="address-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
-        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
-            <button id="address-modal-close" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
+    <div id="address-modal" class="fixed inset-0 modal-backdrop z-[9999] flex items-center justify-center p-4 hidden">
+        <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-8 md:p-10 max-w-xl w-full relative shadow-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
             <div class="text-center mb-8">
-                <div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
-                    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 object-contain" />
+                <div class="inline-block p-3 rounded-full mb-4">
+                    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-16 h-16 object-contain" />
                 </div>
                 <h3 class="text-3xl text-brand-gold font-serif mb-2">Where will we be visiting?</h3>
                 <p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
-                    We'll use this address to calculate drive-time between appointments and only show times that are realistic for mobile service.
+                    Enter your service address.
                 </p>
             </div>
 
@@ -1233,7 +1452,7 @@ function fillAddressFromPlace(place) {
             <div class="mt-8 space-y-4">
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Treatment *</label>
-                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all">
+                    <select id="service-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black transition-all" style="position: relative; z-index: 10;">
                         <option value="" disabled selected>Select a treatment...</option>
 
                         <optgroup label="Core Therapeutic">
@@ -1264,7 +1483,7 @@ function fillAddressFromPlace(place) {
 
                 <div>
                     <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Duration *</label>
-                    <select id="duration-select" disabled class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all">
+                    <select id="duration-select" class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-brand-black disabled:opacity-60 transition-all" style="position: relative; z-index: 10;" disabled>
                         <option value="" disabled selected>Select a duration...</option>
                     </select>
 
@@ -1276,21 +1495,6 @@ function fillAddressFromPlace(place) {
                     <p class="text-xs text-brand-dim/60 mt-2 leading-snug">For Group bookings we support up to 8 participants; for Events up to 30.</p>
                 </div>
 
-                </div>
-            </div>
-
-            <!-- Payment Options -->
-            <div class="mt-6 payment-badge rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                    <div class="bg-brand-gold/10 p-2 rounded-full mt-0.5">
-                        <i data-lucide="credit-card" class="w-4 h-4 text-brand-gold"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs uppercase tracking-[0.15em] text-brand-gold font-bold mb-2">Payment Options</div>
-                        <div class="text-xs text-brand-dim/80 leading-relaxed">
-                            We accept <strong class="text-brand-light">Cash, Credit Card, and E-Transfer</strong>. We also offer <strong class="text-brand-light">Direct Billing</strong> for most insurance companies. <strong class="text-brand-light">Payment is collected after treatment completion.</strong> No credit card required to book.
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -1314,20 +1518,18 @@ function fillAddressFromPlace(place) {
     <!-- CLIENT DETAILS MODAL (STEP 3) -->
     <div class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden" id="client-details-modal">
 <div class="bg-brand-black border border-brand-gold/30 rounded-lg p-0 max-w-xl w-full relative shadow-2xl animate-slide-up max-h-[90vh] overflow-hidden flex flex-col">
-<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-8 md:p-10">
-<div class="flex justify-end mb-2">
-<button aria-label="Close" class="client-modal-close-btn inline-flex items-center justify-center w-10 h-10 p-2 text-brand-gold/80 hover:text-brand-light transition-colors" id="client-modal-close" onclick="closeClientDetailsModal();">
-<i class="w-6 h-6" data-lucide="x"></i>
+<div class="client-details-scroll client-details-scroll--content w-full overflow-x-hidden"><div class="client-details-scroll-inner p-5 md:p-8">
+<!-- Close button - absolute positioned -->
+<button aria-label="Close" class="absolute top-3 right-3 md:top-4 md:right-4 client-modal-close-btn inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-1.5 md:p-2 text-brand-gold/80 hover:text-brand-light transition-colors z-10" id="client-modal-close" onclick="closeClientDetailsModal();">
+<i class="w-5 h-5 md:w-6 md:h-6" data-lucide="x"></i>
 </button>
+<!-- Header: Logo + Title inline -->
+<div class="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 pr-10">
+<img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax &amp; Renew RMT" class="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" />
+<div>
+<h3 class="text-xl md:text-2xl text-brand-gold font-serif leading-tight">Your Contact Information</h3>
+<p class="text-xs md:text-sm text-brand-dim/70 leading-snug mt-0.5">Complete your booking details</p>
 </div>
-<div class="text-center mb-8">
-<div class="inline-block bg-brand-gold/10 p-3 rounded-full mb-4">
-<i class="w-8 h-8 text-brand-gold" data-lucide="user"></i>
-</div>
-<h3 class="text-3xl text-brand-gold font-serif mb-2">Your Contact Information</h3>
-<p class="text-sm text-brand-dim max-w-md mx-auto leading-relaxed">
-                    Please provide your details to complete the booking.
-                </p>
 </div>
 <!-- Booking Summary -->
 <div class="mb-6 p-4 bg-brand-gold/5 border border-brand-gold/20 rounded-lg">
@@ -1349,11 +1551,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-</div>
-<!-- Payment Notice -->
-<div class="mt-3 flex items-start gap-2 text-xs text-brand-dim/90 leading-relaxed">
-<i class="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" data-lucide="info"></i>
-<span><strong class="text-brand-light">No payment required now.</strong> You do not pay until after your treatment is complete. We do not collect any payment information, including credit card details, until your therapist arrives.</span>
+<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -1564,7 +1762,7 @@ function fillAddressFromPlace(place) {
     <!-- Booking Confirmation Modal (Portal style) -->
     <div id="booking-modal-overlay">
         <!-- Close button outside the card -->
-        <button id="booking-modal-close-btn" type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
+        <button id="booking-modal-close-btn" type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/45 rounded-full p-2 hover:bg-black/65" aria-label="Close" onclick="window.closeBookingModalOverlay && window.closeBookingModalOverlay()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1606,7 +1804,7 @@ function fillAddressFromPlace(place) {
         // ============================================================================
         
         // ---------------- CONFIG ----------------
-        const AVAILABILITY_URL = "/.netlify/functions/cliniko-mobile-availability";
+        const AVAILABILITY_URL = "https://primary-production-efcf.up.railway.app/webhook/cliniko-mobile-availability";
         const STATIC_SETUP_MINUTES = 25;
 
         // Pricing data (base price before HST)
@@ -1663,7 +1861,8 @@ function fillAddressFromPlace(place) {
         let calendarCurrent = new Date();
         let selectedDateStr = null;
         let selectedSlot = null;
-        window.__selectedAddress = null;
+        // Load saved address from localStorage if available
+        window.__selectedAddress = (typeof loadAddressFromStorage === 'function') ? loadAddressFromStorage() : null;
 
         let selectedServiceKey = null;
         let selectedStandardDuration = null;
@@ -1767,7 +1966,9 @@ function fillAddressFromPlace(place) {
   } else {
     bindBookingModalClose();
   }
-})();function showBookingModal() {
+})();
+
+function showBookingModal() {
       const overlay = document.getElementById("booking-modal-overlay");
       const spinner = document.getElementById("booking-modal-spinner");
       const successIcon = document.getElementById("booking-modal-success");
@@ -1953,23 +2154,25 @@ function fillAddressFromPlace(place) {
         }
 
         function updateProgress(step) {
-            const steps = ['step-1', 'step-2', 'step-3'];
-            steps.forEach((s, idx) => {
-                const el = document.getElementById(s);
-                if (idx < step - 1) {
-                    el.classList.add('completed');
-                    el.classList.remove('active');
-                } else if (idx === step - 1) {
-                    el.classList.add('active');
-                    el.classList.remove('completed');
-                } else {
-                    el.classList.remove('active', 'completed');
+            const desktopNodes = document.querySelectorAll('.progress-step[data-step]');
+            const mobileNodes = document.querySelectorAll('.progress-footer-step[data-step]');
+            const allNodes = [...desktopNodes, ...mobileNodes];
+            
+            allNodes.forEach(node => {
+                const nodeStep = parseInt(node.dataset.step);
+                node.classList.remove('active', 'completed');
+                
+                if (nodeStep < step) {
+                    node.classList.add('completed');
+                } else if (nodeStep === step) {
+                    node.classList.add('active');
                 }
             });
         }
 
         function setAvailabilityFromResponse(data) {
-            availabilityByDate = {};
+            // DON'T clear existing data - merge new months with cached months
+            // availabilityByDate = {}; // REMOVED - this was clearing cached months!
 
             console.log('🔍 Raw API Response:', data);
             console.log('🔍 Type:', typeof data);
@@ -2056,10 +2259,12 @@ function fillAddressFromPlace(place) {
 
         function updateStickyBar() {
             const bar = document.getElementById('sticky-bar');
+            const progressFooter = document.getElementById('progress-footer');
             const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
             
             if (!selectedSlot || !selectedDateStr || !treat) {
                 bar.classList.remove('show');
+                if (progressFooter) progressFooter.classList.remove('hide');
                 return;
             }
 
@@ -2078,15 +2283,202 @@ function fillAddressFromPlace(place) {
                 ? `${treat.label} (${selectedStandardDuration} min/person x${participants})`
                 : `${treat.label} (${selectedStandardDuration} min)`;
             document.getElementById('summary-datetime').innerHTML = `<i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i>${dateLabel} at ${timeLabel} EST`;
-            document.getElementById('summary-price').textContent = `$${price.base}+HST`;
+            document.getElementById('summary-price').innerHTML = `$${price.base}+HST <span class="text-brand-dim/70 text-sm">(~$${price.total})</span>`;
             document.getElementById('summary-total').textContent = `$${price.total}`;
 
             bar.classList.add('show');
+            if (progressFooter) progressFooter.classList.add('hide');
             
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // ---------------- CALENDAR RENDER ----------------
+
+        // Mobile Footer Expand/Collapse Functions
+        function expandMobileFooter(dateStr) {
+            if (!isMobileViewport()) return;
+            console.log('📱 expandMobileFooter called for date:', dateStr);
+            
+            const footer = document.getElementById('mobile-progress-footer');
+            const dateLabel = document.getElementById('mobile-footer-date-label');
+            const mobileContainer = document.getElementById('mobile-time-slots-container');
+            
+            // Set date label
+            const [yy, mm, dd] = dateStr.split('-').map(Number);
+            const dateObj = new Date(yy, mm - 1, dd);
+            dateLabel.textContent = formatDateLabel(dateObj);
+            
+            // Clone time slots from desktop to mobile footer
+            const desktopSlots = document.getElementById('time-slots');
+            if (desktopSlots && desktopSlots.innerHTML) {
+                console.log('📋 Cloning slots from desktop:', desktopSlots.innerHTML.length, 'chars');
+                mobileContainer.innerHTML = desktopSlots.innerHTML;
+                
+                // Re-attach event listeners for cloned slots
+                const slotButtons = mobileContainer.querySelectorAll('.time-slot-btn');
+                slotButtons.forEach(btn => {
+                    const start = btn.dataset.start;
+                    const end = btn.dataset.end;
+                    const label = btn.dataset.label;
+                    const isAvail = btn.dataset.available === 'true';
+                    
+                    if (isAvail) {
+                        btn.addEventListener('click', () => {
+                            selectedSlot = { start, end, label, available: true };
+                            // Mark this button as selected, unmark others
+                            mobileContainer.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('time-slot-selected'));
+                            btn.classList.add('time-slot-selected');
+                            // Show the Continue button
+                            updateMobileContinueButton();
+                            updateStickyBar();
+                        });
+                    }
+                });
+                
+                // Re-attach expand button listeners
+                const expandButtons = mobileContainer.querySelectorAll('[id^="expand-"]');
+                expandButtons.forEach(btn => {
+                    const groupKey = btn.id.replace('expand-', '');
+                    btn.addEventListener('click', () => window.toggleGroupExpansion?.(groupKey));
+                });
+                
+                // Re-attach group button listeners
+                const groupButtons = mobileContainer.querySelectorAll('[data-group]');
+                groupButtons.forEach(btn => {
+                    const groupKey = btn.dataset.group;
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', () => window.toggleGroupExpansion?.(groupKey));
+                    }
+                });
+                
+                // Re-create lucide icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+            
+            // Expand footer
+            footer.classList.add('expanded');
+            // Hide continue button initially when drawer opens
+            const continueWrapper = document.getElementById('mobile-continue-wrapper');
+            if (continueWrapper) continueWrapper.classList.add('hidden');
+            // Update day navigation button states
+            updateMobileDayNavButtons();
+            console.log('✅ Footer expanded class added');
+        }
+        
+        function updateMobileContinueButton() {
+            const continueWrapper = document.getElementById('mobile-continue-wrapper');
+            if (!continueWrapper) return;
+            
+            if (selectedSlot && selectedDateStr) {
+                continueWrapper.classList.remove('hidden');
+                // Re-init icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                continueWrapper.classList.add('hidden');
+            }
+        }
+        
+        function collapseMobileFooter() {
+            console.log('📥 Collapsing mobile footer');
+            const footer = document.getElementById('mobile-progress-footer');
+            footer.classList.remove('expanded');
+            // Hide continue button when collapsed
+            const continueWrapper = document.getElementById('mobile-continue-wrapper');
+            if (continueWrapper) continueWrapper.classList.add('hidden');
+        }
+        
+        // Navigate to previous/next available day in mobile drawer
+        function navigateMobileDay(direction) {
+            if (!selectedDateStr) return;
+            
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            let currentDate = new Date(yy, mm - 1, dd);
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            // Find next available date in the given direction
+            let attempts = 0;
+            const maxAttempts = 60; // Look up to 60 days ahead/back
+            
+            while (attempts < maxAttempts) {
+                currentDate.setDate(currentDate.getDate() + direction);
+                attempts++;
+                
+                // Don't go before today
+                if (currentDate < today) continue;
+                
+                const testDateStr = toDateStr(currentDate);
+                
+                // Check if this date has available slots
+                if (hasAnyAvailableSlot(testDateStr)) {
+                    // Found an available day - navigate to it
+                    selectedDateStr = testDateStr;
+                    selectedSlot = null;
+                    
+                    // Update calendar to show correct month if needed
+                    if (currentDate.getMonth() !== calendarCurrent.getMonth() || 
+                        currentDate.getFullYear() !== calendarCurrent.getFullYear()) {
+                        calendarCurrent = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                        renderCalendar();
+                    } else {
+                        renderCalendar();
+                    }
+                    
+                    // Render time slots for new date
+                    renderTimeSlotsForDate(testDateStr);
+                    
+                    // Re-populate mobile drawer
+                    expandMobileFooter(testDateStr);
+                    
+                    // Update day navigation button states
+                    updateMobileDayNavButtons();
+                    
+                    return;
+                }
+            }
+            
+            console.log('No available day found in direction:', direction);
+        }
+        
+        // Update prev/next day button disabled states
+        function updateMobileDayNavButtons() {
+            const prevBtn = document.getElementById('mobile-prev-day-btn');
+            const nextBtn = document.getElementById('mobile-next-day-btn');
+            if (!prevBtn || !nextBtn || !selectedDateStr) return;
+            
+            const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+            const currentDate = new Date(yy, mm - 1, dd);
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            // Check if there's a previous available day
+            let hasPrev = false;
+            let testDate = new Date(currentDate);
+            for (let i = 0; i < 60; i++) {
+                testDate.setDate(testDate.getDate() - 1);
+                if (testDate < today) break;
+                if (hasAnyAvailableSlot(toDateStr(testDate))) {
+                    hasPrev = true;
+                    break;
+                }
+            }
+            
+            // Check if there's a next available day
+            let hasNext = false;
+            testDate = new Date(currentDate);
+            for (let i = 0; i < 60; i++) {
+                testDate.setDate(testDate.getDate() + 1);
+                if (hasAnyAvailableSlot(toDateStr(testDate))) {
+                    hasNext = true;
+                    break;
+                }
+            }
+            
+            prevBtn.disabled = !hasPrev;
+            nextBtn.disabled = !hasNext;
+        }
+        
+        function isMobileViewport() {
+            return window.innerWidth < 768;
+        }
         function renderCalendar() {
             const monthLabelEl = document.getElementById('calendar-month-label');
             const daysContainer = document.getElementById('calendar-days');
@@ -2102,6 +2494,10 @@ function fillAddressFromPlace(place) {
             const startDow = firstOfMonth.getDay();
             const daysInMonth = lastOfMonth.getDate();
             daysContainer.innerHTML = '';
+
+            const overlayEl = document.getElementById('calendar-fully-booked-overlay');
+            let monthHasAvailable = false;
+            if (overlayEl) overlayEl.classList.add('hidden');
 
             const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
 
@@ -2137,6 +2533,7 @@ function fillAddressFromPlace(place) {
                 }
                 
                 if (hasAnyAvailableSlot(dateStr)) {
+                    monthHasAvailable = true;
                     dayEl.classList.add('calendar-day-available');
                     dayEl.classList.remove('border-brand-gold/20');
                 } else {
@@ -2155,11 +2552,19 @@ function fillAddressFromPlace(place) {
                     selectedSlot = null;
                     renderCalendar();
                     renderTimeSlotsForDate(dateStr);
+                    expandMobileFooter(dateStr);
                     updateProgress(2);
                     updateStickyBar();
                 });
 
                 daysContainer.appendChild(dayEl);
+            }
+
+            // Month-level "Fully Booked" overlay (no auto-skip).
+            if (overlayEl) {
+                const showFullyBooked = hasLoadedAvailabilityOnce && !isAvailabilityLoading && !monthHasAvailable;
+                overlayEl.classList.toggle('hidden', !showFullyBooked);
+                overlayEl.setAttribute('aria-hidden', showFullyBooked ? 'false' : 'true');
             }
         }
 
@@ -2198,18 +2603,18 @@ function fillAddressFromPlace(place) {
 
             // Group slots by time of day (show ALL slots, but disable/grey booked ones)
             const timeGroups = {
-                morning:   { label: 'AM',   slots: [] }, // 10-11
-                afternoon: { label: 'AFT', slots: [] }, // 12-15
-                evening:   { label: 'EVE', slots: [] }, // 16-20
+                morning:   { label: 'AM',   slots: [] }, // Before 12:00 PM
+                afternoon: { label: 'AFT', slots: [] }, // 12:00 PM – 4:59 PM
+                evening:   { label: 'EVE', slots: [] }, // 5:00 PM and later
             };
 
             daySlots.forEach(slot => {
                 const startTime = new Date(slot.start);
                 const hour = startTime.getHours();
 
-                if (hour >= 11 && hour < 12) timeGroups.morning.slots.push(slot);
-                else if (hour >= 12 && hour < 16) timeGroups.afternoon.slots.push(slot);
-                else if (hour >= 16 && hour <= 20) timeGroups.evening.slots.push(slot);
+                if (hour < 12) timeGroups.morning.slots.push(slot);
+                else if (hour >= 12 && hour < 17) timeGroups.afternoon.slots.push(slot);
+                else if (hour >= 17) timeGroups.evening.slots.push(slot);
             });
 
             // Helper: determine if a group has at least one AVAILABLE slot
@@ -2228,7 +2633,7 @@ function fillAddressFromPlace(place) {
                 groupBtn.type = 'button';
 
                 // Disable expanding when there are NO available slots in that period
-                groupBtn.disabled = !hasAvail;
+                groupBtn.disabled = !hasAny;
 
                 if (!hasAny) {
                     groupBtn.className = 'px-4 py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/60 font-bold text-sm md:text-lg opacity-50 cursor-not-allowed flex flex-col items-center gap-1';
@@ -2237,12 +2642,12 @@ function fillAddressFromPlace(place) {
                         <span class="text-xs font-normal opacity-70">(None)</span>
                     `;
                 } else if (!hasAvail) {
-                    groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg opacity-60 cursor-not-allowed flex flex-col items-center gap-1 transition-all';
+groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/20 bg-black/40 text-brand-dim/70 font-bold text-sm md:text-lg opacity-60  flex flex-col items-center gap-1 transition-all hover:bg-brand-gold/5 cursor-pointer';
                     groupBtn.innerHTML = `
                         <span>${group.label}</span>
                         <span class="text-xs font-normal opacity-80">(Fully Booked)</span>
                     `;
-                    // Intentionally NO click handler when fully booked
+                    groupBtn.addEventListener('click', () => toggleGroupExpansion(groupKey));
                 } else {
                     groupBtn.className = 'px-2 py-3 md:px-4 md:py-3 rounded-lg border border-brand-gold/30 bg-black/60 hover:bg-brand-gold/10 text-brand-light font-bold text-sm md:text-lg transition-all';
                     groupBtn.textContent = group.label;
@@ -2322,7 +2727,11 @@ container.appendChild(groupRow);
                     // If booked, we strike it out.
 
                     if (isAvail) {
-                        slotBtn.className = 'px-1 py-2 rounded-lg border border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center transition-all w-full';
+                        slotBtn.className = 'time-slot-btn px-1 py-2 rounded-lg border border-brand-gold/30 text-brand-light bg-black/40 hover:bg-brand-gold/15 hover:border-brand-gold flex items-center justify-center transition-all w-full';
+                        slotBtn.dataset.start = slot.start;
+                        slotBtn.dataset.end = slot.end;
+                        slotBtn.dataset.label = formatTimeLabel(slot);
+                        slotBtn.dataset.available = 'true';
                         slotBtn.innerHTML = `
                             <span class="font-bold text-sm whitespace-nowrap">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
@@ -2333,7 +2742,11 @@ container.appendChild(groupRow);
                         });
                     } else {
                         // Greyed out + disabled + strikethrough
-                        slotBtn.className = 'px-1 py-2 rounded-lg border border-white/5 text-white/30 bg-white/5 flex items-center justify-center w-full cursor-not-allowed';
+                        slotBtn.className = 'time-slot-btn px-1 py-2 rounded-lg border border-white/5 text-white/30 bg-white/5 flex items-center justify-center w-full cursor-not-allowed';
+                        slotBtn.dataset.start = slot.start;
+                        slotBtn.dataset.end = slot.end;
+                        slotBtn.dataset.label = formatTimeLabel(slot);
+                        slotBtn.dataset.available = 'false';
                         slotBtn.innerHTML = `
                             <span class="font-bold text-sm whitespace-nowrap line-through decoration-brand-gold/40 decoration-2">${timeLabel.replace(' EST', '').replace(' (Booked)', '')}</span>
                         `;
@@ -2356,9 +2769,16 @@ container.appendChild(groupRow);
 
             // Toggle function
             function toggleGroupExpansion(groupKey) {
-                const section = document.getElementById(`slots-${groupKey}`);
-                const expandBtn = document.getElementById(`expand-${groupKey}`);
-                const groupBtn = document.querySelector(`button[data-group="${groupKey}"]`);
+                console.log('🔘 toggleGroupExpansion called for:', groupKey);
+                // Check if we're in mobile footer
+                const isMobile = isMobileViewport();
+                const container = isMobile 
+                    ? document.getElementById('mobile-time-slots-container')
+                    : document.getElementById('time-slots');
+                
+                const section = container ? container.querySelector(`#slots-${groupKey}`) : null;
+                const expandBtn = container ? container.querySelector(`#expand-${groupKey}`) : null;
+                const groupBtn = container ? container.querySelector(`button[data-group="${groupKey}"]`) : null;
 
                 if (!section) return;
 
@@ -2378,9 +2798,9 @@ container.appendChild(groupRow);
                 };
 
                 const collapseGroup = (k) => {
-                    const sec = document.getElementById(`slots-${k}`);
-                    const exp = document.getElementById(`expand-${k}`);
-                    const btn = document.querySelector(`button[data-group="${k}"]`);
+                    const sec = container ? container.querySelector(`#slots-${k}`) : null;
+                    const exp = container ? container.querySelector(`#expand-${k}`) : null;
+                    const btn = container ? container.querySelector(`button[data-group="${k}"]`) : null;
                     if (sec) {
                         sec.classList.add('hidden');
                         sec.style.maxHeight = '0px';
@@ -2390,6 +2810,7 @@ container.appendChild(groupRow);
                     }
                     resetExpandBtn(exp);
                 };
+
 
                 const isHidden = section.classList.contains('hidden');
 
@@ -2418,18 +2839,50 @@ container.appendChild(groupRow);
 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
+            
+            // Expose to global scope for mobile footer access
+            window.toggleGroupExpansion = toggleGroupExpansion;
         }
 
 
         // ---------------- ADDRESS MODAL LOGIC ----------------
         function openAddressModal() {
             const modal = document.getElementById('address-modal');
-            if (modal) modal.classList.remove('hidden');
+            if (modal) {
+                // Immediately lock body scroll for instant screen lock
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                document.body.style.top = `-${window.scrollY}px`;
+                
+                // Show modal instantly
+                modal.classList.remove('hidden');
+                
+                // Pre-populate input with saved address if available
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput && window.__selectedAddress && window.__selectedAddress.address) {
+                    addrInput.value = window.__selectedAddress.address;
+                }
+                
+                // Focus the input field
+                if (addrInput) {
+                    setTimeout(() => addrInput.focus(), 50);
+                }
+            }
         }
         
         function closeAddressModal() {
             const modal = document.getElementById('address-modal');
-            if (modal) modal.classList.add('hidden');
+            if (modal) {
+                modal.classList.add('hidden');
+                // Restore scroll position and unlock body
+                const scrollY = document.body.style.top;
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                document.body.style.top = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
         }
 
         function getAddressFromModal() {
@@ -2454,6 +2907,7 @@ container.appendChild(groupRow);
                 const full = city ? `${street}, ${city} ${postal}` : `${street} ${postal}`;
                 const addrObj = { address: full, city, postal_code: postal, country_code: 'CA' };
                 window.__selectedAddress = addrObj;
+                saveAddressToStorage(addrObj);
                 return addrObj;
             }
 
@@ -2484,6 +2938,7 @@ container.appendChild(groupRow);
             }
             const addrObj = { address: raw, city: "", postal_code: postal, country_code: 'CA' };
             window.__selectedAddress = addrObj;
+            saveAddressToStorage(addrObj);
             return addrObj;
         }
 
@@ -2526,6 +2981,8 @@ container.appendChild(groupRow);
         }
 
         function rebuildDurationOptions() {
+            console.log("=== REBUILD DURATION OPTIONS CALLED ===");
+            console.log("  selectedServiceKey:", selectedServiceKey);
             const durationSelect = document.getElementById('duration-select');
             durationSelect.innerHTML = '<option value="" disabled selected>Select a duration...</option>';
 
@@ -2567,171 +3024,464 @@ container.appendChild(groupRow);
                 durationSelect.appendChild(opt);
             });
 
+            // CRITICAL FIX: Aggressively enable duration select (desktop fix)
             durationSelect.disabled = false;
+            durationSelect.removeAttribute('disabled');
+            durationSelect.style.pointerEvents = 'auto';
+            durationSelect.style.opacity = '1';
+            durationSelect.style.cursor = 'pointer';
+            console.log("✅ Duration select enabled!");
+            console.log("  - Options count:", durationSelect.options.length);
+            console.log("  - Disabled?", durationSelect.disabled);
+            console.log("  - Opacity:", durationSelect.style.opacity);
+            console.log("  - Pointer events:", durationSelect.style.pointerEvents);
+            
+            // FINAL CHECK
+            setTimeout(() => {
+                console.log("=== 100ms AFTER ENABLE ===");
+                const check = document.getElementById('duration-select');
+                console.log("  Disabled?", check.disabled);
+                console.log("  Opacity:", check.style.opacity);
+                console.log("  Pointer-events:", check.style.pointerEvents);
+                console.log("  Computed opacity:", window.getComputedStyle(check).opacity);
+                console.log("  Computed pointer-events:", window.getComputedStyle(check).pointerEvents);
+            }, 100);
             selectedStandardDuration = null;
         }
 
-        async function loadAvailabilityForCurrentMonth() {
-            const addrObj = window.__selectedAddress;
-            if (!addrObj || !addrObj.address) {
-                updateAvailabilityStatus("Enter your address to load live availability.", false);
-                return;
-            }
-            if (!selectedServiceKey || !selectedStandardDuration) {
-                updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
-                return;
-            }
+        // =============================================================================
+// AVAILABILITY WINDOW + REQUEST SEQUENCING (FOUNDATIONAL FIX)
+// =============================================================================
+// We preload a 2-month window (current month + next month). Navigation never triggers
+// redundant loads if the month is already cached. All month math is normalized to
+// the 1st to prevent the classic Jan 31 → Mar overflow bug on mobile.
+const WINDOW_MONTHS = 2; // current + next month
+let loadedMonthKeys = new Set(); // YYYY-MM keys loaded for the active window
+let windowStartMonth = null;      // Date (1st of month) that anchors the active window
 
-            try {
-                // SHOW PROGRESS BAR + HIDE CALENDAR
-                document.getElementById('availability-loading').classList.remove('hidden'); // Show bar
-                document.getElementById('calendar-skeleton').classList.add('hidden'); // Hide skeleton (replaced by bar)
-                document.getElementById('calendar-content').classList.add('hidden');
-                
-                updateAvailabilityStatus("Checking live availability for this address...", false);
-                selectedDateStr = null;
-                selectedSlot = null;
-                document.getElementById('time-slots-wrapper').classList.add('hidden');
-                updateStickyBar();
+// Prevent race conditions from overlapping fetches
+let isAvailabilityLoading = false;
+let availabilityRequestSeq = 0;
+let availabilityAbortController = null;
+let hasLoadedAvailabilityOnce = false;
+// ---------------- CLIENT-SIDE CACHE (SESSION) ----------------
+// Goal: once a month is fetched, going backward renders instantly with no API call.
+// We keep an in-memory cache (availabilityByDate + loadedMonthKeys) AND persist it
+// to sessionStorage so navigation stays "warmed" during the session.
+//
+// Cache is scoped to the current "availability signature" (address + service + duration + participants).
+const SESSION_AVAIL_CACHE_KEY = 'rr_booknow_availability_cache_v1';
+const SESSION_AVAIL_CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes (sessionStorage also clears on tab close)
+let hasTriedSessionCacheRestore = false;
 
-                const { from, to } = computeMonthRange(calendarCurrent);
-                
-                // Calculate block minutes (what Cliniko needs to reserve)
-                const participants = (selectedServiceKey === 'duo') ? 2 : ((selectedServiceKey === 'group' || selectedServiceKey === 'event') ? Number(selectedParticipantCount || 0) : 1);
-                const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
+function getParticipantsForSelection() {
+    if (selectedServiceKey === 'duo') return 2;
+    if (selectedServiceKey === 'group' || selectedServiceKey === 'event') return Number(selectedParticipantCount || 3);
+    return 1;
+}
 
-                const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+function getAvailabilitySignature() {
+    const addrObj = window.__selectedAddress;
+    const sigObj = {
+        address: addrObj?.address || "",
+        city: addrObj?.city || "",
+        postal_code: addrObj?.postal_code || "",
+        serviceKey: selectedServiceKey || "",
+        standardDuration: Number(selectedStandardDuration || 0),
+        participants: getParticipantsForSelection(),
+        slotInterval: 15,
+        setup: STATIC_SETUP_MINUTES
+    };
+    return JSON.stringify(sigObj);
+}
 
-                // Send both standard and block durations
-                const payload = {
-                    address: addrObj.address,
-                    city: addrObj.city,
-                    postal_code: addrObj.postal_code,
-                    from,
-                    to,
-                    durationMinutes: blockMinutes,
-                    standardDurationMinutes: Number(selectedStandardDuration),
-                    participants: participants,
-                    treatment_key: selectedServiceKey,
-                    treatment_label: treat ? treat.label : ""
-                };
+function clearAvailabilitySessionCache() {
+    try { sessionStorage.removeItem(SESSION_AVAIL_CACHE_KEY); } catch (_) {}
+    hasTriedSessionCacheRestore = false;
+}
 
-                console.log('📤 Sending payload:', payload);
-                console.log('🔍 Payload details:');
-                console.log('  - Address:', payload.address);
-                console.log('  - Standard duration (what client sees):', payload.standardDurationMinutes, 'minutes');
-                console.log('  - Block duration (standard + 25 setup):', payload.durationMinutes, 'minutes');
-                console.log('  - Date range:', payload.from, 'to', payload.to);
-                console.log('  - Treatment:', payload.treatment_label);
+function persistAvailabilityCacheToSession() {
+    try {
+        const sig = getAvailabilitySignature();
+        // Only persist when we have a valid selection
+        if (!sig || sig.includes('"address":""') || sig.includes('"serviceKey":""') || sig.includes('"standardDuration":0')) return;
 
-                const res = await fetch(AVAILABILITY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+        const payload = {
+            savedAt: Date.now(),
+            signature: sig,
+            loadedMonthKeys: Array.from(loadedMonthKeys),
+            availabilityByDate: availabilityByDate
+        };
+        sessionStorage.setItem(SESSION_AVAIL_CACHE_KEY, JSON.stringify(payload));
+        // console.log('💾 Persisted availability cache to session:', payload.loadedMonthKeys);
+    } catch (e) {
+        console.warn('⚠️ Could not persist availability cache to session', e);
+    }
+}
 
-                // HIDE PROGRESS BAR + SHOW CALENDAR
-                document.getElementById('availability-loading').classList.add('hidden');
-                document.getElementById('calendar-content').classList.remove('hidden');
+function tryRestoreAvailabilityCacheFromSession() {
+    if (hasTriedSessionCacheRestore) return;
+    hasTriedSessionCacheRestore = true;
 
-                if (!res.ok) {
-                    // If backend deliberately blocked this booking attempt, show the public-facing hard stop.
-                    // Do NOT surface internal fields/reasons.
-                    let payload = null;
-                    try { payload = await res.json(); } catch (e) { payload = null; }
-                    const blockedData = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});
-                    const isBlocked = (res.status === 403) || (blockedData && blockedData.blocked === true);
+    try {
+        const raw = sessionStorage.getItem(SESSION_AVAIL_CACHE_KEY);
+        if (!raw) return;
 
-                    if (isBlocked) {
-                        // Ensure loaders/containers are in a sane state, then show the hard-stop popup.
-                        document.getElementById('availability-loading').classList.add('hidden');
-                        document.getElementById('calendar-content').classList.add('hidden');
-                        window.showBlockedPopup && window.showBlockedPopup();
-                        return;
-                    }
+        const cached = JSON.parse(raw);
+        if (!cached || !cached.signature || !cached.availabilityByDate) return;
 
-                    const errorText = payload ? JSON.stringify(payload) : await res.text();
-                    console.error('❌ Availability API Error');
-                    console.error('  Status:', res.status);
-                    console.error('  Response:', errorText);
-                    setAvailabilityFromResponse(null);
-                    renderCalendar();
-                    updateAvailabilityStatus("We couldn't load availability right now. Please try again or contact us.", true);
-                    return;
-                }
+        const savedAt = Number(cached.savedAt || 0);
+        if (!savedAt || (Date.now() - savedAt) > SESSION_AVAIL_CACHE_TTL_MS) return;
 
-                const raw = await res.json();
-                const data = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
-                console.log('📥 Response received:', data);
-                console.log('📊 Response structure check:');
-                console.log('  - Raw is array?', Array.isArray(raw));
-                console.log('  - Has dates property?', data && typeof data === 'object' && 'dates' in data);
-                console.log('  - dates.length:', data?.dates?.length || 0);
-                if (data?.dates && data.dates.length > 0) {
-                    console.log('  - First date sample:', data.dates[0]);
-                    console.log('  - First date has slots?', data.dates[0]?.slots?.length || 0);
-                }
+        const sig = getAvailabilitySignature();
+        if (cached.signature !== sig) return;
 
-                // Store max drive time (informational only; do NOT use this for charging)
-                const inferredMaxDrive = (() => {
-                    const explicit =
-                        Number(data?.maxDriveTimeMinutes) ||
-                        Number(data?.travel?.maxDriveTimeMinutes) ||
-                        0;
+        availabilityByDate = cached.availabilityByDate || {};
+        loadedMonthKeys = new Set(Array.isArray(cached.loadedMonthKeys) ? cached.loadedMonthKeys : []);
+        console.log('🔥 Restored availability cache from session:', Array.from(loadedMonthKeys).join(', '));
+    } catch (e) {
+        console.warn('⚠️ Could not restore availability cache from session', e);
+    }
+}
 
-                    if (explicit > 0) return explicit;
+function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function addMonths(d, delta) { return new Date(d.getFullYear(), d.getMonth() + delta, 1); }
+function monthIndex(d) { return d.getFullYear() * 12 + d.getMonth(); }
+function monthKeyFromDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+function windowKeys(startMonth) {
+    const keys = [];
+    for (let i = 0; i < WINDOW_MONTHS; i++) keys.push(monthKeyFromDate(addMonths(startMonth, i)));
+    return keys;
+}
+function windowEndMonth(startMonth) { return addMonths(startMonth, WINDOW_MONTHS - 1); }
+function lastDayOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0); }
 
-                    const mins = (data?.dates || [])
-                        .flatMap(d => (d?.slots || []).map(s =>
-                            Number(s?.driveTimeMinutes ?? s?.drive_time_minutes ?? s?.travel?.driveTimeMinutes ?? s?.travel?.drive_time_minutes ?? 0)
-                        ))
-                        .filter(n => Number.isFinite(n) && n > 0);
+function setCalendarNavDisabled(disabled) {
+    const prevBtn = document.getElementById('prev-month-btn');
+    const nextBtn = document.getElementById('next-month-btn');
+    if (!prevBtn || !nextBtn) return;
 
-                    return mins.length ? Math.max(...mins) : 0;
-                })();
+    if (disabled) {
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        prevBtn.setAttribute('aria-disabled', 'true');
+        nextBtn.setAttribute('aria-disabled', 'true');
+    } else {
+        prevBtn.removeAttribute('aria-disabled');
+        nextBtn.removeAttribute('aria-disabled');
+        // Prev button is governed by window.updatePrevMonthButton?.();
+        nextBtn.disabled = false;
+    }
+}
 
-                window.__maxDriveTimeMinutes = inferredMaxDrive;
-                console.log('🚗 Max drive time (informational):', window.__maxDriveTimeMinutes, 'minutes');
+function beginAvailabilityLoadUI() {
+    isAvailabilityLoading = true;
 
-                setAvailabilityFromResponse(data);
+    // Show loading UI
+    try { document.getElementById('availability-loading').classList.remove('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-skeleton').classList.remove('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-content').classList.add('hidden'); } catch (_) {}
 
-                const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
-                
-                // Debug: Show what dates have availability
-                console.log('📅 Availability Summary:');
-                Object.keys(availabilityByDate).forEach(date => {
-                    const slots = availabilityByDate[date];
-                    if (slots && slots.length > 0) {
-                        console.log(`  ${date}: ${slots.length} slots available`);
-                        slots.forEach(slot => {
-                            const start = new Date(slot.start);
-                            const end = new Date(slot.end);
-                            console.log(`    - ${start.toLocaleTimeString('en-CA')} to ${end.toLocaleTimeString('en-CA')}`);
-                        });
-                    }
-                });
-                
-                if (!any) {
-                    console.log('⚠️  No availability found. This could mean:');
-                    console.log('  1. All slots are already booked');
-                    console.log('  2. Travel time from other appointments blocks these times');
-                    console.log('  3. No working hours on these dates');
-                    console.log('Check n8n workflow logs for detailed filtering reasons.');
-                    updateAvailabilityStatus("No mobile availability found for this month with the selected treatment and duration. This may be due to existing appointments and travel time constraints. Please try another month or contact us.", false);
-                } else {
-                    updateAvailabilityStatus("Select a date to see available times.", false);
-                }
+    // Disable month navigation while fetching
+    setCalendarNavDisabled(true);
+}
 
-                renderCalendar();
-            } catch (e) {
-                // Hide loader on error
-                document.getElementById('availability-loading').classList.add('hidden');
-                document.getElementById('calendar-content').classList.remove('hidden');
-                
-                console.error('❌ Availability exception', e);
-                updateAvailabilityStatus("Something went wrong while loading times. Please try again or call us.", true);
-            }
+function endAvailabilityLoadUI() {
+    isAvailabilityLoading = false;
+
+    // Hide loading UI
+    try { document.getElementById('availability-loading').classList.add('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-skeleton').classList.add('hidden'); } catch (_) {}
+    try { document.getElementById('calendar-content').classList.remove('hidden'); } catch (_) {}
+
+    // Re-enable month navigation
+    setCalendarNavDisabled(false);
+    try { window.updatePrevMonthButton?.(); } catch (_) {}
+}
+
+function isMobileViewport() {
+    return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+}
+
+let _calendarAutoScrollToken = 0;
+let _calendarAutoScrollCancel = null;
+
+function cancelCalendarAutoScroll() {
+    if (typeof _calendarAutoScrollCancel === 'function') {
+        try { _calendarAutoScrollCancel(); } catch (_) {}
+    }
+    _calendarAutoScrollCancel = null;
+}
+
+function scheduleCalendarAutoScroll() {
+    if (!isMobileViewport()) return;
+
+    // Always release any prior auto-scroll attempt
+    cancelCalendarAutoScroll();
+
+    const token = ++_calendarAutoScrollToken;
+    let cancelled = false;
+
+    const cleanup = () => {
+        window.removeEventListener('wheel', onUserIntent);
+        window.removeEventListener('touchstart', onUserIntent);
+        window.removeEventListener('touchmove', onUserIntent);
+        window.removeEventListener('keydown', onUserIntent);
+        if (_calendarAutoScrollToken === token) _calendarAutoScrollCancel = null;
+    };
+
+    const cancel = () => {
+        if (cancelled) return;
+        cancelled = true;
+        // Stop any in-flight smooth scroll immediately
+        try { window.scrollTo({ top: window.scrollY, behavior: 'auto' }); } catch (_) {}
+        cleanup();
+    };
+
+    const onUserIntent = () => cancel();
+
+    // If the user tries to scroll at any point, release immediately
+    window.addEventListener('wheel', onUserIntent, { passive: true });
+    window.addEventListener('touchstart', onUserIntent, { passive: true });
+    window.addEventListener('touchmove', onUserIntent, { passive: true });
+    window.addEventListener('keydown', onUserIntent);
+
+    _calendarAutoScrollCancel = cancel;
+
+    // Delay ensures the address overlay is closed and the calendar is actually visible
+    setTimeout(() => {
+        if (cancelled || token !== _calendarAutoScrollToken) return;
+        scrollCalendarIntoView();
+        // Auto-release after the scroll has had time to complete
+        setTimeout(() => {
+            if (token === _calendarAutoScrollToken) cleanup();
+        }, 650);
+    }, 240);
+}
+
+function scrollCalendarIntoView() {
+    if (!isMobileViewport()) return;
+
+    const anchor = document.getElementById('calendar-anchor')
+        || document.getElementById('calendar-content')
+        || document.getElementById('booking');
+
+    if (!anchor) return;
+
+    // Non-intrusive: one smooth scroll, no locking/follow-up adjustments.
+    try {
+        anchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    } catch (_) {
+        const rect = anchor.getBoundingClientRect();
+        const targetTop = window.scrollY + rect.top - 12;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+    }
+}
+
+
+
+
+let lastLoadedState = {
+    address: null,
+    duration: null,
+    serviceKey: null
+};
+
+function shouldReloadAvailability() {
+    const addrObj = window.__selectedAddress;
+    const currentState = {
+        address: addrObj?.address || null,
+        duration: selectedStandardDuration,
+        serviceKey: selectedServiceKey
+    };
+
+    const changed = (
+        currentState.address !== lastLoadedState.address ||
+        currentState.duration !== lastLoadedState.duration ||
+        currentState.serviceKey !== lastLoadedState.serviceKey
+    );
+
+    if (changed) {
+        lastLoadedState = currentState;
+
+        // Clear window cache when inputs change
+        loadedMonthKeys.clear();
+        windowStartMonth = null;
+        availabilityByDate = {};
+        clearAvailabilitySessionCache();
+
+        console.log('🔄 State changed, cleared window cache and availability data');
+    }
+
+    return changed;
+}
+
+async function loadAvailabilityForWindow(force = false) {
+    const addrObj = window.__selectedAddress;
+
+    if (!addrObj || !addrObj.address) {
+        updateAvailabilityStatus("Enter your address to load live availability.", false);
+        return;
+    }
+    if (!selectedServiceKey || !selectedStandardDuration) {
+        updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+        return;
+    }
+
+    // Restore session cache (if it matches current selection)
+    tryRestoreAvailabilityCacheFromSession();
+
+    // Normalize active month to the 1st (prevents mobile overflow skips)
+    calendarCurrent = monthStart(calendarCurrent);
+
+    // Ensure window is aligned
+    if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
+
+    // If viewing month is outside the active window, shift window
+    const activeIdx = monthIndex(calendarCurrent);
+    const winStartIdx = monthIndex(windowStartMonth);
+    const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
+    if (activeIdx < winStartIdx || activeIdx > winEndIdx) {
+        // Shift the active window anchor, but keep all previously loaded months cached.
+        windowStartMonth = monthStart(calendarCurrent);
+    }
+
+    const keys = windowKeys(windowStartMonth);
+    const allLoaded = keys.every(k => loadedMonthKeys.has(k));
+
+    // Fast path: cached window
+    if (!force && allLoaded) {
+        console.log('📋 Using cached availability window:', keys.join(', '));
+        endAvailabilityLoadUI();
+        renderCalendar();
+        window.updatePrevMonthButton?.();
+        return;
+    }
+
+    // Abort any in-flight request and start a new one
+    const requestSeq = ++availabilityRequestSeq;
+    if (availabilityAbortController) {
+        try { availabilityAbortController.abort(); } catch (_) {}
+    }
+    availabilityAbortController = new AbortController();
+
+    // Reset selections when loading a new window
+    selectedDateStr = null;
+    selectedSlot = null;
+    try { document.getElementById('time-slots-wrapper').classList.add('hidden'); } catch (_) {}
+    try { updateStickyBar(); } catch (_) {}
+
+    updateAvailabilityStatus("Checking live availability…", false);
+    beginAvailabilityLoadUI();
+
+    try {
+        // Load the 2-month window range
+        const fromDate = monthStart(windowStartMonth);
+        const toDate = lastDayOfMonth(windowEndMonth(windowStartMonth));
+        const from = toDateStr(fromDate);
+        const to = toDateStr(toDate);
+
+        // Block minutes (Cliniko reservation time)
+        const participants = (selectedServiceKey === 'duo')
+            ? 2
+            : ((selectedServiceKey === 'group' || selectedServiceKey === 'event')
+                ? Number(selectedParticipantCount || 3)
+                : 1);
+
+        // Cliniko needs the *blocked* time (treatment minutes × participants + setup buffer)
+        const blockMinutes = (Number(selectedStandardDuration) * participants) + STATIC_SETUP_MINUTES;
+
+        const treat = selectedServiceKey ? TREATMENT_RULES[selectedServiceKey] : null;
+
+        const payload = {
+            address: addrObj.address,
+            city: addrObj.city,
+            postal_code: addrObj.postal_code,
+
+            // Range
+            from,
+            to,
+
+            // Durations (send both explicit fields expected by the workflow)
+            standardDurationMinutes: Number(selectedStandardDuration),
+            blockDurationMinutes: blockMinutes,
+            durationMinutes: blockMinutes, // backwards-compat for older nodes
+
+            // Slot generation knobs
+            slotIntervalMinutes: 15,
+
+            participants: participants,
+            treatment_key: selectedServiceKey,
+            treatment_label: treat ? treat.label : ""
+        };
+
+        console.log('📤 Availability payload:', payload);
+
+        const res = await fetch(AVAILABILITY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: availabilityAbortController.signal,
+            mode: 'cors'
+        });
+
+        // Stale response guard
+        if (requestSeq !== availabilityRequestSeq) {
+            console.log('⏭️ Ignoring stale availability response (seq:', requestSeq, 'latest:', availabilityRequestSeq, ')');
+            return;
         }
+
+        let data = null;
+        try { data = await res.json(); } catch (_) {}
+
+        // Handle tamper/blocked responses cleanly
+        if (!res.ok) {
+            if (res.status === 403 && data && data.blocked) {
+                updateAvailabilityStatus(data.message || "Request blocked.", true);
+                return;
+            }
+            updateAvailabilityStatus("Could not load availability. Please try again.", true);
+            console.error('❌ Fetch failed:', res.status, res.statusText, 'Response:', data);
+            console.error('❌ Payload sent:', payload);
+            console.error('❌ Availability HTTP error', res.status, data);
+            return;
+        }
+
+        // Merge availability into cache
+        setAvailabilityFromResponse(data);
+
+        // Mark the whole active window as loaded
+        keys.forEach(k => loadedMonthKeys.add(k));
+
+        // Status messaging
+        const any = Object.keys(availabilityByDate).some(d => hasSlots(d));
+        if (!any) {
+            updateAvailabilityStatus("No mobile availability found for this 2‑month window with the selected treatment and duration. Please try another month or contact us.", false);
+        } else {
+            updateAvailabilityStatus("Select a date to see available times.", false);
+        }
+
+        renderCalendar();
+        window.updatePrevMonthButton?.();
+        persistAvailabilityCacheToSession();
+        hasLoadedAvailabilityOnce = true;
+    } catch (e) {
+        // Abort is expected on rapid user changes
+        if (e && (e.name === 'AbortError' || String(e).includes('AbortError'))) {
+            console.log('🛑 Availability request aborted (newer request started).');
+            return;
+        }
+        console.error('❌ Availability exception', e);
+        updateAvailabilityStatus("Could not load availability. Please try again.", true);
+    } finally {
+        // Only end loading UI if we're still the latest request
+        if (requestSeq === availabilityRequestSeq) {
+            endAvailabilityLoadUI();
+        }
+    }
+}
+
+
 
         // ---------------- INIT ----------------
         // ============= STRIPE PAYMENT INTEGRATION =============
@@ -2824,6 +3574,14 @@ container.appendChild(groupRow);
         // ==============================================================
 
         function initializeApp() {
+            console.log("=== INIT DEBUG ===");
+            const durSel = document.getElementById('duration-select');
+            console.log("Duration select found:", !!durSel);
+            if (durSel) {
+                console.log("  Initial disabled:", durSel.disabled);
+                console.log("  Initial opacity:", durSel.style.opacity);
+                console.log("  Initial pointer-events:", durSel.style.pointerEvents);
+            }
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
             // Mobile menu
@@ -2850,21 +3608,52 @@ container.appendChild(groupRow);
             const durationSelect = document.getElementById('duration-select');
             const participantsSelect = document.getElementById('participants-select');
 
-            serviceSelect.addEventListener('change', () => {
+            // Listen to both 'change' and 'input' events for maximum compatibility (especially on desktop)
+            const handleServiceChange = () => {
                 selectedServiceKey = serviceSelect.value || null;
+                console.log('📝 Service selected:', selectedServiceKey);
 
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
 
                 rebuildDurationOptions();
+                
+                // CRITICAL FIX: Force enable duration select immediately (desktop fix)
+                const durationSelect = document.getElementById('duration-select');
+                if (selectedServiceKey && durationSelect) {
+                    durationSelect.disabled = false;
+                    durationSelect.removeAttribute('disabled');
+                    durationSelect.style.opacity = '1';
+                    durationSelect.style.pointerEvents = 'auto';
+                    durationSelect.style.cursor = 'pointer';
+                    console.log('🔓 Duration select FORCE enabled after service selection');
+                }
+            };
+            
+            serviceSelect.addEventListener('change', handleServiceChange);
+            serviceSelect.addEventListener('input', handleServiceChange);
+
+            // Additional safeguard: Force enable on duration select focus if treatment is selected
+            durationSelect.addEventListener('focus', () => {
+                if (selectedServiceKey) {
+                    durationSelect.disabled = false;
+                    durationSelect.removeAttribute('disabled');
+                    durationSelect.style.opacity = '1';
+                    durationSelect.style.pointerEvents = 'auto';
+                    durationSelect.style.cursor = 'pointer';
+                    console.log('🔓 Duration select RE-ENABLED on focus (safeguard)');
+                }
             });
 
             durationSelect.addEventListener('change', async () => {
                 selectedStandardDuration = durationSelect.value ? Number(durationSelect.value) : null;
 
-                // If availability is already being shown, reload using the new block duration
+                // Only reload if state has actually changed (Fix #4)
                 if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
-                    await loadAvailabilityForCurrentMonth();
+                    if (shouldReloadAvailability()) {
+                        console.log('🔄 Duration changed, reloading availability');
+                        await loadAvailabilityForWindow(true); // Preload 2 months
+                    }
                 }
             });
 
@@ -2879,37 +3668,71 @@ container.appendChild(groupRow);
                     selectedStandardDuration = prevDuration;
                 }
 
+                // Only reload if state has actually changed (Fix #4)
                 if (window.__selectedAddress && selectedServiceKey && selectedStandardDuration) {
-                    await loadAvailabilityForCurrentMonth();
+                    if (shouldReloadAvailability()) {
+                        console.log('🔄 Participants changed, reloading availability');
+                        await loadAvailabilityForWindow(true); // Preload 2 months
+                    }
                 }
             });
 
 
 document.getElementById('prev-month-btn').addEventListener('click', async () => {
-                const today = new Date(); today.setHours(0,0,0,0);
-                const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
+                if (isAvailabilityLoading) return;
 
-                if (isCurrentMonth) return;
-                
-                calendarCurrent.setMonth(calendarCurrent.getMonth() - 1);
-                await loadAvailabilityForCurrentMonth();
-                updatePrevMonthButton();
-            });
-            
-            function updatePrevMonthButton() {
                 const today = new Date(); today.setHours(0,0,0,0);
                 const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
-                document.getElementById('prev-month-btn').disabled = isCurrentMonth;
+                if (isCurrentMonth) return;
+
+                // Safe month math: always operate on month-start to prevent overflow
+                calendarCurrent = addMonths(monthStart(calendarCurrent), -1);
+
+                // If we moved outside the active window, shift the window and force-load
+                if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
+                const idx = monthIndex(calendarCurrent);
+                const winStartIdx = monthIndex(windowStartMonth);
+                const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
+                if (idx < winStartIdx) {
+                    // Shift the active window anchor, but keep all previously cached months warmed.
+                    windowStartMonth = monthStart(calendarCurrent);
+                }
+
+                // If the target months are already cached, this renders instantly with no loading state.
+                await loadAvailabilityForWindow(false);
+                renderCalendar();
+
+                window.updatePrevMonthButton?.();
+            });
+
+            window.updatePrevMonthButton = function () {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const isCurrentMonth = today.getFullYear() === calendarCurrent.getFullYear() && today.getMonth() === calendarCurrent.getMonth();
+                document.getElementById('prev-month-btn').disabled = isCurrentMonth || isAvailabilityLoading;
             }
-            updatePrevMonthButton();
+            window.updatePrevMonthButton?.();
 
             document.getElementById('next-month-btn').addEventListener('click', async () => {
-                calendarCurrent.setMonth(calendarCurrent.getMonth() + 1);
-                await loadAvailabilityForCurrentMonth();
-                updatePrevMonthButton();
-            });
+                if (isAvailabilityLoading) return;
 
-            document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
+                // Safe month math: always operate on month-start to prevent overflow
+                calendarCurrent = addMonths(monthStart(calendarCurrent), 1);
+
+                if (!windowStartMonth) windowStartMonth = monthStart(calendarCurrent);
+                const idx = monthIndex(calendarCurrent);
+                const winStartIdx = monthIndex(windowStartMonth);
+                const winEndIdx = monthIndex(windowEndMonth(windowStartMonth));
+                if (idx > winEndIdx) {
+                    // Shift the active window anchor, but keep all previously cached months warmed.
+                    windowStartMonth = monthStart(calendarCurrent);
+                }
+
+                // If the target months are already cached, this renders instantly with no loading state.
+                await loadAvailabilityForWindow(false);
+                renderCalendar();
+
+                window.updatePrevMonthButton?.();
+            });document.getElementById('toggle-manual-address').addEventListener('click', (e) => {
                 e.preventDefault();
                 const manualWrapper = document.getElementById('manual-address-wrapper');
                 const autoInput = document.getElementById('address-input-initial');
@@ -2939,9 +3762,25 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
 
                 errorEl.classList.add('hidden');
                 const price = getPrice();
-                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) at ${addr.city || addr.address} • <span class="text-brand-gold">$${price.base}+HST</span>`;
+                const locationDisplay = addr.city && addr.postal_code 
+                    ? `${addr.city}, ${addr.postal_code}` 
+                    : (addr.city || addr.address);
+                labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) • ${locationDisplay} • <span class="text-brand-gold">$${price.base}+HST (~$${price.total})</span>`;
+                const mobileLabelEl = document.getElementById('mobile-selected-address-label');                if (mobileLabelEl) mobileLabelEl.textContent = `${treat.label} (${selectedStandardDuration}min) • ${addr.city || 'Service location'}`;
                 closeAddressModal();
-                updateProgress(2);
+
+                // Soft scroll to calendar
+                setTimeout(() => {
+                    const bookingSection = document.getElementById('booking');
+                    if (bookingSection) {
+                        bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 300);
+
+updateProgress(2);
+
+                // Mobile UX: bring the calendar into view after initiating availability
+                try { scheduleCalendarAutoScroll(); } catch (_) {}
 
                 // ========== GOOGLE ANALYTICS: BOOKING INTENT EVENT ==========
                 try {
@@ -2961,11 +3800,42 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 }
                 // ========== END BOOKING INTENT EVENT ==========
 
-                await loadAvailabilityForCurrentMonth();
+                // Preload 2 months on initial load (Fix #3)
+                await loadAvailabilityForWindow(true);
             });
 
-            document.getElementById('change-address-btn').addEventListener('click', openAddressModal);
-            document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
+            const changeAddrBtn = document.getElementById('change-address-btn');
+            if (changeAddrBtn) changeAddrBtn.addEventListener('click', openAddressModal);
+            
+            const mobileChangeBtn = document.getElementById('mobile-change-selection-btn');
+            if (mobileChangeBtn) mobileChangeBtn.addEventListener('click', openAddressModal);
+            
+            const mobileCollapseBtn = document.getElementById('mobile-footer-collapse-btn');
+            if (mobileCollapseBtn) mobileCollapseBtn.addEventListener('click', collapseMobileFooter);
+            
+            // Mobile day navigation buttons
+            const mobilePrevDayBtn = document.getElementById('mobile-prev-day-btn');
+            const mobileNextDayBtn = document.getElementById('mobile-next-day-btn');
+            
+            if (mobilePrevDayBtn) {
+                mobilePrevDayBtn.addEventListener('click', () => {
+                    navigateMobileDay(-1);
+                });
+            }
+            if (mobileNextDayBtn) {
+                mobileNextDayBtn.addEventListener('click', () => {
+                    navigateMobileDay(1);
+                });
+            }
+            
+            // Mobile Continue button - opens Step 3 (client details)
+            const mobileContinueBtn = document.getElementById('mobile-continue-btn');
+            if (mobileContinueBtn) {
+                mobileContinueBtn.addEventListener('click', () => {
+                    collapseMobileFooter();
+                    openClientDetailsModal();
+                });
+            }
             
             // Continue to booking button - opens Step 3
             document.getElementById('continue-to-booking-btn').addEventListener('click', () => {
@@ -3018,6 +3888,53 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                 const modal = document.getElementById('client-details-modal');
                 if (!modal) return;
                 modal.classList.add('hidden');
+                
+                // Restore body scroll
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                
+                // Reset mobile drawer state to prevent layout overlap
+                const mobileFooter = document.getElementById('mobile-progress-footer');
+                if (mobileFooter) {
+                    mobileFooter.classList.remove('expanded');
+                }
+                
+                // Hide the continue wrapper
+                const continueWrapper = document.getElementById('mobile-continue-wrapper');
+                if (continueWrapper) {
+                    continueWrapper.classList.add('hidden');
+                }
+                
+                // Hide sticky bar since we're back to date selection
+                const stickyBar = document.getElementById('sticky-bar');
+                if (stickyBar) {
+                    stickyBar.classList.remove('show');
+                }
+                
+                // Clear time slot selection styling
+                document.querySelectorAll('.time-slot-selected').forEach(el => {
+                    el.classList.remove('time-slot-selected');
+                });
+                
+                // Reset selected slot so user must re-select
+                selectedSlot = null;
+                
+                // Reset progress to step 2 (date selection)  
+                updateProgress(2);
+                
+                // Re-render calendar and time slots to clear selection state
+                try { 
+                    renderCalendar();
+                    // Clear time slots panel
+                    const timeSlotsPanel = document.getElementById('time-slots-panel');
+                    if (timeSlotsPanel) {
+                        timeSlotsPanel.classList.add('hidden');
+                    }
+                } catch (_) {}
+                
+                // Refresh Lucide icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }
 
             function bindClientDetailsModalClose() {
@@ -3150,7 +4067,7 @@ function getTravelCanonicalFromSlot(slot) {
         if (travelFeeCents > 0) {
             warningBox.classList.remove("hidden");
             warningText.innerHTML = `
-                Due to extended travel distance (${driveTimeMinutes} minutes), a <b>${travelCharge}</b> travel charge will be added to your total (collected after treatment).
+                Due to extended travel distance (${driveTimeMinutes} min), a <b>${travelCharge}</b> travel charge will be added to your total (collected after treatment).
             `;
 
             if (requiresPayment) {
@@ -3205,12 +4122,18 @@ function getTravelCanonicalFromSlot(slot) {
                 }
                 
                 modal.classList.remove('hidden');
+                
+                // Freeze background scroll
+                document.body.style.overflow = 'hidden';
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
             
             window.closeConfirmationModal = async function() {
                 const modal = document.getElementById('confirmation-modal');
                 modal.classList.add('hidden');
+                
+                // Unfreeze background scroll
+                document.body.style.overflow = '';
 
                 // 1) Immediately prevent "same slot again" from stale UI (optimistic lock)
                 try {
@@ -3518,7 +4441,13 @@ if (result.success) {
                 }
             });
 
-            // Start with modal open
+            // Always open address modal, but pre-fill with cached address if available
+            const cachedAddress = window.__selectedAddress;
+            if (cachedAddress && cachedAddress.address) {
+                // Pre-fill address input with cached data
+                const addrInput = document.getElementById('address-input-initial');
+                if (addrInput) addrInput.value = cachedAddress.address;
+            }
             openAddressModal();
             renderCalendar();
         }
@@ -3528,8 +4457,11 @@ if (result.success) {
     </script>
 
     <!-- CONFIRMATION SUCCESS MODAL -->
-    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]">
-        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-8 md:p-10 max-w-lg w-full relative shadow-2xl animate-slide-up">
+    <div id="confirmation-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 hidden z-[110]" onclick="return false;">
+        <div class="bg-brand-black border-2 border-brand-gold/50 rounded-lg p-6 md:p-8 max-w-2xl max-h-[92vh] overflow-y-auto w-full relative shadow-2xl animate-slide-up" onclick="event.stopPropagation();">
+            <button onclick="closeConfirmationModal()" class="absolute top-4 right-4 text-brand-gold/70 hover:text-brand-light transition-colors z-10">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
             <div class="text-center">
                 <div class="inline-block bg-brand-gold/10 p-4 rounded-full mb-6">
                     <i data-lucide="check-circle" class="w-16 h-16 text-brand-gold"></i>
@@ -3584,7 +4516,7 @@ if (result.success) {
 
     <!-- Blocked Booking Popup (public message only) -->
     <div id="blocked-modal-overlay" aria-hidden="true">
-        <button type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/30 rounded-full p-2 hover:bg-black/50"
+        <button type="button" class="text-brand-gold/70 hover:text-brand-light transition-colors bg-black/45 rounded-full p-2 hover:bg-black/65"
             aria-label="Close" onclick="window.hideBlockedPopup && window.hideBlockedPopup()"
             style="position:absolute; top: 18px; right: 18px; z-index: 1;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3604,6 +4536,170 @@ if (result.success) {
             </button>
         </div>
     </div>
+
+
+<!-- MOBILE PROGRESS FOOTER (EXPANDING) -->
+<div id="mobile-progress-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-50 animate-slide-up">
+    
+    <!-- COLLAPSED STATE (default) -->
+    <div id="mobile-footer-collapsed" class="px-3 py-1.5">
+        <!-- Selection Summary (compact) -->
+        <div id="mobile-selection-summary" class="mb-1 pb-1 border-b border-brand-gold/10">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <i data-lucide="map-pin" class="w-3 h-3 text-brand-gold flex-shrink-0"></i>
+                    <div class="text-[0.65rem] text-brand-light/90 font-medium truncate" id="mobile-selected-address-label">Select address & treatment</div>
+                </div>
+                <button id="mobile-change-selection-btn" class="text-brand-gold hover:text-brand-light transition-colors flex-shrink-0 text-[0.6rem] font-bold uppercase tracking-wider px-1.5 py-0.5 border border-brand-gold/30 rounded">
+                    Change
+                </button>
+            </div>
+        </div>
+        
+        <!-- Progress Steps (compact) -->
+        <div class="flex items-center justify-between max-w-xs mx-auto py-1">
+            <div class="progress-footer-step flex-1" data-step="1">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">1</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Address</div>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="progress-footer-step flex-1" data-step="2">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">2</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Date</div>
+                </div>
+            </div>
+            <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
+            <div class="progress-footer-step flex-1" data-step="3">
+                <div class="flex flex-col items-center">
+                    <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">3</div>
+                    <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Details</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- EXPANDED STATE (time slots) -->
+    <div id="mobile-footer-expanded" class="flex flex-col h-full">
+        <!-- Header with back button and day navigation -->
+        <div class="px-3 pt-3 pb-2 border-b border-brand-gold/20 flex-shrink-0">
+            <div class="flex items-center justify-between mb-2">
+                <button id="mobile-footer-collapse-btn" class="flex items-center gap-1.5 text-brand-gold hover:text-brand-light hover:shadow-[0_0_12px_rgba(224,197,132,0.3)] hover:-translate-y-0.5 transition-all duration-200 px-2 py-1 rounded border border-transparent hover:border-brand-gold/30">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider">Back to calendar</span>
+                </button>
+                <!-- Day navigation with arrows -->
+                <div class="flex items-center gap-2">
+                    <button id="mobile-prev-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
+                    </button>
+                    <div class="text-xs text-brand-light font-semibold min-w-[100px] text-center" id="mobile-footer-date-label">Select a time</div>
+                    <button id="mobile-next-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Integrated mini stepper in expanded view -->
+            <div class="flex items-center justify-center gap-3 py-1">
+                <div class="flex items-center gap-1.5">
+                    <div class="w-5 h-5 rounded-full bg-brand-gold/30 border border-brand-gold flex items-center justify-center text-[0.6rem] font-bold text-brand-gold">✓</div>
+                    <span class="text-[0.6rem] text-brand-gold/70 uppercase tracking-wider">Address</span>
+                </div>
+                <div class="w-4 h-px bg-brand-gold/30"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-5 h-5 rounded-full bg-brand-gold border border-brand-gold flex items-center justify-center text-[0.6rem] font-bold text-black">2</div>
+                    <span class="text-[0.6rem] text-brand-gold uppercase tracking-wider font-semibold">Time</span>
+                </div>
+                <div class="w-4 h-px bg-brand-gold/20"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-5 h-5 rounded-full border border-brand-gold/30 flex items-center justify-center text-[0.6rem] font-bold text-brand-dim/50">3</div>
+                    <span class="text-[0.6rem] text-brand-dim/50 uppercase tracking-wider">Details</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Time slots container (scrollable) -->
+        <div id="mobile-time-slots-container" class="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+            <!-- Time slots will be injected here -->
+        </div>
+        
+        <!-- Fixed Continue Button at bottom -->
+        <div id="mobile-continue-wrapper" class="px-3 py-3 border-t border-brand-gold/20 bg-brand-black/95 flex-shrink-0 hidden">
+            <button id="mobile-continue-btn" type="button" class="btn-filled w-full text-center">
+                <span>Continue to Details</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+            <p class="text-[0.6rem] text-brand-dim/50 text-center mt-2 uppercase tracking-wider">Professional, Registered Mobile Massage Therapy</p>
+        </div>
+    </div>
+    
+</div>
+
+<style>
+
+/* Expanding Footer States */
+#mobile-progress-footer {
+    transition: max-height 0.25s ease-out, box-shadow 0.25s ease-out, border-width 0.15s ease-out;
+    height: auto;
+    max-height: 110px;
+    overflow: hidden;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    will-change: max-height;
+}
+
+#mobile-progress-footer.expanded {
+    max-height: 65vh;
+    overflow: hidden;
+    border-width: 2px;
+    box-shadow: 0 -8px 32px rgba(224, 197, 132, 0.25);
+    background: rgba(5, 5, 5, 0.98);
+}
+
+#mobile-footer-collapsed,
+#mobile-footer-expanded {
+    transition: opacity 0.2s ease-out;
+}
+
+#mobile-footer-collapsed {
+    display: block;
+}
+
+#mobile-footer-expanded {
+    display: none;
+    opacity: 0;
+}
+
+#mobile-progress-footer.expanded #mobile-footer-collapsed {
+    display: none;
+}
+
+#mobile-progress-footer.expanded #mobile-footer-expanded {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    opacity: 1;
+}
+.progress-footer-step.active .step-circle-mini {
+    background: #E0C584;
+    color: #000;
+    border-color: #E0C584;
+    box-shadow: 0 0 12px rgba(224, 197, 132, 0.4);
+}
+.progress-footer-step.active .step-label {
+    color: rgba(224, 197, 132, 0.9);
+}
+.progress-footer-step.completed .step-circle-mini {
+    background: rgba(224, 197, 132, 0.3);
+    border-color: #E0C584;
+}
+.progress-footer-step.completed .step-label {
+    color: rgba(224, 197, 132, 0.7);
+}
+</style>
+
 
 </body>
 </html>
