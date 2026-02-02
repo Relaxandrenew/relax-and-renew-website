@@ -109,6 +109,151 @@
         .term-visible { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ==================== MOBILE CAROUSEL STYLES ==================== */
+        @media (max-width: 767px) {
+            /* Mobile-only compact scaling */
+            .pricing-card {
+                padding: 1.25rem 1rem;
+                margin: 0;
+            }
+            .pricing-card h3 {
+                font-size: 1.25rem;
+            }
+            .pricing-card .text-5xl {
+                font-size: 2.5rem;
+            }
+            .pricing-card .text-xs {
+                font-size: 0.65rem;
+            }
+            .pricing-card ul {
+                gap: 0.5rem;
+            }
+            .pricing-card ul li {
+                font-size: 0.8rem;
+            }
+            .pricing-card .btn-gold,
+            .pricing-card .btn-filled {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+                margin-top: 1rem;
+            }
+            .pricing-card .border-t {
+                padding-top: 1rem;
+            }
+            .pricing-card .mb-8 {
+                margin-bottom: 1rem;
+            }
+            .pricing-card .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+            
+            /* Carousel container */
+            .mobile-carousel-wrapper {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+            }
+            
+            .mobile-carousel {
+                display: flex;
+                transition: transform 0.4s ease-out;
+                touch-action: pan-y;
+            }
+            
+            .mobile-carousel .pricing-card {
+                flex: 0 0 85%;
+                max-width: 85%;
+                margin: 0 2.5%;
+                scroll-snap-align: center;
+            }
+            
+            /* Carousel navigation arrows */
+            .carousel-nav {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 32px;
+                height: 32px;
+                background: rgba(224, 197, 132, 0.15);
+                border: 1px solid rgba(224, 197, 132, 0.4);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+                transition: all 0.2s ease;
+            }
+            .carousel-nav:hover {
+                background: rgba(224, 197, 132, 0.25);
+                border-color: rgba(224, 197, 132, 0.7);
+            }
+            .carousel-nav:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+            .carousel-nav.prev { left: 4px; }
+            .carousel-nav.next { right: 4px; }
+            .carousel-nav i { color: #E0C584; width: 16px; height: 16px; }
+            
+            /* Carousel dots indicator */
+            .carousel-dots {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .carousel-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(224, 197, 132, 0.25);
+                border: 1px solid rgba(224, 197, 132, 0.4);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .carousel-dot.active {
+                background: #E0C584;
+                border-color: #E0C584;
+            }
+            
+            /* Row labels */
+            .carousel-row-label {
+                text-align: center;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                color: rgba(224, 197, 132, 0.7);
+                margin-bottom: 12px;
+                font-weight: 600;
+            }
+            
+            /* Spacing between carousel rows */
+            .carousel-row + .carousel-row {
+                margin-top: 24px;
+            }
+            
+            /* Hide desktop grid on mobile */
+            .desktop-pricing-grid {
+                display: none !important;
+            }
+            
+            /* Show mobile carousels */
+            .mobile-pricing-carousels {
+                display: block !important;
+            }
+        }
+        
+        /* Desktop: hide mobile carousels, show grid */
+        @media (min-width: 768px) {
+            .mobile-pricing-carousels {
+                display: none !important;
+            }
+            .desktop-pricing-grid {
+                display: grid !important;
+            }
+        }
+
     </style>
 </head>
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
@@ -308,17 +453,18 @@
     </section>
 
     <!-- PRICING TIERS -->
-    <section id="plans" class="py-24 bg-alternate-pattern bg-cover bg-center bg-fixed relative">
+    <section id="plans" class="py-24 md:py-24 py-12 bg-alternate-pattern bg-cover bg-center bg-fixed relative">
         <div class="absolute inset-0 bg-brand-black/80 backdrop-blur-sm"></div>
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl text-brand-light mb-4 font-serif">Membership Plans</h2>
-                <p class="text-brand-dim max-w-2xl mx-auto font-light">
+        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center mb-8 md:mb-16">
+                <h2 class="text-3xl md:text-5xl text-brand-light mb-2 md:mb-4 font-serif">Membership Plans</h2>
+                <p class="text-brand-dim max-w-2xl mx-auto font-light text-sm md:text-base">
                     Choose the frequency and coverage that fits your lifestyle.
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <!-- ==================== DESKTOP GRID (md+) ==================== -->
+            <div class="desktop-pricing-grid grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 
                 <!-- Plan 1: Individual Monthly -->
                 <div class="pricing-card">
@@ -410,8 +556,130 @@
                 </div>
 
             </div>
+
+            <!-- ==================== MOBILE CAROUSELS (< md) ==================== -->
+            <div class="mobile-pricing-carousels">
+                
+                <!-- ROW 1: Individual Plans -->
+                <div class="carousel-row" id="carousel-row-1">
+                    <div class="carousel-row-label">Individual Plans</div>
+                    <div class="mobile-carousel-wrapper">
+                        <button class="carousel-nav prev" data-carousel="1" data-dir="prev" aria-label="Previous">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <div class="mobile-carousel" id="carousel-1">
+                            <!-- Individual Monthly -->
+                            <div class="pricing-card" data-plan="Individual Monthly">
+                                <h3 class="text-brand-light font-serif">Individual Monthly</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Standard Care • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $110<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ mo + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($124.30 total). 1 credit/month.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>1 Credit per Month</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Rollover credits</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Individual Monthly')" class="btn-gold w-full text-center justify-center mt-8">Select Monthly</a>
+                            </div>
+                            
+                            <!-- Individual Bi-Weekly -->
+                            <div class="pricing-card highlight" data-plan="Individual Bi-Weekly">
+                                <div class="absolute top-0 right-0 bg-brand-gold text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider">Best Value</div>
+                                <h3 class="text-brand-light font-serif">Individual Bi-Weekly</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Accelerated • Month to Month</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ tx + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($203.40 total). 2 credits/month.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span><strong>Lowest Price</strong></span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>2 Credits/Month</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Individual Bi-Weekly')" class="btn-filled w-full text-center justify-center mt-8">Select Bi-Weekly</a>
+                            </div>
+                        </div>
+                        <button class="carousel-nav next" data-carousel="1" data-dir="next" aria-label="Next">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="carousel-dots" id="dots-1">
+                        <span class="carousel-dot active" data-index="0"></span>
+                        <span class="carousel-dot" data-index="1"></span>
+                    </div>
+                </div>
+
+                <!-- ROW 2: Shared Plans -->
+                <div class="carousel-row" id="carousel-row-2">
+                    <div class="carousel-row-label">Shared Plans</div>
+                    <div class="mobile-carousel-wrapper">
+                        <button class="carousel-nav prev" data-carousel="2" data-dir="prev" aria-label="Previous">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <div class="mobile-carousel" id="carousel-2">
+                            <!-- Duo -->
+                            <div class="pricing-card" data-plan="Duo">
+                                <h3 class="text-brand-light font-serif">Duo (Couples)</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Shared • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $100<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($113 total/person). 1 credit each.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Partners/Roommates</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">Free Upgrade</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Duo')" class="btn-gold w-full text-center justify-center mt-8">Select Duo</a>
+                            </div>
+                            
+                            <!-- Household -->
+                            <div class="pricing-card" data-plan="Household">
+                                <h3 class="text-brand-light font-serif">Household (3+)</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Family • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($101.70 total/person). 1 credit each.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Max Family Savings</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">Free Upgrade</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Household')" class="btn-gold w-full text-center justify-center mt-8">Select Household</a>
+                            </div>
+                        </div>
+                        <button class="carousel-nav next" data-carousel="2" data-dir="next" aria-label="Next">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="carousel-dots" id="dots-2">
+                        <span class="carousel-dot active" data-index="0"></span>
+                        <span class="carousel-dot" data-index="1"></span>
+                    </div>
+                </div>
+
+            </div>
             
-            <p class="text-center text-xs text-brand-dim/50 mt-12 max-w-3xl mx-auto">
+            <p class="text-center text-xs text-brand-dim/50 mt-8 md:mt-12 max-w-3xl mx-auto">
                 * Payment collected monthly or bi-weekly by credit card. Grace period of 6 months available after non-renewal to use remaining credits.
             </p>
         </div>
@@ -483,7 +751,6 @@
                                 <option value="Individual Bi-Weekly">Individual Bi-Weekly ($90/session + HST)</option>
                                 <option value="Duo">Duo / Couples ($100/person + HST)</option>
                                 <option value="Household">Household 3+ ($90/person + HST)</option>
-                                <option value="Live Test ($1)">Live Test ($1/month • 12 months)</option>
                             </select>
                         </div>
                         
@@ -743,10 +1010,6 @@
                 6:  "price_1Sugka2atTjzVbCkByf7sDj0",
                 12: "price_1Sugv52atTjzVbCkMa66Y2GJ",
                 plan_key: "GRP"
-            },
-            "Live Test ($1)": {
-                12: "price_1SwP932atTjzVbCkppuTSdm6",
-                plan_key: "LIVE_TEST"
             }
         };
 
@@ -774,6 +1037,144 @@
 
             // Setup form submission
             setupFormSubmission();
+
+            // Setup mobile carousels
+            setupMobileCarousels();
+        });
+
+        // ============================================================
+        // MOBILE CAROUSELS
+        // ============================================================
+        function setupMobileCarousels() {
+            // Only run on mobile
+            if (window.innerWidth >= 768) return;
+
+            const carousels = [
+                { id: 1, current: 0, total: 2, autoScrollInterval: null },
+                { id: 2, current: 0, total: 2, autoScrollInterval: null }
+            ];
+
+            carousels.forEach(carousel => {
+                const track = document.getElementById(`carousel-${carousel.id}`);
+                const dotsContainer = document.getElementById(`dots-${carousel.id}`);
+                
+                if (!track) return;
+
+                // Calculate card width (85% + 5% margins = 90% per card)
+                const cardWidth = 90;
+
+                function goToSlide(index) {
+                    if (index < 0) index = carousel.total - 1;
+                    if (index >= carousel.total) index = 0;
+                    
+                    carousel.current = index;
+                    const offset = index * cardWidth;
+                    track.style.transform = `translateX(-${offset}%)`;
+
+                    // Update dots
+                    if (dotsContainer) {
+                        dotsContainer.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                            dot.classList.toggle('active', i === index);
+                        });
+                    }
+
+                    // Update nav button states
+                    const prevBtn = document.querySelector(`.carousel-nav.prev[data-carousel="${carousel.id}"]`);
+                    const nextBtn = document.querySelector(`.carousel-nav.next[data-carousel="${carousel.id}"]`);
+                    if (prevBtn) prevBtn.disabled = false; // Always enabled for wrap-around
+                    if (nextBtn) nextBtn.disabled = false;
+                }
+
+                function nextSlide() {
+                    goToSlide(carousel.current + 1);
+                }
+
+                function prevSlide() {
+                    goToSlide(carousel.current - 1);
+                }
+
+                // Auto-scroll every 5 seconds
+                function startAutoScroll() {
+                    stopAutoScroll();
+                    carousel.autoScrollInterval = setInterval(nextSlide, 5000);
+                }
+
+                function stopAutoScroll() {
+                    if (carousel.autoScrollInterval) {
+                        clearInterval(carousel.autoScrollInterval);
+                        carousel.autoScrollInterval = null;
+                    }
+                }
+
+                // Nav button clicks
+                document.querySelectorAll(`.carousel-nav[data-carousel="${carousel.id}"]`).forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        stopAutoScroll();
+                        if (btn.dataset.dir === 'next') {
+                            nextSlide();
+                        } else {
+                            prevSlide();
+                        }
+                        // Restart auto-scroll after user interaction
+                        setTimeout(startAutoScroll, 8000);
+                    });
+                });
+
+                // Dot clicks
+                if (dotsContainer) {
+                    dotsContainer.querySelectorAll('.carousel-dot').forEach(dot => {
+                        dot.addEventListener('click', () => {
+                            stopAutoScroll();
+                            goToSlide(parseInt(dot.dataset.index, 10));
+                            setTimeout(startAutoScroll, 8000);
+                        });
+                    });
+                }
+
+                // Touch/swipe support
+                let touchStartX = 0;
+                let touchEndX = 0;
+
+                track.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    stopAutoScroll();
+                }, { passive: true });
+
+                track.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const diff = touchStartX - touchEndX;
+                    
+                    if (Math.abs(diff) > 50) { // Minimum swipe distance
+                        if (diff > 0) {
+                            nextSlide(); // Swipe left = next
+                        } else {
+                            prevSlide(); // Swipe right = prev
+                        }
+                    }
+                    setTimeout(startAutoScroll, 8000);
+                }, { passive: true });
+
+                // Initialize
+                goToSlide(0);
+                startAutoScroll();
+            });
+
+            // Reinitialize Lucide icons for carousel cards
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 100);
+            }
+        }
+
+        // Re-setup carousels on resize (in case switching between mobile/desktop)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (window.innerWidth < 768) {
+                    setupMobileCarousels();
+                }
+            }, 250);
         });
 
         // ============================================================
@@ -988,7 +1389,7 @@
                     planCol.classList.add('md:col-span-1');
                 }
             } else {
-                // Hide Term Select (Bi-Weekly, Live Test, or empty)
+                // Hide Term Select (Bi-Weekly or empty)
                 termContainer.classList.remove('term-visible');
                 termContainer.classList.add('term-hidden');
                 termSelect.removeAttribute('required');
@@ -1059,10 +1460,6 @@
                     // Bi-Weekly has no term selection
                     termMonths = 0;
                     stripePriceId = planConfig[0];
-                } else if (selectedPlan === 'Live Test ($1)') {
-                    // Live test is always 12 months
-                    termMonths = 12;
-                    stripePriceId = planConfig[12];
                 } else {
                     // Monthly, Duo, Household require term selection
                     if (!selectedTerm) {
