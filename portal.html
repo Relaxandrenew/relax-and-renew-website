@@ -984,6 +984,14 @@
 
     /* ========== PORTAL MOBILE PROGRESS FOOTER (EXPANDING DRAWER) ========== */
     @media (max-width: 767px) {
+
+      /* Time filter buttons (AM/AFT/EVE) */
+      .portal-time-filter-btn.active {
+        background: rgba(224, 197, 132, 0.18) !important;
+        border-color: rgba(224, 197, 132, 0.95) !important;
+        color: #E0C584 !important;
+        box-shadow: 0 0 12px rgba(224, 197, 132, 0.18);
+      }
       /* Hide the old mobile times overlay on rebook tab - we use the new footer drawer instead */
       #mobile-times-overlay { display: none !important; }
       
@@ -1714,6 +1722,73 @@ function mobileConfirmBooking() {
     }
 
     // ========== PORTAL MOBILE FOOTER DRAWER SYSTEM ==========
+
+
+    // ---- Mobile Drawer Time Filters (AM / AFT / EVE) ----
+    let portalTimeFilter = 'AM';
+    let portalTimeFilterDate = null;
+
+    function portalBucketForSlot(slot) {
+      const mins = getTorontoMinutesFromSlot(slot);
+      if (typeof mins !== 'number' || isNaN(mins)) return 'AFT';
+      if (mins < (12 * 60)) return 'AM';
+      if (mins < (17 * 60)) return 'AFT'; // 12:00 PM - 4:59 PM
+      return 'EVE'; // 5:00 PM+
+    }
+
+    function portalUpdateTimeFilterUI() {
+      const btnAM = document.getElementById('portal-filter-am');
+      const btnAFT = document.getElementById('portal-filter-aft');
+      const btnEVE = document.getElementById('portal-filter-eve');
+      if (!btnAM || !btnAFT || !btnEVE) return;
+
+      [btnAM, btnAFT, btnEVE].forEach(b => b.classList.remove('active'));
+      if (portalTimeFilter === 'AM') btnAM.classList.add('active');
+      if (portalTimeFilter === 'AFT') btnAFT.classList.add('active');
+      if (portalTimeFilter === 'EVE') btnEVE.classList.add('active');
+    }
+
+    function portalPickDefaultFilterForSlots(inWindowSlots) {
+      const has = { AM:false, AFT:false, EVE:false };
+
+      (inWindowSlots || []).forEach(s => {
+        if (!isSlotAvailable(s)) return;
+        const b = portalBucketForSlot(s);
+        if (b && has.hasOwnProperty(b)) has[b] = true;
+      });
+
+      if (has.AM) return 'AM';
+      if (has.AFT) return 'AFT';
+      if (has.EVE) return 'EVE';
+      // fallback if there are only unavailable slots
+      return 'AM';
+    }
+
+    function portalSetTimeFilter(nextFilter, dateStrForReset) {
+      if (!nextFilter) return;
+
+      // If date changes, allow resetting default filter logic
+      if (dateStrForReset && portalTimeFilterDate !== dateStrForReset) {
+        portalTimeFilterDate = dateStrForReset;
+      }
+
+      if (portalTimeFilter === nextFilter) return;
+      portalTimeFilter = nextFilter;
+
+      // Changing filter should clear the selected slot to avoid hidden selections
+      selectedSlot = null;
+      try { setConfirmEnabled(false); } catch (e) {}
+      const continueWrapper = document.getElementById('portal-continue-wrapper');
+      if (continueWrapper) continueWrapper.classList.add('hidden');
+
+      portalUpdateTimeFilterUI();
+
+      if (selectedDateStr) {
+        renderPortalFooterTimeSlots(selectedDateStr);
+      }
+      try { updateSummary(); } catch (e) {}
+      try { savePortalState(); } catch (e) {}
+    }
     
     function isPortalMobileFooterExpanded() {
       const footer = document.getElementById('portal-mobile-footer');
@@ -1779,24 +1854,57 @@ function mobileConfirmBooking() {
       const slots = availabilityByDate[key] || [];
       const usable = Array.isArray(slots) ? slots : [];
       
-      // Filter to visible window
-      const filtered = usable.filter(s => slotPassesUiWindow(key, s));
-      
-      if (!filtered.length) {
+            // Filter to visible window
+      const inWindow = usable.filter(s => slotPassesUiWindow(key, s));
+
+      // Show/hide the filter bar depending on slot existence
+      const filterBar = document.getElementById('portal-time-filter-bar');
+      if (filterBar) {
+        if (inWindow.length) filterBar.classList.remove('hidden');
+        else filterBar.classList.add('hidden');
+      }
+
+      if (!inWindow.length) {
         if (noSlotsEl) noSlotsEl.classList.remove('hidden');
         return;
       }
-      
+
       if (noSlotsEl) noSlotsEl.classList.add('hidden');
-      
+
+      // Ensure filter is valid for the selected day (match Book Now behavior)
+      if (portalTimeFilterDate !== key) {
+        portalTimeFilterDate = key;
+        portalTimeFilter = portalPickDefaultFilterForSlots(inWindow);
+        portalUpdateTimeFilterUI();
+      } else {
+        // If current filter has no available slots, auto-pick the next best one
+        const curHas = inWindow.some(s => isSlotAvailable(s) && portalBucketForSlot(s) === portalTimeFilter);
+        if (!curHas) {
+          portalTimeFilter = portalPickDefaultFilterForSlots(inWindow);
+          portalUpdateTimeFilterUI();
+        }
+      }
+
+      // Apply AM/AFT/EVE filter
+      const filtered = inWindow.filter(s => portalBucketForSlot(s) === portalTimeFilter);
+
+      // If the chosen bucket has no slots at all, fall back (rare edge case)
+      if (!filtered.length) {
+        portalTimeFilter = portalPickDefaultFilterForSlots(inWindow);
+        portalUpdateTimeFilterUI();
+      }
+
+      const finalList = inWindow.filter(s => portalBucketForSlot(s) === portalTimeFilter);
+
       // Sort by time
-      filtered.sort((a,b) => {
+      finalList.sort((a,b) => {
         const am = getTorontoMinutesFromSlot(a);
         const bm = getTorontoMinutesFromSlot(b);
         return (am || 0) - (bm || 0);
       });
-      
-      filtered.forEach(slot => {
+
+      finalList.forEach(slot => {
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'time-slot-btn rounded-lg border py-2 px-1 text-center';
@@ -1821,10 +1929,16 @@ function mobileConfirmBooking() {
             updateSummary();
             savePortalState();
             
-            // Show continue button
+                        // Show continue button + advance progress (time selected)
             const continueWrapper = document.getElementById('portal-continue-wrapper');
-            if (continueWrapper) continueWrapper.classList.remove('hidden');
-          });
+            if (continueWrapper) {
+              continueWrapper.classList.remove('hidden');
+              // Ensure the CTA is visually reachable (in case of small screens)
+              try { continueWrapper.scrollIntoView({ behavior: 'smooth', block: 'end' }); } catch(e) {}
+            }
+
+            try { updatePortalFooterProgress(3); } catch (e) {}
+});
         } else {
           btn.disabled = true;
           btn.classList.add('time-slot-unavailable', 'border-white/10', 'bg-white/5', 'text-white/30', 'cursor-not-allowed');
@@ -2018,7 +2132,19 @@ function mobileConfirmBooking() {
         nextDayBtn.addEventListener('click', () => navigatePortalDay(1));
       }
       
-      const continueBtn = document.getElementById('portal-continue-btn');
+            // Time filter buttons (AM/AFT/EVE)
+      const filterAM = document.getElementById('portal-filter-am');
+      const filterAFT = document.getElementById('portal-filter-aft');
+      const filterEVE = document.getElementById('portal-filter-eve');
+
+      if (filterAM) filterAM.addEventListener('click', () => portalSetTimeFilter('AM', selectedDateStr));
+      if (filterAFT) filterAFT.addEventListener('click', () => portalSetTimeFilter('AFT', selectedDateStr));
+      if (filterEVE) filterEVE.addEventListener('click', () => portalSetTimeFilter('EVE', selectedDateStr));
+
+      // Initialize active state on load (safe no-op if buttons aren't present)
+      portalUpdateTimeFilterUI();
+
+const continueBtn = document.getElementById('portal-continue-btn');
       if (continueBtn) {
         continueBtn.addEventListener('click', () => {
           collapsePortalMobileFooter();
@@ -3372,7 +3498,16 @@ function mobileConfirmBooking() {
       
       <!-- Time slots container (scrollable) -->
       <div id="portal-time-slots-container" class="flex-1 overflow-y-auto px-3 py-3">
-        <div id="portal-time-slots-grid" class="grid grid-cols-4 gap-2">
+                <!-- Time Filters (AM / AFT / EVE) -->
+        <div id="portal-time-filter-bar" class="mb-3">
+          <div class="grid grid-cols-3 gap-2">
+            <button id="portal-filter-am" type="button" class="portal-time-filter-btn rounded-lg border border-brand-gold/30 bg-black/40 text-brand-light text-xs font-bold py-2 transition-all hover:bg-brand-gold/15">AM</button>
+            <button id="portal-filter-aft" type="button" class="portal-time-filter-btn rounded-lg border border-brand-gold/30 bg-black/40 text-brand-light text-xs font-bold py-2 transition-all hover:bg-brand-gold/15">AFT</button>
+            <button id="portal-filter-eve" type="button" class="portal-time-filter-btn rounded-lg border border-brand-gold/30 bg-black/40 text-brand-light text-xs font-bold py-2 transition-all hover:bg-brand-gold/15">EVE</button>
+          </div>
+        </div>
+
+<div id="portal-time-slots-grid" class="grid grid-cols-4 gap-2">
           <!-- Time slots will be injected here -->
         </div>
         <div id="portal-no-slots" class="hidden text-center py-6">
