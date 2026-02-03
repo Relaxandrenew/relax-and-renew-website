@@ -1235,6 +1235,31 @@
 
     }
 
+
+    // =========================================================
+    // Mobile Footer Visibility (Rebook-only)
+    // =========================================================
+    function updatePortalMobileFooterVisibility() {
+      try {
+        const footer = document.getElementById('portal-mobile-footer');
+        if (!footer) return;
+
+        // Only show on mobile, and only when the Rebook calendar is visible
+        const rebookTab = document.getElementById('tab-rebook');
+        const calDays = document.getElementById('calendar-days');
+
+        const rebookVisible = !!rebookTab && !rebookTab.classList.contains('hidden') && rebookTab.offsetParent !== null;
+        const calVisible = !!calDays && calDays.offsetParent !== null;
+
+        const shouldShow = isMobileUI() && rebookVisible && calVisible;
+
+        footer.classList.toggle('hidden', !shouldShow);
+        if (!shouldShow) footer.classList.remove('expanded');
+      } catch (e) {}
+    }
+    window.updatePortalMobileFooterVisibility = updatePortalMobileFooterVisibility;
+
+
     // =========================================================
     // Mobile Step 2 Date Strip (7-day window + prev/next 7 days)
     // - Uses month-wide availabilityByDate cache
@@ -3418,7 +3443,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
   </main>
 
   <!-- PORTAL MOBILE PROGRESS FOOTER (EXPANDING DRAWER) -->
-  <div id="portal-mobile-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-50">
+  <div id="portal-mobile-footer" class="hidden md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-50">
     
     <!-- COLLAPSED STATE (default) -->
     <div id="portal-footer-collapsed" class="px-3 py-2">
@@ -8021,6 +8046,8 @@ function switchTab(tabId) {
 
       if (tabId === "membership") { loadMembershipStatus(); }
 
+      try { updatePortalMobileFooterVisibility(); } catch(e) {}
+
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -8291,6 +8318,19 @@ const refreshInstallButtons = () => {
 
       // Initial tab
       switchTab("dashboard");
+
+      // Rebook-only mobile drawer visibility (only when calendar is on screen)
+      try {
+        updatePortalMobileFooterVisibility();
+        if (window.MutationObserver) {
+          const rebookTab = document.getElementById("tab-rebook");
+          const calDays = document.getElementById("calendar-days");
+          const obs = new MutationObserver(() => { try { updatePortalMobileFooterVisibility(); } catch(e) {} });
+          [rebookTab, calDays].filter(Boolean).forEach(el => {
+            obs.observe(el, { attributes: true, attributeFilter: ["class","style"] });
+          });
+        }
+      } catch(e) {}
 
       // Check for existing authentication - this will either show login or load the portal
       await checkExistingAuth();
