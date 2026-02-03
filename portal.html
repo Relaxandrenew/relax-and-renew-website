@@ -86,6 +86,7 @@
                         'fade-in-up': 'fadeInUp 1s ease-out forwards',
                         'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
                         'loading-bar': 'loadingBar 1.5s ease-in-out infinite',
+                        'skeleton-pulse': 'skeletonPulse 1.5s ease-in-out infinite',
                     },
                     keyframes: {
                         fadeInUp: {
@@ -99,6 +100,10 @@
                         loadingBar: {
                             '0%': { transform: 'translateX(-100%)' },
                             '100%': { transform: 'translateX(300%)' }
+                        },
+                        skeletonPulse: {
+                            '0%, 100%': { opacity: '0.4' },
+                            '50%': { opacity: '0.7' }
                         }
                     }
                 }
@@ -886,6 +891,94 @@
       #mobile-times-overlay #summary-confirm-panel { display: none !important; }
       #mobile-confirm-overlay #summary-confirm-panel { display: block !important; }
 
+      /* ========== MOBILE REBOOK BOTTOM DRAWER REDESIGN ========== */
+      /* Bottom drawer animation */
+      #mobile-times-overlay.bottom-drawer .modal-card {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 85vh !important;
+        animation: slideUpDrawer 0.3s ease-out !important;
+      }
+      
+      @keyframes slideUpDrawer {
+        from { transform: translateY(100%); opacity: 0.5; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      /* Drawer handle */
+      #mobile-times-overlay.bottom-drawer .drawer-handle {
+        width: 40px;
+        height: 4px;
+        background: rgba(224, 197, 132, 0.3);
+        border-radius: 2px;
+        margin: 0 auto 12px;
+      }
+      
+      /* Calendar day selected state - more prominent */
+      .calendar-day-selected {
+        background: linear-gradient(135deg, rgba(224, 197, 132, 0.25), rgba(224, 197, 132, 0.15)) !important;
+        border-color: #E0C584 !important;
+        color: #E0C584 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 0 12px rgba(224, 197, 132, 0.2) !important;
+      }
+      
+      /* Mobile calendar - larger touch targets */
+      #tab-rebook .calendar-day {
+        min-height: 44px !important;
+        font-size: 0.9rem !important;
+      }
+      
+      /* Time slots in drawer - horizontal scroll on very small screens */
+      #mobile-times-overlay .time-slots-scroll {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+      
+      /* Simplified confirmation card for portal rebooking */
+      .portal-confirm-summary {
+        background: rgba(224, 197, 132, 0.05);
+        border: 1px solid rgba(224, 197, 132, 0.15);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      
+      .portal-confirm-summary .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(224, 197, 132, 0.08);
+      }
+      
+      .portal-confirm-summary .summary-row:last-child {
+        border-bottom: none;
+      }
+      
+      .portal-confirm-summary .summary-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(240, 226, 192, 0.6);
+      }
+      
+      .portal-confirm-summary .summary-value {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1rem;
+        color: #F0E2C0;
+        font-weight: 600;
+      }
 
     }
 
@@ -1457,7 +1550,32 @@ function restoreSummaryConfirmPanelToPage() {
       const content = document.getElementById('mobile-confirm-content');
       if (!confirmOverlay || !content) return;
 
-      // Move the confirm panel into the confirm modal
+      // Populate simplified summary fields
+      const treatmentEl = document.getElementById('mobile-confirm-treatment');
+      const datetimeEl = document.getElementById('mobile-confirm-datetime');
+      const durationEl = document.getElementById('mobile-confirm-duration');
+      const feeEl = document.getElementById('mobile-confirm-fee');
+      
+      if (treatmentEl) {
+        const summaryTreatment = document.getElementById('summary-treatment');
+        treatmentEl.textContent = summaryTreatment?.textContent || selectedServiceKey || '—';
+      }
+      
+      if (datetimeEl) {
+        const summaryDatetime = document.getElementById('summary-datetime');
+        datetimeEl.textContent = summaryDatetime?.textContent || '—';
+      }
+      
+      if (durationEl) {
+        durationEl.textContent = selectedStandardDuration ? `${selectedStandardDuration} minutes` : '—';
+      }
+      
+      if (feeEl) {
+        const summaryFee = document.getElementById('summary-travel-fee');
+        feeEl.textContent = summaryFee?.textContent || '$0.00';
+      }
+
+      // Move the confirm panel into the confirm modal (hidden, but keeps form state)
       const panel = document.getElementById('summary-confirm-panel');
       if (panel) content.appendChild(panel);
 
@@ -2037,8 +2155,12 @@ function mobileConfirmBooking() {
                   </div>
                   <div class="text-[0.6rem] sm:text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60">Membership</div>
                 </div>
-                <div class="text-base sm:text-lg font-serif text-brand-light" id="dash-membership-status">Coming Soon</div>
-                <div class="muted text-[0.7rem] sm:text-xs mt-1">Coming soon</div>
+                <div class="text-base sm:text-lg font-serif text-brand-light" id="dash-membership-status">
+                  <div class="skeleton-loader h-5 w-24 rounded bg-brand-gold/10 animate-skeleton-pulse"></div>
+                </div>
+                <div class="muted text-[0.7rem] sm:text-xs mt-1" id="dash-membership-subtext">
+                  <div class="skeleton-loader h-3 w-32 rounded bg-brand-gold/5 animate-skeleton-pulse"></div>
+                </div>
               </div>
               <div class="card-fancy p-3 sm:p-5">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
@@ -2106,7 +2228,7 @@ function mobileConfirmBooking() {
                   <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-gold"></i>
                   Upcoming Appointments
                 </h3>
-                <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-1.5 px-3">
+                <button onclick="loadUpcomingAppointments(true)" class="btn-outline text-xs py-1.5 px-3">
                   <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                   Refresh
                 </button>
@@ -2175,7 +2297,7 @@ function mobileConfirmBooking() {
                     <div>
                       <div class="font-bold text-brand-light">Unable to load appointments</div>
                       <div class="muted mt-1 text-sm" id="appointments-error-message">Please try again.</div>
-                      <button onclick="loadUpcomingAppointments()" class="btn-outline text-xs py-1.5 mt-3">
+                      <button onclick="loadUpcomingAppointments(true)" class="btn-outline text-xs py-1.5 mt-3">
                         <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                         Try Again
                       </button>
@@ -2489,7 +2611,7 @@ function mobileConfirmBooking() {
                   </button>
                 </div>
                 <p class="muted text-xs mt-4 text-center">
-                  Need help? Contact us at <a href="mailto:info@relaxandrenew.ca" class="text-brand-gold hover:text-brand-goldHover">info@relaxandrenew.ca</a>
+                  Need help? Contact us at <a href="/cdn-cgi/l/email-protection#a1c8cfc7cee1d3c4cdc0d9c0cfc5d3c4cfc4d68fc2c0" class="text-brand-gold hover:text-brand-goldHover"><span class="__cf_email__" data-cfemail="046d6a626b44766168657c656a6076616a61732a6765">[email&#160;protected]</span></a>
                 </p>
               </div>
             </div>
@@ -2501,7 +2623,7 @@ function mobileConfirmBooking() {
               </div>
               <h3 class="text-xl font-serif text-brand-light mb-2">Unable to Load Membership</h3>
               <p class="muted mb-4" id="membership-error-message">Please try again in a moment.</p>
-              <button onclick="loadMembershipStatus()" class="btn-outline">
+              <button onclick="loadMembershipStatus(true)" class="btn-outline">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 Retry
               </button>
@@ -2751,8 +2873,11 @@ function mobileConfirmBooking() {
 
 
   <!-- Mobile Time Picker Overlay (mobile only) -->
-  <div id="mobile-times-overlay" class="modal-overlay hidden">
+  <div id="mobile-times-overlay" class="modal-overlay hidden bottom-drawer">
     <div class="modal-card" style="max-width: 620px;">
+      <!-- Drawer handle for mobile -->
+      <div class="drawer-handle md:hidden"></div>
+      
       <div class="flex items-start justify-between gap-4 mb-3">
         <div class="flex-1">
           <div id="mobile-times-title" class="font-serif text-xl text-brand-light">Select a Time</div>
@@ -2792,13 +2917,16 @@ function mobileConfirmBooking() {
     </div>
   </div>
 
-  <!-- Mobile Confirm Overlay (mobile only) -->
-  <div id="mobile-confirm-overlay" class="modal-overlay hidden">
+  <!-- Mobile Confirm Overlay (mobile only) - Simplified for Portal -->
+  <div id="mobile-confirm-overlay" class="modal-overlay hidden bottom-drawer">
     <div class="modal-card" style="max-width: 620px;">
+      <!-- Drawer handle for mobile -->
+      <div class="drawer-handle md:hidden"></div>
+      
       <div class="flex items-start justify-between gap-4 mb-3">
         <div class="flex-1">
           <div class="font-serif text-xl text-brand-light">Confirm Booking</div>
-          <div class="muted text-sm mt-1">Review your details, then confirm.</div>
+          <div class="muted text-sm mt-1">Review and confirm your appointment.</div>
         </div>
         <button class="btn-outline px-3 py-2 text-xs" onclick="closeMobileConfirmOverlay(false)">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -2806,6 +2934,36 @@ function mobileConfirmBooking() {
       </div>
 
       <div id="mobile-confirm-scroll" class="rnr-modal-scroll">
+        <!-- Simplified Portal Confirmation Summary -->
+        <div class="portal-confirm-summary mb-4">
+          <div class="summary-row">
+            <span class="summary-label">Treatment</span>
+            <span class="summary-value" id="mobile-confirm-treatment">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Date & Time</span>
+            <span class="summary-value" id="mobile-confirm-datetime">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Duration</span>
+            <span class="summary-value" id="mobile-confirm-duration">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Travel Fee</span>
+            <span class="summary-value text-brand-gold" id="mobile-confirm-fee">$0.00</span>
+          </div>
+        </div>
+        
+        <!-- Therapist Info -->
+        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-brand-gold/10 mb-4">
+          <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
+               alt="Cassandra S." class="w-12 h-12 rounded-full object-cover border border-brand-gold/20">
+          <div>
+            <div class="font-serif text-brand-light">Cassandra S.</div>
+            <div class="text-xs text-brand-dim">Registered Massage Therapist</div>
+          </div>
+        </div>
+        
         <div id="mobile-confirm-content"></div>
       </div>
 
@@ -2877,7 +3035,7 @@ function mobileConfirmBooking() {
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -5497,7 +5655,7 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     // LOAD UPCOMING APPOINTMENTS
     // =========================================================
-    async function loadUpcomingAppointments() {
+    async function loadUpcomingAppointments(forceRefresh = false) {
       if (!portalProfile || !portalProfile.email) {
         console.warn("No profile/email to load appointments");
         document.getElementById("appointments-loading")?.classList.add("hidden");
@@ -5505,6 +5663,29 @@ if (selectedSlot && driveTime > 0) {
         document.getElementById("history-loading")?.classList.add("hidden");
         document.getElementById("history-empty")?.classList.remove("hidden");
         return;
+      }
+
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = getCachedData(CACHE_KEY_APPOINTMENTS);
+        if (cached) {
+          console.log("Using cached appointments data");
+          const { upcoming, completed, cancelled, history } = cached;
+          upcomingAppointments = upcoming || [];
+          completedAppointments = completed || [];
+          cancelledAppointments = cancelled || [];
+          historyAppointments = history || [];
+          
+          // Load "Book Same as Last Time" banner
+          try { loadLastBookingSummary(); } catch (e) {}
+          
+          renderAppointments();
+          renderHistory();
+          updateCountdown();
+          if (countdownTimer) clearInterval(countdownTimer);
+          countdownTimer = setInterval(updateCountdown, 60000);
+          return;
+        }
       }
 
       // Show loading states
@@ -5573,6 +5754,14 @@ if (selectedSlot && driveTime > 0) {
           const as = a?.starts_at ? new Date(a.starts_at).getTime() : 0;
           const bs = b?.starts_at ? new Date(b.starts_at).getTime() : 0;
           return bs - as;
+        });
+
+        // Cache the appointments data
+        setCachedData(CACHE_KEY_APPOINTMENTS, {
+          upcoming: upcomingAppointments,
+          completed: completedAppointments,
+          cancelled: cancelledAppointments,
+          history: historyAppointments
         });
 
         // Load "Book Same as Last Time" banner immediately (parallel with other renders)
@@ -5686,8 +5875,53 @@ if (selectedSlot && driveTime > 0) {
     // =========================================================
     // LOAD MEMBERSHIP STATUS
     // =========================================================
-    async function loadMembershipStatus() {
-      console.log("loadMembershipStatus called");
+    const CACHE_KEY_MEMBERSHIP = 'rnr_portal_membership_cache';
+    const CACHE_KEY_APPOINTMENTS = 'rnr_portal_appointments_cache';
+    const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache
+
+    function getCachedData(key) {
+      try {
+        const cached = sessionStorage.getItem(key);
+        if (!cached) return null;
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > CACHE_DURATION_MS) {
+          sessionStorage.removeItem(key);
+          return null;
+        }
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setCachedData(key, data) {
+      try {
+        sessionStorage.setItem(key, JSON.stringify({
+          data,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.warn('Failed to cache data:', e);
+      }
+    }
+
+    async function loadMembershipStatus(forceRefresh = false) {
+      console.log("loadMembershipStatus called, forceRefresh:", forceRefresh);
+      
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = getCachedData(CACHE_KEY_MEMBERSHIP);
+        if (cached) {
+          console.log("Using cached membership data");
+          membershipData = cached;
+          if (cached.has_membership === true) {
+            renderActiveMembership(cached);
+          } else {
+            showMembershipState('none');
+          }
+          return;
+        }
+      }
       
       // Show loading state
       showMembershipState('loading');
@@ -5726,6 +5960,9 @@ if (selectedSlot && driveTime > 0) {
         const data = await res.json();
         console.log("Membership data received:", data);
         membershipData = data;
+        
+        // Cache the data
+        setCachedData(CACHE_KEY_MEMBERSHIP, data);
 
         // Check if they have an active membership
         if (data && data.has_membership === true) {
@@ -5755,7 +5992,7 @@ if (selectedSlot && driveTime > 0) {
         
         // Update dashboard tile
         const dashStatus = document.getElementById("dash-membership-status");
-        const dashSubtext = dashStatus?.nextElementSibling;
+        const dashSubtext = document.getElementById("dash-membership-subtext");
         if (dashStatus) dashStatus.textContent = "No Active Membership";
         if (dashSubtext) dashSubtext.textContent = "Join to unlock benefits";
       } else if (state === 'error') {
@@ -5763,6 +6000,11 @@ if (selectedSlot && driveTime > 0) {
         if (errorMsg) {
           document.getElementById("membership-error-message").textContent = errorMsg;
         }
+        // Update dashboard tile for error state
+        const dashStatus = document.getElementById("dash-membership-status");
+        const dashSubtext = document.getElementById("dash-membership-subtext");
+        if (dashStatus) dashStatus.textContent = "Unable to Load";
+        if (dashSubtext) dashSubtext.textContent = "Tap to retry";
       }
 
       // Refresh icons
@@ -5774,7 +6016,7 @@ if (selectedSlot && driveTime > 0) {
       
       // Update dashboard tile
       const dashStatus = document.getElementById("dash-membership-status");
-      const dashSubtext = dashStatus?.nextElementSibling;
+      const dashSubtext = document.getElementById("dash-membership-subtext");
       if (dashStatus) {
         dashStatus.textContent = data.plan_name || "Active";
       }
@@ -5795,14 +6037,17 @@ if (selectedSlot && driveTime > 0) {
       document.getElementById("m_commit_end").textContent = formatDate(data.commitment_end_date) || "N/A";
       document.getElementById("m_credits_remaining").textContent = data.credits_remaining ?? "—";
       
-      // Member since (optional - can use created date from Stripe if available)
-      document.getElementById("m_member_since").textContent = "—";
+      // Member since - use member_since from API response
+      document.getElementById("m_member_since").textContent = formatDate(data.member_since) || "—";
 
       // Refresh icons
       if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
     async function openStripeBillingPortal() {
+      const btn = document.getElementById('btn-manage-billing');
+      const originalText = btn ? btn.innerHTML : '';
+      
       if (!MEMBERSHIP_PORTAL_URL || MEMBERSHIP_PORTAL_URL.trim() === "") {
         showToast("Coming Soon", "Billing portal is not yet configured.", true);
         return false;
@@ -5813,21 +6058,38 @@ if (selectedSlot && driveTime > 0) {
         return false;
       }
 
+      // Show loading state on button
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block w-4 h-4 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin mr-2"></span> Opening Portal...';
+      }
+
       try {
+        const payload = {
+          email: portalProfile.email,
+          return_url: window.location.href
+        };
+        
+        // Include stripe_customer_id if available from membership data
+        if (membershipData && membershipData.stripe_customer_id) {
+          payload.stripe_customer_id = membershipData.stripe_customer_id;
+        }
+
         const res = await fetch(MEMBERSHIP_PORTAL_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: portalProfile.email,
-            return_url: window.location.href
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error("Billing portal error response:", errorText);
           throw new Error(`HTTP ${res.status}`);
         }
 
         const data = await res.json();
+        console.log("Billing portal response:", data);
+        
         if (data && data.url) {
           window.location.href = data.url;
         } else {
@@ -5836,7 +6098,13 @@ if (selectedSlot && driveTime > 0) {
 
       } catch (e) {
         console.error("Failed to open billing portal:", e);
-        showToast("Error", "Unable to open billing portal. Please try again.", true);
+        showToast("Error", "Unable to open billing portal. Please try again or contact support.", true);
+        
+        // Restore button
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
       }
 
       return false;
@@ -8537,8 +8805,4 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
 
           reg.addEventListener('updatefound', () => {
             const sw = reg.installing;
-            if (!sw) return;
-            sw.addEventListener('statechange', () => {
-              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version installed; activate ASAP
-                reg.waiting && reg.waiting.pos
+            if (!sw) ret
