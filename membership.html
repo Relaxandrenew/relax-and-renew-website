@@ -1,201 +1,1549 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Membership | Maintenance | Relax & Renew RMT</title>
-  <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Membership page maintenance — Relax & Renew RMT.">
-  <meta property="og:title" content="Membership Maintenance — Relax & Renew RMT">
-  <meta property="og:description" content="We’re doing a quick update to our membership page and will be back shortly.">
-  <meta property="og:image" content="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membership | Relax & Renew RMT</title>
+    <meta name="description" content="Join the Relax & Renew RMT Membership. Save on mobile massage therapy with monthly credits, rollovers, and exclusive rates.">
+    <meta property="og:title" content="Relax & Renew RMT Membership">
+    <meta property="og:description" content="Prioritize your wellness with our flexible mobile massage memberships.">
+    <meta property="og:image" content="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png">
+    
+    <!-- 1. LIBRARIES & CONFIG -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#E0C584',
+                            goldHover: '#F0D594',
+                            light: '#F0E2C0', 
+                            dim: 'rgba(240, 226, 192, 0.6)',
+                            black: '#050505',
+                            dark: '#0a0a0a',
+                            panel: 'rgba(20, 20, 20, 0.7)',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                    },
+                    backgroundImage: {
+                        'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
+                        'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')",
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        subtleBounce: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
 
-  <!-- Tailwind + Brand config (kept to match your site) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              gold: '#E0C584',
-              goldHover: '#F0D594',
-              light: '#F0E2C0',
-              dim: 'rgba(240, 226, 192, 0.6)',
-              black: '#050505',
-              dark: '#0a0a0a',
-              panel: 'rgba(20, 20, 20, 0.7)',
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+        
+        /* Navigation */
+        .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); display: flex; align-items: center; }
+        
+        /* Mobile Menu */
+        .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #050505; z-index: 49; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .mobile-menu.open { transform: translateX(0); }
+        
+        /* Cards & Components */
+        .pricing-card { background: rgba(20, 20, 20, 0.6); border: 1px solid rgba(224, 197, 132, 0.2); padding: 2.5rem 2rem; border-radius: 4px; position: relative; transition: 0.3s; display: flex; flex-direction: column; height: 100%; }
+        .pricing-card.highlight { background: linear-gradient(180deg, rgba(224, 197, 132, 0.05), rgba(0,0,0,0)); border-color: rgba(224, 197, 132, 0.5); box-shadow: 0 0 30px rgba(224, 197, 132, 0.05); }
+        .pricing-card:hover { transform: translateY(-5px); border-color: rgba(224, 197, 132, 0.6); }
+        
+        /* Buttons */
+        .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
+        
+        .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
+        
+        /* Links */
+        .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .nav-link.active::after { width: 100%; }
+        
+        /* Form Styling */
+        input, textarea, select { transition: all 0.3s ease; }
+        input:focus, textarea:focus, select:focus { border-color: #E0C584; background-color: rgba(255, 255, 255, 0.08); outline: none; }
+        
+        /* Dropdown Options Fix */
+        select option { background-color: #050505; color: #E0C584; padding: 10px; }
+        
+        /* Google Maps Autocomplete Styling Override */
+        .pac-container { background-color: #1a1a1a; border: 1px solid #E0C584; font-family: 'Cormorant Garamond', serif; z-index: 200 !important; }
+        .pac-item { border-top: 1px solid rgba(224, 197, 132, 0.1); color: #F0E2C0; padding: 10px; cursor: pointer; }
+        .pac-item:hover { background-color: rgba(224, 197, 132, 0.1); }
+        .pac-item-query { color: #E0C584; }
+
+        /* Utilities */
+        .pill { background: rgba(224, 197, 132, 0.08); border: 1px solid rgba(224, 197, 132, 0.2); color: #F0E2C0; display: inline-block; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.9rem; margin: 0 0.3rem 0.5rem 0; letter-spacing: 0.05em; }
+        .rotate-icon { transition: transform 0.3s ease; }
+        .rotate-icon.active { transform: rotate(180deg); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .accordion-content.active { max-height: 500px; }
+        
+        /* Visibility Transition for Term Select */
+        .term-hidden { display: none; }
+        .term-visible { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ==================== MOBILE CAROUSEL STYLES ==================== */
+        @media (max-width: 767px) {
+            /* Mobile-only compact scaling */
+            .pricing-card {
+                padding: 1.25rem 1rem;
+                margin: 0;
             }
-          },
-          fontFamily: {
-            serif: ['"Cormorant Garamond"', 'serif'],
-          },
-          backgroundImage: {
-            'hero-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.9)), url('https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png')",
-            'alternate-pattern': "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://static.wixstatic.com/media/bf8fef_7776f5b067be4025a75ed7e149bb1d7e~mv2.jpg')",
-          },
-          animation: {
-            'fade-in-up': 'fadeInUp 0.9s ease-out forwards',
-            'subtle-bounce': 'subtleBounce 3s ease-in-out infinite',
-            'soft-pulse': 'softPulse 2.2s ease-in-out infinite',
-          },
-          keyframes: {
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(18px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            subtleBounce: {
-              '0%, 100%': { transform: 'translateY(0)' },
-              '50%': { transform: 'translateY(-6px)' },
-            },
-            softPulse: {
-              '0%, 100%': { opacity: '0.6' },
-              '50%': { opacity: '1' },
+            .pricing-card h3 {
+                font-size: 1.25rem;
             }
-          }
+            .pricing-card .text-5xl {
+                font-size: 2.5rem;
+            }
+            .pricing-card .text-xs {
+                font-size: 0.65rem;
+            }
+            .pricing-card ul {
+                gap: 0.5rem;
+            }
+            .pricing-card ul li {
+                font-size: 0.8rem;
+            }
+            .pricing-card .btn-gold,
+            .pricing-card .btn-filled {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+                margin-top: 1rem;
+            }
+            .pricing-card .border-t {
+                padding-top: 1rem;
+            }
+            .pricing-card .mb-8 {
+                margin-bottom: 1rem;
+            }
+            .pricing-card .mb-6 {
+                margin-bottom: 0.75rem;
+            }
+            
+            /* Carousel container */
+            .mobile-carousel-wrapper {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+            }
+            
+            .mobile-carousel {
+                display: flex;
+                transition: transform 0.4s ease-out;
+                touch-action: pan-y;
+            }
+            
+            .mobile-carousel .pricing-card {
+                flex: 0 0 85%;
+                max-width: 85%;
+                margin: 0 2.5%;
+                scroll-snap-align: center;
+            }
+            
+            /* Carousel navigation arrows */
+            .carousel-nav {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 32px;
+                height: 32px;
+                background: rgba(224, 197, 132, 0.15);
+                border: 1px solid rgba(224, 197, 132, 0.4);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+                transition: all 0.2s ease;
+            }
+            .carousel-nav:hover {
+                background: rgba(224, 197, 132, 0.25);
+                border-color: rgba(224, 197, 132, 0.7);
+            }
+            .carousel-nav:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+            .carousel-nav.prev { left: 4px; }
+            .carousel-nav.next { right: 4px; }
+            .carousel-nav i { color: #E0C584; width: 16px; height: 16px; }
+            
+            /* Carousel dots indicator */
+            .carousel-dots {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .carousel-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(224, 197, 132, 0.25);
+                border: 1px solid rgba(224, 197, 132, 0.4);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .carousel-dot.active {
+                background: #E0C584;
+                border-color: #E0C584;
+            }
+            
+            /* Row labels */
+            .carousel-row-label {
+                text-align: center;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                color: rgba(224, 197, 132, 0.7);
+                margin-bottom: 12px;
+                font-weight: 600;
+            }
+            
+            /* Spacing between carousel rows */
+            .carousel-row + .carousel-row {
+                margin-top: 24px;
+            }
+            
+            /* Hide desktop grid on mobile */
+            .desktop-pricing-grid {
+                display: none !important;
+            }
+            
+            /* Show mobile carousels */
+            .mobile-pricing-carousels {
+                display: block !important;
+            }
         }
-      }
-    };
-  </script>
+        
+        /* Desktop: hide mobile carousels, show grid */
+        @media (min-width: 768px) {
+            .mobile-pricing-carousels {
+                display: none !important;
+            }
+            .desktop-pricing-grid {
+                display: grid !important;
+            }
+        }
 
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-
-  <style>
-    body { background-color: #050505; color: #F0E2C0; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1.7; overflow-x: hidden; }
-    html { scroll-behavior: smooth; }
-
-    /* Navigation (matches your membership page) */
-    .fixed-nav { position: fixed; top: 0; left: 0; width: 100%; height: 80px; z-index: 50; transition: all 0.4s ease; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(224, 197, 132, 0.2); display: flex; align-items: center; }
-
-    /* Mobile Menu */
-    .mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #050505; z-index: 49; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .mobile-menu.open { transform: translateX(0); }
-
-    /* Buttons */
-    .btn-gold { border: 1px solid #E0C584; color: #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-    .btn-gold:hover { background: rgba(224, 197, 132, 0.1); color: #F0E2C0; border-color: #F0D594; box-shadow: 0 0 15px rgba(224, 197, 132, 0.2); }
-
-    .btn-filled { background: #E0C584; color: #000; border: 1px solid #E0C584; padding: 0.6rem 2rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
-    .btn-filled:hover { background: #F0D594; border-color: #F0D594; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(224, 197, 132, 0.3); }
-
-    /* Links */
-    .nav-link { color: #F0E2C0; text-transform: uppercase; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-decoration: none; position: relative; padding-bottom: 5px; }
-    .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: #E0C584; transition: width 0.3s ease; }
-    .nav-link:hover::after { width: 100%; }
-    .nav-link.active::after { width: 100%; }
-
-    /* Panel */
-    .glass-panel { background: rgba(20, 20, 20, 0.60); border: 1px solid rgba(224, 197, 132, 0.22); box-shadow: 0 0 30px rgba(224, 197, 132, 0.05); }
-    .corner { position: absolute; width: 12px; height: 12px; }
-    .corner.tl { top: -1px; left: -1px; border-top: 1px solid rgba(224, 197, 132, 0.85); border-left: 1px solid rgba(224, 197, 132, 0.85); }
-    .corner.tr { top: -1px; right: -1px; border-top: 1px solid rgba(224, 197, 132, 0.85); border-right: 1px solid rgba(224, 197, 132, 0.85); }
-    .corner.bl { bottom: -1px; left: -1px; border-bottom: 1px solid rgba(224, 197, 132, 0.85); border-left: 1px solid rgba(224, 197, 132, 0.85); }
-    .corner.br { bottom: -1px; right: -1px; border-bottom: 1px solid rgba(224, 197, 132, 0.85); border-right: 1px solid rgba(224, 197, 132, 0.85); }
-
-    .status-dot { width: 10px; height: 10px; border-radius: 999px; background: rgba(224, 197, 132, 0.95); box-shadow: 0 0 16px rgba(224, 197, 132, 0.35); }
-  </style>
+    </style>
 </head>
-
 <body class="bg-brand-black selection:bg-brand-gold selection:text-black relative">
 
-  <!-- NAVIGATION BAR -->
-  <nav id="navbar" class="fixed-nav">
-    <div class="container mx-auto px-6 flex justify-between items-center h-full">
-      <a href="index.html" class="flex items-center gap-3 no-underline group">
-        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
-        <div class="hidden md:flex flex-col">
-          <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
-          <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+    <!-- NAVIGATION BAR -->
+    <nav id="navbar" class="fixed-nav">
+        <div class="container mx-auto px-6 flex justify-between items-center h-full">
+            <a href="index.html" class="flex items-center gap-3 no-underline group">
+                <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Relax & Renew Logo" class="h-10 w-auto transition-transform group-hover:scale-105">
+                <div class="hidden md:flex flex-col">
+                    <span class="text-brand-gold font-bold tracking-[0.2em] text-sm leading-none">RELAX & RENEW</span>
+                    <span class="text-brand-light text-[0.65rem] tracking-[0.4em] uppercase opacity-70 leading-tight mt-1">Mobile RMT</span>
+                </div>
+            </a>
+            <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
+                <a href="index.html#services" class="nav-link">Services</a>
+                <a href="index.html#pricing" class="nav-link">Pricing</a>
+                <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
+                <a href="index.html#area" class="nav-link">Service Area</a>
+                <a href="index.html#faq" class="nav-link">FAQ</a>
+                <a href="therapists.html" class="nav-link">Our Therapists</a>
+                <a href="#" class="nav-link text-brand-gold font-bold">Membership</a>
+            </div>
+            <button id="menu-btn" class="lg:hidden text-brand-gold p-2 focus:outline-none hover:text-brand-light transition-colors">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
         </div>
-      </a>
-
-      <div class="hidden lg:flex items-center space-x-8 whitespace-nowrap">
-        <a href="index.html#services" class="nav-link">Services</a>
-        <a href="index.html#pricing" class="nav-link">Pricing</a>
-        <a href="index.html#giftcards" class="nav-link">Gift Cards</a>
-        <a href="index.html#area" class="nav-link">Service Area</a>
-        <a href="index.html#faq" class="nav-link">FAQ</a>
-        <a href="therapists.html" class="nav-link">Our Therapists</a>
-        <a href="#" class="nav-link active text-brand-gold font-bold">Membership</a>
-      </div>
-
-      <button id="menu-btn" class="lg:hidden text-brand-gold p-2 focus:outline-none hover:text-brand-light transition-colors">
-        <i data-lucide="menu" class="w-8 h-8"></i>
-      </button>
-    </div>
-  </nav>
-
-  <!-- MOBILE MENU -->
-  <div id="mob-menu" class="mobile-menu">
-    <button id="close-btn" class="absolute top-8 right-6 text-brand-gold p-2 hover:rotate-90 transition-transform">
-      <i data-lucide="x" class="w-10 h-10"></i>
-    </button>
-    <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-16 w-auto mb-8 opacity-80">
-    <nav class="flex flex-col space-y-6 text-center">
-      <a href="index.html#services" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Services</a>
-      <a href="index.html#pricing" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Pricing</a>
-      <a href="index.html#giftcards" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Gift Cards</a>
-      <a href="index.html#area" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Service Area</a>
-      <a href="index.html#faq" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">FAQ</a>
-      <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
-      <a href="index.html" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Return Home</a>
     </nav>
-  </div>
 
-  <!-- HERO -->
-  <header class="relative min-h-[70vh] flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat">
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-brand-black"></div>
-
-    <div class="container mx-auto px-6 relative z-10 text-center pt-24">
-      <div class="inline-flex items-center gap-3 border-b border-brand-gold/50 pb-2 mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
-        <span class="status-dot animate-soft-pulse"></span>
-        <p class="text-brand-gold uppercase tracking-[0.3em] text-xs md:text-sm font-bold">Maintenance</p>
-      </div>
-
-      <h1 class="text-5xl md:text-7xl font-medium text-brand-light mb-6 leading-[1.1] animate-fade-in-up" style="animation-delay: 0.25s;">
-        Membership is <span class="text-brand-gold italic font-serif">temporarily offline</span>
-      </h1>
-
-      <p class="text-lg md:text-xl text-brand-light/90 max-w-2xl mx-auto mb-10 font-light leading-relaxed animate-fade-in-up" style="animation-delay: 0.4s;">
-        We’re doing a quick update to our membership system  to make sure everything is accurate and seamless.
-        If you need help right now, contact us and we’ll take care of you.
-      </p>
-
-      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style="animation-delay: 0.55s;">
-        <a class="btn-filled min-w-[220px]" href="mailto:info@relaxandrenew.ca">
-          <i data-lucide="mail" class="w-5 h-5"></i>
-          Email Us
-        </a>
-        <a class="btn-gold min-w-[220px]" href="tel:2263379064">
-          <i data-lucide="phone" class="w-5 h-5"></i>
-          Call / Text (226) 337-9064
-        </a>
-      </div>
-
-      <div class="mt-10 text-xs text-brand-dim/60 tracking-[0.18em] uppercase animate-fade-in-up" style="animation-delay: 0.7s;">
-        Thank you for your patience. 
-      </div>
+    <!-- MOBILE MENU -->
+    <div id="mob-menu" class="mobile-menu">
+        <button id="close-btn" class="absolute top-8 right-6 text-brand-gold p-2 hover:rotate-90 transition-transform">
+            <i data-lucide="x" class="w-10 h-10"></i>
+        </button>
+        <img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-16 w-auto mb-8 opacity-80">
+        <nav class="flex flex-col space-y-6 text-center">
+            <a href="index.html#services" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Services</a>
+            <a href="index.html#pricing" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Pricing</a>
+            <a href="index.html#giftcards" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Gift Cards</a>
+            <a href="index.html#area" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Service Area</a>
+            <a href="index.html#faq" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">FAQ</a>
+            <a href="therapists.html" class="text-3xl text-brand-light font-light hover:text-brand-gold transition-colors toggle-menu-link">Our Therapists</a>
+            <a href="#signup-form" class="btn-filled text-lg px-10 py-4 mt-8 animate-subtle-bounce">Join Now</a>
+        </nav>
     </div>
-  </header>
+    <!-- STATUS PANELS (success / cancel) -->
+    <section id="status-panels" class="hidden pt-28 pb-10 bg-brand-black border-b border-brand-gold/10">
+        <div class="container mx-auto px-6">
+            <!-- Success -->
+            <div id="status-success" class="hidden bg-white/5 border border-brand-gold/25 rounded-lg shadow-2xl relative p-8 md:p-10">
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand-gold"></div>
+                <div class="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-brand-gold"></div>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-brand-gold"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand-gold"></div>
 
-  <script>
-    // Init Icons
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-12 h-12 rounded-full border border-brand-gold/35 bg-white/5 flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-7 h-7 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <p class="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Membership Confirmed</p>
+                        <h2 class="text-3xl md:text-4xl text-brand-light font-serif mt-1">You’re all set.</h2>
+                    </div>
+                </div>
 
-    // Menu Toggle (matches your site)
-    const menuBtn = document.getElementById('menu-btn');
-    const mobMenu = document.getElementById('mob-menu');
-    const closeBtn = document.getElementById('close-btn');
-    const menuLinks = document.querySelectorAll('.toggle-menu-link');
+                <p class="text-brand-light/90 font-light leading-relaxed mb-3">
+                    Your membership signup was successful. If you’re already an existing client, you can head to the portal now to manage appointments, book sessions, and more.
+                </p>
+                <p class="text-brand-dim font-light text-sm leading-relaxed mb-7">
+                    If you’re new to Relax &amp; Renew, you’ll receive an email invitation shortly to activate your portal access.
+                </p>
 
-    if (menuBtn && mobMenu) {
-      function openMenu() { mobMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
-      function closeMenuFn() { mobMenu.classList.remove('open'); document.body.style.overflow = ''; }
-      menuBtn.addEventListener('click', openMenu);
-      if (closeBtn) closeBtn.addEventListener('click', closeMenuFn);
-      menuLinks.forEach(link => link.addEventListener('click', closeMenuFn));
-    }
-  </script>
+                <div class="flex flex-col sm:flex-row gap-3 justify-start">
+                    <a href="index.html" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Home Page
+                    </a>
+                    <a href="https://www.relaxandrenew.ca/portal" class="btn-filled w-full sm:w-auto justify-center">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Go to Portal
+                    </a>
+                    <a href="/membership" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="crown" class="w-4 h-4"></i>
+                        Back to Membership
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cancel -->
+            <div id="status-cancel" class="hidden bg-white/5 border border-brand-gold/20 rounded-lg shadow-2xl relative p-8 md:p-10">
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand-gold"></div>
+                <div class="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-brand-gold"></div>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-brand-gold"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand-gold"></div>
+
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-12 h-12 rounded-full border border-brand-gold/30 bg-white/5 flex items-center justify-center">
+                        <i data-lucide="x-circle" class="w-7 h-7 text-brand-gold"></i>
+                    </div>
+                    <div>
+                        <p class="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Checkout Cancelled</p>
+                        <h2 class="text-3xl md:text-4xl text-brand-light font-serif mt-1">No worries.</h2>
+                    </div>
+                </div>
+
+                <p class="text-brand-light/90 font-light leading-relaxed mb-7">
+                    Your checkout was cancelled and no payment was taken. You can try again anytime.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-start">
+                    <a href="#signup-form" class="btn-filled w-full sm:w-auto justify-center" onclick="clearStatusParam()">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        Try Again
+                    </a>
+                    <a href="/membership" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="crown" class="w-4 h-4"></i>
+                        Back to Membership
+                    </a>
+                    <a href="index.html" class="btn-gold w-full sm:w-auto justify-center">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        Home Page
+                    </a>
+                </div>
+
+                <p class="text-xs text-brand-dim/60 mt-6">
+                    If you’re having trouble checking out, email <a class="text-brand-gold hover:text-brand-light transition-colors" href="/cdn-cgi/l/email-protection#b3daddd5dcf3c1d6dfd2cbd2ddd7c1d6ddd6c49dd0d2"><span class="__cf_email__" data-cfemail="e58c8b838aa5978089849d848b8197808b8092cb8684">[email&#160;protected]</span></a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- HERO SECTION -->
+    <header class="relative min-h-[60vh] flex items-center justify-center bg-hero-pattern bg-cover bg-center bg-fixed bg-no-repeat bg-gray-900">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-brand-black"></div>
+        <div class="container mx-auto px-6 relative z-10 text-center pt-20">
+            <div class="inline-block border-b border-brand-gold/50 pb-2 mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <p class="text-brand-gold uppercase tracking-[0.3em] text-xs md:text-sm font-bold">The Inner Circle</p>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-medium text-brand-light mb-8 leading-[1.1] animate-fade-in-up" style="animation-delay: 0.3s;">
+                Consistency is <br> 
+                <span class="text-brand-gold italic font-serif">The Key to Wellness.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-brand-light/90 max-w-2xl mx-auto mb-10 font-light leading-relaxed animate-fade-in-up" style="animation-delay: 0.5s;">
+                Commit to your health with our exclusive membership plans. Lock in our best rates and ensure your sanctuary is always reserved.
+            </p>
+            <div class="animate-fade-in-up" style="animation-delay: 0.7s;">
+                <a href="#plans" class="btn-filled text-black min-w-[200px] animate-subtle-bounce">
+                    View Plans
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HOW IT WORKS & BENEFITS -->
+    <section class="py-24 bg-brand-black relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Transparency & Value</span>
+                <h2 class="text-4xl md:text-5xl text-brand-light mt-3 mb-6">How It Works</h2>
+                <div class="w-16 h-px bg-brand-gold mx-auto mb-8"></div>
+                <p class="text-brand-dim max-w-2xl mx-auto font-light leading-relaxed">
+                    Our membership is built on a simple monthly credit system. There are no hidden fees or signup costs—just consistent care at a preferred rate.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-12 text-center max-w-6xl mx-auto">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full border border-brand-gold/30 flex items-center justify-center mb-6 bg-white/5">
+                        <i data-lucide="credit-card" class="w-8 h-8 text-brand-gold"></i>
+                    </div>
+                    <h3 class="text-xl text-brand-light font-serif mb-3">1. Monthly Credits</h3>
+                    <p class="text-brand-dim text-sm leading-relaxed max-w-xs mx-auto">
+                        Your monthly payment purchases a treatment credit. This credit sits in your account until you're ready to use it.
+                    </p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full border border-brand-gold/30 flex items-center justify-center mb-6 bg-white/5">
+                        <i data-lucide="repeat" class="w-8 h-8 text-brand-gold"></i>
+                    </div>
+                    <h3 class="text-xl text-brand-light font-serif mb-3">2. Flexible Rollovers</h3>
+                    <p class="text-brand-dim text-sm leading-relaxed max-w-xs mx-auto">
+                        Busy month? No problem. Unused credits roll over automatically and never expire while your membership is active.
+                    </p>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full border border-brand-gold/30 flex items-center justify-center mb-6 bg-white/5">
+                        <i data-lucide="users" class="w-8 h-8 text-brand-gold"></i>
+                    </div>
+                    <h3 class="text-xl text-brand-light font-serif mb-3">3. Shareable Care</h3>
+                    <p class="text-brand-dim text-sm leading-relaxed max-w-xs mx-auto">
+                        Credits are transferable within your household. You can also stack credits for longer treatments (e.g., a 2-hour massage).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING TIERS -->
+    <section id="plans" class="py-24 md:py-24 py-12 bg-alternate-pattern bg-cover bg-center bg-fixed relative">
+        <div class="absolute inset-0 bg-brand-black/80 backdrop-blur-sm"></div>
+        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center mb-8 md:mb-16">
+                <h2 class="text-3xl md:text-5xl text-brand-light mb-2 md:mb-4 font-serif">Membership Plans</h2>
+                <p class="text-brand-dim max-w-2xl mx-auto font-light text-sm md:text-base">
+                    Choose the frequency and coverage that fits your lifestyle.
+                </p>
+            </div>
+
+            <!-- ==================== DESKTOP GRID (md+) ==================== -->
+            <div class="desktop-pricing-grid grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                
+                <!-- Plan 1: Individual Monthly -->
+                <div class="pricing-card">
+                    <h3 class="text-2xl text-brand-light font-serif">Individual Monthly</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Standard Care • 3, 6, or 12 Month Options</p>
+                    
+                    <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                        $110<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ month + HST</span>
+                    </div>
+                    <p class="text-brand-dim/60 text-xs mb-8 italic">($124.30 total per month). One treatment credit per month.</p>
+
+                    <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                        <p class="text-brand-light text-sm font-bold mb-4">Includes:</p>
+                        <ul class="space-y-3 text-sm text-brand-light/80">
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>1 Credit per Month</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="gift" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">One 50% OFF Bonus Massage</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Rollover unused credits</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Rate protection</span></li>
+                        </ul>
+                    </div>
+                    <a href="#signup-form" onclick="selectPlan('Individual Monthly')" class="btn-gold w-full text-center justify-center mt-8">Select Monthly</a>
+                </div>
+
+                <!-- Plan 2: Bi-Weekly -->
+                <div class="pricing-card highlight transform md:-translate-y-4">
+                    <div class="absolute top-0 right-0 bg-brand-gold text-black text-xs font-bold px-3 py-1 uppercase tracking-wider">Best Value</div>
+                    <h3 class="text-3xl text-brand-light font-serif">Individual Bi-Weekly</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Accelerated Wellness • Month to Month</p>
+                    
+                    <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                        $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ treatment + HST</span>
+                    </div>
+                    <p class="text-brand-dim/60 text-xs mb-8 italic">($203.40 total per month). Two credits per month.</p>
+
+                    <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                        <p class="text-brand-light text-sm font-bold mb-4">Includes:</p>
+                        <ul class="space-y-3 text-sm text-brand-light/80">
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span><strong>Lowest Price Per Massage</strong></span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="gift" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">One 50% OFF Bonus Massage</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>2 Credits per Month</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Ideal for injury recovery or stress</span></li>
+                        </ul>
+                    </div>
+                    <a href="#signup-form" onclick="selectPlan('Individual Bi-Weekly')" class="btn-filled w-full text-center justify-center mt-8">Select Bi-Weekly</a>
+                </div>
+
+                <!-- Plan 3: Duo -->
+                <div class="pricing-card">
+                    <h3 class="text-2xl text-brand-light font-serif">Duo (Couples)</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Shared Wellness • 3, 6, or 12 Month Options</p>
+                    
+                    <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                        $100<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                    </div>
+                    <p class="text-brand-dim/60 text-xs mb-8 italic">($113 total per person/month). One credit per person.</p>
+
+                    <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                        <p class="text-brand-light text-sm font-bold mb-4">Includes:</p>
+                        <ul class="space-y-3 text-sm text-brand-light/80">
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Great for partners or roommates</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="gift" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">One 50% OFF Bonus Massage</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="sparkles" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">Complimentary Hot Stone or Cupping Upgrade</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Credits pooled for household</span></li>
+                        </ul>
+                    </div>
+                    <a href="#signup-form" onclick="selectPlan('Duo')" class="btn-gold w-full text-center justify-center mt-8">Select Duo</a>
+                </div>
+
+                <!-- Plan 4: Household -->
+                <div class="pricing-card">
+                    <h3 class="text-2xl text-brand-light font-serif">Household (3+)</h3>
+                    <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Family Care • 3, 6, or 12 Month Options</p>
+                    
+                    <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                        $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                    </div>
+                    <p class="text-brand-dim/60 text-xs mb-8 italic">($101.70 total per person/month). One credit per person.</p>
+
+                    <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                        <p class="text-brand-light text-sm font-bold mb-4">Includes:</p>
+                        <ul class="space-y-3 text-sm text-brand-light/80">
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Maximum savings for families</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="gift" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">One 50% OFF Bonus Massage</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="sparkles" class="w-4 h-4 text-brand-gold mt-1"></i> <span class="text-brand-gold">Complimentary Hot Stone or Cupping Upgrade</span></li>
+                            <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-gold mt-1"></i> <span>Convenient bulk booking</span></li>
+                        </ul>
+                    </div>
+                    <a href="#signup-form" onclick="selectPlan('Household')" class="btn-gold w-full text-center justify-center mt-8">Select Household</a>
+                </div>
+
+            </div>
+
+            <!-- ==================== MOBILE CAROUSELS (< md) ==================== -->
+            <div class="mobile-pricing-carousels">
+                
+                <!-- ROW 1: Individual Plans -->
+                <div class="carousel-row" id="carousel-row-1">
+                    <div class="carousel-row-label">Individual Plans</div>
+                    <div class="mobile-carousel-wrapper">
+                        <button class="carousel-nav prev" data-carousel="1" data-dir="prev" aria-label="Previous">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <div class="mobile-carousel" id="carousel-1">
+                            <!-- Individual Monthly -->
+                            <div class="pricing-card" data-plan="Individual Monthly">
+                                <h3 class="text-brand-light font-serif">Individual Monthly</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Standard Care • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $110<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ mo + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($124.30 total). 1 credit/month.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>1 Credit per Month</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Rollover credits</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Individual Monthly')" class="btn-gold w-full text-center justify-center mt-8">Select Monthly</a>
+                            </div>
+                            
+                            <!-- Individual Bi-Weekly -->
+                            <div class="pricing-card highlight" data-plan="Individual Bi-Weekly">
+                                <div class="absolute top-0 right-0 bg-brand-gold text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider">Best Value</div>
+                                <h3 class="text-brand-light font-serif">Individual Bi-Weekly</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Accelerated • Month to Month</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ tx + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($203.40 total). 2 credits/month.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span><strong>Lowest Price</strong></span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>2 Credits/Month</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Individual Bi-Weekly')" class="btn-filled w-full text-center justify-center mt-8">Select Bi-Weekly</a>
+                            </div>
+                        </div>
+                        <button class="carousel-nav next" data-carousel="1" data-dir="next" aria-label="Next">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="carousel-dots" id="dots-1">
+                        <span class="carousel-dot active" data-index="0"></span>
+                        <span class="carousel-dot" data-index="1"></span>
+                    </div>
+                </div>
+
+                <!-- ROW 2: Shared Plans -->
+                <div class="carousel-row" id="carousel-row-2">
+                    <div class="carousel-row-label">Shared Plans</div>
+                    <div class="mobile-carousel-wrapper">
+                        <button class="carousel-nav prev" data-carousel="2" data-dir="prev" aria-label="Previous">
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <div class="mobile-carousel" id="carousel-2">
+                            <!-- Duo -->
+                            <div class="pricing-card" data-plan="Duo">
+                                <h3 class="text-brand-light font-serif">Duo (Couples)</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Shared • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $100<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($113 total/person). 1 credit each.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Partners/Roommates</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">Free Upgrade</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Duo')" class="btn-gold w-full text-center justify-center mt-8">Select Duo</a>
+                            </div>
+                            
+                            <!-- Household -->
+                            <div class="pricing-card" data-plan="Household">
+                                <h3 class="text-brand-light font-serif">Household (3+)</h3>
+                                <p class="text-brand-gold text-xs uppercase tracking-widest font-bold mb-6">Family • 3, 6, or 12 Months</p>
+                                
+                                <div class="text-5xl text-brand-gold font-serif mb-2 flex items-baseline">
+                                    $90<span class="text-sm text-brand-dim/50 ml-2 font-sans font-light">/ person + HST</span>
+                                </div>
+                                <p class="text-brand-dim/60 text-xs mb-8 italic">($101.70 total/person). 1 credit each.</p>
+
+                                <div class="border-t border-brand-gold/10 pt-6 mt-auto">
+                                    <ul class="space-y-2 text-sm text-brand-light/80">
+                                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-brand-gold mt-1"></i> <span>Max Family Savings</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="gift" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">50% OFF Bonus</span></li>
+                                        <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-brand-gold mt-1"></i> <span class="text-brand-gold">Free Upgrade</span></li>
+                                    </ul>
+                                </div>
+                                <a href="#signup-form" onclick="selectPlan('Household')" class="btn-gold w-full text-center justify-center mt-8">Select Household</a>
+                            </div>
+                        </div>
+                        <button class="carousel-nav next" data-carousel="2" data-dir="next" aria-label="Next">
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="carousel-dots" id="dots-2">
+                        <span class="carousel-dot active" data-index="0"></span>
+                        <span class="carousel-dot" data-index="1"></span>
+                    </div>
+                </div>
+
+            </div>
+            
+            <p class="text-center text-xs text-brand-dim/50 mt-8 md:mt-12 max-w-3xl mx-auto">
+                * Payment collected monthly or bi-weekly by credit card. Grace period of 6 months available after non-renewal to use remaining credits.
+            </p>
+        </div>
+    </section>
+
+    <!-- SIGNUP FORM -->
+    <section id="signup-form" class="py-24 bg-brand-black border-t border-brand-light/5">
+        <div class="container mx-auto px-6 max-w-2xl">
+            <div class="text-center mb-12">
+                <span class="text-brand-gold/80 tracking-[0.2em] uppercase text-sm font-bold">Start Your Journey</span>
+                <h2 class="text-4xl text-brand-light mt-2">Membership Application</h2>
+                <p class="text-brand-dim mt-4 font-light">Fill out the form below to get started. You’ll be securely redirected to Stripe to complete checkout. If you’re not already an existing client, you’ll receive an invitation to our client portal where you can manage appointments, book sessions, and more.</p>
+            </div>
+
+            <div class="bg-white/5 border border-brand-gold/20 p-8 rounded-lg shadow-2xl relative">
+                <!-- Form Decoration -->
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand-gold"></div>
+                <div class="absolute -top-1 -right-1 w-3 h-3 border-t border-r border-brand-gold"></div>
+                <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b border-l border-brand-gold"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand-gold"></div>
+
+                <form id="membership-form" onsubmit="handleMembershipSubmit(event)" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">First Name *</label>
+                            <input type="text" name="first_name" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Last Name *</label>
+                            <input type="text" name="last_name" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Phone *</label>
+                            <input type="tel" inputmode="tel" id="phone-input" name="phone" autocomplete="tel" required placeholder="(555) 555-5555" maxlength="14" pattern="\(\d{3}\) \d{3}-\d{4}" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Email *</label>
+                            <input type="email" name="email" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                    </div>
+
+                    <!-- Address Fields -->
+                    <div>
+                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Street Address *</label>
+                        <input id="autocomplete-address" type="text" name="address" required placeholder="Start typing address..." class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">City *</label>
+                            <input id="form-city" type="text" name="city" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Postal Code *</label>
+                            <input id="form-postal" type="text" name="postal_code" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold">
+                        </div>
+                    </div>
+
+                    <!-- Plan Selection Grid -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="md:col-span-1" id="plan-col">
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Desired Plan *</label>
+                            <select id="plan-select" name="plan" required class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold focus:ring-0">
+                                <option value="" disabled selected>Select a membership tier...</option>
+                                <option value="Individual Monthly">Individual Monthly ($110 + HST)</option>
+                                <option value="Individual Bi-Weekly">Individual Bi-Weekly ($90/session + HST)</option>
+                                <option value="Duo">Duo / Couples ($100/person + HST)</option>
+                                <option value="Household">Household 3+ ($90/person + HST)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Hidden Duration Field (Shows when Monthly/Duo/Household selected) -->
+                        <div id="term-container" class="term-hidden md:col-span-1">
+                            <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Commitment Term *</label>
+                            <select id="term-select" name="term_length" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold focus:ring-0">
+                                <option value="" disabled selected>Select duration...</option>
+                                <option value="3 Months">3 Months</option>
+                                <option value="6 Months">6 Months</option>
+                                <option value="12 Months">12 Months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-brand-dim uppercase font-bold mb-2">Questions or Notes</label>
+                        <textarea name="notes" rows="3" class="w-full bg-brand-black border border-brand-gold/30 rounded p-3 text-brand-light text-sm focus:border-brand-gold"></textarea>
+                    </div>
+
+                    <!-- Terms Checkbox -->
+                    <div class="flex items-start gap-3 mt-2">
+                        <input type="checkbox" id="terms-check" required class="mt-1 w-4 h-4 bg-brand-black border-brand-gold/30 rounded focus:ring-brand-gold text-brand-gold accent-brand-gold cursor-pointer">
+                        <label for="terms-check" class="text-xs text-brand-dim">
+                            I agree to the <a href="/terms" class="text-brand-gold underline hover:text-brand-light">Relax & Renew RMT Terms and Conditions</a>.
+                        </label>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full btn-filled py-4 mt-4 font-bold tracking-widest text-sm">
+                        SUBMIT APPLICATION
+                    </button>
+                    <p class="text-xs text-center text-brand-dim/40 mt-4">No payment is taken at this step.</p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-24 bg-brand-black">
+        <div class="container mx-auto px-6 max-w-3xl">
+            <h2 class="text-3xl text-center text-brand-light mb-12 font-serif">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-white/5">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('mf1')">
+                        <span class="text-brand-gold font-medium font-serif">How does the mobile service work?</span>
+                        <i id="icon-mf1" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="mf1" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light text-sm leading-relaxed">
+                            Our RMTs bring the sanctuary to you. We provide the massage table, linens, lotions, and music. You only need to provide a small, quiet space for setup.
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-white/5">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('mf2')">
+                        <span class="text-brand-gold font-medium font-serif">Do you offer Direct Billing?</span>
+                        <i id="icon-mf2" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="mf2" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light text-sm leading-relaxed">
+                            Yes, we offer direct billing for almost all insurance providers. We require your policy information at signup for automatic processing. Any co-pay not covered is charged to the credit card on file.
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-white/5">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('mf3')">
+                        <span class="text-brand-gold font-medium font-serif">Is membership required to book?</span>
+                        <i id="icon-mf3" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="mf3" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light text-sm leading-relaxed">
+                            No, membership is not required. Anyone can book individual sessions at our standard rates. The membership is simply designed for regular clients seeking the best value.
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-white/5">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('mf4')">
+                        <span class="text-brand-gold font-medium font-serif">What if I miss a month?</span>
+                        <i id="icon-mf4" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="mf4" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light text-sm leading-relaxed">
+                            Unused credits roll over automatically. Credits never expire as long as your membership is active. If you cancel, you have a 6-month grace period to use remaining credits.
+                        </div>
+                    </div>
+                </div>
+                <!-- New FAQ Item -->
+                <div class="border border-brand-gold/20 rounded-lg overflow-hidden bg-white/5">
+                    <button class="w-full text-left p-6 hover:bg-brand-gold/5 flex justify-between items-center transition-colors gap-4" onclick="toggleAccordion('mf5')">
+                        <span class="text-brand-gold font-medium font-serif">What happens after I submit my application?</span>
+                        <i id="icon-mf5" data-lucide="chevron-down" class="text-brand-gold rotate-icon flex-shrink-0"></i>
+                    </button>
+                    <div id="mf5" class="accordion-content">
+                        <div class="p-6 pt-2 text-brand-light font-light text-sm leading-relaxed">
+                            Our team will review your details and contact you to finalize your profile and secure your preferred payment method. If you are ready to book, we can schedule your first appointments immediately during this call.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER (Matching Index) -->
+    <footer class="bg-neutral-950 py-16 border-t border-brand-gold/20">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-2">
+                    <a href="index.html" class="flex items-center gap-2 mb-4"><img src="https://static.wixstatic.com/media/bf8fef_511df25fad074d79a408119293545f75~mv2.png" alt="Logo" class="h-8 w-auto"><span class="text-brand-gold tracking-widest font-bold">RELAX & RENEW</span></a>
+                    <p class="text-brand-dim/60 max-w-sm mb-6 text-sm">Professional, registered mobile massage therapy. We are a General Partnership dedicated to bringing health and wellness to your doorstep.</p>
+                    <div class="flex gap-4 text-brand-gold">
+                        <a href="https://www.facebook.com/share/1F1fYU6yrF/" target="_blank" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="facebook" class="w-4 h-4"></i></a>
+                        <a href="/cdn-cgi/l/email-protection#a6cfc8c0c9e6d4c3cac7dec7c8c2d4c3c8c3d188c5c7" class="hover:text-brand-light transition-colors bg-brand-light/5 p-2 rounded-full"><i data-lucide="mail" class="w-4 h-4"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Quick Links</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li><a href="index.html#services" class="hover:text-brand-gold transition-colors">Therapeutic Services</a></li>
+                        <li><a href="index.html#pricing" class="hover:text-brand-gold transition-colors">Pricing & Membership</a></li>
+                        <li><a href="https://relaxandrenew.noterro.com/" target="_blank" class="hover:text-brand-gold transition-colors">Book Online</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-brand-light font-bold mb-6 uppercase tracking-wider text-xs">Contact</h4>
+                    <ul class="space-y-3 text-brand-dim/60 text-sm">
+                        <li class="flex gap-3 items-center"><i data-lucide="phone" class="w-4 h-4 text-brand-gold"></i> (226) 337-9064</li>
+                        <li class="flex gap-3 items-center"><i data-lucide="mail" class="w-4 h-4 text-brand-gold"></i> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1c75727a735c6e79707d647d72786e7972796b327f7d">[email&#160;protected]</a></li>
+                        <li class="flex gap-3 items-center"><i data-lucide="map-pin" class="w-4 h-4 text-brand-gold"></i> Niagara Region, ON</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-brand-light/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-brand-dim/30">
+                <p>&copy; 2025-2026 Relax & Renew RMT. All rights reserved.</p>
+                <div class="flex gap-6 mt-4 md:mt-0"><a href="#" class="hover:text-brand-gold">Privacy Policy</a><a href="#" class="hover:text-brand-gold">Terms of Service</a></div>
+            </div>
+        </div>
+    </footer>
+
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        // ============================================================
+        // GOOGLE MAPS AUTOCOMPLETE (must be defined before API loads)
+        // ============================================================
+        function initAutocomplete() {
+            // Wait for DOM if not ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initAutocompleteInternal);
+            } else {
+                initAutocompleteInternal();
+            }
+        }
+
+        function initAutocompleteInternal() {
+            try {
+                if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                    console.warn('Google Maps API not available');
+                    return;
+                }
+
+                const addressInput = document.getElementById('autocomplete-address');
+                if (!addressInput) {
+                    console.warn('Address input not found');
+                    return;
+                }
+
+                const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                    componentRestrictions: { country: "ca" },
+                    fields: ["address_components", "formatted_address"],
+                    types: ["address"]
+                });
+
+                autocomplete.addListener("place_changed", function() {
+                    const place = autocomplete.getPlace();
+                    if (!place || !place.address_components) {
+                        console.warn('No place data');
+                        return;
+                    }
+
+                    let streetNumber = '';
+                    let route = '';
+                    let city = '';
+                    let postalCode = '';
+
+                    for (const component of place.address_components) {
+                        const type = component.types[0];
+                        
+                        if (type === 'street_number') {
+                            streetNumber = component.long_name;
+                        } else if (type === 'route') {
+                            route = component.long_name;
+                        } else if (type === 'locality') {
+                            city = component.long_name;
+                        } else if (type === 'administrative_area_level_3' && !city) {
+                            city = component.long_name;
+                        } else if (type === 'postal_code') {
+                            postalCode = component.long_name;
+                        }
+                    }
+
+                    // Format street address
+                    const street = [streetNumber, route].filter(Boolean).join(' ').trim();
+                    if (street) {
+                        addressInput.value = street;
+                    }
+
+                    // Auto-fill City and Postal Code
+                    const cityInput = document.getElementById('form-city');
+                    const postalInput = document.getElementById('form-postal');
+
+                    if (cityInput && city) {
+                        cityInput.value = city;
+                    }
+                    if (postalInput && postalCode) {
+                        postalInput.value = postalCode;
+                    }
+
+                    console.log('Address filled:', { street, city, postalCode });
+                });
+
+                console.log('Google Maps Autocomplete initialized successfully');
+            } catch (e) {
+                console.error("Google Maps Autocomplete Error:", e);
+            }
+        }
+    </script>
+
+    <!-- Google Maps Places API (loaded after initAutocomplete is defined) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAZz1rumAp-1QeQsZ70GXh3vQH3sJQjx6A&libraries=places&callback=initAutocomplete" async defer></script>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+        const N8N_WEBHOOK_URL = "https://primary-production-efcf.up.railway.app/webhook/membership";
+
+        // Stripe Price ID Mapping (must match workflow allowlist)
+        const PRICE_MAP = {
+            "Individual Monthly": {
+                3:  "price_1Sudgq2atTjzVbCkcT2cTgGB",
+                6:  "price_1SudnS2atTjzVbCkkucVZf58",
+                12: "price_1SudpX2atTjzVbCkAGk7dwZl",
+                plan_key: "IND_MO"
+            },
+            "Individual Bi-Weekly": {
+                0: "price_1Sue1A2atTjzVbCkBiEmJZA5",
+                plan_key: "IND_BW"
+            },
+            "Duo": {
+                3:  "price_1SuePp2atTjzVbCkZqKR2PtM",
+                6:  "price_1SueWy2atTjzVbCkBP5wG8TN",
+                12: "price_1SueZ42atTjzVbCkvHYExS5w",
+                plan_key: "DUO"
+            },
+            "Household": {
+                3:  "price_1SugfA2atTjzVbCk7RnUKQCJ",
+                6:  "price_1Sugka2atTjzVbCkByf7sDj0",
+                12: "price_1Sugv52atTjzVbCkMa66Y2GJ",
+                plan_key: "GRP"
+            }
+        };
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Init Lucide Icons
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Handle status banners from Stripe redirects
+            handleMembershipStatus();
+
+            // Setup mobile menu
+            setupMobileMenu();
+
+            // Setup FAQ accordions
+            setupAccordions();
+
+            // Setup phone formatting
+            setupPhoneFormatting();
+
+            // Setup plan selection logic
+            setupPlanSelection();
+
+            // Setup form submission
+            setupFormSubmission();
+
+            // Setup mobile carousels
+            setupMobileCarousels();
+        });
+
+        // ============================================================
+        // MOBILE CAROUSELS
+        // ============================================================
+        function setupMobileCarousels() {
+            // Only run on mobile
+            if (window.innerWidth >= 768) return;
+
+            const carousels = [
+                { id: 1, current: 0, total: 2, autoScrollInterval: null },
+                { id: 2, current: 0, total: 2, autoScrollInterval: null }
+            ];
+
+            carousels.forEach(carousel => {
+                const track = document.getElementById(`carousel-${carousel.id}`);
+                const dotsContainer = document.getElementById(`dots-${carousel.id}`);
+                
+                if (!track) return;
+
+                // Calculate card width (85% + 5% margins = 90% per card)
+                const cardWidth = 90;
+
+                function goToSlide(index) {
+                    if (index < 0) index = carousel.total - 1;
+                    if (index >= carousel.total) index = 0;
+                    
+                    carousel.current = index;
+                    const offset = index * cardWidth;
+                    track.style.transform = `translateX(-${offset}%)`;
+
+                    // Update dots
+                    if (dotsContainer) {
+                        dotsContainer.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                            dot.classList.toggle('active', i === index);
+                        });
+                    }
+
+                    // Update nav button states
+                    const prevBtn = document.querySelector(`.carousel-nav.prev[data-carousel="${carousel.id}"]`);
+                    const nextBtn = document.querySelector(`.carousel-nav.next[data-carousel="${carousel.id}"]`);
+                    if (prevBtn) prevBtn.disabled = false; // Always enabled for wrap-around
+                    if (nextBtn) nextBtn.disabled = false;
+                }
+
+                function nextSlide() {
+                    goToSlide(carousel.current + 1);
+                }
+
+                function prevSlide() {
+                    goToSlide(carousel.current - 1);
+                }
+
+                // Auto-scroll every 5 seconds
+                function startAutoScroll() {
+                    stopAutoScroll();
+                    carousel.autoScrollInterval = setInterval(nextSlide, 5000);
+                }
+
+                function stopAutoScroll() {
+                    if (carousel.autoScrollInterval) {
+                        clearInterval(carousel.autoScrollInterval);
+                        carousel.autoScrollInterval = null;
+                    }
+                }
+
+                // Nav button clicks
+                document.querySelectorAll(`.carousel-nav[data-carousel="${carousel.id}"]`).forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        stopAutoScroll();
+                        if (btn.dataset.dir === 'next') {
+                            nextSlide();
+                        } else {
+                            prevSlide();
+                        }
+                        // Restart auto-scroll after user interaction
+                        setTimeout(startAutoScroll, 8000);
+                    });
+                });
+
+                // Dot clicks
+                if (dotsContainer) {
+                    dotsContainer.querySelectorAll('.carousel-dot').forEach(dot => {
+                        dot.addEventListener('click', () => {
+                            stopAutoScroll();
+                            goToSlide(parseInt(dot.dataset.index, 10));
+                            setTimeout(startAutoScroll, 8000);
+                        });
+                    });
+                }
+
+                // Touch/swipe support
+                let touchStartX = 0;
+                let touchEndX = 0;
+
+                track.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    stopAutoScroll();
+                }, { passive: true });
+
+                track.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const diff = touchStartX - touchEndX;
+                    
+                    if (Math.abs(diff) > 50) { // Minimum swipe distance
+                        if (diff > 0) {
+                            nextSlide(); // Swipe left = next
+                        } else {
+                            prevSlide(); // Swipe right = prev
+                        }
+                    }
+                    setTimeout(startAutoScroll, 8000);
+                }, { passive: true });
+
+                // Initialize
+                goToSlide(0);
+                startAutoScroll();
+            });
+
+            // Reinitialize Lucide icons for carousel cards
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 100);
+            }
+        }
+
+        // Re-setup carousels on resize (in case switching between mobile/desktop)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (window.innerWidth < 768) {
+                    setupMobileCarousels();
+                }
+            }, 250);
+        });
+
+        // ============================================================
+        // STATUS BANNERS (Success/Cancel from Stripe)
+        // ============================================================
+        function handleMembershipStatus() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const status = (params.get('status') || '').toLowerCase();
+
+                const panels = document.getElementById('status-panels');
+                const success = document.getElementById('status-success');
+                const cancel = document.getElementById('status-cancel');
+
+                if (!panels || !success || !cancel) return;
+
+                if (status === 'success') {
+                    panels.classList.remove('hidden');
+                    success.classList.remove('hidden');
+                    cancel.classList.add('hidden');
+
+                    const plansSection = document.getElementById('plans');
+                    const signupSection = document.getElementById('signup-form');
+                    if (plansSection) plansSection.classList.add('hidden');
+                    if (signupSection) signupSection.classList.add('hidden');
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (status === 'cancel') {
+                    panels.classList.remove('hidden');
+                    cancel.classList.remove('hidden');
+                    success.classList.add('hidden');
+
+                    const signupSection = document.getElementById('signup-form');
+                    if (signupSection) signupSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } catch (e) {
+                console.warn('Status handling error:', e);
+            }
+        }
+
+        function clearStatusParam() {
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('status');
+                window.history.replaceState({}, document.title, url.pathname + url.hash);
+            } catch (e) {}
+        }
+
+        // ============================================================
+        // MOBILE MENU
+        // ============================================================
+        function setupMobileMenu() {
+            const menuBtn = document.getElementById('menu-btn');
+            const mobMenu = document.getElementById('mob-menu');
+            const closeBtn = document.getElementById('close-btn');
+            const menuLinks = document.querySelectorAll('.toggle-menu-link');
+
+            if (menuBtn && mobMenu) {
+                function openMenu() {
+                    mobMenu.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+                }
+                function closeMenu() {
+                    mobMenu.classList.remove('open');
+                    document.body.style.overflow = '';
+                }
+
+                menuBtn.addEventListener('click', openMenu);
+                if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+                menuLinks.forEach(link => link.addEventListener('click', closeMenu));
+            }
+        }
+
+        // ============================================================
+        // FAQ ACCORDION (FIXED)
+        // ============================================================
+        function setupAccordions() {
+            // Find all accordion buttons and bind click events
+            const accordionButtons = document.querySelectorAll('button[onclick*="toggleAccordion"]');
+            
+            accordionButtons.forEach(btn => {
+                // Extract the accordion ID from the onclick attribute
+                const onclickAttr = btn.getAttribute('onclick') || '';
+                const match = onclickAttr.match(/toggleAccordion\(['"]([^'"]+)['"]\)/);
+                
+                if (match) {
+                    const accordionId = match[1];
+                    
+                    // Remove inline onclick and add proper event listener
+                    btn.removeAttribute('onclick');
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toggleAccordion(accordionId);
+                    });
+                }
+            });
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (!content) return;
+
+            const isOpen = content.classList.contains('active');
+
+            // Close all accordions first
+            document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.rotate-icon').forEach(el => el.classList.remove('active'));
+
+            // Toggle the selected one
+            if (!isOpen) {
+                content.classList.add('active');
+                if (icon) icon.classList.add('active');
+            }
+        }
+
+        // ============================================================
+        // PHONE FORMATTING (Force Mask: (xxx) xxx-xxxx)
+        // ============================================================
+        function setupPhoneFormatting() {
+            const phoneInput = document.getElementById('phone-input');
+            if (!phoneInput) return;
+
+            const formatPhone = (value) => {
+                const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+                const a = digits.slice(0, 3);
+                const b = digits.slice(3, 6);
+                const c = digits.slice(6, 10);
+                
+                if (digits.length === 0) return '';
+                if (digits.length <= 3) return `(${a}`;
+                if (digits.length <= 6) return `(${a}) ${b}`;
+                return `(${a}) ${b}-${c}`;
+            };
+
+            phoneInput.addEventListener('input', (e) => {
+                const cursorPos = e.target.selectionStart;
+                const oldVal = e.target.value;
+                const newVal = formatPhone(oldVal);
+                e.target.value = newVal;
+            });
+
+            phoneInput.addEventListener('keydown', (e) => {
+                const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                if (allowed.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
+                if (!/\d/.test(e.key)) e.preventDefault();
+            });
+
+            phoneInput.addEventListener('blur', (e) => {
+                e.target.value = formatPhone(e.target.value);
+            });
+
+            phoneInput.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                e.target.value = formatPhone(paste);
+            });
+        }
+
+        // ============================================================
+        // PLAN SELECTION LOGIC
+        // ============================================================
+        function setupPlanSelection() {
+            const planSelect = document.getElementById('plan-select');
+            const termContainer = document.getElementById('term-container');
+            const termSelect = document.getElementById('term-select');
+            const planCol = document.getElementById('plan-col');
+
+            if (!planSelect) return;
+
+            // Listen for plan changes
+            planSelect.addEventListener('change', () => toggleTermSelect(planSelect, termContainer, termSelect, planCol));
+
+            // Bind "Select Plan" buttons from pricing cards
+            document.querySelectorAll('a[onclick*="selectPlan"]').forEach(btn => {
+                const onclickAttr = btn.getAttribute('onclick') || '';
+                const match = onclickAttr.match(/selectPlan\(['"]([^'"]+)['"]\)/);
+                
+                if (match) {
+                    const planName = match[1];
+                    
+                    btn.removeAttribute('onclick');
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        selectPlan(planName);
+                        
+                        // Scroll to the form
+                        const signupForm = document.getElementById('signup-form');
+                        if (signupForm) {
+                            signupForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    });
+                }
+            });
+        }
+
+        function toggleTermSelect(planSelect, termContainer, termSelect, planCol) {
+            if (!planSelect || !termContainer || !termSelect) return;
+
+            const selectedPlan = planSelect.value;
+            const plansWithTerms = ["Individual Monthly", "Duo", "Household"];
+
+            if (plansWithTerms.includes(selectedPlan)) {
+                // Show Term Select
+                termContainer.classList.remove('term-hidden');
+                termContainer.classList.add('term-visible');
+                termSelect.setAttribute('required', 'true');
+                
+                if (planCol) {
+                    planCol.classList.remove('md:col-span-2');
+                    planCol.classList.add('md:col-span-1');
+                }
+            } else {
+                // Hide Term Select (Bi-Weekly or empty)
+                termContainer.classList.remove('term-visible');
+                termContainer.classList.add('term-hidden');
+                termSelect.removeAttribute('required');
+                termSelect.value = "";
+            }
+        }
+
+        function selectPlan(planName) {
+            const planSelect = document.getElementById('plan-select');
+            const termContainer = document.getElementById('term-container');
+            const termSelect = document.getElementById('term-select');
+            const planCol = document.getElementById('plan-col');
+
+            if (planSelect) {
+                planSelect.value = planName;
+                toggleTermSelect(planSelect, termContainer, termSelect, planCol);
+            }
+        }
+
+        // ============================================================
+        // FORM SUBMISSION (Stripe Redirect)
+        // ============================================================
+        function setupFormSubmission() {
+            const form = document.getElementById('membership-form');
+            if (!form) return;
+
+            // Remove inline onsubmit and use event listener
+            form.removeAttribute('onsubmit');
+            form.addEventListener('submit', handleMembershipSubmit);
+        }
+
+        async function handleMembershipSubmit(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('submit-btn');
+            if (!btn) return;
+
+            const originalText = btn.innerHTML;
+
+            // Show loading state
+            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin inline mr-2 w-4 h-4"></i> Redirecting to Checkout...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            try {
+                const formData = new FormData(event.target);
+                const data = Object.fromEntries(formData.entries());
+
+                const email = String(data.email || '').trim().toLowerCase();
+                if (!email || !email.includes('@')) {
+                    throw new Error('Valid email required.');
+                }
+
+                const selectedPlan = String(data.plan || '').trim();
+                const selectedTerm = String(data.term_length || '').trim();
+
+                // Build payload based on plan type
+                const planConfig = PRICE_MAP[selectedPlan];
+                if (!planConfig) {
+                    throw new Error('Please select a valid membership plan.');
+                }
+
+                let termMonths = 0;
+                let stripePriceId = '';
+
+                if (selectedPlan === 'Individual Bi-Weekly') {
+                    // Bi-Weekly has no term selection
+                    termMonths = 0;
+                    stripePriceId = planConfig[0];
+                } else {
+                    // Monthly, Duo, Household require term selection
+                    if (!selectedTerm) {
+                        throw new Error('Please select a commitment term.');
+                    }
+                    
+                    const termMatch = selectedTerm.match(/(\d+)/);
+                    termMonths = termMatch ? parseInt(termMatch[1], 10) : 0;
+                    
+                    if (!termMonths || !planConfig[termMonths]) {
+                        throw new Error('Invalid term selection.');
+                    }
+                    
+                    stripePriceId = planConfig[termMonths];
+                }
+
+                // Determine seat count
+                let seatCount = 1;
+                if (planConfig.plan_key === 'DUO') seatCount = 2;
+                if (planConfig.plan_key === 'GRP') seatCount = 3; // Minimum 3 for household
+
+                const payload = {
+                    email: email,
+                    plan_key: planConfig.plan_key,
+                    term_months: termMonths,
+                    stripe_price_id: stripePriceId,
+                    seat_count: seatCount,
+                    // Include additional info for records
+                    first_name: data.first_name || '',
+                    last_name: data.last_name || '',
+                    phone: data.phone || '',
+                    address: data.address || '',
+                    city: data.city || '',
+                    postal_code: data.postal_code || '',
+                    notes: data.notes || ''
+                };
+
+                console.log('Sending payload:', payload);
+
+                const res = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text().catch(() => '');
+                    throw new Error(`Request failed (${res.status}). ${txt}`);
+                }
+
+                let result = {};
+                try {
+                    result = await res.json();
+                } catch (e) {
+                    result = {};
+                }
+
+                const checkoutUrl = result && typeof result.url === 'string' ? result.url : '';
+
+                if (checkoutUrl && checkoutUrl.startsWith('http')) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = checkoutUrl;
+                    return;
+                }
+
+                // Fallback if no URL returned
+                throw new Error('No checkout URL returned from server.');
+
+            } catch (error) {
+                console.error('Submission error:', error);
+                
+                btn.innerHTML = '<i data-lucide="alert-circle" class="inline mr-2 w-4 h-4"></i> ' + (error.message || 'Error. Please try again.');
+                btn.classList.remove('btn-filled');
+                btn.classList.add('bg-red-600', 'text-white', 'border-red-600');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-70', 'cursor-not-allowed', 'bg-red-600', 'text-white', 'border-red-600');
+                    btn.classList.add('btn-filled');
+                }, 3000);
+            }
+        }
+    </script>
 </body>
 </html>
