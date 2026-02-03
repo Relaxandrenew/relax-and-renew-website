@@ -982,6 +982,89 @@
 
     }
 
+    /* ========== PORTAL MOBILE PROGRESS FOOTER (EXPANDING DRAWER) ========== */
+    @media (max-width: 767px) {
+      /* Hide the old mobile times overlay on rebook tab - we use the new footer drawer instead */
+      #mobile-times-overlay { display: none !important; }
+      
+      /* Expanding Footer States */
+      #portal-mobile-footer {
+        transition: max-height 0.25s ease-out, box-shadow 0.25s ease-out;
+        height: auto;
+        max-height: 95px;
+        overflow: hidden;
+        z-index: 60;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+        will-change: max-height;
+      }
+      
+      #portal-mobile-footer.expanded {
+        max-height: 70vh;
+        box-shadow: 0 -8px 32px rgba(224, 197, 132, 0.25);
+        background: rgba(5, 5, 5, 0.98);
+        border-width: 2px;
+      }
+      
+      #portal-footer-collapsed,
+      #portal-footer-expanded {
+        transition: opacity 0.2s ease-out;
+      }
+      
+      #portal-footer-collapsed {
+        display: block;
+      }
+      
+      #portal-footer-expanded {
+        display: none;
+        opacity: 0;
+      }
+      
+      #portal-mobile-footer.expanded #portal-footer-collapsed {
+        display: none;
+      }
+      
+      #portal-mobile-footer.expanded #portal-footer-expanded {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        opacity: 1;
+      }
+      
+      .portal-footer-step.active .step-circle-mini {
+        background: #E0C584;
+        color: #000;
+        border-color: #E0C584;
+        box-shadow: 0 0 12px rgba(224, 197, 132, 0.4);
+      }
+      .portal-footer-step.active .step-label {
+        color: rgba(224, 197, 132, 0.9);
+      }
+      .portal-footer-step.completed .step-circle-mini {
+        background: rgba(224, 197, 132, 0.3);
+        border-color: #E0C584;
+      }
+      .portal-footer-step.completed .step-label {
+        color: rgba(224, 197, 132, 0.7);
+      }
+      
+      /* Time slots grid in portal footer */
+      #portal-time-slots-container .time-slot-btn {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+      
+      /* Spacer for mobile footer */
+      #tab-rebook .portal-mobile-spacer {
+        height: 110px;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      #portal-mobile-footer { display: none !important; }
+      #tab-rebook .portal-mobile-spacer { display: none; }
+    }
+
 
     /* RNR: smaller/thinner Auth0 buttons (requested) */
     #auth0-lock-container .auth0-lock button.auth0-lock-submit,
@@ -1629,6 +1712,340 @@ function mobileConfirmBooking() {
         showToast('Select a time', 'Please select a time first.', true, 4500);
       }
     }
+
+    // ========== PORTAL MOBILE FOOTER DRAWER SYSTEM ==========
+    
+    function isPortalMobileFooterExpanded() {
+      const footer = document.getElementById('portal-mobile-footer');
+      return footer && footer.classList.contains('expanded');
+    }
+    
+    function expandPortalMobileFooter(dateStr) {
+      if (!isMobileUI()) return;
+      
+      const footer = document.getElementById('portal-mobile-footer');
+      const dateLabel = document.getElementById('portal-footer-date-label');
+      const slotsGrid = document.getElementById('portal-time-slots-grid');
+      const noSlots = document.getElementById('portal-no-slots');
+      
+      if (!footer) return;
+      
+      // Update date label
+      if (dateStr && dateLabel) {
+        dateLabel.textContent = formatDatePretty(dateStr);
+      }
+      
+      // Render time slots in the footer
+      renderPortalFooterTimeSlots(dateStr);
+      
+      // Expand the footer
+      footer.classList.add('expanded');
+      
+      // Hide continue button initially
+      const continueWrapper = document.getElementById('portal-continue-wrapper');
+      if (continueWrapper) continueWrapper.classList.add('hidden');
+      
+      // Update day navigation button states
+      updatePortalDayNavButtons();
+      
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    
+    function collapsePortalMobileFooter() {
+      const footer = document.getElementById('portal-mobile-footer');
+      if (footer) {
+        footer.classList.remove('expanded');
+      }
+      
+      // Hide continue button
+      const continueWrapper = document.getElementById('portal-continue-wrapper');
+      if (continueWrapper) continueWrapper.classList.add('hidden');
+      
+      // Restore body scroll
+      document.body.style.overflow = '';
+    }
+    
+    function renderPortalFooterTimeSlots(dateStr) {
+      const grid = document.getElementById('portal-time-slots-grid');
+      const noSlotsEl = document.getElementById('portal-no-slots');
+      
+      if (!grid) return;
+      grid.innerHTML = '';
+      
+      const key = (typeof normalizeDateKey === 'function' ? (normalizeDateKey(dateStr) || dateStr) : dateStr);
+      const slots = availabilityByDate[key] || [];
+      const usable = Array.isArray(slots) ? slots : [];
+      
+      // Filter to visible window
+      const filtered = usable.filter(s => slotPassesUiWindow(key, s));
+      
+      if (!filtered.length) {
+        if (noSlotsEl) noSlotsEl.classList.remove('hidden');
+        return;
+      }
+      
+      if (noSlotsEl) noSlotsEl.classList.add('hidden');
+      
+      // Sort by time
+      filtered.sort((a,b) => {
+        const am = getTorontoMinutesFromSlot(a);
+        const bm = getTorontoMinutesFromSlot(b);
+        return (am || 0) - (bm || 0);
+      });
+      
+      filtered.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'time-slot-btn rounded-lg border py-2 px-1 text-center';
+        btn.setAttribute('data-slot-id', String(slot.start || slot.label || ''));
+        
+        try { btn.setAttribute('data-slot-raw', JSON.stringify(slot)); } catch(e) {}
+        
+        const parts = formatTimeLabelCompactParts(slot);
+        btn.innerHTML = `<span class="time-main text-sm font-bold">${parts.time}</span>` + 
+                        (parts.ampm ? `<span class="time-ampm text-[0.6rem] uppercase ml-0.5 opacity-70">${parts.ampm}</span>` : '');
+        
+        if (isSlotAvailable(slot)) {
+          btn.classList.add('border-brand-gold/30', 'bg-black/40', 'text-brand-light', 'hover:bg-brand-gold/15', 'hover:border-brand-gold');
+          btn.addEventListener('click', () => {
+            // Deselect other slots
+            grid.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('time-slot-selected'));
+            btn.classList.add('time-slot-selected');
+            
+            // Set selected slot
+            selectedSlot = slot;
+            setConfirmEnabled(true);
+            updateSummary();
+            savePortalState();
+            
+            // Show continue button
+            const continueWrapper = document.getElementById('portal-continue-wrapper');
+            if (continueWrapper) continueWrapper.classList.remove('hidden');
+          });
+        } else {
+          btn.disabled = true;
+          btn.classList.add('time-slot-unavailable', 'border-white/10', 'bg-white/5', 'text-white/30', 'cursor-not-allowed');
+        }
+        
+        grid.appendChild(btn);
+      });
+      
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    
+    function navigatePortalDay(direction) {
+      if (!selectedDateStr) return;
+      
+      const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+      let currentDate = new Date(yy, mm - 1, dd);
+      const today = new Date(); today.setHours(0,0,0,0);
+      
+      let attempts = 0;
+      const maxAttempts = 60;
+      
+      while (attempts < maxAttempts) {
+        currentDate.setDate(currentDate.getDate() + direction);
+        attempts++;
+        
+        if (currentDate < today) continue;
+        
+        const testDateStr = toDateStr(currentDate);
+        const slots = availabilityByDate[testDateStr] || [];
+        const hasAvailable = Array.isArray(slots) && slots.some(s => isSlotAvailable(s) && slotPassesUiWindow(testDateStr, s));
+        
+        if (hasAvailable) {
+          selectedDateStr = testDateStr;
+          selectedSlot = null;
+          setConfirmEnabled(false);
+          
+          // Update calendar month if needed
+          if (currentDate.getMonth() !== calendarCurrent.getMonth() || 
+              currentDate.getFullYear() !== calendarCurrent.getFullYear()) {
+            calendarCurrent = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+          }
+          
+          renderCalendar();
+          renderPortalFooterTimeSlots(testDateStr);
+          
+          const dateLabel = document.getElementById('portal-footer-date-label');
+          if (dateLabel) dateLabel.textContent = formatDatePretty(testDateStr);
+          
+          updatePortalDayNavButtons();
+          updateSummary();
+          savePortalState();
+          
+          // Hide continue button since slot is deselected
+          const continueWrapper = document.getElementById('portal-continue-wrapper');
+          if (continueWrapper) continueWrapper.classList.add('hidden');
+          
+          return;
+        }
+      }
+    }
+    
+    function updatePortalDayNavButtons() {
+      const prevBtn = document.getElementById('portal-prev-day-btn');
+      const nextBtn = document.getElementById('portal-next-day-btn');
+      if (!prevBtn || !nextBtn || !selectedDateStr) return;
+      
+      const [yy, mm, dd] = selectedDateStr.split('-').map(Number);
+      const currentDate = new Date(yy, mm - 1, dd);
+      const today = new Date(); today.setHours(0,0,0,0);
+      
+      // Check for previous available day
+      let hasPrev = false;
+      let testDate = new Date(currentDate);
+      for (let i = 0; i < 60; i++) {
+        testDate.setDate(testDate.getDate() - 1);
+        if (testDate < today) break;
+        const testStr = toDateStr(testDate);
+        const slots = availabilityByDate[testStr] || [];
+        if (Array.isArray(slots) && slots.some(s => isSlotAvailable(s) && slotPassesUiWindow(testStr, s))) {
+          hasPrev = true;
+          break;
+        }
+      }
+      
+      // Check for next available day
+      let hasNext = false;
+      testDate = new Date(currentDate);
+      for (let i = 0; i < 60; i++) {
+        testDate.setDate(testDate.getDate() + 1);
+        const testStr = toDateStr(testDate);
+        const slots = availabilityByDate[testStr] || [];
+        if (Array.isArray(slots) && slots.some(s => isSlotAvailable(s) && slotPassesUiWindow(testStr, s))) {
+          hasNext = true;
+          break;
+        }
+      }
+      
+      prevBtn.disabled = !hasPrev;
+      nextBtn.disabled = !hasNext;
+    }
+    
+    function openPortalConfirmDrawer() {
+      const drawer = document.getElementById('portal-confirm-drawer');
+      if (!drawer) return;
+      
+      // Populate confirmation details
+      const treat = TREATMENT_RULES[selectedServiceKey];
+      document.getElementById('portal-confirm-treatment').textContent = treat ? treat.label : '—';
+      document.getElementById('portal-confirm-duration').textContent = selectedStandardDuration ? `${selectedStandardDuration} minutes` : '—';
+      
+      if (selectedDateStr && selectedSlot) {
+        const dateLabel = formatDatePretty(selectedDateStr);
+        const timeLabel = formatTimeLabel(selectedSlot);
+        document.getElementById('portal-confirm-datetime').textContent = `${dateLabel} at ${timeLabel}`;
+      }
+      
+      const driveTime = selectedSlot?.driveTimeMinutes || 0;
+      const fee = calcTravelFee(driveTime);
+      document.getElementById('portal-confirm-fee').textContent = fee > 0 ? `$${fee.toFixed(2)}` : '$0.00';
+      
+      // Client info from portal profile
+      if (portalProfile) {
+        document.getElementById('portal-confirm-client').textContent = `${portalProfile.firstName || ''} ${portalProfile.lastName || ''}`.trim() || '—';
+        document.getElementById('portal-confirm-address').textContent = portalProfile.address || '—';
+      }
+      
+      drawer.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    
+    function closePortalConfirmDrawer(goBack = false) {
+      const drawer = document.getElementById('portal-confirm-drawer');
+      if (drawer) drawer.classList.add('hidden');
+      
+      if (goBack) {
+        // Re-expand the footer
+        expandPortalMobileFooter(selectedDateStr);
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+    
+    async function portalFinalConfirm() {
+      // This calls the existing confirmBooking function
+      closePortalConfirmDrawer(false);
+      collapsePortalMobileFooter();
+      await confirmBooking();
+    }
+    
+    function updatePortalMobileSummary() {
+      const label = document.getElementById('portal-mobile-summary-label');
+      if (!label) return;
+      
+      const treat = TREATMENT_RULES[selectedServiceKey];
+      
+      if (treat && selectedStandardDuration) {
+        label.textContent = `${treat.label} (${selectedStandardDuration} min)`;
+      } else if (treat) {
+        label.textContent = treat.label;
+      } else {
+        label.textContent = 'Select treatment & date';
+      }
+    }
+    
+    function updatePortalFooterProgress(step) {
+      const steps = document.querySelectorAll('.portal-footer-step');
+      steps.forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.remove('active', 'completed');
+        if (s < step) el.classList.add('completed');
+        else if (s === step) el.classList.add('active');
+      });
+    }
+    
+    // Initialize portal mobile footer event listeners
+    function initPortalMobileFooter() {
+      const collapseBtn = document.getElementById('portal-footer-collapse-btn');
+      if (collapseBtn) {
+        collapseBtn.addEventListener('click', collapsePortalMobileFooter);
+      }
+      
+      const prevDayBtn = document.getElementById('portal-prev-day-btn');
+      if (prevDayBtn) {
+        prevDayBtn.addEventListener('click', () => navigatePortalDay(-1));
+      }
+      
+      const nextDayBtn = document.getElementById('portal-next-day-btn');
+      if (nextDayBtn) {
+        nextDayBtn.addEventListener('click', () => navigatePortalDay(1));
+      }
+      
+      const continueBtn = document.getElementById('portal-continue-btn');
+      if (continueBtn) {
+        continueBtn.addEventListener('click', () => {
+          collapsePortalMobileFooter();
+          openPortalConfirmDrawer();
+        });
+      }
+      
+      const confirmBackBtn = document.getElementById('portal-confirm-back-btn');
+      if (confirmBackBtn) {
+        confirmBackBtn.addEventListener('click', () => closePortalConfirmDrawer(true));
+      }
+      
+      const finalConfirmBtn = document.getElementById('portal-final-confirm-btn');
+      if (finalConfirmBtn) {
+        finalConfirmBtn.addEventListener('click', portalFinalConfirm);
+      }
+    }
+    
+    // Expose functions
+    window.expandPortalMobileFooter = expandPortalMobileFooter;
+    window.collapsePortalMobileFooter = collapsePortalMobileFooter;
+    window.openPortalConfirmDrawer = openPortalConfirmDrawer;
+    window.closePortalConfirmDrawer = closePortalConfirmDrawer;
+    window.portalFinalConfirm = portalFinalConfirm;
+    window.initPortalMobileFooter = initPortalMobileFooter;
+    
+    // ========== END PORTAL MOBILE FOOTER ==========
 
     // Expose for inline onclick handlers
 
@@ -2535,6 +2952,9 @@ function mobileConfirmBooking() {
                 </div>
               </div>
             </div>
+            
+            <!-- Spacer for mobile footer -->
+            <div class="portal-mobile-spacer md:hidden"></div>
           </div>
 
           <!-- Membership -->
@@ -2871,8 +3291,174 @@ function mobileConfirmBooking() {
     </div>
   </main>
 
+  <!-- PORTAL MOBILE PROGRESS FOOTER (EXPANDING DRAWER) -->
+  <div id="portal-mobile-footer" class="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-t from-brand-black via-brand-dark to-transparent backdrop-blur-md border-t border-brand-gold/20 z-50">
+    
+    <!-- COLLAPSED STATE (default) -->
+    <div id="portal-footer-collapsed" class="px-3 py-2">
+      <!-- Selection Summary (compact) -->
+      <div id="portal-selection-summary" class="mb-1 pb-1 border-b border-brand-gold/10">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <i data-lucide="calendar-check" class="w-3 h-3 text-brand-gold flex-shrink-0"></i>
+            <div class="text-[0.65rem] text-brand-light/90 font-medium truncate" id="portal-mobile-summary-label">Select treatment & date</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Progress Steps (compact) -->
+      <div class="flex items-center justify-between max-w-xs mx-auto py-1">
+        <div class="portal-footer-step flex-1" data-step="1">
+          <div class="flex flex-col items-center">
+            <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">1</div>
+            <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Treatment</div>
+          </div>
+        </div>
+        <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
+        <div class="portal-footer-step flex-1" data-step="2">
+          <div class="flex flex-col items-center">
+            <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">2</div>
+            <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Date/Time</div>
+          </div>
+        </div>
+        <div class="flex-shrink-0 w-5 h-0.5 bg-brand-gold/20 -mx-1"></div>
+        <div class="portal-footer-step flex-1" data-step="3">
+          <div class="flex flex-col items-center">
+            <div class="step-circle-mini w-6 h-6 rounded-full border-2 border-brand-gold/30 flex items-center justify-center text-[0.65rem] font-bold mb-0.5 transition-all">3</div>
+            <div class="step-label text-[0.5rem] text-brand-dim/60 font-medium">Confirm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- EXPANDED STATE (time slots) -->
+    <div id="portal-footer-expanded" class="flex flex-col h-full">
+      <!-- Header with back button and day navigation -->
+      <div class="px-3 pt-3 pb-2 border-b border-brand-gold/20 flex-shrink-0">
+        <div class="flex items-center justify-between mb-2">
+          <button id="portal-footer-collapse-btn" class="flex items-center gap-1.5 text-brand-gold hover:text-brand-light hover:shadow-[0_0_12px_rgba(224,197,132,0.3)] hover:-translate-y-0.5 transition-all duration-200 px-2 py-1 rounded border border-transparent hover:border-brand-gold/30">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span class="text-xs font-bold uppercase tracking-wider">Back to calendar</span>
+          </button>
+          <!-- Day navigation with arrows -->
+          <div class="flex items-center gap-2">
+            <button id="portal-prev-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+              <i data-lucide="chevron-left" class="w-4 h-4 text-brand-gold"></i>
+            </button>
+            <div class="text-xs text-brand-light font-semibold min-w-[100px] text-center" id="portal-footer-date-label">Select a time</div>
+            <button id="portal-next-day-btn" class="p-1.5 rounded border border-brand-gold/30 hover:bg-brand-gold/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+              <i data-lucide="chevron-right" class="w-4 h-4 text-brand-gold"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Integrated mini stepper in expanded view -->
+        <div class="flex items-center justify-center gap-3 py-1">
+          <div class="flex items-center gap-1.5">
+            <div class="w-5 h-5 rounded-full bg-brand-gold/30 border border-brand-gold flex items-center justify-center text-[0.6rem] font-bold text-brand-gold">✓</div>
+            <span class="text-[0.6rem] text-brand-gold/70 uppercase tracking-wider">Treatment</span>
+          </div>
+          <div class="w-4 h-px bg-brand-gold/30"></div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-5 h-5 rounded-full bg-brand-gold border border-brand-gold flex items-center justify-center text-[0.6rem] font-bold text-black">2</div>
+            <span class="text-[0.6rem] text-brand-gold uppercase tracking-wider font-semibold">Time</span>
+          </div>
+          <div class="w-4 h-px bg-brand-gold/20"></div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-5 h-5 rounded-full border border-brand-gold/30 flex items-center justify-center text-[0.6rem] font-bold text-brand-dim/50">3</div>
+            <span class="text-[0.6rem] text-brand-dim/50 uppercase tracking-wider">Confirm</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Time slots container (scrollable) -->
+      <div id="portal-time-slots-container" class="flex-1 overflow-y-auto px-3 py-3">
+        <div id="portal-time-slots-grid" class="grid grid-cols-4 gap-2">
+          <!-- Time slots will be injected here -->
+        </div>
+        <div id="portal-no-slots" class="hidden text-center py-6">
+          <i data-lucide="calendar-x" class="w-8 h-8 text-brand-dim/40 mx-auto mb-2"></i>
+          <p class="text-brand-dim/60 text-sm">No slots available for this day</p>
+        </div>
+      </div>
+      
+      <!-- Fixed Continue Button at bottom -->
+      <div id="portal-continue-wrapper" class="px-3 py-3 border-t border-brand-gold/20 bg-brand-black/95 flex-shrink-0 hidden">
+        <button id="portal-continue-btn" type="button" class="btn-filled w-full text-center py-3">
+          <span>Continue to Confirm</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
-  <!-- Mobile Time Picker Overlay (mobile only) -->
+  <!-- PORTAL MOBILE CONFIRMATION DRAWER -->
+  <div id="portal-confirm-drawer" class="md:hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[70] hidden">
+    <div class="absolute bottom-0 left-0 right-0 bg-brand-black border-t-2 border-brand-gold/30 rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <!-- Header -->
+      <div class="px-4 pt-4 pb-3 border-b border-brand-gold/20 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <button id="portal-confirm-back-btn" class="flex items-center gap-1.5 text-brand-gold hover:text-brand-light transition-all px-2 py-1">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span class="text-xs font-bold uppercase tracking-wider">Back</span>
+          </button>
+          <div class="font-serif text-lg text-brand-light">Confirm Booking</div>
+          <div class="w-16"></div>
+        </div>
+      </div>
+      
+      <!-- Confirmation Content (scrollable) -->
+      <div class="flex-1 overflow-y-auto px-4 py-4">
+        <!-- Booking Summary -->
+        <div class="portal-confirm-summary mb-4">
+          <div class="summary-row">
+            <span class="summary-label">Treatment</span>
+            <span class="summary-value" id="portal-confirm-treatment">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Date & Time</span>
+            <span class="summary-value" id="portal-confirm-datetime">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Duration</span>
+            <span class="summary-value" id="portal-confirm-duration">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Travel Fee</span>
+            <span class="summary-value text-brand-gold" id="portal-confirm-fee">$0.00</span>
+          </div>
+        </div>
+        
+        <!-- Client Info (from profile) -->
+        <div class="bg-white/5 rounded-lg border border-brand-gold/10 p-3 mb-4">
+          <div class="text-[0.65rem] uppercase tracking-wider text-brand-gold/60 mb-2">Your Information</div>
+          <div class="font-serif text-brand-light" id="portal-confirm-client">—</div>
+          <div class="text-xs text-brand-dim/70 mt-1" id="portal-confirm-address">—</div>
+        </div>
+        
+        <!-- Therapist Info -->
+        <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-brand-gold/10">
+          <img src="https://static.wixstatic.com/media/bf8fef_1f7ca3e3f4ed4260a2af32f574055d39~mv2.jpg"
+               alt="Cassandra S." class="w-12 h-12 rounded-full object-cover border border-brand-gold/20">
+          <div>
+            <div class="font-serif text-brand-light">Cassandra S.</div>
+            <div class="text-xs text-brand-dim">Registered Massage Therapist</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Confirm Button -->
+      <div class="px-4 py-4 border-t border-brand-gold/20 bg-brand-black flex-shrink-0">
+        <button id="portal-final-confirm-btn" class="btn-filled w-full py-3.5">
+          <i data-lucide="check-circle" class="w-5 h-5"></i>
+          <span>Confirm Booking</span>
+        </button>
+        <p class="text-[0.6rem] text-brand-dim/50 text-center mt-2">A confirmation will be sent to your email</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Mobile Time Picker Overlay (mobile only) - LEGACY, now hidden on mobile -->
   <div id="mobile-times-overlay" class="modal-overlay hidden bottom-drawer">
     <div class="modal-card" style="max-width: 620px;">
       <!-- Drawer handle for mobile -->
@@ -6920,9 +7506,14 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
 
       const mobile = (typeof isMobileUI === 'function' && isMobileUI());
 
-      // On mobile: only open the picker + render times when the user explicitly clicks a date.
+      // On mobile: use the new expanding footer drawer instead of the old overlay
       if (mobile && userInitiated) {
-        try { openMobileTimesOverlay(); } catch (e) {}
+        try { 
+          expandPortalMobileFooter(norm);
+          updatePortalFooterProgress(2);
+        } catch (e) {
+          console.warn('Portal mobile footer error:', e);
+        }
       }
 
       renderCalendar();
@@ -7522,9 +8113,11 @@ const refreshInstallButtons = () => {
         __availabilityLoadedRange = null;
         if (!selectedServiceKey) {
           updateAvailabilityStatus("Select your treatment and duration to load live availability.", false);
+          try { updatePortalFooterProgress(1); updatePortalMobileSummary(); } catch(e) {}
         } else {
           updateAvailabilityStatus("Now choose a duration to load live availability.", false);
           savePortalState();
+          try { updatePortalFooterProgress(1); updatePortalMobileSummary(); } catch(e) {}
         }
       });
 
@@ -7545,6 +8138,7 @@ const refreshInstallButtons = () => {
 
         if (selectedStandardDuration) {
           maybeLoadAvailabilityForCurrentMonth();
+          try { updatePortalFooterProgress(2); updatePortalMobileSummary(); } catch(e) {}
         }
         updateSummary();
         savePortalState();
@@ -7552,6 +8146,9 @@ const refreshInstallButtons = () => {
 
       // Confirm booking
       document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
+
+      // Initialize portal mobile footer (for mobile rebook experience)
+      try { initPortalMobileFooter(); } catch (e) { console.warn('Portal mobile footer init error:', e); }
 
       // Logout
       document.getElementById("logout-btn").addEventListener("click", handleLogout);
