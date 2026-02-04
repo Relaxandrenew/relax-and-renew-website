@@ -1,4 +1,4 @@
-<!-- Portal Version: v3.0 — Mobile Hero Removal + Centralized Billing Tab | Description: Mobile-only hero removal (sticky nav only) and centralized Stripe billing management via a dedicated Billing tab + sidebar item. Membership tab Manage Billing button removed; uses existing Stripe portal session flow. -->
+<!-- Portal Version: v3.1 — Mobile Hero Removal + Centralized Billing Tab | Description: Fix desktop layout + sticky header spacing, remove broken Cloudflare script, and clean billing portal handling. -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -793,13 +793,7 @@
       #mobile-menu { padding-bottom: env(safe-area-inset-bottom); }
     }
 
-    /* Desktop-only: remove website header on portal (keep banner/hero) */
-    @media (min-width: 641px) {
-      #navbar { display: none !important; }
-      #navbar-spacer { display: none !important; height: 0 !important; }
-    }
-
-@media (max-height: 700px) {
+    @media (max-height: 700px) {
       #login-overlay, #auth-check-overlay { align-items: flex-start; justify-content: flex-start; }
       .login-card { margin-top: 8px; }
     }
@@ -2255,11 +2249,13 @@ const continueBtn = document.getElementById('portal-continue-btn');
 
   </script>
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Relax%20%26%20Renew%20RMT%20Portal%22%2C%22short_name%22%3A%22R%26R%20Portal%22%2C%22start_url%22%3A%22/portal%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23E0C584%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A//static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/png%22%7D%2C%7B%22src%22%3A%22https%3A//static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image/png%22%7D%5D%7D"/>
   <meta name="theme-color" content="#E0C584" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" href="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png"/>
 
   <style>
     /* Offline banner */
@@ -2658,7 +2654,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
 
   <!-- MAIN -->
   <main class="min-h-screen">
-    <div id="portal-main-wrap" class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-6>
+    <div id="portal-main-wrap" class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-6">
       <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
         <!-- SIDEBAR -->
         <aside class="hidden lg:block">
@@ -3834,7 +3830,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  /script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -6844,7 +6840,7 @@ if (selectedSlot && driveTime > 0) {
     }
 
     async function openStripeBillingPortal(triggerBtn) {
-      const btn = triggerBtn || document.getElementById('btn-stripe-portal') || document.getElementById('btn-manage-billing');
+      const btn = triggerBtn || document.getElementById('btn-stripe-portal');
       const linkEl = document.getElementById('stripe-portal-link');
 const originalText = btn ? btn.innerHTML : '';
       
@@ -8073,18 +8069,7 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         _setText("m_commit_end", _fmtDateMaybe(payload.commitment_end_date));
         _setText("m_credits_remaining", payload.credits_remaining ?? "—");
       }
-
-      const mb = document.getElementById("btn-manage-billing");
       const rc = document.getElementById("btn-request-cancel");
-
-      // Manage billing: only enable if n8n provides a billing portal URL (read-only).
-      const billingUrl = payload.billing_portal_url || "";
-      if (mb) {
-        mb.disabled = !(isActive && !!billingUrl);
-        mb.title = mb.disabled ? "Not available yet" : "";
-        mb.dataset.url = billingUrl;
-      }
-
       // Cancellation request: portal can only gate + request; never cancels Stripe directly.
       const commitEnd = payload.commitment_end_date ? new Date(payload.commitment_end_date) : null;
       const today = new Date();
@@ -9638,18 +9623,51 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-    // PWA SW registration (v4)
+  <script>
+    // PWA Service Worker registration (safe, non-blocking)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
           const reg = await navigator.serviceWorker.register('/sw.js');
 
-          // If there's a waiting worker, trigger it to activate immediately
+          // If there's a waiting worker, activate it immediately
           if (reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
 
           reg.addEventListener('updatefound', () => {
             const sw = reg.installing;
-            if (!sw) ret
+            if (!sw) return;
+
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('Portal update available; refresh to load the newest version.');
+              }
+            });
+          });
+        } catch (e) {
+          console.warn('Service worker registration failed:', e);
+        }
+      });
+    }
+  </script>
+
+  <script>
+    // Sticky nav spacer: prevent header overlap on all breakpoints
+    (function(){
+      function syncNavbarSpacer(){
+        const nav = document.getElementById('navbar');
+        const spacer = document.getElementById('navbar-spacer');
+        if (!nav || !spacer) return;
+        const h = Math.max(0, nav.getBoundingClientRect().height || 0);
+        spacer.style.height = h ? (h + 'px') : '';
+      }
+      window.addEventListener('load', syncNavbarSpacer, { once: true });
+      window.addEventListener('resize', syncNavbarSpacer);
+      syncNavbarSpacer();
+      requestAnimationFrame(syncNavbarSpacer);
+    })();
+  </script>
+
+</body>
+</html>
