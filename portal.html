@@ -1,4 +1,4 @@
-<!-- Portal Version: v3.1 — Mobile Hero Removal + Centralized Billing Tab | Description: Fix desktop layout + sticky header spacing, remove broken Cloudflare script, and clean billing portal handling. -->
+<!-- Portal Version: v3.2 — Mobile Hero Removal + Centralized Billing Tab | Description: Fix desktop layout + sticky header spacing, remove broken Cloudflare script, and clean billing portal handling. -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -8224,7 +8224,12 @@ function switchTab(tabId) {
               dbg.textContent = (!window.isSecureContext)
                 ? "Install requires HTTPS. Open this page using https:// and refresh."
                 : "Install isn’t available yet. Ensure /manifest.json and /sw.js are deployed and refresh.";
-            } else {
+            }
+
+      // Expose install prompt handlers for inline onclick buttons
+      window.closeInstallPromptModal = closeInstallPromptModal;
+      window.triggerInstallPrompt = triggerInstallPrompt;
+ else {
               showToast("Install not available", (!window.isSecureContext) ? "Use https:// then refresh." : "Ensure manifest + service worker are deployed, then refresh.", true, 6500);
             }
             return;
