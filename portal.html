@@ -198,8 +198,19 @@
     /* Mobile-only: remove hero section (sticky nav only) */
     @media (max-width: 768px) {
       .header-hero { display: none !important; }
-      #navbar-spacer { height: 12px !important; }
-      #portal-main-wrap { padding-top: 1.75rem !important; margin-top: 0 !important; }
+      /* Spacer height is synced via JS; only add extra breathing room on mobile */
+      #portal-main-wrap {
+        padding-top: calc(var(--navh, 64px) + 14px) !important;
+        margin-top: 0 !important;
+      }
+    }
+    @media (max-width: 640px) {
+      /* Mobile dashboard declutter: consolidate booking actions */
+      #dash-quick-actions,
+      #book-same-container,
+      #book-first-helper {
+        display: none !important;
+      }
     }
 /* Cards */
     .card-fancy, .glass-panel {
@@ -2597,7 +2608,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
         
         <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="billing">
           <i data-lucide="credit-card" class="w-5 h-5"></i>
-          Billing / Payment Method
+          Billing
         </button>
 <button class="text-left nav-link text-lg flex items-center gap-3 opacity-60 cursor-not-allowed" disabled>
           <i data-lucide="user" class="w-5 h-5"></i>
@@ -2692,7 +2703,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
               
               <button class="sidebar-btn" data-tab="billing">
                 <i data-lucide="credit-card" class="w-5 h-5 text-brand-gold"></i>
-                <span>Billing / Payment Method</span>
+                <span>Billing</span>
               </button>
 <button id="theme-toggle-btn" class="sidebar-btn sidebar-btn--compact flex items-center gap-3" onclick="toggleTheme()">
                 <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-brand-gold"></i>
@@ -2718,7 +2729,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
                   <h2 class="text-3xl font-serif text-brand-light">Welcome Back</h2>
                   <p class="muted mt-2 font-light">Here's an overview of your account.</p>
                 </div>
-                <button onclick="switchTab('rebook')" class="btn-filled text-sm py-2 px-4">
+                <button id="dash-book-btn" onclick="switchTab('rebook')" class="btn-filled text-sm py-2 px-4 hidden sm:inline-flex">
                   <i data-lucide="calendar-plus" class="w-4 h-4"></i>
                   Book Appointment
                 </button>
@@ -2824,6 +2835,12 @@ const continueBtn = document.getElementById('portal-continue-btn');
                 </button>
               </div>
 
+              <!-- Mobile primary action (consolidated) -->
+              <button id="dash-mobile-book-btn" onclick="switchTab('rebook')" class="btn-filled text-sm py-2 px-4 w-full sm:hidden">
+                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                Book Appointment
+              </button>
+
               <!-- Next Appointment (inline) -->
               <div id="next-appt-inline" class="hidden mb-4 p-3 sm:p-4 border border-brand-gold/15 bg-black/25 rounded">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -2898,7 +2915,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
             </div>
 
             <!-- Quick Actions -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div id="dash-quick-actions" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button onclick="switchTab('rebook')" class="card-fancy p-5 text-left hover:border-brand-gold/40 transition-all group">
                 <div class="flex items-center gap-4">
                   <div class="w-12 h-12 border border-brand-gold/20 bg-brand-gold/5 flex items-center justify-center text-brand-gold rounded group-hover:bg-brand-gold/10 transition-all">
@@ -3221,10 +3238,10 @@ const continueBtn = document.getElementById('portal-continue-btn');
         </section>
 
 
-        <!-- Billing / Payment Method -->
+        <!-- Billing -->
         <section id="tab-billing" class="tab-content hidden animate-fade-in-up">
           <div class="max-w-3xl mx-auto">
-            <h2 class="text-3xl font-serif text-brand-light mb-2">Billing / Payment Method</h2>
+            <h2 class="text-3xl font-serif text-brand-light mb-2">Billing</h2>
             <p class="muted mb-6">Billing is managed securely on Stripe.</p>
 
             <div class="glass-panel p-6">
@@ -6839,93 +6856,145 @@ if (selectedSlot && driveTime > 0) {
       if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
-    async function openStripeBillingPortal(triggerBtn) {
-      const btn = triggerBtn || document.getElementById('btn-stripe-portal');
-      const linkEl = document.getElementById('stripe-portal-link');
-const originalText = btn ? btn.innerHTML : '';
-      
-      if (!MEMBERSHIP_PORTAL_URL || MEMBERSHIP_PORTAL_URL.trim() === "") {
-        showToast("Coming Soon", "Billing portal is not yet configured.", true);
-        return false;
-      }
+        // --- Stripe Customer Portal: prefetch-on-login + click uses bound URL (no rerun on click) ---
+    const STRIPE_PORTAL_CACHE_KEY = "rnr_stripe_portal_session_url";
+    const STRIPE_PORTAL_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-      if (!portalProfile || !portalProfile.email) {
-        showToast("Error", "Please log in to manage billing.", true);
-        return false;
-      }
-
-      // Show loading state on button
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="inline-block w-4 h-4 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin mr-2"></span> Opening Portal...';
-      }
-
+    function getCachedStripePortalUrl() {
       try {
-        const payload = {
-          email: portalProfile.email,
-          return_url: window.location.href
-        };
-        
-        // Include stripe_customer_id if available from membership data
-        if (membershipData && membershipData.stripe_customer_id) {
-          payload.stripe_customer_id = membershipData.stripe_customer_id;
-        }
-
-        const res = await fetch(MEMBERSHIP_PORTAL_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text().catch(() => '');
-          console.error("Billing portal error response:", errorText);
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
-        console.log("Billing portal response:", data);
-        
-        if (data && data.url) {
-          // Reveal link for visibility / fallback
-          if (linkEl) {
-            linkEl.href = data.url;
-            linkEl.classList.remove('hidden');
-          }
-
-          // Prefer opening in a new tab so the portal stays open; fallback to same-tab redirect if blocked
-          let opened = false;
-          try {
-            const w = window.open(data.url, '_blank', 'noopener');
-            opened = !!w;
-          } catch (e) { opened = false; }
-
-          if (!opened) {
-            window.location.href = data.url;
-          } else {
-            // Restore button state if we stayed on this page
-            if (btn) {
-              btn.disabled = false;
-              btn.innerHTML = originalText;
-            }
-          }
-        } else {
-          throw new Error("No portal URL returned");
-        }
-
+        const raw = sessionStorage.getItem(STRIPE_PORTAL_CACHE_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj?.url || !obj?.createdAt) return null;
+        if ((Date.now() - Number(obj.createdAt)) > STRIPE_PORTAL_TTL_MS) return null;
+        return String(obj.url);
       } catch (e) {
-        console.error("Failed to open billing portal:", e);
-        showToast("Error", "Unable to open billing portal. Please try again or contact support.", true);
-        
-        // Restore button
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
+        return null;
+      }
+    }
+
+    function setCachedStripePortalUrl(url) {
+      try {
+        sessionStorage.setItem(STRIPE_PORTAL_CACHE_KEY, JSON.stringify({ url, createdAt: Date.now() }));
+      } catch (e) {}
+    }
+
+    async function prefetchStripePortalUrl(email) {
+      const cached = getCachedStripePortalUrl();
+      if (cached) return cached;
+
+      if (!email) return null;
+      if (!MEMBERSHIP_PORTAL_URL || MEMBERSHIP_PORTAL_URL.trim() === "") return null;
+
+      // Fetch once to generate a fresh Stripe portal session URL
+      const res = await fetch(MEMBERSHIP_PORTAL_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(email).trim().toLowerCase(),
+          return_url: window.location.href
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      const url = data?.url || data?.portal_url || data?.stripe_portal_url || null;
+      if (url) setCachedStripePortalUrl(url);
+      return url ? String(url) : null;
+    }
+
+    function setStripePortalUiState(state) {
+      const btn = document.getElementById("btn-stripe-portal");
+      const linkEl = document.getElementById("stripe-portal-link");
+      if (!btn) return;
+
+      if (state === "loading") {
+        btn.setAttribute("aria-disabled", "true");
+        btn.classList.add("opacity-60", "pointer-events-none");
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Preparing Stripe Portal...</span>';
+        if (linkEl) linkEl.classList.add("hidden");
+        try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+        return;
+      }
+
+      if (state && typeof state === "object" && state.url) {
+        btn.removeAttribute("aria-disabled");
+        btn.classList.remove("opacity-60", "pointer-events-none");
+        btn.href = state.url;
+        btn.target = "_blank";
+        btn.rel = "noopener";
+        btn.innerHTML = '<i data-lucide="external-link" class="w-4 h-4"></i><span>Manage on Stripe Portal</span>';
+        if (linkEl) {
+          linkEl.href = state.url;
+          linkEl.textContent = "Open Stripe Portal link";
+          linkEl.classList.remove("hidden");
+          linkEl.target = "_blank";
+          linkEl.rel = "noopener";
         }
+        try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+        return;
+      }
+
+      // idle/error
+      btn.removeAttribute("href");
+      btn.removeAttribute("target");
+      btn.removeAttribute("rel");
+      btn.removeAttribute("aria-disabled");
+      btn.classList.remove("opacity-60", "pointer-events-none");
+      btn.innerHTML = '<i data-lucide="external-link" class="w-4 h-4"></i><span>Manage on Stripe Portal</span>';
+      if (linkEl) linkEl.classList.add("hidden");
+      try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
+    }
+
+    async function bindStripePortalButton() {
+      const email = (portalProfile?.email || window.portalProfile?.email || "").trim();
+      const btn = document.getElementById("btn-stripe-portal");
+      if (!btn) return;
+
+      if (!email) {
+        setStripePortalUiState(null);
+        return;
+      }
+
+      setStripePortalUiState("loading");
+      try {
+        const url = await prefetchStripePortalUrl(email);
+        if (url) setStripePortalUiState({ url });
+        else {
+          setStripePortalUiState(null);
+          showToast("Billing unavailable", "Stripe portal could not be prepared. Please try again.", true);
+        }
+      } catch (e) {
+        console.warn("Stripe portal prefetch failed:", e);
+        setStripePortalUiState(null);
+        showToast("Billing unavailable", "Stripe portal could not be prepared. Please try again.", true);
+      }
+    }
+
+    // Click handler: do NOT re-run workflow if URL already bound. If not bound yet, prepare once then open.
+    async function openStripeBillingPortal(triggerBtn) {
+      const btn = triggerBtn || document.getElementById("btn-stripe-portal");
+      const email = (portalProfile?.email || window.portalProfile?.email || "").trim();
+
+      if (!email) {
+        showToast("Login required", "Please log in to manage billing.", true);
+        return false;
+      }
+
+      if (btn && btn.href) {
+        // Already bound — nothing to fetch, just navigate (new tab via target)
+        return true;
+      }
+
+      // Not bound yet — bind once, then navigate
+      await bindStripePortalButton();
+      if (btn && btn.href) {
+        try { btn.click(); } catch (e) { window.open(btn.href, "_blank", "noopener"); }
+        return true;
       }
 
       return false;
     }
+
 
     function requestMembershipCancellation() {
       showToast("Contact Us", "Please email info@relaxandrenew.ca or call 226-337-9064 to request cancellation.", false, 7000);
@@ -7146,6 +7215,10 @@ const originalText = btn ? btn.innerHTML : '';
           try { hideLoginOverlay(); } catch (e) {}
 
           hydrateProfileUI();
+
+          // Bind Stripe portal button once the profile/email is available
+          try { window.portalProfile = portalProfile; } catch (e) {}
+          try { bindStripePortalButton(); } catch (e) {}
           renderCalendar();
 
           // Start server-side review flag check early (does not touch Auth0)
@@ -9673,6 +9746,7 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
         if (!nav || !spacer) return;
         const h = Math.max(0, nav.getBoundingClientRect().height || 0);
         spacer.style.height = h ? (h + 'px') : '';
+        try { document.documentElement.style.setProperty('--navh', (h ? (h + 'px') : '')); } catch(e) {}
       }
       window.addEventListener('load', syncNavbarSpacer, { once: true });
       window.addEventListener('resize', syncNavbarSpacer);
