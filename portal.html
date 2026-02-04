@@ -1,4 +1,4 @@
-<!-- Portal Version: v2.9 — Membership UI Rebuild (Aligned Cards + Grid + Dashboard Tile Styling) | Description: Rebuilds the Membership tab to match the portal’s existing black/gold glass UI (proper spacing, alignment, card styling, and responsive grid), adds the missing .card-fancy base styles used across dashboard tiles and membership cards, and improves readability/contrast. UI-only (no workflows); Auth0 embed/core logic untouched. -->
+<!-- Portal Version: v3.0 — Mobile Hero Removal + Centralized Billing Tab | Description: Mobile-only hero removal (sticky nav only) and centralized Stripe billing management via a dedicated Billing tab + sidebar item. Membership tab Manage Billing button removed; uses existing Stripe portal session flow. -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -194,7 +194,14 @@
 
     .header-hero { background: linear-gradient(145deg, rgba(8,8,8,0.95), rgba(5,5,5,0.98)); }
 
-    /* Cards */
+    
+    /* Mobile-only: remove hero section (sticky nav only) */
+    @media (max-width: 768px) {
+      .header-hero { display: none !important; }
+      #navbar-spacer { height: 12px !important; }
+      #portal-main-wrap { padding-top: 1.75rem !important; margin-top: 0 !important; }
+    }
+/* Cards */
     .card-fancy, .glass-panel {
       background: linear-gradient(145deg, rgba(20,20,20,0.8), rgba(10,10,10,0.9));
       border: 1px solid rgba(224, 197, 132, 0.1);
@@ -376,6 +383,7 @@
       z-index: 200; /* Higher than nav */
       background: #000000;
             padding: 24px 12px;
+      overflow-x: hidden;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
 /* backdrop-filter removed for solid overlay */
@@ -436,6 +444,14 @@
       border: 1px solid rgba(224,197,132,0.45) !important;
       overflow: hidden !important;
     }
+
+    /* Mobile: prevent Auth0 widget from causing horizontal scroll */
+    #login-overlay *, #auth-check-overlay * { box-sizing: border-box; }
+    .auth0-lock, .auth0-lock-widget, .auth0-lock-widget-container, .auth0-lock-container {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
     #auth0-lock-container .auth0-lock .auth0-lock-header,
     #auth0-lock-container .auth0-lock .auth0-lock-header-bg,
     #auth0-lock-container .auth0-lock .auth0-lock-footer,
@@ -2582,7 +2598,12 @@ const continueBtn = document.getElementById('portal-continue-btn');
           Membership
         </button>
 
-        <button class="text-left nav-link text-lg flex items-center gap-3 opacity-60 cursor-not-allowed" disabled>
+        
+        <button class="mobile-portal-btn text-left nav-link text-lg flex items-center gap-3" data-tab="billing">
+          <i data-lucide="credit-card" class="w-5 h-5"></i>
+          Billing / Payment Method
+        </button>
+<button class="text-left nav-link text-lg flex items-center gap-3 opacity-60 cursor-not-allowed" disabled>
           <i data-lucide="user" class="w-5 h-5"></i>
           Profile (Coming Soon)
         </button>
@@ -2637,7 +2658,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
 
   <!-- MAIN -->
   <main class="min-h-screen">
-    <div class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-6">
+    <div id="portal-main-wrap" class="container mx-auto max-w-7xl px-4 md:px-6 py-14 mt-6>
       <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
         <!-- SIDEBAR -->
         <aside class="hidden lg:block">
@@ -2672,7 +2693,12 @@ const continueBtn = document.getElementById('portal-continue-btn');
                 <span>Membership</span>
               </button>
               
-              <button id="theme-toggle-btn" class="sidebar-btn sidebar-btn--compact flex items-center gap-3" onclick="toggleTheme()">
+              
+              <button class="sidebar-btn" data-tab="billing">
+                <i data-lucide="credit-card" class="w-5 h-5 text-brand-gold"></i>
+                <span>Billing / Payment Method</span>
+              </button>
+<button id="theme-toggle-btn" class="sidebar-btn sidebar-btn--compact flex items-center gap-3" onclick="toggleTheme()">
                 <i id="theme-icon" data-lucide="sun" class="w-5 h-5 text-brand-gold"></i>
                 <span id="theme-label" class="muted text-sm">Light Mode</span>
               </button>
@@ -3172,11 +3198,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
               <div class="glass-panel p-6">
                 <h3 class="text-xl font-serif text-brand-light mb-4">Manage Your Membership</h3>
                 <div class="grid gap-3">
-                  <button id="btn-manage-billing" class="btn-filled w-full" onclick="return openStripeBillingPortal();">
-                    <i data-lucide="credit-card" class="w-4 h-4"></i>
-                    Manage Billing & Payment
-                  </button>
-                  <button id="btn-request-cancel" class="btn-outline w-full" onclick="return requestMembershipCancellation();">
+<button id="btn-request-cancel" class="btn-outline w-full" onclick="return requestMembershipCancellation();">
                     <i data-lucide="help-circle" class="w-4 h-4"></i>
                     Request Cancellation
                   </button>
@@ -3198,6 +3220,37 @@ const continueBtn = document.getElementById('portal-continue-btn');
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 Retry
               </button>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- Billing / Payment Method -->
+        <section id="tab-billing" class="tab-content hidden animate-fade-in-up">
+          <div class="max-w-3xl mx-auto">
+            <h2 class="text-3xl font-serif text-brand-light mb-2">Billing / Payment Method</h2>
+            <p class="muted mb-6">Billing is managed securely on Stripe.</p>
+
+            <div class="glass-panel p-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 class="text-xl font-serif text-brand-light">Manage on Stripe Portal</h3>
+                  <p class="muted text-sm mt-1">Update your payment method and billing details on the Stripe-hosted customer portal.</p>
+                </div>
+
+                <button id="btn-stripe-portal" class="btn-filled text-sm py-2 px-4" onclick="return openStripeBillingPortal(this);">
+                  <i data-lucide="external-link" class="w-4 h-4"></i>
+                  Manage on Stripe Portal
+                </button>
+              </div>
+
+              <div class="mt-4 text-sm">
+                <a id="stripe-portal-link" href="#" target="_blank" rel="noopener" class="hidden text-brand-gold hover:text-brand-light underline underline-offset-4 decoration-brand-gold/40 hover:decoration-brand-gold/80 transition">
+                  Open Stripe Portal
+                </a>
+              </div>
+
+              <p class="muted text-xs mt-4">If the portal doesn’t open, please allow popups for this site or try again.</p>
             </div>
           </div>
         </section>
@@ -6790,9 +6843,10 @@ if (selectedSlot && driveTime > 0) {
       if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
-    async function openStripeBillingPortal() {
-      const btn = document.getElementById('btn-manage-billing');
-      const originalText = btn ? btn.innerHTML : '';
+    async function openStripeBillingPortal(triggerBtn) {
+      const btn = triggerBtn || document.getElementById('btn-stripe-portal') || document.getElementById('btn-manage-billing');
+      const linkEl = document.getElementById('stripe-portal-link');
+const originalText = btn ? btn.innerHTML : '';
       
       if (!MEMBERSHIP_PORTAL_URL || MEMBERSHIP_PORTAL_URL.trim() === "") {
         showToast("Coming Soon", "Billing portal is not yet configured.", true);
@@ -6837,7 +6891,28 @@ if (selectedSlot && driveTime > 0) {
         console.log("Billing portal response:", data);
         
         if (data && data.url) {
-          window.location.href = data.url;
+          // Reveal link for visibility / fallback
+          if (linkEl) {
+            linkEl.href = data.url;
+            linkEl.classList.remove('hidden');
+          }
+
+          // Prefer opening in a new tab so the portal stays open; fallback to same-tab redirect if blocked
+          let opened = false;
+          try {
+            const w = window.open(data.url, '_blank', 'noopener');
+            opened = !!w;
+          } catch (e) { opened = false; }
+
+          if (!opened) {
+            window.location.href = data.url;
+          } else {
+            // Restore button state if we stayed on this page
+            if (btn) {
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+            }
+          }
         } else {
           throw new Error("No portal URL returned");
         }
