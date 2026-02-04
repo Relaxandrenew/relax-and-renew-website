@@ -2261,7 +2261,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
 
   </script>
   <!-- PWA -->
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Relax%20%26%20Renew%20RMT%20Portal%22%2C%22short_name%22%3A%22R%26R%20Portal%22%2C%22start_url%22%3A%22/portal%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23E0C584%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A//static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/png%22%7D%2C%7B%22src%22%3A%22https%3A//static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image/png%22%7D%5D%7D"/>
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#E0C584" />
     <link rel="icon" href="https://static.wixstatic.com/media/bf8fef_94f8be278f0f4b8abaee73b95d03b5e2~mv2.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -6995,20 +6995,6 @@ if (selectedSlot && driveTime > 0) {
       return false;
     }
 
-      if (btn && btn.href) {
-        // Already bound — nothing to fetch, just navigate (new tab via target)
-        return true;
-      }
-
-      // Not bound yet — bind once, then navigate
-      await bindStripePortalButton();
-      if (btn && btn.href) {
-        try { btn.click(); } catch (e) { window.open(btn.href, "_blank", "noopener"); }
-        return true;
-      }
-
-      return false;
-    }
 
 
     function requestMembershipCancellation() {
