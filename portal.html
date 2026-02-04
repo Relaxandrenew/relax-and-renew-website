@@ -8226,10 +8226,7 @@ function switchTab(tabId) {
                 : "Install isn’t available yet. Ensure /manifest.json and /sw.js are deployed and refresh.";
             }
 
-      // Expose install prompt handlers for inline onclick buttons
-      window.closeInstallPromptModal = closeInstallPromptModal;
-      window.triggerInstallPrompt = triggerInstallPrompt;
- else {
+            } else {
               showToast("Install not available", (!window.isSecureContext) ? "Use https:// then refresh." : "Ensure manifest + service worker are deployed, then refresh.", true, 6500);
             }
             return;
@@ -8245,6 +8242,11 @@ function switchTab(tabId) {
         }
       }
 
+
+
+      // Expose install prompt handlers for inline onclick buttons
+      window.closeInstallPromptModal = closeInstallPromptModal;
+      window.triggerInstallPrompt = triggerInstallPrompt;
 const refreshInstallButtons = () => {
         // If already installed as an app, hide install UI
         if (isStandalone()) {
