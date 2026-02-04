@@ -1363,6 +1363,7 @@ function renderMobileDateStrip() {
         // Compact label: day letter + number
         const weekday = d.toLocaleDateString('en-CA', { weekday: 'short' }).slice(0,1);
         const dayNum = d.getDate();
+        btn.href = "#";
         btn.innerHTML = `
           <div class="flex flex-col items-center leading-none">
             <div class="text-[10px] uppercase tracking-[0.15em] text-brand-dim">${weekday}</div>
@@ -2890,11 +2891,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
                 </div>
                 <h4 class="text-lg font-serif text-brand-light mb-2">No Upcoming Appointments</h4>
                 <p class="muted text-sm mb-4">You don't have any scheduled sessions.</p>
-                <button onclick="switchTab('rebook')" class="btn-outline text-sm py-2 px-4">
-                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
-                  Book Now
-                </button>
-              </div>
+                </div>
 
               <!-- Error State -->
               <div id="appointments-error" class="hidden py-6">
@@ -3251,10 +3248,10 @@ const continueBtn = document.getElementById('portal-continue-btn');
                   <p class="muted text-sm mt-1">Update your payment method and billing details on the Stripe-hosted customer portal.</p>
                 </div>
 
-                <button id="btn-stripe-portal" class="btn-filled text-sm py-2 px-4" onclick="return openStripeBillingPortal(this);">
+                <a id="btn-stripe-portal" class="btn-filled text-sm py-2 px-4" href="#" onclick="return openStripeBillingPortal(this);">
                   <i data-lucide="external-link" class="w-4 h-4"></i>
                   Manage on Stripe Portal
-                </button>
+                </a>
               </div>
 
               <div class="mt-4 text-sm">
@@ -6892,7 +6889,7 @@ if (selectedSlot && driveTime > 0) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: String(email).trim().toLowerCase(),
-          return_url: window.location.href
+          return_url: (/(^https?:\/\/deploy-preview-|\.netlify\.app$)/.test(window.location.origin) ? "https://www.relaxandrenew.ca/portal" : window.location.href)
         })
       });
 
@@ -6971,14 +6968,32 @@ if (selectedSlot && driveTime > 0) {
     }
 
     // Click handler: do NOT re-run workflow if URL already bound. If not bound yet, prepare once then open.
-    async function openStripeBillingPortal(triggerBtn) {
-      const btn = triggerBtn || document.getElementById("btn-stripe-portal");
+    async function openStripeBillingPortal(triggerEl) {
+      const el = triggerEl || document.getElementById("btn-stripe-portal");
       const email = (portalProfile?.email || window.portalProfile?.email || "").trim();
 
       if (!email) {
         showToast("Login required", "Please log in to manage billing.", true);
         return false;
       }
+
+      // If already bound to a real URL, allow default navigation
+      const href = (el && typeof el.getAttribute === "function") ? (el.getAttribute("href") || "") : "";
+      if (href && href !== "#" && !href.endsWith("#")) {
+        return true;
+      }
+
+      // Not bound yet — bind once, then navigate
+      await bindStripePortalButton();
+      const href2 = (el && typeof el.getAttribute === "function") ? (el.getAttribute("href") || "") : "";
+      if (href2 && href2 !== "#" && !href2.endsWith("#")) {
+        try { window.open(href2, "_blank", "noopener"); } catch (e) { window.location.href = href2; }
+        return false; // prevent inline default navigation duplicate
+      }
+
+      showToast("Billing unavailable", "Stripe portal could not be prepared. Please try again.", true);
+      return false;
+    }
 
       if (btn && btn.href) {
         // Already bound — nothing to fetch, just navigate (new tab via target)
@@ -8350,6 +8365,15 @@ const refreshInstallButtons = () => {
         // Show our own in-app prompt (browser prompt requires a user gesture)
         setTimeout(() => maybeShowInstallPromptModal(false), 800);
       });
+
+      // When the app is actually installed, clear any stale UI state
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        try { hideInstallPromptModal(); } catch (e) {}
+        try { refreshInstallButtons(); } catch (e) {}
+        try { showToast("Installed", "Relax & Renew Portal has been installed.", false, 4500); } catch (e) {}
+      });
+
 
       // Initial state
       refreshInstallButtons();
