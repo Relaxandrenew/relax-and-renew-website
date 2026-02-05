@@ -1,11 +1,11 @@
-// Relax & Renew Portal Service Worker (v4 - 2026-01-12)
+// Relax & Renew Portal Service Worker (v5 - 2026-02-04)
 // Strategy:
 // - Precache core app shell
 // - Network-first for navigations (prevents "stuck old HTML")
 // - Cache-first for static assets
 // - Offline fallback to /offline.html
 
-const CACHE_NAME = 'rnr-portal-v4';
+const CACHE_NAME = 'rnr-portal-v5';
 const PRECACHE_URLS = [
   '/',                // optional - your home route
   '/portal',
