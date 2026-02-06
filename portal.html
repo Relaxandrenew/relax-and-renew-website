@@ -1,4 +1,4 @@
-<!-- Portal Version: v3.2 — Mobile Hero Removal + Centralized Billing Tab | Description: Fix desktop layout + sticky header spacing, remove broken Cloudflare script, and clean billing portal handling. -->
+<!-- Portal Version: v3.2.1 — Hotfix: Install prompt mobile-only | Description: Restrict PWA install popup to mobile devices only, prevent showing on desktop browsers. -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -3214,7 +3214,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
                   </button>
                 </div>
                 <p class="muted text-xs mt-4 text-center">
-                  Need help? Contact us at <a href="/cdn-cgi/l/email-protection#a1c8cfc7cee1d3c4cdc0d9c0cfc5d3c4cfc4d68fc2c0" class="text-brand-gold hover:text-brand-goldHover"><a href="mailto:info@relaxandrenew.ca" style="color:#E0C584; text-decoration:none;">info@relaxandrenew.ca</a></a>
+                  Need help? Contact us at <a href="/cdn-cgi/l/email-protection#a1c8cfc7cee1d3c4cdc0d9c0cfc5d3c4cfc4d68fc2c0" class="text-brand-gold hover:text-brand-goldHover"><a href="/cdn-cgi/l/email-protection#81e8efe7eec1f3e4ede0f9e0efe5f3e4efe4f6afe2e0" style="color:#E0C584; text-decoration:none;"><span class="__cf_email__" data-cfemail="3b52555d547b495e575a435a555f495e555e4c15585a">[email&#160;protected]</span></a></a>
                 </p>
               </div>
             </div>
@@ -3499,7 +3499,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
           so we can investigate.
         </p>
         <p class="text-brand-dim/60 text-xs">
-          Version 1.0
+          Version 1.0.1
         </p>
       </div>
     </div>
@@ -3844,7 +3844,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
     </div>
   </div>
 
-  </script><script>
+  </script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // =========================================================
     // STATE
     // =========================================================
@@ -8262,6 +8262,8 @@ function switchTab(tabId) {
         try {
           if (isStandalone()) return;
           if (!deferredInstallPrompt) return;
+          // Only show auto-prompt on mobile devices
+          if (!/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "")) return;
 
           const key = "rnr_install_prompt_dismissed_at";
           const last = Number(localStorage.getItem(key) || 0);
@@ -8543,7 +8545,7 @@ const refreshInstallButtons = () => {
       <div id="cancel-cutoff-warning" class="hidden mt-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded">
         <div class="font-bold text-brand-light mb-1">This appointment is within 12 hours</div>
         <div class="muted text-sm">
-          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="mailto:info@relaxandrenew.ca" style="color:#E0C584; text-decoration:none;">info@relaxandrenew.ca</a> / 226 337 9064.
+          This is under 12 hours. To cancel, you will be charged a fee of 50% of the treatment. If under 6 hours, it is 100%. If this is an emergency, please contact us directly at <a href="/cdn-cgi/l/email-protection#ee87808881ae9c8b828f968f808a9c8b808b99c08d8f" style="color:#E0C584; text-decoration:none;"><span class="__cf_email__" data-cfemail="ed84838b82ad9f88818c958c83899f8883889ac38e8c">[email&#160;protected]</span></a> / 226 337 9064.
         </div>
       </div>
 
@@ -9718,7 +9720,7 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
     </div>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // PWA Service Worker registration (safe, non-blocking)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
@@ -9753,17 +9755,4 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
       function syncNavbarSpacer(){
         const nav = document.getElementById('navbar');
         const spacer = document.getElementById('navbar-spacer');
-        if (!nav || !spacer) return;
-        const h = Math.max(0, nav.getBoundingClientRect().height || 0);
-        spacer.style.height = h ? (h + 'px') : '';
-        try { document.documentElement.style.setProperty('--navh', (h ? (h + 'px') : '')); } catch(e) {}
-      }
-      window.addEventListener('load', syncNavbarSpacer, { once: true });
-      window.addEventListener('resize', syncNavbarSpacer);
-      syncNavbarSpacer();
-      requestAnimationFrame(syncNavbarSpacer);
-    })();
-  </script>
-
-</body>
-</html>
+        if (!nav || !sp
