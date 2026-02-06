@@ -1,4 +1,4 @@
-<!-- Portal Version: v3.2.1 — Hotfix: Install prompt mobile-only | Description: Restrict PWA install popup to mobile devices only, prevent showing on desktop browsers. -->
+<!-- Portal Version: v3.2.3 — Hotfix: Preserve duration on month nav, Stripe portal prefetch fix | Description: preloadAvailabilityInBackground respects active user selection instead of overwriting from localStorage; Stripe billing portal URL prefetched on both auth paths and billing tab open. -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-build="2026-01-27-v2.4">
 <head>
@@ -3499,7 +3499,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
           so we can investigate.
         </p>
         <p class="text-brand-dim/60 text-xs">
-          Version 1.0.1
+          Version 1.0.3
         </p>
       </div>
     </div>
@@ -6581,9 +6581,30 @@ if (selectedSlot && driveTime > 0) {
           const lastAppt = upcomingAppointments[0] || completedAppointments[0];
           if (lastAppt) {
             try {
+              // Cliniko's duration is the BLOCK duration (standard + setup buffer).
+              // Derive the standard treatment duration by subtracting setup time and
+              // rounding down to the nearest valid option for the treatment type.
+              const rawDur = Number(lastAppt.duration) || 60;
+              const tName = String(lastAppt.appointment_type?.name || lastAppt.treatment_type || "").toLowerCase();
+              let tKey = "relaxation";
+              if (tName.includes("deep tissue")) tKey = "deep-tissue";
+              else if (tName.includes("sport")) tKey = "sports";
+              else if (tName.includes("senior")) tKey = "senior";
+              else if (tName.includes("hot stone")) tKey = "hot-stone";
+              else if (tName.includes("cupping")) tKey = "cupping";
+              else if (tName.includes("prenatal")) tKey = "prenatal";
+              else if (tName.includes("pediatric")) tKey = "pediatric";
+              else if (tName.includes("infant")) tKey = "infant";
+              const tRule = TREATMENT_RULES[tKey];
+              let stdDur = 60;
+              if (tRule) {
+                const adjusted = rawDur - (typeof STATIC_SETUP_MINUTES === "number" ? STATIC_SETUP_MINUTES : 25);
+                const candidates = tRule.durations.filter(d => d <= adjusted);
+                stdDur = candidates.length > 0 ? candidates[candidates.length - 1] : tRule.durations[0];
+              }
               localStorage.setItem("rnr_portal_last_treatment", JSON.stringify({
                 treatment_type: lastAppt.appointment_type?.name || lastAppt.treatment_type || "",
-                duration: lastAppt.duration || 60
+                duration: stdDur
               }));
             } catch(e) {}
           }
@@ -7040,27 +7061,43 @@ if (selectedSlot && driveTime > 0) {
       let preloadTreatment = "relaxation";
       let preloadDuration = 60;
 
+      // One-time migration: clear stale stored duration that included setup buffer time
       try {
-        const lastRaw = localStorage.getItem("rnr_portal_last_treatment");
-        if (lastRaw) {
-          const last = JSON.parse(lastRaw);
-          const name = String(last.treatment_type || "").toLowerCase();
-          if (name.includes("deep tissue")) preloadTreatment = "deep-tissue";
-          else if (name.includes("sport")) preloadTreatment = "sports";
-          else if (name.includes("senior")) preloadTreatment = "senior";
-          else if (name.includes("hot stone")) preloadTreatment = "hot-stone";
-          else if (name.includes("cupping")) preloadTreatment = "cupping";
-          else if (name.includes("prenatal")) preloadTreatment = "prenatal";
-          else if (name.includes("pediatric")) preloadTreatment = "pediatric";
-          else if (name.includes("infant")) preloadTreatment = "infant";
-          
-          const dur = Number(last.duration);
-          if (dur && [30, 45, 60, 75, 90, 120].includes(dur)) {
-            preloadDuration = dur;
-          }
+        if (!localStorage.getItem("rnr_dur_fix_v1")) {
+          localStorage.removeItem("rnr_portal_last_treatment");
+          localStorage.setItem("rnr_dur_fix_v1", "1");
         }
-      } catch (e) {
-        console.warn("Could not parse last treatment:", e);
+      } catch (e) {}
+
+      // If the user already has an active treatment+duration selected, keep it.
+      // Only fall back to localStorage / defaults for the initial background preload.
+      const userHasActiveSelection = !!(selectedServiceKey && TREATMENT_RULES[selectedServiceKey] && selectedStandardDuration);
+      if (userHasActiveSelection) {
+        preloadTreatment = selectedServiceKey;
+        preloadDuration = Number(selectedStandardDuration);
+      } else {
+        try {
+          const lastRaw = localStorage.getItem("rnr_portal_last_treatment");
+          if (lastRaw) {
+            const last = JSON.parse(lastRaw);
+            const name = String(last.treatment_type || "").toLowerCase();
+            if (name.includes("deep tissue")) preloadTreatment = "deep-tissue";
+            else if (name.includes("sport")) preloadTreatment = "sports";
+            else if (name.includes("senior")) preloadTreatment = "senior";
+            else if (name.includes("hot stone")) preloadTreatment = "hot-stone";
+            else if (name.includes("cupping")) preloadTreatment = "cupping";
+            else if (name.includes("prenatal")) preloadTreatment = "prenatal";
+            else if (name.includes("pediatric")) preloadTreatment = "pediatric";
+            else if (name.includes("infant")) preloadTreatment = "infant";
+            
+            const dur = Number(last.duration);
+            if (dur && [30, 45, 60, 75, 90, 120].includes(dur)) {
+              preloadDuration = dur;
+            }
+          }
+        } catch (e) {
+          console.warn("Could not parse last treatment:", e);
+        }
       }
 
       console.log("Preloading:", preloadTreatment, preloadDuration + "min");
@@ -7408,6 +7445,10 @@ if (selectedSlot && driveTime > 0) {
             
             // Load membership status
             loadMembershipStatus();
+
+            // Bind Stripe portal button (prefetch URL) immediately after login
+            try { window.portalProfile = portalProfile; } catch (e) {}
+            try { bindStripePortalButton(); } catch (e) {}
           }, 300);
 
         } catch (e) {
@@ -7532,7 +7573,7 @@ if (selectedSlot && driveTime > 0) {
       if (!addrOk) return { error: "Missing address/city/postal code in portal profile." };
       if (!selectedServiceKey || !selectedStandardDuration) return { error: "Select treatment and duration first." };
 
-      const { from, to } = computeTwoMonthRange(calendarCurrent);
+      const { from, to } = computeTwoMonthRange(availabilityAnchorMonth || calendarCurrent);
       const blockMinutes = Number(selectedStandardDuration) + Number(STATIC_SETUP_MINUTES);
 
       return {
@@ -7692,6 +7733,8 @@ if (selectedSlot && driveTime > 0) {
         const data = await res.json();
         availabilityCache.set(cacheKey, data);
         parseAvailabilityResponse(data);
+        __availabilityLoadedContextKey = contextKey;
+        __availabilityLoadedRange = { from: payload.from, to: payload.to };
         renderCalendar();
         try { if (typeof isMobileTimesOverlayOpen === 'function' && isMobileTimesOverlayOpen()) renderMobileDateStrip(); } catch(e) {}
         setTimeout(ensureCalendarClickableAfterPreload, 60);
@@ -8179,6 +8222,7 @@ function switchTab(tabId) {
       });
 
       if (tabId === "membership") { loadMembershipStatus(); }
+      if (tabId === "billing") { try { bindStripePortalButton(); } catch (e) {} }
 
       try { updatePortalMobileFooterVisibility(); } catch(e) {}
 
