@@ -682,6 +682,17 @@
                         </label>
                     </div>
 
+                    <!-- Marketing Email Consent -->
+                    <div class="mb-8">
+                        <label class="flex items-start cursor-pointer p-3 rounded border border-[#E0C584]/20 hover:bg-[#E0C584]/5 transition-colors">
+                            <input type="checkbox" name="email_marketing_consent" value="true" class="mt-1">
+                            <span class="ml-3 text-sm md:text-base">
+                                <span class="font-semibold">Yes, I'd like to receive marketing emails</span>
+                                <span class="block text-xs opacity-70 mt-1">Discounts, news &amp; special offers. You will still receive operational emails about portal updates, appointment reminders &amp; account notifications regardless of this choice.</span>
+                            </span>
+                        </label>
+                    </div>
+
                      <!-- Final Intake Consent -->
                      <div class="mb-8 p-4 border border-[#E0C584] rounded bg-[#E0C584]/10">
                         <p class="mb-4 font-semibold text-[#E0C584]">I confirm that I have answered all questions honestly and to the best of my ability.</p>
@@ -1329,7 +1340,8 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
     const formDataObj = {
         patientId: patientId,
         appointmentId: appointmentId,
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
+        email_marketing_consent: !!document.querySelector('input[name="email_marketing_consent"]')?.checked
     };
     
     for (let [key, value] of formData.entries()) {
