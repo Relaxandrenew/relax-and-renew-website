@@ -2111,6 +2111,24 @@ function mobileConfirmBooking() {
         document.getElementById('portal-confirm-client').textContent = `${portalProfile.firstName || ''} ${portalProfile.lastName || ''}`.trim() || '—';
         document.getElementById('portal-confirm-address').textContent = portalProfile.address || '—';
       }
+
+      // Show/hide duo partner fields on mobile
+      const duoMobile = document.getElementById('duo-partner-section-mobile');
+      if (duoMobile) {
+        duoMobile.classList.toggle('hidden', selectedServiceKey !== 'duo');
+        // Sync desktop values to mobile if present
+        if (selectedServiceKey === 'duo') {
+          const df = document.getElementById('duo-partner-first-desktop');
+          const dl = document.getElementById('duo-partner-last-desktop');
+          const de = document.getElementById('duo-partner-email-desktop');
+          const mf = document.getElementById('duo-partner-first-mobile');
+          const ml = document.getElementById('duo-partner-last-mobile');
+          const me = document.getElementById('duo-partner-email-mobile');
+          if (df && mf && df.value && !mf.value) mf.value = df.value;
+          if (dl && ml && dl.value && !ml.value) ml.value = dl.value;
+          if (de && me && de.value && !me.value) me.value = de.value;
+        }
+      }
       
       drawer.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -3008,6 +3026,7 @@ const continueBtn = document.getElementById('portal-continue-btn');
                       <option value="prenatal">Prenatal Massage</option>
                       <option value="pediatric">Pediatric Massage</option>
                       <option value="infant">Infant Massage</option>
+                      <option value="duo">Duo Massage (2 People)</option>
                     </select>
 
                     <select id="duration-select" class="input w-full" disabled>
@@ -3104,6 +3123,19 @@ const continueBtn = document.getElementById('portal-continue-btn');
                     <div class="text-[0.65rem] tracking-[0.2em] uppercase text-brand-gold/60 mb-1">Client</div>
                     <div class="font-bold text-brand-light font-serif text-lg" id="summary-client">—</div>
                     <div class="muted mt-0 text-xs" id="summary-email">—</div>
+                  </div>
+
+                  <!-- Duo Partner Fields (desktop) -->
+                  <div id="duo-partner-section-desktop" class="hidden">
+                    <div class="card-fancy p-4 border-l-2 border-l-amber-500/60">
+                      <div class="text-[0.65rem] tracking-[0.2em] uppercase text-amber-400/80 mb-2">Second Person</div>
+                      <div class="flex flex-col gap-2">
+                        <input type="text" id="duo-partner-first-desktop" placeholder="First name" class="input w-full text-sm" autocomplete="off">
+                        <input type="text" id="duo-partner-last-desktop" placeholder="Last name" class="input w-full text-sm" autocomplete="off">
+                        <input type="email" id="duo-partner-email-desktop" placeholder="Email address" class="input w-full text-sm" autocomplete="off">
+                      </div>
+                      <p class="text-[0.6rem] text-brand-dim/50 mt-2">Their confirmation will be sent separately.</p>
+                    </div>
                   </div>
 
                   <div class="card-fancy p-4">
@@ -3657,6 +3689,19 @@ const continueBtn = document.getElementById('portal-continue-btn');
           <div class="font-serif text-brand-light" id="portal-confirm-client">—</div>
           <div class="text-xs text-brand-dim/70 mt-1" id="portal-confirm-address">—</div>
         </div>
+
+        <!-- Duo Partner Fields (mobile) -->
+        <div id="duo-partner-section-mobile" class="hidden mb-4">
+          <div class="bg-white/5 rounded-lg border border-amber-500/20 p-3">
+            <div class="text-[0.65rem] uppercase tracking-wider text-amber-400/80 mb-2">Second Person</div>
+            <div class="flex flex-col gap-2">
+              <input type="text" id="duo-partner-first-mobile" placeholder="First name" class="input w-full text-sm" autocomplete="off">
+              <input type="text" id="duo-partner-last-mobile" placeholder="Last name" class="input w-full text-sm" autocomplete="off">
+              <input type="email" id="duo-partner-email-mobile" placeholder="Email address" class="input w-full text-sm" autocomplete="off">
+            </div>
+            <p class="text-[0.6rem] text-brand-dim/50 mt-2">Their confirmation will be sent separately.</p>
+          </div>
+        </div>
         
         <!-- Therapist Info -->
         <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-brand-gold/10">
@@ -3944,6 +3989,7 @@ let lock = null;
       "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
       "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
       "infant":      { label: "Infant Massage", durations: [30,45] },
+      "duo":         { label: "Duo Massage (2 People)", durations: [60,75,90] },
     };
 
     // =========================================================
@@ -4970,6 +5016,13 @@ let lock = null;
       // Update summary to reflect reset state
       updateSummary();
       savePortalState();
+
+      // Clear duo partner fields
+      ['duo-partner-first-desktop','duo-partner-last-desktop','duo-partner-email-desktop',
+       'duo-partner-first-mobile','duo-partner-last-mobile','duo-partner-email-mobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
     }
 
     function showAuthError(msg) {
@@ -5347,6 +5400,13 @@ function computeMonthRange(date) {
     }
 
     function setConfirmEnabled(enabled) {
+      // Extra validation for duo: require partner first name and email
+      if (enabled && selectedServiceKey === 'duo') {
+        const pf = (document.getElementById('duo-partner-first-desktop')?.value || document.getElementById('duo-partner-first-mobile')?.value || '').trim();
+        const pe = (document.getElementById('duo-partner-email-desktop')?.value || document.getElementById('duo-partner-email-mobile')?.value || '').trim();
+        if (!pf || !pe) enabled = false;
+      }
+
       const btn = document.getElementById("confirm-booking-btn");
       btn.disabled = !enabled;
       btn.classList.toggle("btn-disabled", !enabled);
@@ -5411,6 +5471,12 @@ if (selectedSlot && driveTime > 0) {
 }
 
       setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+
+      // Show/hide duo partner fields on desktop
+      const duoDesktop = document.getElementById('duo-partner-section-desktop');
+      if (duoDesktop) {
+        duoDesktop.classList.toggle('hidden', selectedServiceKey !== 'duo');
+      }
 
       try {
         const overlay = document.getElementById("mobile-times-overlay");
@@ -8059,8 +8125,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         treatment_label: treat ? treat.label : "",
         duration: Number(selectedStandardDuration),
         standardDurationMinutes: Number(selectedStandardDuration),
-        participants: 1,
-        participant_count: 1,
+        participants: selectedServiceKey === 'duo' ? 2 : 1,
+        participant_count: selectedServiceKey === 'duo' ? 2 : 1,
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
         date: selectedDateStr,
@@ -8070,6 +8136,22 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
         notes: "Booked via Client Portal."
       };
+
+      // Add duo partner info if duo booking
+      if (selectedServiceKey === 'duo') {
+        const dpFirst = (document.getElementById('duo-partner-first-desktop')?.value || document.getElementById('duo-partner-first-mobile')?.value || '').trim();
+        const dpLast = (document.getElementById('duo-partner-last-desktop')?.value || document.getElementById('duo-partner-last-mobile')?.value || '').trim();
+        const dpEmail = (document.getElementById('duo-partner-email-desktop')?.value || document.getElementById('duo-partner-email-mobile')?.value || '').trim();
+
+        if (!dpFirst || !dpEmail) {
+          showToast("Missing info", "Please enter the second person's first name and email.", true);
+          return;
+        }
+
+        bookingPayload.duo_attendee_first_name = dpFirst;
+        bookingPayload.duo_attendee_last_name = dpLast || '';
+        bookingPayload.duo_attendee_email = dpEmail;
+      }
 
       try { localStorage.setItem("rnr_portal_last_booking_payload", JSON.stringify(bookingPayload)); } catch(e) {}
 
@@ -8509,6 +8591,23 @@ const refreshInstallButtons = () => {
 
       // Confirm booking
       document.getElementById("confirm-booking-btn").addEventListener("click", confirmBooking);
+
+      // Duo partner field listeners — re-validate confirm button on input
+      ['duo-partner-first-desktop', 'duo-partner-last-desktop', 'duo-partner-email-desktop',
+       'duo-partner-first-mobile', 'duo-partner-last-mobile', 'duo-partner-email-mobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            // Sync desktop ↔ mobile
+            const suffix = id.endsWith('-desktop') ? '-desktop' : '-mobile';
+            const other = id.replace(suffix, suffix === '-desktop' ? '-mobile' : '-desktop');
+            const otherEl = document.getElementById(other);
+            if (otherEl && !otherEl.value) otherEl.value = el.value;
+            // Re-check confirm enabled
+            setConfirmEnabled(!!(portalProfile && selectedServiceKey && selectedStandardDuration && selectedDateStr && selectedSlot));
+          });
+        }
+      });
 
       // Initialize portal mobile footer (for mobile rebook experience)
       try { initPortalMobileFooter(); } catch (e) { console.warn('Portal mobile footer init error:', e); }
