@@ -1503,10 +1503,16 @@ function fillAddressFromPlace(place) {
                 </div>
             </div>
 
+            <!-- Insurance note -->
+            <p class="mt-5 text-xs text-brand-dim/70 text-center leading-relaxed">
+                <i data-lucide="shield-check" class="w-3 h-3 inline mr-1 text-brand-gold/60"></i>
+                We accept 99% of insurance companies and do direct billing!
+            </p>
+
             <!-- Group/Event: Contact Us Message (shown when group/event selected) -->
             <div id="group-event-contact-msg" class="hidden mt-6 p-5 border border-brand-gold/30 rounded-lg bg-brand-gold/5 text-center">
                 <div class="flex items-center justify-center gap-2 mb-3">
-                    <i data-lucide="phone" class="w-5 h-5 text-brand-gold"></i>
+                    <i data-lucide="message-square" class="w-5 h-5 text-brand-gold"></i>
                     <span class="text-sm uppercase tracking-wider text-brand-gold font-bold">Contact Us to Book</span>
                 </div>
                 <p class="text-sm text-brand-dim/80 mb-4 leading-relaxed">Group and Event bookings require personalized coordination. Please reach out to us directly and we'll get everything set up for you.</p>
@@ -1515,9 +1521,9 @@ function fillAddressFromPlace(place) {
                         <i data-lucide="mail" class="w-4 h-4"></i>
                         info@relaxandrenew.ca
                     </a>
-                    <a href="tel:2263379064" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
-                        <i data-lucide="phone" class="w-4 h-4"></i>
-                        226 337 9064
+                    <a href="sms:2263379064" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        Text us at 226 337 9064
                     </a>
                 </div>
             </div>
@@ -1575,7 +1581,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
+<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete. We accept 99% of insurance companies and do direct billing!</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -3664,10 +3670,16 @@ async function loadAvailabilityForWindow(force = false) {
                 // Group/Event: show contact message, hide booking flow
                 const contactMsg = document.getElementById('group-event-contact-msg');
                 const continueBtn = document.getElementById('address-continue-btn');
-                const durationWrapper = document.getElementById('duration-select')?.closest('.mt-8') || document.getElementById('duration-select')?.parentElement;
+                const returningClientsLink = continueBtn?.nextElementSibling; // the <a> "Returning Clients" link
+                const durationSelectEl = document.getElementById('duration-select');
+                const durationBlock = durationSelectEl?.parentElement;
+                const participantsWrapper = document.getElementById('participants-wrapper');
                 if (selectedServiceKey === 'group' || selectedServiceKey === 'event') {
                     if (contactMsg) contactMsg.classList.remove('hidden');
                     if (continueBtn) continueBtn.classList.add('hidden');
+                    if (returningClientsLink && returningClientsLink.tagName === 'A') returningClientsLink.classList.add('hidden');
+                    if (durationBlock) durationBlock.classList.add('hidden');
+                    if (participantsWrapper) participantsWrapper.classList.add('hidden');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     // Still rebuild options for completeness but user can't proceed
                     rebuildDurationOptions();
@@ -3675,6 +3687,9 @@ async function loadAvailabilityForWindow(force = false) {
                 } else {
                     if (contactMsg) contactMsg.classList.add('hidden');
                     if (continueBtn) continueBtn.classList.remove('hidden');
+                    if (returningClientsLink && returningClientsLink.tagName === 'A') returningClientsLink.classList.remove('hidden');
+                    if (durationBlock) durationBlock.classList.remove('hidden');
+                    if (participantsWrapper) participantsWrapper.classList.remove('hidden');
                 }
 
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
