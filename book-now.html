@@ -1517,9 +1517,9 @@ function fillAddressFromPlace(place) {
                 </div>
                 <p class="text-sm text-brand-dim/80 mb-4 leading-relaxed">Group and Event bookings require personalized coordination. Please reach out to us directly and we'll get everything set up for you.</p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <a href="mailto:info@relaxandrenew.ca" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
+                    <a href="/cdn-cgi/l/email-protection#620b0c040d2210070e031a030c0610070c07154c0103" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
                         <i data-lucide="mail" class="w-4 h-4"></i>
-                        info@relaxandrenew.ca
+                        <span class="__cf_email__" data-cfemail="aac3c4ccc5ead8cfc6cbd2cbc4ced8cfc4cfdd84c9cb">[email&#160;protected]</span>
                     </a>
                     <a href="sms:2263379064" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
                         <i data-lucide="message-circle" class="w-4 h-4"></i>
@@ -1599,7 +1599,7 @@ function fillAddressFromPlace(place) {
 <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
 <input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-phone" placeholder="(555) 123-4567" required="" type="tel"/>
 </div>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
                 // Phone number force-formatting (BACKSPACE/DELETE SAFE)
                 (function setupPhoneFormatting() {
                     const input = document.getElementById('client-phone');
@@ -4456,6 +4456,8 @@ function getTravelCanonicalFromSlot(slot) {
                     });
 
                     const result = await response.json();
+                    console.log('📋 Booking webhook response:', JSON.stringify(result));
+                    console.log('📋 response.ok:', response.ok, 'status:', response.status);
 
 if (result.error === 'slot_taken') {
     try { hideBookingModal(false, 'That time was just booked by someone else. Please pick another time.'); } catch (_) {}
@@ -4539,10 +4541,13 @@ if (result.success) {
                             stripeCardElement.clear();
                         }
                     } else {
+                        console.warn('📋 Unexpected booking response - no success flag:', JSON.stringify(result));
+                        try { hideBookingModal(false, 'Unexpected response from server. Your booking may still have been placed — please check your email.'); } catch (_) {}
                         throw new Error('Booking submission failed');
                     }
                 } catch (error) {
                     console.error('Booking error:', error);
+                    try { hideBookingModal(false, (error && error.message) ? error.message : 'Please try again or contact us directly.'); } catch (_) {}
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>There was an error submitting your booking. Please try again or contact us directly.`;
                 } finally {
@@ -4810,15 +4815,3 @@ if (result.success) {
 .progress-footer-step.active .step-label {
     color: rgba(224, 197, 132, 0.9);
 }
-.progress-footer-step.completed .step-circle-mini {
-    background: rgba(224, 197, 132, 0.3);
-    border-color: #E0C584;
-}
-.progress-footer-step.completed .step-label {
-    color: rgba(224, 197, 132, 0.7);
-}
-</style>
-
-
-</body>
-</html>
