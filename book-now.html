@@ -1234,7 +1234,12 @@ function fillAddressFromPlace(place) {
                 <div class="text-center mb-8">
                     <h2 class="text-2xl md:text-3xl text-brand-gold font-serif mb-2">Our Availability</h2>
                     <p class="text-[0.7rem] text-brand-dim/50 uppercase tracking-widest mb-2">Professional, Registered Mobile Massage Therapy</p>
-                    <p class="text-sm text-brand-dim/80" id="selected-address-label">Select your treatment above to view availability</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <p class="text-sm text-brand-dim/80" id="selected-address-label">Select your treatment above to view availability</p>
+                        <button id="desktop-change-selection-btn" class="hidden md:hidden text-brand-gold hover:text-brand-light transition-colors text-[0.7rem] font-bold uppercase tracking-wider px-2 py-1 border border-brand-gold/30 rounded hover:bg-brand-gold/10 flex-shrink-0">
+                            Change
+                        </button>
+                    </div>
                 </div>
 
                 <!-- NEW PROGRESS BAR LOADER -->
@@ -1498,6 +1503,31 @@ function fillAddressFromPlace(place) {
                 </div>
             </div>
 
+            <!-- Insurance note -->
+            <p class="mt-5 text-xs text-brand-dim/70 text-center leading-relaxed">
+                <i data-lucide="shield-check" class="w-3 h-3 inline mr-1 text-brand-gold/60"></i>
+                We accept 99% of insurance companies and do direct billing!
+            </p>
+
+            <!-- Group/Event: Contact Us Message (shown when group/event selected) -->
+            <div id="group-event-contact-msg" class="hidden mt-6 p-5 border border-brand-gold/30 rounded-lg bg-brand-gold/5 text-center">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <i data-lucide="message-square" class="w-5 h-5 text-brand-gold"></i>
+                    <span class="text-sm uppercase tracking-wider text-brand-gold font-bold">Contact Us to Book</span>
+                </div>
+                <p class="text-sm text-brand-dim/80 mb-4 leading-relaxed">Group and Event bookings require personalized coordination. Please reach out to us directly and we'll get everything set up for you.</p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <a href="/cdn-cgi/l/email-protection#620b0c040d2210070e031a030c0610070c07154c0103" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                        <span class="__cf_email__" data-cfemail="aac3c4ccc5ead8cfc6cbd2cbc4ced8cfc4cfdd84c9cb">[email&#160;protected]</span>
+                    </a>
+                    <a href="sms:2263379064" class="inline-flex items-center gap-2 text-brand-gold hover:text-brand-light transition-colors text-sm font-semibold border border-brand-gold/30 rounded-lg px-4 py-2 hover:bg-brand-gold/10">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        Text us at 226 337 9064
+                    </a>
+                </div>
+            </div>
+
             <button id="address-continue-btn" class="w-full btn-filled py-4 mt-6 font-bold tracking-wider text-base">
                 <i data-lucide="arrow-right-circle" class="w-5 h-5"></i>
                 <span>Show Available Times</span>
@@ -1551,7 +1581,7 @@ function fillAddressFromPlace(place) {
 <span class="text-brand-gold font-bold">Total:</span>
 <span class="text-brand-gold font-bold text-lg" id="summary-modal-price">$120+HST (~$136)</span>
 </div>
-<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete.</p>
+<p class="text-[0.8rem] font-semibold md:text-sm md:font-normal text-brand-dim/90 md:text-brand-dim/80 text-center mt-2 md:mt-3 leading-tight">No payment collected here. You pay after your treatment is complete. We accept 99% of insurance companies and do direct billing!</p>
 </div>
 </div>
 <form class="space-y-4" id="client-details-form">
@@ -1569,7 +1599,7 @@ function fillAddressFromPlace(place) {
 <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Phone Number *</label>
 <input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-phone" placeholder="(555) 123-4567" required="" type="tel"/>
 </div>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
                 // Phone number force-formatting (BACKSPACE/DELETE SAFE)
                 (function setupPhoneFormatting() {
                     const input = document.getElementById('client-phone');
@@ -1690,6 +1720,30 @@ function fillAddressFromPlace(place) {
 <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
 <input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="client-email" placeholder="your.email@example.com" required="" type="email"/>
 <p class="text-xs text-brand-dim/60 mt-1 ml-1">For booking confirmation</p>
+</div>
+<!-- Duo Massage: 2nd Attendee Fields (shown dynamically) -->
+<div id="duo-attendee-section" class="hidden border border-brand-gold/20 rounded-lg p-4 bg-brand-gold/5">
+<div class="text-xs uppercase tracking-wider text-brand-gold font-bold mb-3 flex items-center gap-2">
+<i data-lucide="users" class="w-4 h-4"></i>
+2nd Attendee Details
+</div>
+<div class="space-y-3">
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">First Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="duo-attendee-first-name" type="text"/>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Last Name *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="duo-attendee-last-name" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Email *</label>
+<input class="w-full bg-white/5 border border-brand-gold/40 rounded-lg p-3 text-brand-light text-sm focus:outline-none focus:border-brand-gold focus:bg-white/10 transition-all" id="duo-attendee-email" placeholder="attendee@example.com" type="email"/>
+<p class="text-xs text-brand-dim/60 mt-1 ml-1">For the second person's booking confirmation</p>
+</div>
+</div>
 </div>
 <div>
 <label class="block text-xs text-brand-gold/80 uppercase font-bold mb-2 tracking-wider">Special Requests or Notes (Optional)</label>
@@ -3613,6 +3667,31 @@ async function loadAvailabilityForWindow(force = false) {
                 selectedServiceKey = serviceSelect.value || null;
                 console.log('📝 Service selected:', selectedServiceKey);
 
+                // Group/Event: show contact message, hide booking flow
+                const contactMsg = document.getElementById('group-event-contact-msg');
+                const continueBtn = document.getElementById('address-continue-btn');
+                const returningClientsLink = continueBtn?.nextElementSibling; // the <a> "Returning Clients" link
+                const durationSelectEl = document.getElementById('duration-select');
+                const durationBlock = durationSelectEl?.parentElement;
+                const participantsWrapper = document.getElementById('participants-wrapper');
+                if (selectedServiceKey === 'group' || selectedServiceKey === 'event') {
+                    if (contactMsg) contactMsg.classList.remove('hidden');
+                    if (continueBtn) continueBtn.classList.add('hidden');
+                    if (returningClientsLink && returningClientsLink.tagName === 'A') returningClientsLink.classList.add('hidden');
+                    if (durationBlock) durationBlock.classList.add('hidden');
+                    if (participantsWrapper) participantsWrapper.classList.add('hidden');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    // Still rebuild options for completeness but user can't proceed
+                    rebuildDurationOptions();
+                    return;
+                } else {
+                    if (contactMsg) contactMsg.classList.add('hidden');
+                    if (continueBtn) continueBtn.classList.remove('hidden');
+                    if (returningClientsLink && returningClientsLink.tagName === 'A') returningClientsLink.classList.remove('hidden');
+                    if (durationBlock) durationBlock.classList.remove('hidden');
+                    if (participantsWrapper) participantsWrapper.classList.remove('hidden');
+                }
+
                 // Duo is fixed at 2 participants; Group/Event are chosen via dropdown
                 selectedParticipantCount = (selectedServiceKey === 'duo') ? 2 : selectedParticipantCount;
 
@@ -3767,6 +3846,9 @@ document.getElementById('prev-month-btn').addEventListener('click', async () => 
                     : (addr.city || addr.address);
                 labelEl.innerHTML = `${treat.label} (${selectedStandardDuration} min) • ${locationDisplay} • <span class="text-brand-gold">$${price.base}+HST (~$${price.total})</span>`;
                 const mobileLabelEl = document.getElementById('mobile-selected-address-label');                if (mobileLabelEl) mobileLabelEl.textContent = `${treat.label} (${selectedStandardDuration}min) • ${addr.city || 'Service location'}`;
+                // Show desktop Change button
+                const deskChangeBtn = document.getElementById('desktop-change-selection-btn');
+                if (deskChangeBtn) { deskChangeBtn.classList.remove('hidden', 'md:hidden'); deskChangeBtn.classList.add('hidden', 'md:inline-flex'); }
                 closeAddressModal();
 
                 // Soft scroll to calendar
@@ -3809,6 +3891,9 @@ updateProgress(2);
             
             const mobileChangeBtn = document.getElementById('mobile-change-selection-btn');
             if (mobileChangeBtn) mobileChangeBtn.addEventListener('click', openAddressModal);
+
+            const desktopChangeBtn = document.getElementById('desktop-change-selection-btn');
+            if (desktopChangeBtn) desktopChangeBtn.addEventListener('click', openAddressModal);
             
             const mobileCollapseBtn = document.getElementById('mobile-footer-collapse-btn');
             if (mobileCollapseBtn) mobileCollapseBtn.addEventListener('click', collapseMobileFooter);
@@ -3878,6 +3963,16 @@ updateProgress(2);
                 // Calculate and show travel charge if applicable
                 // Note: This is a simplified version. The actual drive time would come from the workflow
                 calculateAndShowTravelCharge();
+
+                // Show/hide duo attendee fields
+                const duoSection = document.getElementById('duo-attendee-section');
+                if (duoSection) {
+                    if (selectedServiceKey === 'duo') {
+                        duoSection.classList.remove('hidden');
+                    } else {
+                        duoSection.classList.add('hidden');
+                    }
+                }
 
                 modal.classList.remove('hidden');
                 if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -4193,6 +4288,22 @@ function getTravelCanonicalFromSlot(slot) {
                     return;
                 }
 
+                // Duo massage: validate 2nd attendee fields
+                let duoAttendeeFirstName = '';
+                let duoAttendeeLastName = '';
+                let duoAttendeeEmail = '';
+                if (selectedServiceKey === 'duo') {
+                    duoAttendeeFirstName = (document.getElementById('duo-attendee-first-name')?.value || '').trim();
+                    duoAttendeeLastName = (document.getElementById('duo-attendee-last-name')?.value || '').trim();
+                    duoAttendeeEmail = (document.getElementById('duo-attendee-email')?.value || '').trim();
+                    if (!duoAttendeeFirstName || !duoAttendeeLastName || !duoAttendeeEmail) {
+                        errorEl.classList.remove('hidden');
+                        errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please fill in all fields for the 2nd attendee.';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        return;
+                    }
+                }
+
                 if (emailMarketingConsent === null) {
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please select your marketing email preference (Yes or No).';
@@ -4318,7 +4429,15 @@ function getTravelCanonicalFromSlot(slot) {
                     travel_charge: travelCharge,
                     travel_fee_cents: Number.isFinite(Number(travelFeeCents)) ? Number(travelFeeCents) : Math.round((Number(travelCharge) || 0) * 100),
                     drive_time_minutes: (driveTimeMinutes ?? 0),
-                    stripe_payment_method_id: paymentMethodId
+                    stripe_payment_method_id: paymentMethodId,
+
+                    // Duo massage: 2nd attendee details
+                    ...(selectedServiceKey === 'duo' ? {
+                        duo_attendee_first_name: duoAttendeeFirstName,
+                        duo_attendee_last_name: duoAttendeeLastName,
+                        duo_attendee_email: duoAttendeeEmail,
+                        duo_attendee_name: `${duoAttendeeFirstName} ${duoAttendeeLastName}`
+                    } : {})
                 };
 
                 console.log('📋 Booking data ready:', bookingData);
@@ -4337,6 +4456,8 @@ function getTravelCanonicalFromSlot(slot) {
                     });
 
                     const result = await response.json();
+                    console.log('📋 Booking webhook response:', JSON.stringify(result));
+                    console.log('📋 response.ok:', response.ok, 'status:', response.status);
 
 if (result.error === 'slot_taken') {
     try { hideBookingModal(false, 'That time was just booked by someone else. Please pick another time.'); } catch (_) {}
@@ -4420,10 +4541,13 @@ if (result.success) {
                             stripeCardElement.clear();
                         }
                     } else {
+                        console.warn('📋 Unexpected booking response - no success flag:', JSON.stringify(result));
+                        try { hideBookingModal(false, 'Unexpected response from server. Your booking may still have been placed — please check your email.'); } catch (_) {}
                         throw new Error('Booking submission failed');
                     }
                 } catch (error) {
                     console.error('Booking error:', error);
+                    try { hideBookingModal(false, (error && error.message) ? error.message : 'Please try again or contact us directly.'); } catch (_) {}
                     errorEl.classList.remove('hidden');
                     errorEl.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>There was an error submitting your booking. Please try again or contact us directly.`;
                 } finally {
