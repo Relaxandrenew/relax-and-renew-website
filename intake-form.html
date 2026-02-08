@@ -286,6 +286,21 @@
         </div>
     </div>
 
+    <!-- Success Overlay -->
+    <div id="successOverlay" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center hidden" style="overflow:hidden;">
+        <div class="text-center max-w-md mx-auto px-6 py-8" style="padding-bottom: max(2rem, env(safe-area-inset-bottom));">
+            <div class="mb-5 md:mb-6">
+                <svg class="mx-auto w-16 h-16 md:w-20 md:h-20 text-[#4ade80]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold text-[#E0C584] mb-2 md:mb-3 tracking-wide">Success!</h2>
+            <p class="text-[#E0C584]/80 text-sm md:text-lg mb-8 md:mb-10 leading-relaxed px-2">Thank you for completing your intake form.<br>We look forward to seeing you.</p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center">
+                <a href="https://www.relaxandrenew.ca" class="btn-gold py-4 px-8 rounded text-sm md:text-base tracking-widest font-bold text-center min-h-[48px] flex items-center justify-center">Return to Home</a>
+                <a href="https://www.relaxandrenew.ca/portal" class="btn-gold py-4 px-8 rounded text-sm md:text-base tracking-widest font-bold text-center min-h-[48px] flex items-center justify-center">Go to Client Portal</a>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-5xl mx-auto glass-panel rounded-lg overflow-hidden shadow-2xl relative">
         
         <!-- Header -->
@@ -1224,14 +1239,20 @@
 document.getElementById('healthIntakeForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Immediately disable to prevent double-clicks
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    
     const signatureInput = document.getElementById('signatureImage');
     
     if(!signatureInput.value) {
         alert("Please sign the form before submitting.");
+        submitBtn.disabled = false;
         return;
     }
 
-    const submitBtn = document.getElementById('submitBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const successMessage = document.getElementById('successMessage');
     const errorMessage = document.getElementById('errorMessage');
@@ -1379,7 +1400,8 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         await minDelay;
         
         loadingOverlay.classList.add('hidden');
-        successMessage.classList.remove('hidden');
+        document.getElementById('successOverlay').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
         this.reset();
         
         const ctx = canvas.getContext('2d');
@@ -1388,8 +1410,6 @@ document.getElementById('healthIntakeForm').addEventListener('submit', async fun
         
         __rnrSignatureStrokes = null;
         __rnrClearDraft();
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         
     } catch (error) {
         console.error('Error:', error);
