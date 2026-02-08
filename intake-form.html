@@ -107,12 +107,35 @@
             font-weight: bold;
         }
 
+        input[type="checkbox"]::after {
+            content: '✓';
+            font-size: 0.8em;
+            font-weight: bold;
+            visibility: hidden;
+        }
+
+        input[type="checkbox"]:checked::after {
+            visibility: visible;
+        }
+
         input[type="radio"]:checked::after {
             content: '';
             width: 0.6em;
             height: 0.6em;
             background-color: var(--primary-gold);
             border-radius: 50%;
+        }
+
+        input[type="radio"]::after {
+            content: '';
+            width: 0.6em;
+            height: 0.6em;
+            border-radius: 50%;
+            visibility: hidden;
+        }
+
+        input[type="radio"]:checked::after {
+            visibility: visible;
         }
 
         /* Button Styling */
@@ -147,6 +170,9 @@
         }
 
         /* Option Hover */
+        .choice-option {
+            overflow-anchor: none;
+        }
         .choice-option:hover {
             background-color: rgba(224, 197, 132, 0.05);
             border-color: var(--primary-gold);
@@ -183,6 +209,24 @@
         /* Placeholder Opacity */
         ::placeholder {
             color: rgba(224, 197, 132, 0.4);
+        }
+
+        /* Mobile Compact Spacing (does NOT apply in easy-view) */
+        @media (max-width: 767px) {
+            body:not(.easy-view) .section-divider {
+                margin-bottom: 1rem;
+            }
+            body:not(.easy-view) .choice-option {
+                padding: 0.65rem 0.75rem;
+            }
+            body:not(.easy-view) input[type="text"],
+            body:not(.easy-view) input[type="email"],
+            body:not(.easy-view) input[type="tel"],
+            body:not(.easy-view) input[type="date"],
+            body:not(.easy-view) textarea,
+            body:not(.easy-view) select {
+                padding: 0.6rem 0.75rem;
+            }
         }
         
         /* Signature Pad */
@@ -318,8 +362,8 @@
             <h1 class="text-2xl md:text-4xl font-bold mb-2 tracking-wide text-[#E0C584] relative z-10">Health History &amp; Billing</h1>
             <p class="text-[#E0C584]/80 text-sm md:text-lg uppercase tracking-widest relative z-10">Relax &amp; Renew RMT</p>
             <div class="mt-4 text-xs md:text-sm opacity-70 relative z-10">
-                <p>Port Colborne, Ontario</p>
-                <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="711012121e041f05023103141d1009101f1503141f14065f1210">[email&#160;protected]</a> | 1-226-337-9064</p>
+                <p>Niagara Region, Ontario</p>
+                <p><a href="mailto:info@relaxandrenew.ca" class="hover:underline">info@relaxandrenew.ca</a> | 1-226-337-9064</p>
             </div>
         </div>
 
@@ -340,7 +384,7 @@
                 </p>
             </div>
 
-            <form id="healthIntakeForm" class="space-y-10 md:space-y-12">
+            <form id="healthIntakeForm" class="space-y-6 md:space-y-12">
                 
                 <!-- Client Profile -->
                 <div class="section">
@@ -669,7 +713,7 @@
                                 <li><strong>Under 6 Hours / No Show:</strong> Full Charge</li>
                             </ul>
                             <p><strong>Services:</strong> All services are provided by Registered Massage Therapists (RMTs) in good standing with the CMTO. We reserve the right to refuse service.</p>
-                            <p><strong>Payments:</strong> Payment is due at the time of service via Credit Card, E-Transfer, or Cash. Credit card information is stored securely via Noterro/Square/Stripe to enforce our cancellation policy. Full card numbers are never stored on local systems.</p>
+                            <p><strong>Payments:</strong> We offer direct insurance billing where available. Any remaining balance (co-pay), or the full amount if insurance does not cover your visit, is due at the time of service via Credit Card, E-Transfer, or Cash. Credit card information is stored securely via Stripe to enforce our cancellation policy. Full card numbers are never stored on local systems.</p>
                             <p><strong>Client Conduct:</strong> Any inappropriate remarks, sexual advances, or aggressive actions will result in the immediate termination of the session, full payment will be charged, and the client will be banned.</p>
                             <p><strong>Liability:</strong> The client releases Relax &amp; Renew RMT from liability regarding injury or damage on the client's premises, except in cases of gross negligence.</p>
                         </div>
@@ -687,7 +731,7 @@
                         </div>
                         <div class="bg-white/5 p-4 rounded h-40 overflow-y-auto policy-scroll text-sm opacity-90 mb-3 border border-[#E0C584]/20 space-y-2">
                             <p><strong>Collection &amp; Use:</strong> We collect necessary personal (name, address, DOB) and health information to provide safe, effective care under PHIPA. Payment and booking data is processed securely.</p>
-                            <p><strong>Disclosure:</strong> We do not sell or rent your information. Disclosure is strictly limited to your circle of care (with consent), third-party processors (e.g., Noterro, Stripe) for booking/billing, or as required by law.</p>
+                            <p><strong>Disclosure:</strong> We do not sell or rent your information. Disclosure is strictly limited to your circle of care (with consent), third-party processors (e.g., Cliniko, Stripe) for booking/billing, or as required by law.</p>
                             <p><strong>Security &amp; Retention:</strong> Records are stored securely in compliance with CMTO regulations. Clinical records are retained for the legally required period (typically 10 years).</p>
                             <p><strong>Your Rights:</strong> You have the right to access, correct, or withdraw consent for your information, subject to legal requirements.</p>
                         </div>
@@ -718,7 +762,7 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-sm uppercase tracking-wide opacity-90">Date <span class="text-red-400">*</span></label>
-                                <input type="date" name="signature_date" required class="w-full p-3 rounded bg-black/50 border-[#E0C584]">
+                                <input type="date" name="signature_date" required readonly class="w-full p-3 rounded bg-black/50 border-[#E0C584] opacity-80 cursor-not-allowed">
                             </div>
                             <div class="md:col-span-2 space-y-2">
                                 <label class="block text-sm uppercase tracking-wide opacity-90">Digital Signature (Draw below) <span class="text-red-400">*</span></label>
@@ -1001,10 +1045,10 @@
             );
         }
 
-        // Set today's date for signature date
+        // Set today's date for signature date (locked)
         const dateInput = document.querySelector('input[name="signature_date"]');
         if(dateInput) {
-            if (!dateInput.value) dateInput.valueAsDate = new Date();
+            dateInput.valueAsDate = new Date();
         }
 
         // 2. TOKEN LOGIC
