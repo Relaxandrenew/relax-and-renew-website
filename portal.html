@@ -3989,7 +3989,6 @@ let lock = null;
       "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
       "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
       "infant":      { label: "Infant Massage", durations: [30,45] },
-<<<<<<< Test-Branch
       "duo":         { label: "Duo Massage (2 People)", durations: [45,60] },
     };
 
@@ -4006,51 +4005,19 @@ let lock = null;
       "duo":         { per_person_60: 100 },
     };
 
-=======
-      "duo":         { label: "Duo Massage", durations: [45,60] },
-    };
-
-    const PRICING = {
-      "relaxation":  { 60: 120, 75: 140, 90: 160, 120: 200 },
-      "deep-tissue": { 60: 120, 75: 140, 90: 160, 120: 200 },
-      "sports":      { 60: 120, 75: 140, 90: 160, 120: 200 },
-      "senior":      { 60: 120, 75: 140, 90: 160, 120: 200 },
-      "hot-stone":   { 60: 130, 75: 150, 90: 170, 120: 210 },
-      "cupping":     { 60: 130, 75: 150, 90: 170, 120: 210 },
-      "prenatal":    { 30: 70, 45: 100, 60: 130 },
-      "pediatric":   { 30: 50, 45: 75 },
-      "infant":      { 30: 50, 45: 75 },
-      "duo":         { per_person_60: 100 },
-    };
-
->>>>>>> main
     const HST_RATE = 0.13;
 
     function calcPrice(serviceKey, durationMinutes, participants) {
       const p = PRICING[serviceKey];
       if (!p) return { base: 0, total: 0 };
-<<<<<<< Test-Branch
       const mins = Number(durationMinutes);
       const count = Number(participants) || 1;
       let base = 0;
       if (p.per_person_60) {
-=======
-
-      let base = 0;
-      const mins = Number(durationMinutes);
-      const count = Number(participants) || 1;
-
-      if (p.per_person_60) {
-        // Multi-client: scale by duration and participants
->>>>>>> main
         base = Math.round(p.per_person_60 * (mins / 60) * count);
       } else {
         base = p[mins] || 0;
       }
-<<<<<<< Test-Branch
-=======
-
->>>>>>> main
       const total = Math.round(base * (1 + HST_RATE) * 100) / 100;
       return { base, total };
     }
@@ -9965,4 +9932,12 @@ width="2277px" height="2277px" viewBox="0 0 2277 2277" enable-background="new 0 
       function syncNavbarSpacer(){
         const nav = document.getElementById('navbar');
         const spacer = document.getElementById('navbar-spacer');
-        if (!nav || !sp
+        if (!spacer || !nav) return;
+        spacer.style.height = nav.offsetHeight + 'px';
+      }
+      syncNavbarSpacer();
+      window.addEventListener('resize', syncNavbarSpacer);
+    })();
+  </script>
+</body>
+</html>
