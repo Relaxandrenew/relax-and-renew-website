@@ -3944,7 +3944,42 @@ let lock = null;
       "prenatal":    { label: "Prenatal Massage", durations: [30,45,60] },
       "pediatric":   { label: "Pediatric Massage", durations: [30,45] },
       "infant":      { label: "Infant Massage", durations: [30,45] },
+      "duo":         { label: "Duo Massage", durations: [45,60] },
     };
+
+    const PRICING = {
+      "relaxation":  { 60: 120, 75: 140, 90: 160, 120: 200 },
+      "deep-tissue": { 60: 120, 75: 140, 90: 160, 120: 200 },
+      "sports":      { 60: 120, 75: 140, 90: 160, 120: 200 },
+      "senior":      { 60: 120, 75: 140, 90: 160, 120: 200 },
+      "hot-stone":   { 60: 130, 75: 150, 90: 170, 120: 210 },
+      "cupping":     { 60: 130, 75: 150, 90: 170, 120: 210 },
+      "prenatal":    { 30: 70, 45: 100, 60: 130 },
+      "pediatric":   { 30: 50, 45: 75 },
+      "infant":      { 30: 50, 45: 75 },
+      "duo":         { per_person_60: 100 },
+    };
+
+    const HST_RATE = 0.13;
+
+    function calcPrice(serviceKey, durationMinutes, participants) {
+      const p = PRICING[serviceKey];
+      if (!p) return { base: 0, total: 0 };
+
+      let base = 0;
+      const mins = Number(durationMinutes);
+      const count = Number(participants) || 1;
+
+      if (p.per_person_60) {
+        // Multi-client: scale by duration and participants
+        base = Math.round(p.per_person_60 * (mins / 60) * count);
+      } else {
+        base = p[mins] || 0;
+      }
+
+      const total = Math.round(base * (1 + HST_RATE) * 100) / 100;
+      return { base, total };
+    }
 
     // =========================================================
     // UTIL
@@ -8046,6 +8081,8 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
       const treat = TREATMENT_RULES[selectedServiceKey];
       const driveTime = selectedSlot?.driveTimeMinutes || 0;
       const travelFee = calcTravelFee(driveTime);
+      const participants = selectedServiceKey === 'duo' ? 2 : 1;
+      const pricing = calcPrice(selectedServiceKey, selectedStandardDuration, participants);
 
       const bookingPayload = {
         firstName: portalProfile.firstName || "",
@@ -8059,12 +8096,14 @@ const monthName = calendarCurrent.toLocaleDateString("en-CA", { month: "long", y
         treatment_label: treat ? treat.label : "",
         duration: Number(selectedStandardDuration),
         standardDurationMinutes: Number(selectedStandardDuration),
-        participants: 1,
-        participant_count: 1,
+        participants: participants,
+        participant_count: participants,
         slot_start: selectedSlot.start,
         slot_end: selectedSlot.end,
         date: selectedDateStr,
         times_already_utc: true,
+        price_base: pricing.base,
+        price_total: pricing.total,
         travel_charge: Number(travelFee || 0),
         drive_time_minutes: Number(driveTime || 0),
         travel_fee_cents: Math.round(Number(travelFee || 0) * 100),
