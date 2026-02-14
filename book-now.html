@@ -4191,20 +4191,8 @@ updateProgress(2);
                     });
                 }
 
-                // Click outside the card closes (overlay only)
-                if (modal) {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) closeClientDetailsModal();
-                    });
-                }
-
-                // ESC closes
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const m = document.getElementById('client-details-modal');
-                        if (m && !m.classList.contains('hidden')) closeClientDetailsModal();
-                    }
-                });
+                // Backdrop click and ESC are DISABLED — modal can only be closed
+                // via the X button to prevent accidental dismissal on desktop.
             }
 
 // Ensure the Client Details (final confirmation) modal close handlers are always bound
@@ -4413,27 +4401,30 @@ function getTravelCanonicalFromSlot(slot) {
             document.getElementById('client-details-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                // Portal-style booking overlay (visual only)
-                try { showBookingModal(); } catch (_) {}
-
-                
                 const submitBtn = document.getElementById('submit-booking-btn');
                 const originalBtnText = submitBtn.innerHTML;
                 
                 const firstName = document.getElementById('client-first-name').value.trim();
                 const lastName = document.getElementById('client-last-name').value.trim();
-                const phone = document.getElementById('client-phone').value.trim();
+                const phoneRaw = document.getElementById('client-phone').value.trim();
                 const email = document.getElementById('client-email').value.trim();
                 const notes = document.getElementById('client-notes').value.trim();
-                
+
+                // Normalize phone to (XXX) XXX-XXXX — safety net in case formatter missed
+                const phoneDigits = (phoneRaw || '').replace(/\D/g, '').slice(-10);
+                const phone = phoneDigits.length === 10
+                    ? `(${phoneDigits.slice(0,3)}) ${phoneDigits.slice(3,6)}-${phoneDigits.slice(6)}`
+                    : phoneRaw;
+
                 const marketingConsentEl = document.querySelector('input[name="email_marketing_consent"]:checked');
                 const emailMarketingConsent = marketingConsentEl ? (marketingConsentEl.value === 'true') : null;
                 const errorEl = document.getElementById('client-error');
 
-                // Validation
-                if (!firstName || !lastName || !phone || !email) {
+                // Validation (require 10-digit phone)
+                if (!firstName || !lastName || !phone || !email || phoneDigits.length !== 10) {
                     errorEl.classList.remove('hidden');
-                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please fill in all required fields.';
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>' +
+                        (phoneDigits.length !== 10 ? 'Please enter a valid 10-digit phone number.' : 'Please fill in all required fields.');
                     return;
                 }
 
@@ -4475,6 +4466,9 @@ function getTravelCanonicalFromSlot(slot) {
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
+
+                // All validation passed — show the booking progress overlay
+                try { showBookingModal(); } catch (_) {}
 
                 // Travel (canonical from backend slot data; do not compute client-side)
                 const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
