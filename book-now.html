@@ -1242,14 +1242,16 @@ function fillAddressFromPlace(place) {
                     </div>
                 </div>
 
-                <!-- NEW PROGRESS BAR LOADER -->
+                <!-- ANIMATED PROGRESS BAR LOADER WITH ROTATING MESSAGES -->
                 <div id="availability-loading" class="hidden mb-8">
-                    <div class="flex justify-between text-xs uppercase tracking-wider text-brand-gold/80 mb-2 font-bold">
-                        <span>Checking Availability...</span>
-                        <span class="animate-pulse">Please Wait</span>
+                    <div class="text-center mb-2">
+                        <span id="avail-loading-msg" class="text-xs uppercase tracking-wider text-brand-gold/80 font-bold inline-block transition-opacity duration-300">Checking Availability...</span>
                     </div>
-                    <div class="h-1.5 w-full bg-brand-gold/10 rounded-full overflow-hidden relative">
-                        <div class="absolute top-0 left-0 h-full bg-brand-gold w-1/3 animate-loading-bar rounded-full"></div>
+                    <div class="h-2 w-full bg-brand-gold/10 rounded-full overflow-hidden relative">
+                        <div id="avail-loading-bar" class="h-full bg-gradient-to-r from-brand-gold/80 to-brand-gold rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    </div>
+                    <div class="text-right mt-1">
+                        <span id="avail-loading-pct" class="text-[10px] text-brand-gold/50 font-mono">0%</span>
                     </div>
                 </div>
 
@@ -2233,12 +2235,81 @@ function showBookingModal() {
 
             if (!data) return;
 
+            // --- Travel field propagation ---
+            // The availability workflow may return travel data at the day level
+            // (driveTimeMinutes, travelFeeCents, etc.) rather than on each individual slot.
+            // We propagate day-level travel fields to each slot so that
+            // getTravelCanonicalFromSlot() can find them when building the booking payload.
+            const TRAVEL_FIELDS = [
+                'driveTimeMinutes', 'drive_time_minutes',
+                'travelFeeCents', 'travel_fee_cents',
+                'requiresCard', 'requires_card',
+                'travelFeeApplies', 'travel_fee_applies',
+                'travel'
+            ];
+
+            function propagateDayTravel(day, slots) {
+                const dayTravel = {};
+                let hasDayTravel = false;
+                for (const f of TRAVEL_FIELDS) {
+                    if (day[f] !== undefined && day[f] !== null) {
+                        dayTravel[f] = day[f];
+                        hasDayTravel = true;
+                    }
+                }
+
+                // Also check for top-level response travel fields (inherited from caller)
+                if (!hasDayTravel) return slots;
+
+                console.log('🚗 Day-level travel data found for', day.date, ':', dayTravel);
+
+                return slots.map(s => {
+                    if (!s) return s;
+                    const patched = { ...s };
+                    for (const [field, value] of Object.entries(dayTravel)) {
+                        // Only fill in if the slot doesn't already have this field
+                        if (patched[field] === undefined || patched[field] === null) {
+                            patched[field] = value;
+                        }
+                    }
+                    return patched;
+                });
+            }
+
+            // Debug: log first day and first slot structure to trace travel fields
+            function logSlotStructure(days) {
+                if (!Array.isArray(days) || days.length === 0) return;
+                const firstDay = days.find(d => d && d.date && Array.isArray(d.slots) && d.slots.length > 0);
+                if (firstDay) {
+                    console.log('🔍 First day keys:', Object.keys(firstDay));
+                    console.log('🔍 First day object (travel check):', {
+                        date: firstDay.date,
+                        driveTimeMinutes: firstDay.driveTimeMinutes,
+                        drive_time_minutes: firstDay.drive_time_minutes,
+                        travelFeeCents: firstDay.travelFeeCents,
+                        travel_fee_cents: firstDay.travel_fee_cents,
+                        travel: firstDay.travel,
+                    });
+                    const firstSlot = firstDay.slots[0];
+                    console.log('🔍 First slot keys:', Object.keys(firstSlot));
+                    console.log('🔍 First slot object (travel check):', {
+                        start: firstSlot.start,
+                        driveTimeMinutes: firstSlot.driveTimeMinutes,
+                        drive_time_minutes: firstSlot.drive_time_minutes,
+                        travelFeeCents: firstSlot.travelFeeCents,
+                        travel_fee_cents: firstSlot.travel_fee_cents,
+                        travel: firstSlot.travel,
+                    });
+                }
+            }
+
             // Handle object with dates property (expected from n8n)
             if (data.dates && Array.isArray(data.dates)) {
                 console.log('✅ Processing dates array from response');
+                logSlotStructure(data.dates);
                 data.dates.forEach(day => {
                     if (!day || !day.date || !Array.isArray(day.slots)) return;
-                    availabilityByDate[day.date] = day.slots;
+                    availabilityByDate[day.date] = propagateDayTravel(day, day.slots);
                 });
                 console.log('📅 Availability by date:', availabilityByDate);
                 return;
@@ -2247,9 +2318,10 @@ function showBookingModal() {
             // Fallback: Handle direct array
             if (Array.isArray(data)) {
                 console.log('✅ Processing as direct array');
+                logSlotStructure(data);
                 data.forEach(day => {
                     if (!day || !day.date || !Array.isArray(day.slots)) return;
-                    availabilityByDate[day.date] = day.slots;
+                    availabilityByDate[day.date] = propagateDayTravel(day, day.slots);
                 });
                 console.log('📅 Availability by date:', availabilityByDate);
                 return;
@@ -3228,6 +3300,74 @@ function setCalendarNavDisabled(disabled) {
     }
 }
 
+// --- Availability Loading Animation (rotating messages + percentage bar) ---
+const availLoadingMessages = [
+    "Checking Therapist Availabilities...",
+    "Checking Drive Times...",
+    "Please Hold On a Moment...",
+    "This Can Take a Few Seconds Due to Complexity...",
+    "Analyzing Schedule Conflicts...",
+    "Almost Ready..."
+];
+let _availLoadingInterval = null;
+let _availLoadingPctInterval = null;
+let _availLoadingMsgIdx = 0;
+let _availLoadingPct = 0;
+
+function _startAvailLoadingAnimation() {
+    _availLoadingMsgIdx = 0;
+    _availLoadingPct = 0;
+
+    const msgEl  = document.getElementById('avail-loading-msg');
+    const barEl  = document.getElementById('avail-loading-bar');
+    const pctEl  = document.getElementById('avail-loading-pct');
+
+    if (msgEl) { msgEl.textContent = availLoadingMessages[0]; msgEl.style.opacity = '1'; }
+    if (barEl) barEl.style.width = '0%';
+    if (pctEl) pctEl.textContent = '0%';
+
+    // Cycle messages every 2.5 seconds with fade transition
+    if (_availLoadingInterval) clearInterval(_availLoadingInterval);
+    _availLoadingInterval = setInterval(() => {
+        _availLoadingMsgIdx = (_availLoadingMsgIdx + 1) % availLoadingMessages.length;
+        if (msgEl) {
+            msgEl.style.opacity = '0';
+            setTimeout(() => {
+                msgEl.textContent = availLoadingMessages[_availLoadingMsgIdx];
+                msgEl.style.opacity = '1';
+            }, 300);
+        }
+    }, 2500);
+
+    // Simulated percentage: ramps quickly to ~70%, slows to ~90%, crawls near 95%
+    if (_availLoadingPctInterval) clearInterval(_availLoadingPctInterval);
+    _availLoadingPctInterval = setInterval(() => {
+        if (_availLoadingPct < 70) {
+            _availLoadingPct += Math.random() * 8 + 2;
+        } else if (_availLoadingPct < 90) {
+            _availLoadingPct += Math.random() * 2 + 0.5;
+        } else {
+            _availLoadingPct = Math.min(_availLoadingPct + 0.3, 95);
+        }
+        _availLoadingPct = Math.min(_availLoadingPct, 95);
+        if (barEl) barEl.style.width = Math.round(_availLoadingPct) + '%';
+        if (pctEl) pctEl.textContent = Math.round(_availLoadingPct) + '%';
+    }, 400);
+}
+
+function _stopAvailLoadingAnimation() {
+    if (_availLoadingInterval)    { clearInterval(_availLoadingInterval);    _availLoadingInterval = null; }
+    if (_availLoadingPctInterval) { clearInterval(_availLoadingPctInterval); _availLoadingPctInterval = null; }
+
+    // Snap to 100%
+    const msgEl = document.getElementById('avail-loading-msg');
+    const barEl = document.getElementById('avail-loading-bar');
+    const pctEl = document.getElementById('avail-loading-pct');
+    if (barEl) barEl.style.width = '100%';
+    if (pctEl) pctEl.textContent = '100%';
+    if (msgEl) { msgEl.style.opacity = '1'; msgEl.textContent = 'Done!'; }
+}
+
 function beginAvailabilityLoadUI() {
     isAvailabilityLoading = true;
 
@@ -3236,6 +3376,9 @@ function beginAvailabilityLoadUI() {
     try { document.getElementById('calendar-skeleton').classList.remove('hidden'); } catch (_) {}
     try { document.getElementById('calendar-content').classList.add('hidden'); } catch (_) {}
 
+    // Start animated messages + percentage bar
+    try { _startAvailLoadingAnimation(); } catch (_) {}
+
     // Disable month navigation while fetching
     setCalendarNavDisabled(true);
 }
@@ -3243,14 +3386,20 @@ function beginAvailabilityLoadUI() {
 function endAvailabilityLoadUI() {
     isAvailabilityLoading = false;
 
-    // Hide loading UI
-    try { document.getElementById('availability-loading').classList.add('hidden'); } catch (_) {}
-    try { document.getElementById('calendar-skeleton').classList.add('hidden'); } catch (_) {}
-    try { document.getElementById('calendar-content').classList.remove('hidden'); } catch (_) {}
+    // Stop animation and snap to 100%
+    try { _stopAvailLoadingAnimation(); } catch (_) {}
 
-    // Re-enable month navigation
-    setCalendarNavDisabled(false);
-    try { window.updatePrevMonthButton?.(); } catch (_) {}
+    // Brief delay so user sees "Done! 100%" before hiding
+    setTimeout(() => {
+        // Hide loading UI
+        try { document.getElementById('availability-loading').classList.add('hidden'); } catch (_) {}
+        try { document.getElementById('calendar-skeleton').classList.add('hidden'); } catch (_) {}
+        try { document.getElementById('calendar-content').classList.remove('hidden'); } catch (_) {}
+
+        // Re-enable month navigation
+        setCalendarNavDisabled(false);
+        try { window.updatePrevMonthButton?.(); } catch (_) {}
+    }, 500);
 }
 
 function isMobileViewport() {
@@ -4042,20 +4191,8 @@ updateProgress(2);
                     });
                 }
 
-                // Click outside the card closes (overlay only)
-                if (modal) {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) closeClientDetailsModal();
-                    });
-                }
-
-                // ESC closes
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const m = document.getElementById('client-details-modal');
-                        if (m && !m.classList.contains('hidden')) closeClientDetailsModal();
-                    }
-                });
+                // Backdrop click and ESC are DISABLED — modal can only be closed
+                // via the X button to prevent accidental dismissal on desktop.
             }
 
 // Ensure the Client Details (final confirmation) modal close handlers are always bound
@@ -4264,27 +4401,30 @@ function getTravelCanonicalFromSlot(slot) {
             document.getElementById('client-details-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                // Portal-style booking overlay (visual only)
-                try { showBookingModal(); } catch (_) {}
-
-                
                 const submitBtn = document.getElementById('submit-booking-btn');
                 const originalBtnText = submitBtn.innerHTML;
                 
                 const firstName = document.getElementById('client-first-name').value.trim();
                 const lastName = document.getElementById('client-last-name').value.trim();
-                const phone = document.getElementById('client-phone').value.trim();
+                const phoneRaw = document.getElementById('client-phone').value.trim();
                 const email = document.getElementById('client-email').value.trim();
                 const notes = document.getElementById('client-notes').value.trim();
-                
+
+                // Normalize phone to (XXX) XXX-XXXX — safety net in case formatter missed
+                const phoneDigits = (phoneRaw || '').replace(/\D/g, '').slice(-10);
+                const phone = phoneDigits.length === 10
+                    ? `(${phoneDigits.slice(0,3)}) ${phoneDigits.slice(3,6)}-${phoneDigits.slice(6)}`
+                    : phoneRaw;
+
                 const marketingConsentEl = document.querySelector('input[name="email_marketing_consent"]:checked');
                 const emailMarketingConsent = marketingConsentEl ? (marketingConsentEl.value === 'true') : null;
                 const errorEl = document.getElementById('client-error');
 
-                // Validation
-                if (!firstName || !lastName || !phone || !email) {
+                // Validation (require 10-digit phone)
+                if (!firstName || !lastName || !phone || !email || phoneDigits.length !== 10) {
                     errorEl.classList.remove('hidden');
-                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>Please fill in all required fields.';
+                    errorEl.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i>' +
+                        (phoneDigits.length !== 10 ? 'Please enter a valid 10-digit phone number.' : 'Please fill in all required fields.');
                     return;
                 }
 
@@ -4326,6 +4466,9 @@ function getTravelCanonicalFromSlot(slot) {
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     return;
                 }
+
+                // All validation passed — show the booking progress overlay
+                try { showBookingModal(); } catch (_) {}
 
                 // Travel (canonical from backend slot data; do not compute client-side)
                 const travelInfo = getTravelCanonicalFromSlot(selectedSlot);
